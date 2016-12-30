@@ -6,8 +6,8 @@ raw <- paste0(dataroot, "datasets/raw/")
 mst <- paste0(dataroot, "datasets/mst/")
 
 # Set the import/export directories
-importdir <- paste0(root, "import/")
-exportdir <- paste0(root, "export/")
+importdir <- paste0(dataroot, "import/")
+exportdir <- paste0(dataroot, "export/")
 
 # Set the programroot location
 programroot <- "~/git/of-dollars-and-data/"
