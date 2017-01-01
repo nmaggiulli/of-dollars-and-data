@@ -22,7 +22,8 @@ set.seed(12345)
 
 # This will follow the 2 and 20 model initially but can be made dynamic
 hedge_fund_management_fee <- 0.02
-hegde_fund_performance_fee <- 0.2
+hedge_fund_performance_fee <- 0.2
+hedge_fund_watermark <- 0.05
 sample_mean_return <- 0.1
 sample_sd_return <- 0.2
 
@@ -31,6 +32,7 @@ sample_sd_return <- 0.2
 asset_return_matrix <- matrix(NA,nrow=n_simulations,ncol=n_periods)
 client_value_matrix <- matrix(NA,nrow=n_simulations,ncol=n_periods)
 hedge_fund_value_matrix <- matrix(NA,nrow=n_simulations,ncol=n_periods)
+compare_value_matrix <- matrix(NA,nrow=n_simulations,ncol=n_periods)
 
 # Run the simulations for each period by getting asset returns and calculating asset values
 # This assumes the returns are annualized
@@ -40,18 +42,29 @@ for (i in 1:n_periods){
   asset_return_matrix[,i] <- rnorm(n_simulations, sample_mean_return, sample_sd_return)
   
   # At this point each row is a different simulation and the column is the i-th period
-  # Calculate the final asset values (use some if logic for 1st period)
+  # Calculate the asset values after each period in the simulation
   if (i == 1){
-    client_value_matrix[,i] <- initial_client_capital * (1+asset_return_matrix)
+    management_fee <- initial_client_capital * (hedge_fund_management_fee)
+    performance_fee <- (initial_client_capital * (1 + asset_return_matrix[,i]) - initial_client_capital) * 
+                        hedge_fund_performance_fee * 
+                        (asset_return_matrix[,i] > hedge_fund_watermark)
+    hedge_fund_value_matrix[,i] <- management_fee + performance_fee
+    client_value_matrix[,i] <- (initial_client_capital * (1 + asset_return_matrix[,i])) - management_fee - performance_fee
   } else if (i > 1){
-    
-  } else {
-    print("Error:  This should never happen")
+    management_fee <- client_value_matrix[,i-1] * (hedge_fund_management_fee)
+    performance_fee <- (client_value_matrix[,i-1] * (1 + asset_return_matrix[,i]) - client_value_matrix[,i-1]) * 
+                        hedge_fund_performance_fee * 
+                        (asset_return_matrix[,i] > hedge_fund_watermark)    
+    hedge_fund_value_matrix[,i] <- (hedge_fund_value_matrix[,i-1] * (1 + asset_return_matrix[,i])) + management_fee + performance_fee
+    client_value_matrix[,i] <- (client_value_matrix[,i-1] * (1 + asset_return_matrix[,i])) - management_fee - performance_fee
   }
+  
+  # Compare the hedge fund's total capital to that of its client
+  compare_value_matrix[,i] <- client_value_matrix[,i] > hedge_fund_value_matrix[,i]
 }
 
-
-
+#Print the number of periods until the hedge fund has more capital than their client
+sum(colSums(compare_value_matrix) > n_simulations/2) + 1
 
 
 # ############################  End  ################################## #
