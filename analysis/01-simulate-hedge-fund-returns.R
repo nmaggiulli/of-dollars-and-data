@@ -127,7 +127,21 @@ plot_sim(
   top_title = "On Average, the Hedge Fund is Richer\nThan Its Clients In Less Than 20 Years"
 )
 
-# The second model represents a Vanguard index fund with 0.05% (5 basis points) for its
+# This second simulation assumes a 1.4% management fee and 17% performance fee
+# These numbers come from an article showing changes in hedge fund fees
+# See here:  http://fortune.com/2016/09/15/hedge-fund-fees-cut/
+plot_sim(
+  hedge_fund_management_fee = 0.014, 
+  hedge_fund_performance_fee = 0.17, 
+  hedge_fund_watermark = 0, 
+  sample_mean_return = 0.1, 
+  sample_sd_return = 0.2,
+  n_periods = 50,
+  file_name = "hf_over_client_1.4_and_17_sp500_return.jpeg",
+  top_title = "On Average, the Hedge Fund is Richer\nThan Its Clients In Less Than 25 Years"
+)
+
+# The third model represents a Vanguard index fund with 0.05% (5 basis points) for its
 # annual expense ratio.  There is no performance fee or watermark in this scenario.
 plot_sim(
   hedge_fund_management_fee = 0.0005, 
