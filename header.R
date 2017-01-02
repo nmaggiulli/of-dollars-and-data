@@ -2,8 +2,7 @@
 dataroot <- "C:/Users/Nick/data/of-dollars-and-data/"
 
 # Set dataset libraries
-raw <- paste0(dataroot, "datasets/raw/")
-mst <- paste0(dataroot, "datasets/mst/")
+localdir <- paste0(dataroot, "datasets/local/")
 
 # Set the import/export directories
 importdir <- paste0(dataroot, "import/")
