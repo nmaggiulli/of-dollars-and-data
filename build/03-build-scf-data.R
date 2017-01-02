@@ -6,6 +6,7 @@ source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
 
 ########################## Load in Libraries ########################## #
 
+library(dplyr)
 
 ########################## Start Program Here ######################### #
 
@@ -29,7 +30,7 @@ for (x in year_list){
   # fin = total finanical assets
   # resdbt = residential debt
   # agecl = age class, 1:<35, 2:35-44, 3:45-54, 4:55-64, 5:65-74, 6:>=75
-  # hhsex = gender, 1 = , 2 =
+  # hhsex = gender, 1 = male , 2 = female
   # race = race, 1 = white non-Hispanic, 2 = nonwhite or Hispanic
   # edcl = education class, 1 = no high school diploma/GED, 2 = high school diploma or GED,
   #   3 = some college, 4 = college degree
@@ -65,6 +66,12 @@ for (x in year_list){
     scf_stack <- rbind(scf_stack, imp1, imp2, imp3, imp4, imp5)
   }
 }
+
+# Clean some additional variables
+scf_stack <- mutate(scf_stack, married = married %% 2,
+                    white = race %% 2,
+                    male = hhsex %% 2) %>%
+              select(-hhsex, - race)
 
 # Save down data to permanent file
 saveRDS(scf_stack, paste0(localdir, "03-scf-stack.Rds"))
