@@ -24,49 +24,53 @@ initial_hedge_fund_capital <- 0
 # This seed allows us to have reproducible random sampling
 set.seed(12345)                                   
 
-plot_sim <- function(hedge_fund_management_fee, 
+plot_sim <- function(
+                  hedge_fund_management_fee, 
                   hedge_fund_performance_fee, 
                   hedge_fund_watermark, 
                   sample_mean_return, 
                   sample_sd_return,
                   n_periods,
                   file_name,
-                  top_title){
-  
+                  top_title
+){
   
   # Initialze matrix for the returns and value paths
-  # I use matrices because they are much, much faster than data frames in this regard
-  asset_return_matrix <- matrix(NA,nrow=n_simulations,ncol=n_periods)
-  client_value_matrix <- matrix(initial_client_capital,nrow=n_simulations,ncol=(n_periods + 1))
-  hedge_fund_value_matrix <- matrix(initial_hedge_fund_capital,nrow=n_simulations,ncol=(n_periods + 1))
-  compare_value_matrix <- matrix(NA,nrow=n_simulations,ncol=(n_periods + 1))
-  hf_over_client_value <- matrix(NA,nrow=n_simulations,ncol=(n_periods + 1))
+  # I use matrices because they are much faster than data frames in this regard
+  asset_return_matrix <- matrix(NA, nrow = n_simulations, ncol = n_periods)
+  client_value_matrix <- matrix(initial_client_capital, nrow = n_simulations, ncol = (n_periods + 1))
+  hedge_fund_value_matrix <- matrix(initial_hedge_fund_capital, nrow = n_simulations, ncol = (n_periods + 1))
+  compare_value_matrix <- matrix(NA, nrow = n_simulations, ncol = (n_periods + 1))
+  hf_over_client_value <- matrix(NA, nrow = n_simulations, ncol = (n_periods + 1))
   
-  #Set the first period of the comparison matrices manually
-  compare_value_matrix[,1] <- client_value_matrix[,1] > hedge_fund_value_matrix[,1]
-  hf_over_client_value[,1] <- hedge_fund_value_matrix[,1] / client_value_matrix[,1] 
+  # Set the first period of the comparison matrices manually
+  # Note that the first column in these matrices represents the starting (0-th period)
+  # in the simulation
+  compare_value_matrix[, 1] <- client_value_matrix[, 1] > hedge_fund_value_matrix[, 1]
+  hf_over_client_value[, 1] <- hedge_fund_value_matrix[, 1] / client_value_matrix[, 1] 
   
   
   # Run the simulations for each period by getting asset returns and calculating asset values
   # This assumes the returns are annualized
-  for (i in 2:(n_periods+1)){
+  # Start at period 2 and go to n_periods + 1 (since period 1 is actually the 0-th period)
+  for (i in 2:(n_periods + 1)){
     # Sample from a normal distribution n_simulations for each of the periods in our model
     # Put the simulated returns into each column (period) of the data
-    asset_return_matrix[,i-1] <- rnorm(n_simulations, sample_mean_return, sample_sd_return)
+    asset_return_matrix[, i-1] <- rnorm(n_simulations, sample_mean_return, sample_sd_return)
     
     # At this point each row is a different simulation and the column is the i-th period
     # Calculate the asset values after each period in the simulation
     # This assumes that the hedge fund reinvests all of its capital alongside its client
-    management_fee <- client_value_matrix[,i-1] * (hedge_fund_management_fee)
-    performance_fee <- (client_value_matrix[,i-1] * (1 + asset_return_matrix[,i-1]) - client_value_matrix[,i-1]) * 
+    management_fee <- client_value_matrix[, i-1] * (hedge_fund_management_fee)
+    performance_fee <- (client_value_matrix[, i-1] * (1 + asset_return_matrix[, i-1]) - client_value_matrix[, i-1]) * 
                         hedge_fund_performance_fee * 
-                        (asset_return_matrix[,i-1] > hedge_fund_watermark)    
-    hedge_fund_value_matrix[,i] <- (hedge_fund_value_matrix[,i-1] * (1 + asset_return_matrix[,i-1])) + management_fee + performance_fee
-    client_value_matrix[,i] <- (client_value_matrix[,i-1] * (1 + asset_return_matrix[,i-1])) - management_fee - performance_fee
+                        (asset_return_matrix[, i-1] > hedge_fund_watermark)    
+    hedge_fund_value_matrix[, i] <- (hedge_fund_value_matrix[, i-1] * (1 + asset_return_matrix[, i-1])) + management_fee + performance_fee
+    client_value_matrix[, i] <- (client_value_matrix[, i-1] * (1 + asset_return_matrix[, i-1])) - management_fee - performance_fee
   
     # Compare the hedge fund's total capital to that of its client
-    compare_value_matrix[,i] <- client_value_matrix[,i] > hedge_fund_value_matrix[,i]
-    hf_over_client_value[,i] <- hedge_fund_value_matrix[,i] / client_value_matrix[,i]
+    compare_value_matrix[, i] <- client_value_matrix[, i] > hedge_fund_value_matrix[, i]
+    hf_over_client_value[, i] <- hedge_fund_value_matrix[, i] / client_value_matrix[, i]
   }
   # Calculate the number of periods until the hedge fund has more money than its client
   n_periods_until_50pct <- sum(colSums(compare_value_matrix) > (n_simulations / 2))
@@ -75,34 +79,40 @@ plot_sim <- function(hedge_fund_management_fee,
   hf_over_client_df <- as.data.frame(t(hf_over_client_value))
   assign("hf_over_client_df",  hf_over_client_df, envir = .GlobalEnv)
   
+  # Define the number of periods for plotting
   periods <- seq(0, n_periods)
   
   # Plot a subset of the simulations for visual clarity and to reduce memory size of plot
-  to_plot <- cbind(hf_over_client_df[,1:(n_simulations/100)], periods)
+  to_plot <- cbind(hf_over_client_df[, 1:(n_simulations/100)], periods)
   to_plot <- melt(to_plot, id.vars = "periods")
   
+  # Set the file_path based on the function input 
   file_path = paste0(exportdir, "01-simulate-hedge-fund-returns/", file_name)
   
+  # Plot the fund capital over client capital
+  # Each colored line is its own simulation
   plot <- ggplot(to_plot, aes(x = periods, y = value, col = variable))  +
     geom_line() +
+    # The horizontal line is the point where the fund has the same capital as its client
     geom_hline(yintercept = 1) +
+    # The vertical line is the average number of years before the hedge fund has more capital than its client 
     geom_vline(xintercept = n_periods_until_50pct, col = "black", linetype = "longdash", alpha = 0.25) +
+    # Removes legend  
     scale_color_discrete(guide=FALSE) +
     scale_y_continuous(limits = c(0, 3), labels = percent) +
     ggtitle(top_title)  +
-    theme(plot.title = element_text(family="LibreBaskerville", size = 16, face="bold", margin = margin(0, 0, 10, 0)),
-                  axis.title.y = element_text(face = "bold", size = 12, family = "LibreBaskerville", margin = margin(0,10,0,0)),
+    # Make a theme that matches the OfDollarsAndData.com blog
+    theme(plot.title = element_text(family="LibreBaskerville", size = 15, face="bold", margin = margin(0, 0, 10, 0)),
+                  axis.title.y = element_text(face = "bold", size = 11, family = "LibreBaskerville", margin = margin(0, 10, 0, 0)),
                   axis.text.y = element_text(color = "black"),
                   axis.ticks.y = element_line(color = "black"),
-                  axis.title.x = element_text(face = "bold", size = 12, family = "LibreBaskerville", margin = margin(10,0,0,0)),
+                  axis.title.x = element_text(face = "bold", size = 11, family = "LibreBaskerville", margin = margin(10, 0, 0, 0)),
                   axis.text.x = element_text(color = "black"),
-                  axis.ticks.x = element_line(color = "black"),
-                  plot.margin = unit(c(1,1,1,1), "cm")) +
+                  axis.ticks.x = element_line(color = "black")) +
     labs(x = "Number of Years Invested" , y = "Fund Capital Over Client Capital")
   
-  #Save the plot  
-  ggsave(file_path, plot) 
-  
+  # Save the plot  
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm") 
 }
 
 # This first simulation assumes a 2 and 20 traditional hedge fund fee structure
