@@ -12,8 +12,13 @@ library(ggplot2)
 library(grid)
 library(gtable)
 library(gridExtra)
+library(extrafont)
 
 ########################## Start Program Here ######################### #
+
+# Import Libre Baskerville fonts
+font_import(pattern="Libre.*") 
+y
 
 # Set the initial values for the simulation
 n_simulations <- 10000
