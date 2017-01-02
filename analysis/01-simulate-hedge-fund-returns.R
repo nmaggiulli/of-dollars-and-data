@@ -9,16 +9,12 @@ source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
 library(MASS)
 library(reshape2)
 library(ggplot2)
-library(grid)
-library(gtable)
-library(gridExtra)
-library(extrafont)
+library(scales)
 
 ########################## Start Program Here ######################### #
 
-# Import Libre Baskerville fonts
-font_import(pattern="Libre.*") 
-y
+# Set the LibreBaskerville font
+windowsFonts(LibreBaskerville=windowsFont("Libre Baskerville"))
 
 # Set the initial values for the simulation
 n_simulations <- 10000
@@ -35,9 +31,7 @@ plot_sim <- function(hedge_fund_management_fee,
                   sample_sd_return,
                   n_periods,
                   file_name,
-                  top_title,
-                  source_text,
-                  note_text){
+                  top_title){
   
   
   # Initialze matrix for the returns and value paths
@@ -50,7 +44,7 @@ plot_sim <- function(hedge_fund_management_fee,
   
   #Set the first period of the comparison matrices manually
   compare_value_matrix[,1] <- client_value_matrix[,1] > hedge_fund_value_matrix[,1]
-  hf_over_client_value[,1] <- hedge_fund_value_matrix[,1] / client_value_matrix[,1] * 100 
+  hf_over_client_value[,1] <- hedge_fund_value_matrix[,1] / client_value_matrix[,1] 
   
   
   # Run the simulations for each period by getting asset returns and calculating asset values
@@ -72,7 +66,7 @@ plot_sim <- function(hedge_fund_management_fee,
   
     # Compare the hedge fund's total capital to that of its client
     compare_value_matrix[,i] <- client_value_matrix[,i] > hedge_fund_value_matrix[,i]
-    hf_over_client_value[,i] <- hedge_fund_value_matrix[,i] / client_value_matrix[,i] * 100
+    hf_over_client_value[,i] <- hedge_fund_value_matrix[,i] / client_value_matrix[,i]
   }
   # Calculate the number of periods until the hedge fund has more money than its client
   n_periods_until_50pct <- sum(colSums(compare_value_matrix) > (n_simulations / 2))
@@ -91,30 +85,23 @@ plot_sim <- function(hedge_fund_management_fee,
   
   plot <- ggplot(to_plot, aes(x = periods, y = value, col = variable))  +
     geom_line() +
+    geom_hline(yintercept = 1) +
+    geom_vline(xintercept = n_periods_until_50pct, col = "black", linetype = "longdash", alpha = 0.25) +
     scale_color_discrete(guide=FALSE) +
-    scale_y_continuous(limits = c(0, 300)) +
+    scale_y_continuous(limits = c(0, 3), labels = percent) +
     ggtitle(top_title)  +
-    labs(x = "Number of Years Invested" , y = "Fund Capital Over Client Capital") +
-    theme(plot.title = element_text(family="Arial", size = 16, vjust=0, face="bold"),
-                  axis.title.y = element_text(face = "bold", size = 12, vjust=1.0),
+    theme(plot.title = element_text(family="LibreBaskerville", size = 16, face="bold", margin = margin(0, 0, 10, 0)),
+                  axis.title.y = element_text(face = "bold", size = 12, family = "LibreBaskerville", margin = margin(0,10,0,0)),
                   axis.text.y = element_text(color = "black"),
                   axis.ticks.y = element_line(color = "black"),
-                  axis.title.x = element_text(face = "bold", size = 12, vjust=1.2),
+                  axis.title.x = element_text(face = "bold", size = 12, family = "LibreBaskerville", margin = margin(10,0,0,0)),
                   axis.text.x = element_text(color = "black"),
                   axis.ticks.x = element_line(color = "black"),
-                  plot.margin = unit(c(2,0.5,2,0.5), "cm"))
-  
-    gtable <- ggplot_gtable(ggplot_build(plot))
-    source_grob <- textGrob(source_text, 
-                       vjust = -7, hjust=2.60, gp =gpar(fontfamily = "Arial", fontsize = 9))
-    note_grob <- textGrob(paste(note_text),
-                     vjust = -7, hjust=2.425, gp =gpar(fontfamily = "Arial", fontsize = 9))
-    gtable <- arrangeGrob(gtable, bottom = source_grob)
-    gtable <- arrangeGrob(gtable, bottom = note_grob)
-    grid.draw(gtable)
+                  plot.margin = unit(c(1,1,1,1), "cm")) +
+    labs(x = "Number of Years Invested" , y = "Fund Capital Over Client Capital")
   
   #Save the plot  
-  #ggsave(file_path, plot) 
+  ggsave(file_path, plot) 
   
 }
 
@@ -127,37 +114,21 @@ plot_sim(
   sample_sd_return = 0.2,
   n_periods = 50,
   file_name = "hf_over_client_2_and_20_sp500_return.jpeg",
-  top_title = "On Average the Hedge Fund is Richer Within 20 Years",
-  source_text = "Source:  Simulated Returns with Mean of 10% and Standard Deviation of 20%",
-  note_text = "Note:  Assumes the fund re-invests all of its annual capital alongside its clients."
+  top_title = "On Average, the Hedge Fund is Richer\nThan Its Clients In Less Than 20 Years"
 )
 
-# This second model is the same as the first but has a 5% watermark on the performance fee
-# plot_sim(
-#   hedge_fund_management_fee = 0.02, 
-#   hedge_fund_performance_fee = 0.2, 
-#   hedge_fund_watermark = 0, 
-#   sample_mean_return = 0.1, 
-#   sample_sd_return = 0.2,
-#   n_periods = 50,
-#   file_name = "hf_over_client_2_and_20_sp500_return_5pct_watermark.jpeg",
-#   top_title = "On Average the Hedge Fund is Richer Within 20 Years",
-#   note_text = ""
-# )
-# 
-# # The third model represents a Vanguard index fund with 0.05% (5 basis points) for its
-# # annual expense ratio.  There is no performance fee or watermark in this scenario.
-# plot_sim(
-#   hedge_fund_management_fee = 0.0005, 
-#   hedge_fund_performance_fee = 0.0, 
-#   hedge_fund_watermark = 0.0, 
-#   sample_mean_return = 0.1, 
-#   sample_sd_return = 0.2,
-#   n_periods = 1500,
-#   file_name = "vanguard_over_client_0.05pct_sp500_return.jpeg",
-#   top_title = "A Low-Cost Index Fund Would Take\nAlmost 1,500 Years To Be Richer Than Its Clients",
-#   note_text = ""
-# )
+# The second model represents a Vanguard index fund with 0.05% (5 basis points) for its
+# annual expense ratio.  There is no performance fee or watermark in this scenario.
+plot_sim(
+  hedge_fund_management_fee = 0.0005, 
+  hedge_fund_performance_fee = 0.0, 
+  hedge_fund_watermark = 0.0, 
+  sample_mean_return = 0.1, 
+  sample_sd_return = 0.2,
+  n_periods = 1500,
+  file_name = "vanguard_over_client_0.05pct_sp500_return.jpeg",
+  top_title = "A Low-Cost Index Fund Would Take\nAlmost 1,500 Years To Be Richer Than Its Clients"
+)
 
 
 # ############################  End  ################################## #
