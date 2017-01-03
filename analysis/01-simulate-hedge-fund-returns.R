@@ -14,7 +14,7 @@ library(scales)
 ########################## Start Program Here ######################### #
 
 # Set the LibreBaskerville font
-windowsFonts(LibreBaskerville=windowsFont("Libre Baskerville"))
+windowsFonts(my_font=windowsFont("Libre Baskerville"))
 
 # Set the initial values for the simulation
 n_simulations <- 10000
@@ -102,11 +102,11 @@ plot_sim <- function(
     scale_y_continuous(limits = c(0, 3), labels = percent) +
     ggtitle(top_title)  +
     # Make a theme that matches the OfDollarsAndData.com blog
-    theme(plot.title = element_text(family="LibreBaskerville", size = 15, face="bold", margin = margin(0, 0, 10, 0)),
-                  axis.title.y = element_text(face = "bold", size = 11, family = "LibreBaskerville", margin = margin(0, 10, 0, 0)),
+    theme(plot.title = element_text(family="my_font", size = 15, face="bold", margin = margin(0, 0, 10, 0)),
+                  axis.title.y = element_text(face = "bold", size = 11, family = "my_font", margin = margin(0, 10, 0, 0)),
                   axis.text.y = element_text(color = "black"),
                   axis.ticks.y = element_line(color = "black"),
-                  axis.title.x = element_text(face = "bold", size = 11, family = "LibreBaskerville", margin = margin(10, 0, 0, 0)),
+                  axis.title.x = element_text(face = "bold", size = 11, family = "my_font", margin = margin(10, 0, 0, 0)),
                   axis.text.x = element_text(color = "black"),
                   axis.ticks.x = element_line(color = "black")) +
     labs(x = "Number of Years Invested" , y = "Fund Capital Over Client Capital")
