@@ -60,16 +60,16 @@ for (i in agecl_list){
     # Then group by year and calculate networth percentiles
     to_plot <- filter(scf_stack, agecl == i, edcl == j) %>%
                     group_by(year) %>%
-                summarise(pct_10 = quantile(networth, probs=0.1),
-                          pct_25 = quantile(networth, probs=0.25),
-                          pct_50 = quantile(networth, probs=0.5),
-                          pct_75 = quantile(networth, probs=0.75),
-                          #pct_90 = quantile(networth, probs=0.90),
+                summarise(`10th` = quantile(networth, probs=0.1),
+                          `25th` = quantile(networth, probs=0.25),
+                          `50th` = quantile(networth, probs=0.5),
+                          `75th` = quantile(networth, probs=0.75),
+                          #`90th` = quantile(networth, probs=0.90),
                           n_obs = n()) %>%
-              gather(networth_percentile, value, -year)
+              gather(`Net Worth Percentile`, value, -year)
     
-    plot_n <- filter(to_plot, networth_percentile == "n_obs")
-    to_plot <- filter(to_plot, networth_percentile != "n_obs")
+    plot_n <- filter(to_plot, `Net Worth Percentile` == "n_obs")
+    to_plot <- filter(to_plot, `Net Worth Percentile` != "n_obs")
     
     # Assign the data frame to another name to exmaine after plotting 
     assign(paste0("to_plot_", i, "_", j), to_plot) 
@@ -80,7 +80,7 @@ for (i in agecl_list){
     # Create a dynamic title based upon the agecl and edcl
     top_title <- paste0("Age Cohort:  ", agecl_string, "\n", "Education Cohort:\n", edcl_string)
     
-    plot <- ggplot(to_plot, aes(x = year, y = value, col = networth_percentile)) +
+    plot <- ggplot(to_plot, aes(x = year, y = value, col = `Net Worth Percentile`)) +
       geom_line() +
       ggtitle(top_title)  +
       scale_x_continuous(breaks = seq(first_year, last_year, 3)) +
@@ -92,8 +92,9 @@ for (i in agecl_list){
             axis.ticks.y = element_line(color = "black"),
             axis.title.x = element_text(face = "bold", size = 11, family = "my_font", margin = margin(10, 0, 0, 0)),
             axis.text.x = element_text(color = "black"),
-            axis.ticks.x = element_line(color = "black")) +
-      labs(x = "Year" , y = "Networth ($)")
+            axis.ticks.x = element_line(color = "black"),
+            legend.position="right") +
+      labs(x = "Year" , y = "Net Worth ($)")
     
     ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   }
