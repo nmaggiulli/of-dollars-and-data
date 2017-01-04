@@ -12,6 +12,9 @@ windowsFonts(my_font=windowsFont("Libre Baskerville"))
 
 ########################## Start Program Here ######################### #
 
+# Program taken from https://github.com/ajdamico/asdfree/blob/master/Survey%20of%20Consumer%20Finances/download%20all%20microdata.R
+# Anthony Damico is a boss
+
 ##################################################################################
 # download every file from every year of the Survey of Consumer Finances with R  #
 # then save every file as an R data frame (.rda) so future analyses can be rapid #
