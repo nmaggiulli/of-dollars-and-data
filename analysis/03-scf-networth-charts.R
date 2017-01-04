@@ -10,6 +10,9 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(scales)
+library(grid)
+library(gridExtra)
+library(gtable)
 
 ########################## Start Program Here ######################### #
 
@@ -18,11 +21,11 @@ scf_stack <- readRDS(paste0(localdir, "03-scf-stack.Rds"))
 
 # Define first_year and last_year dynamically for the charts
 first_year <- min(scf_stack$year)
-last_year <- max(scf_stack$year)
+last_year  <- max(scf_stack$year)
 
 # Create lists of education class and age class to loop over
 agecl_list <- unique(scf_stack$agecl)
-edcl_list <- unique(scf_stack$edcl)
+edcl_list  <- unique(scf_stack$edcl)
 
 # As a reminder here are what the codes for agecl and edcl represent:
 # agecl = age class, 1:<35, 2:35-44, 3:45-54, 4:55-64, 5:65-74, 6:>=75
@@ -61,12 +64,15 @@ for (i in agecl_list){
                           `25th` = quantile(networth, probs=0.25),
                           `50th` = quantile(networth, probs=0.5),
                           `75th` = quantile(networth, probs=0.75),
-                          #`90th` = quantile(networth, probs=0.90),
                           n_obs = n()) %>%
               gather(`Net Worth Percentile`, value, -year)
     
     plot_n <- filter(to_plot, `Net Worth Percentile` == "n_obs")
     to_plot <- filter(to_plot, `Net Worth Percentile` != "n_obs")
+  
+    to_plot$`Net Worth Percentile` <- factor(to_plot$`Net Worth Percentile`,
+                                             levels=c("75th", "50th", "25th", "10th"))
+    
     
     # Assign the data frame to another name to exmaine after plotting 
     assign(paste0("to_plot_", i, "_", j), to_plot) 
@@ -85,7 +91,19 @@ for (i in agecl_list){
       of_dollars_and_data_theme +
       labs(x = "Year" , y = "Net Worth ($)")
     
-    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+    source_string <- "Source:  Survey of Consumer Finances"
+    note_string   <- "Note:  Net worth percentiles are shown at the household level." 
+    
+    my_gtable   <- ggplot_gtable(ggplot_build(plot))
+    
+    source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
+                            gp =gpar(fontfamily = "my_font", fontsize = 7))
+    note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+                            gp =gpar(fontfamily = "my_font", fontsize = 7))
+    my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
+    my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
+    
+    ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
   }
 }
 
