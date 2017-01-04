@@ -4,6 +4,9 @@ rm(list = ls()) #clear your environment
 ########################## Load in header file ######################## #
 source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
 
+# Use the LibreBaskerville font
+windowsFonts(my_font=windowsFont("Libre Baskerville"))
+
 ########################## Load in Libraries ########################## #
 
 library(dplyr)
@@ -12,9 +15,6 @@ library(tidyr)
 library(scales)
 
 ########################## Start Program Here ######################### #
-
-# Set the LibreBaskerville font
-windowsFonts(my_font=windowsFont("Libre Baskerville"))
 
 # Load data fom local library
 scf_stack <- readRDS(paste0(localdir, "03-scf-stack.Rds"))
@@ -85,15 +85,7 @@ for (i in agecl_list){
       ggtitle(top_title)  +
       scale_x_continuous(breaks = seq(first_year, last_year, 3)) +
       scale_y_continuous(labels = dollar) +
-      # Make a theme that matches the OfDollarsAndData.com blog
-      theme(plot.title = element_text(family="my_font", size = 15, face="bold", margin = margin(0, 0, 10, 0)),
-            axis.title.y = element_text(face = "bold", size = 11, family = "my_font", margin = margin(0, 10, 0, 0)),
-            axis.text.y = element_text(color = "black"),
-            axis.ticks.y = element_line(color = "black"),
-            axis.title.x = element_text(face = "bold", size = 11, family = "my_font", margin = margin(10, 0, 0, 0)),
-            axis.text.x = element_text(color = "black"),
-            axis.ticks.x = element_line(color = "black"),
-            legend.position="right") +
+      of_dollars_and_data_theme +
       labs(x = "Year" , y = "Net Worth ($)")
     
     ggsave(file_path, plot, width = 15, height = 12, units = "cm")

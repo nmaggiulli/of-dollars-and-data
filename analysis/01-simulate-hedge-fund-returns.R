@@ -4,17 +4,18 @@ rm(list = ls()) #clear your environment
 ########################## Load in header file ######################## #
 source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
 
+# Use the LibreBaskerville font
+windowsFonts(my_font=windowsFont("Libre Baskerville"))
+
 ########################## Load in Libraries ########################## #
 
 library(MASS)
 library(reshape2)
 library(ggplot2)
 library(scales)
+library(grid)
 
 ########################## Start Program Here ######################### #
-
-# Set the LibreBaskerville font
-windowsFonts(my_font=windowsFont("Libre Baskerville"))
 
 # Set the initial values for the simulation
 n_simulations <- 10000
@@ -32,16 +33,18 @@ plot_sim <- function(
                   sample_sd_return,
                   n_periods,
                   file_name,
-                  top_title
+                  top_title,
+                  source_string,
+                  note_string
 ){
   
   # Initialze matrix for the returns and value paths
   # I use matrices because they are much faster than data frames in this regard
-  asset_return_matrix <- matrix(NA, nrow = n_simulations, ncol = n_periods)
-  client_value_matrix <- matrix(initial_client_capital, nrow = n_simulations, ncol = (n_periods + 1))
+  asset_return_matrix     <- matrix(NA, nrow = n_simulations, ncol = n_periods)
+  client_value_matrix     <- matrix(initial_client_capital, nrow = n_simulations, ncol = (n_periods + 1))
   hedge_fund_value_matrix <- matrix(initial_hedge_fund_capital, nrow = n_simulations, ncol = (n_periods + 1))
-  compare_value_matrix <- matrix(NA, nrow = n_simulations, ncol = (n_periods + 1))
-  hf_over_client_value <- matrix(NA, nrow = n_simulations, ncol = (n_periods + 1))
+  compare_value_matrix    <- matrix(NA, nrow = n_simulations, ncol = (n_periods + 1))
+  hf_over_client_value    <- matrix(NA, nrow = n_simulations, ncol = (n_periods + 1))
   
   # Set the first period of the comparison matrices manually
   # Note that the first column in these matrices represents the starting (0-th period)
@@ -61,12 +64,13 @@ plot_sim <- function(
     # At this point each row is a different simulation and the column is the i-th period
     # Calculate the asset values after each period in the simulation
     # This assumes that the hedge fund reinvests all of its capital alongside its client
-    management_fee <- client_value_matrix[, i-1] * (hedge_fund_management_fee)
+    management_fee  <- client_value_matrix[, i-1] * (hedge_fund_management_fee)
     performance_fee <- (client_value_matrix[, i-1] * (1 + asset_return_matrix[, i-1]) - client_value_matrix[, i-1]) * 
                         hedge_fund_performance_fee * 
                         (asset_return_matrix[, i-1] > hedge_fund_watermark)    
+    
     hedge_fund_value_matrix[, i] <- (hedge_fund_value_matrix[, i-1] * (1 + asset_return_matrix[, i-1])) + management_fee + performance_fee
-    client_value_matrix[, i] <- (client_value_matrix[, i-1] * (1 + asset_return_matrix[, i-1])) - management_fee - performance_fee
+    client_value_matrix[, i]     <- (client_value_matrix[, i-1] * (1 + asset_return_matrix[, i-1])) - management_fee - performance_fee
   
     # Compare the hedge fund's total capital to that of its client
     compare_value_matrix[, i] <- client_value_matrix[, i] > hedge_fund_value_matrix[, i]
@@ -74,7 +78,6 @@ plot_sim <- function(
   }
   # Calculate the number of periods until the hedge fund has more money than its client
   n_periods_until_50pct <- sum(colSums(compare_value_matrix) > (n_simulations / 2))
-  print(n_periods_until_50pct)
   
   hf_over_client_df <- as.data.frame(t(hf_over_client_value))
   assign("hf_over_client_df",  hf_over_client_df, envir = .GlobalEnv)
@@ -101,18 +104,20 @@ plot_sim <- function(
     scale_color_discrete(guide=FALSE) +
     scale_y_continuous(limits = c(0, 3), labels = percent) +
     ggtitle(top_title)  +
-    # Make a theme that matches the OfDollarsAndData.com blog
-    theme(plot.title = element_text(family="my_font", size = 15, face="bold", margin = margin(0, 0, 10, 0)),
-                  axis.title.y = element_text(face = "bold", size = 11, family = "my_font", margin = margin(0, 10, 0, 0)),
-                  axis.text.y = element_text(color = "black"),
-                  axis.ticks.y = element_line(color = "black"),
-                  axis.title.x = element_text(face = "bold", size = 11, family = "my_font", margin = margin(10, 0, 0, 0)),
-                  axis.text.x = element_text(color = "black"),
-                  axis.ticks.x = element_line(color = "black")) +
+    of_dollars_and_data_theme +
     labs(x = "Number of Years Invested" , y = "Fund Capital Over Client Capital")
   
+  my_gtable   <- ggplot_gtable(ggplot_build(plot))
+  
+  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(1, "inches")), y = unit(0.5, "inches"),
+                    gp =gpar(fontfamily = my_font, fontsize = 9))
+  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(1, "inches")), y = unit(0.5, "inches"),
+                   gp =gpar(fontfamily = my_font, fontsize = 9))
+  my_gtable   <- arrangeGrob(my_gtable, bottom = source)
+  grid.draw(my_gtable)
+  
   # Save the plot  
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm") 
+  ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
 }
 
 # This first simulation assumes a 2 and 20 traditional hedge fund fee structure
@@ -124,7 +129,9 @@ plot_sim(
   sample_sd_return = 0.2,
   n_periods = 50,
   file_name = "hf_over_client_2_and_20_sp500_return.jpeg",
-  top_title = "On Average, the Hedge Fund is Richer\nThan Its Clients In Less Than 20 Years"
+  top_title = "On Average, the Hedge Fund is Richer\nThan Its Clients In Less Than 20 Years",
+  source_string = "Source:  Simulated returns",
+  note_string = "Note:  Assumes a 2% management fee and a 20% performance fee."
 )
 
 # This second simulation assumes a 1.4% management fee and 17% performance fee
@@ -138,7 +145,9 @@ plot_sim(
   sample_sd_return = 0.2,
   n_periods = 50,
   file_name = "hf_over_client_1.4_and_17_sp500_return.jpeg",
-  top_title = "On Average, the Hedge Fund is Richer\nThan Its Clients In Less Than 25 Years"
+  top_title = "On Average, the Hedge Fund is Richer\nThan Its Clients In Less Than 25 Years",
+  source_string = "Source:  Simulated returns",
+  note_string = "Note:  Assumes a 1.4% management fee and a 17% performance fee."
 )
 
 # The third model represents a Vanguard index fund with 0.05% (5 basis points) for its
@@ -151,8 +160,11 @@ plot_sim(
   sample_sd_return = 0.2,
   n_periods = 1500,
   file_name = "vanguard_over_client_0.05pct_sp500_return.jpeg",
-  top_title = "A Low-Cost Index Fund Would Take\nAlmost 1,500 Years To Be Richer Than Its Clients"
+  top_title = "A Low-Cost Index Fund Would Take\nAlmost 1,500 Years To Be Richer Than Its Clients",
+  source_string = "Source:  Simulated returns",
+  note_string = "Note:  Assumes a 0.05% management fee and no performance fee."
 )
 
+dev.off()
 
 # ############################  End  ################################## #
