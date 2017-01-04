@@ -28,6 +28,25 @@ last_year  <- max(scf_stack$year)
 # Plotly credentials
 py <- plotly("ofdollarsanddata", "..........")
 
+plotly_data <- filter(scf_stack, edcl == 4, year == 2013) %>%
+  group_by(year, agecl) %>%
+  summarise(`10th` = quantile(networth, probs=0.1),
+            `25th` = quantile(networth, probs=0.25),
+            `50th` = quantile(networth, probs=0.5),
+            `75th` = quantile(networth, probs=0.75),
+            n_obs = n()) %>%
+  gather(`Net Worth Percentile`, value, -year, -agecl)
+
+ggtest <- ggplot(data = plotly_data, aes(x = agecl, y = value, col = `Net Worth Percentile`)) +
+    geom_line() +
+  of_dollars_and_data_theme +
+    ggtitle("Education Level:  College Degree")  +
+    scale_x_continuous(breaks = seq(1, 6, 1)) +
+    scale_y_continuous(labels = dollar) +
+    labs(x = "Age Group" , y = "Net Worth ($)")
+
+ggplotly(ggtest)
+
 # Create lists of education class and age class to loop over
 edcl_list  <- unique(scf_stack$edcl)
 
@@ -108,6 +127,8 @@ for (j in edcl_list){
                           gp =gpar(fontfamily = "my_font", fontsize = 8))
   my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
   my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
+  
+  ggplotly(plot)
   
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
