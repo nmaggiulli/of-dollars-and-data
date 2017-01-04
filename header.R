@@ -23,7 +23,7 @@ require(ggplot2)
 
 # Make a theme that matches the OfDollarsAndData.com blog
 of_dollars_and_data_theme <- theme(
-                  plot.title       = element_text(family = "my_font", size = 14, face = "bold", margin = margin(0, 0, 10, 0)),
+                  plot.title       = element_text(family = "my_font", size = 14, face = "bold", hjust = 0.5, margin = margin(0, 0, 10, 0)),
                   axis.title.y     = element_text(face = "bold", size = 10, family = "my_font", margin = margin(0, 10, 0, 0)),
                   axis.text.y      = element_text(color = "black"), 
                   axis.ticks.y     = element_line(color = "black"),
