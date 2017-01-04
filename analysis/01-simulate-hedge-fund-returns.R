@@ -164,6 +164,4 @@ plot_sim(
   note_string = "Note:  Assumes a 0.05% management fee and no performance fee."
 )
 
-dev.off()
-
 # ############################  End  ################################## #
