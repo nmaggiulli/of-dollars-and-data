@@ -4,9 +4,6 @@ rm(list = ls()) #clear your environment
 ########################## Load in header file ######################## #
 source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
 
-# Use the LibreBaskerville font
-windowsFonts(my_font=windowsFont("Libre Baskerville"))
-
 ########################## Load in Libraries ########################## #
 
 library(MASS)
@@ -14,6 +11,8 @@ library(reshape2)
 library(ggplot2)
 library(scales)
 library(grid)
+library(gridExtra)
+library(gtable)
 
 ########################## Start Program Here ######################### #
 
@@ -109,12 +108,12 @@ plot_sim <- function(
   
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
-  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(1, "inches")), y = unit(0.5, "inches"),
-                    gp =gpar(fontfamily = my_font, fontsize = 9))
-  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(1, "inches")), y = unit(0.5, "inches"),
-                   gp =gpar(fontfamily = my_font, fontsize = 9))
-  my_gtable   <- arrangeGrob(my_gtable, bottom = source)
-  grid.draw(my_gtable)
+  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
+                    gp =gpar(fontfamily = "my_font", fontsize = 7))
+  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+                   gp =gpar(fontfamily = "my_font", fontsize = 7))
+  my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
+  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
   
   # Save the plot  
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
