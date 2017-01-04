@@ -81,7 +81,7 @@ for (i in agecl_list){
     file_path = paste0(exportdir, "03-scf-networth-charts/age_", i, "_edc_", j, ".jpeg")
     
     # Create a dynamic title based upon the agecl and edcl
-    top_title <- paste0("Age Cohort:  ", agecl_string, "\n", "Education Cohort:\n", edcl_string)
+    top_title <- paste0("Age Group:  ", agecl_string, "\n", "Education Level:\n", edcl_string)
     
     plot <- ggplot(to_plot, aes(x = year, y = value, col = `Net Worth Percentile`)) +
       geom_line() +
@@ -97,9 +97,9 @@ for (i in agecl_list){
     my_gtable   <- ggplot_gtable(ggplot_build(plot))
     
     source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
-                            gp =gpar(fontfamily = "my_font", fontsize = 7))
+                            gp =gpar(fontfamily = "my_font", fontsize = 8))
     note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
-                            gp =gpar(fontfamily = "my_font", fontsize = 7))
+                            gp =gpar(fontfamily = "my_font", fontsize = 8))
     my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
     my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
     
