@@ -81,7 +81,7 @@ for (i in agecl_list){
     file_path = paste0(exportdir, "03-scf-networth-charts/age_", i, "_edc_", j, ".jpeg")
     
     # Create a dynamic title based upon the agecl and edcl
-    top_title <- paste0("Age Group:  ", agecl_string, "\n", "Education Level:\n", edcl_string)
+    top_title <- paste0("Age Group:  ", agecl_string, "\n", "Education Level:  ", edcl_string)
     
     plot <- ggplot(to_plot, aes(x = year, y = value, col = `Net Worth Percentile`)) +
       geom_line() +
@@ -91,7 +91,7 @@ for (i in agecl_list){
       of_dollars_and_data_theme +
       labs(x = "Year" , y = "Net Worth ($)")
     
-    source_string <- "Source:  Survey of Consumer Finances"
+    source_string <- "Source:  Federal Reserve Board, Survey of Consumer Finances"
     note_string   <- "Note:  Net worth percentiles are shown at the household level." 
     
     my_gtable   <- ggplot_gtable(ggplot_build(plot))
