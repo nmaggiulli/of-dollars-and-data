@@ -32,6 +32,7 @@ of_dollars_and_data_theme <- theme(
                   axis.title.x     = element_text(face = "bold", size = 10, family = "my_font", margin = margin(10, 0, 0, 0)),
                   axis.line.x      = element_line(color = "black"),
                   axis.line.y      = element_line(color = "black"),
+                  legend.key       = element_blank(),
                   panel.grid.major = element_blank(),
                   panel.grid.minor = element_blank(),
                   panel.border     = element_blank(),
