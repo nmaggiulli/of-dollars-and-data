@@ -37,3 +37,6 @@ of_dollars_and_data_theme <- theme(
                   panel.grid.minor = element_blank(),
                   panel.border     = element_blank(),
                   panel.background = element_blank())
+
+# Import the plotly_api_key
+plotly_api_key <- read.table(paste0(importdir,"plotly_api_key.txt"))$V1
