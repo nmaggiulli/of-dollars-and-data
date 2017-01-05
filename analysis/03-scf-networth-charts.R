@@ -13,7 +13,6 @@ library(scales)
 library(grid)
 library(gridExtra)
 library(gtable)
-library(devtools)
 library(plotly)
 
 ########################## Start Program Here ######################### #
@@ -37,13 +36,19 @@ scf_stack$agecl <- ifelse(scf_stack[,"agecl"] == 1, "<35",
                    ifelse(scf_stack[,"agecl"] == 6, "Over 75", "99"))))))
 
 # Define strings for education class
-scf_stack$edcl <- ifelse(scf_stack[,"edcl"] == 1, "No High School Diploma/GED", 
+scf_stack$edcl <- ifelse(scf_stack[,"edcl"]  == 1, "No High School Diploma/GED", 
                    ifelse(scf_stack[,"edcl"] == 2, "High School Diploma/GED",
                    ifelse(scf_stack[,"edcl"] == 3, "Some College",   
                    ifelse(scf_stack[,"edcl"] == 4, "College Degree", "99"))))
 
+# Make edcl into a factor
+scf_stack$edcl <- factor(scf_stack$edcl,levels = c("No High School Diploma/GED", 
+                                                    "High School Diploma/GED", 
+                                                    "Some College", 
+                                                    "College Degree"))
+
 # Create lists of education class and age class to loop over
-edcl_list  <- unique(scf_stack$edcl)
+edcl_list  <- sort(unique(scf_stack$edcl))
 
 # Loop through the education list in order to create plots
 # Create a counter
@@ -58,10 +63,8 @@ for (j in edcl_list){
                         `50th` = quantile(networth, probs=0.5),
                         `75th` = quantile(networth, probs=0.75)) %>%
             gather(`Net Worth Percentile`, value, -year, -agecl)
-  
-  plot_n <- filter(to_plot, `Net Worth Percentile` == "n_obs")
-  to_plot <- filter(to_plot, `Net Worth Percentile` != "n_obs")
 
+  # Alter certain variables to be factors
   to_plot$`Net Worth Percentile` <- factor(to_plot$`Net Worth Percentile`,
                                            levels = c("75th", "50th", "25th", "10th"))
   to_plot$agecl <- factor(to_plot$agecl,levels = c("<35", "35-44", "45-54", "55-64",
@@ -76,6 +79,7 @@ for (j in edcl_list){
   # Create a dynamic title based upon the agecl and edcl
   top_title <- paste0("Education Level:  ", j)
   
+  # Create plot with the correct theme
   plot <- ggplot(to_plot, aes(x = agecl, y = value, col = `Net Worth Percentile`, group = `Net Worth Percentile`)) +
     geom_line() +
     ggtitle(top_title)  +
@@ -83,18 +87,24 @@ for (j in edcl_list){
     of_dollars_and_data_theme +
     labs(x = "Age Group" , y = "Net Worth ($)")
   
+  # Add a source and note string for the plots
   source_string <- "Source:  Federal Reserve Board, Survey of Consumer Finances"
   note_string   <- "Note:  Net worth percentiles are shown at the household level." 
   
+  # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
+  # Make the source and note text grobs
   source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
                           gp =gpar(fontfamily = "my_font", fontsize = 8))
   note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
                           gp =gpar(fontfamily = "my_font", fontsize = 8))
+  
+  # Add the text grobs to the bototm of the gtable
   my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
   my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
   
+  # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
   
   # Create a plotly interactive plot as well
@@ -104,7 +114,6 @@ for (j in edcl_list){
   # Post it publically on the ofdollarsanddata plotly profile
   plotly_POST(x = to_post, filename =  paste0("03-networth_edcl_", n), sharing =  "public")
     
-  
   # Increment the counter
   n <- n + 1
 }

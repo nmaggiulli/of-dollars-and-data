@@ -106,12 +106,16 @@ plot_sim <- function(
     of_dollars_and_data_theme +
     labs(x = "Number of Years Invested" , y = "Fund Capital Over Client Capital")
   
+  # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
+  # Make the source and note text grobs
   source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
                     gp =gpar(fontfamily = "my_font", fontsize = 8))
   note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
                    gp =gpar(fontfamily = "my_font", fontsize = 8))
+  
+  # Add the text grobs to the bototm of the gtable
   my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
   my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
   
