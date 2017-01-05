@@ -21,63 +21,34 @@ library(plotly)
 # Load data fom local library
 scf_stack <- readRDS(paste0(localdir, "03-scf-stack.Rds"))
 
+# Plotly credentials 
+py <- plotly("ofdollarsanddata",as.character(plotly_api_key))
+
 # Define first_year and last_year dynamically for the charts
 first_year <- min(scf_stack$year)
 last_year  <- max(scf_stack$year)
 
-# Plotly credentials
-py <- plotly("ofdollarsanddata", "..........")
+# Define strings for each age class based on the definitions above
+scf_stack$agecl <- ifelse(scf_stack[,"agecl"] == 1, "<35", 
+                   ifelse(scf_stack[,"agecl"] == 2, "35-44",
+                   ifelse(scf_stack[,"agecl"] == 3, "45-54",   
+                   ifelse(scf_stack[,"agecl"] == 4, "55-64",
+                   ifelse(scf_stack[,"agecl"] == 5, "65-74",
+                   ifelse(scf_stack[,"agecl"] == 6, "Over 75", "99"))))))
 
-plotly_data <- filter(scf_stack, edcl == 4, year == 2013) %>%
-  group_by(year, agecl) %>%
-  summarise(`10th` = quantile(networth, probs=0.1),
-            `25th` = quantile(networth, probs=0.25),
-            `50th` = quantile(networth, probs=0.5),
-            `75th` = quantile(networth, probs=0.75),
-            n_obs = n()) %>%
-  gather(`Net Worth Percentile`, value, -year, -agecl)
-
-ggtest <- ggplot(data = plotly_data, aes(x = agecl, y = value, col = `Net Worth Percentile`)) +
-    geom_line() +
-  of_dollars_and_data_theme +
-    ggtitle("Education Level:  College Degree")  +
-    scale_x_continuous(breaks = seq(1, 6, 1)) +
-    scale_y_continuous(labels = dollar) +
-    labs(x = "Age Group" , y = "Net Worth ($)")
-
-ggplotly(ggtest)
+# Define strings for education class
+scf_stack$edcl <- ifelse(scf_stack[,"edcl"] == 1, "No High School Diploma/GED", 
+                   ifelse(scf_stack[,"edcl"] == 2, "High School Diploma/GED",
+                   ifelse(scf_stack[,"edcl"] == 3, "Some College",   
+                   ifelse(scf_stack[,"edcl"] == 4, "College Degree", "99"))))
 
 # Create lists of education class and age class to loop over
 edcl_list  <- unique(scf_stack$edcl)
 
-# As a reminder here are what the codes for agecl and edcl represent:
-# agecl = age class, 1:<35, 2:35-44, 3:45-54, 4:55-64, 5:65-74, 6:>=75
-# edcl = education class, 1 = no high school diploma/GED, 2 = high school diploma or GED,
-#   3 = some college, 4 = college degree
-
-# Loop through the lists in order to create plots
+# Loop through the education list in order to create plots
+# Create a counter
+n <- 1
 for (j in edcl_list){
-  
-  # Define strings for each age class based on the definitions above
-#   if (i == 1){
-#     agecl_string <- paste0("Less Than 35")
-#   } else if (i > 1 & i < 6){
-#     agecl_string <- paste0((35 + (i-2)*10), "-", (44 + (i-2)*10))
-#   } else if (i == 6){
-#     agecl_string <- paste0("75 or Older")
-#   }
-  
-  # Define strings for education class
-  if (j == 1){
-    edcl_string <- "No High School Diploma/GED"
-  } else if (j == 2){
-    edcl_string <- "High School Diploma/GED"
-  } else if (j == 3){
-    edcl_string <- "Some College"
-  } else if (j == 4){
-    edcl_string <- "College Degree"
-  }
-  
   # Filter the data to the correct age and education 
   # Then group by year and calculate networth percentiles
   to_plot <- filter(scf_stack, edcl == j, year == 2013) %>%
@@ -85,33 +56,29 @@ for (j in edcl_list){
               summarise(`10th` = quantile(networth, probs=0.1),
                         `25th` = quantile(networth, probs=0.25),
                         `50th` = quantile(networth, probs=0.5),
-                        `75th` = quantile(networth, probs=0.75),
-                        n_obs = n()) %>%
+                        `75th` = quantile(networth, probs=0.75)) %>%
             gather(`Net Worth Percentile`, value, -year, -agecl)
   
   plot_n <- filter(to_plot, `Net Worth Percentile` == "n_obs")
   to_plot <- filter(to_plot, `Net Worth Percentile` != "n_obs")
 
   to_plot$`Net Worth Percentile` <- factor(to_plot$`Net Worth Percentile`,
-                                           levels=c("75th", "50th", "25th", "10th"))
-  
-  #Get agecl min and max for x-axis on plots
-  first_agecl <- min(to_plot$agecl)
-  last_agecl  <- max(to_plot$agecl)
+                                           levels = c("75th", "50th", "25th", "10th"))
+  to_plot$agecl <- factor(to_plot$agecl,levels = c("<35", "35-44", "45-54", "55-64",
+                                                 "65-74", "Over 75"))
   
   # Assign the data frame to another name to exmaine after plotting 
-  assign(paste0("to_plot_", j), to_plot) 
+  assign(paste0("to_plot_", n), to_plot) 
               
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "03-scf-networth-charts/_edc_", j, ".jpeg")
+  file_path = paste0(exportdir, "03-scf-networth-charts/edc_", as.character(n), ".jpeg")
   
   # Create a dynamic title based upon the agecl and edcl
-  top_title <- paste0("Education Level:  ", edcl_string)
+  top_title <- paste0("Education Level:  ", j)
   
-  plot <- ggplot(to_plot, aes(x = agecl, y = value, col = `Net Worth Percentile`)) +
+  plot <- ggplot(to_plot, aes(x = agecl, y = value, col = `Net Worth Percentile`, group = `Net Worth Percentile`)) +
     geom_line() +
     ggtitle(top_title)  +
-    scale_x_continuous(breaks = seq(first_agecl, last_agecl, 1)) +
     scale_y_continuous(labels = dollar) +
     of_dollars_and_data_theme +
     labs(x = "Age Group" , y = "Net Worth ($)")
@@ -128,9 +95,18 @@ for (j in edcl_list){
   my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
   my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
   
-  ggplotly(plot)
-  
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+  
+  # Create a plotly interactive plot as well
+  to_post <- plot_ly(data = to_plot, x = ~agecl, y = ~value, color = ~`Net Worth Percentile`) %>%
+                add_lines()
+                
+  # Post it publically on the ofdollarsanddata plotly profile
+  plotly_POST(x = to_post, filename =  paste0("03-networth_edcl_", n), sharing =  "public")
+    
+  
+  # Increment the counter
+  n <- n + 1
 }
 
 
