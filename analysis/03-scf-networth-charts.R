@@ -14,6 +14,7 @@ library(grid)
 library(gridExtra)
 library(gtable)
 library(plotly)
+library(RColorBrewer)
 
 ########################## Start Program Here ######################### #
 
@@ -60,8 +61,7 @@ for (j in edcl_list){
                   group_by(year, agecl) %>%
               summarise(`10th` = quantile(networth, probs=0.1),
                         `25th` = quantile(networth, probs=0.25),
-                        `50th` = quantile(networth, probs=0.5),
-                        `75th` = quantile(networth, probs=0.75)) %>%
+                        `50th` = quantile(networth, probs=0.5)) %>%
             gather(`Net Worth Percentile`, value, -year, -agecl)
 
   # Alter certain variables to be factors
@@ -70,6 +70,23 @@ for (j in edcl_list){
   to_plot$agecl <- factor(to_plot$agecl,levels = c("<35", "35-44", "45-54", "55-64",
                                                  "65-74", "Over 75"))
   
+  y_unit <- 10^ceiling(min(log10(abs(max(to_plot$value))), log10(abs(min(to_plot$value)))))
+  
+  create_max_min <- function(x, unit, ceilfloor) {
+    ceilfloor(x/unit)*unit
+  }
+  
+  y_max <- create_max_min(max(to_plot$value), y_unit, ceiling)
+  y_min <- create_max_min(min(to_plot$value), y_unit, floor)
+  
+  while (ceiling(abs(y_max - y_min))/y_unit > 10){
+    y_unit <- y_unit * 2
+  }
+  
+  y_max <- create_max_min(y_max, y_unit, ceiling)
+  
+  print(paste0(n, " ", y_min, " ", y_max, " ", y_unit))
+    
   # Assign the data frame to another name to exmaine after plotting 
   assign(paste0("to_plot_", n), to_plot) 
               
@@ -82,8 +99,9 @@ for (j in edcl_list){
   # Create plot with the correct theme
   plot <- ggplot(to_plot, aes(x = agecl, y = value, col = `Net Worth Percentile`, group = `Net Worth Percentile`)) +
     geom_line() +
+    scale_colour_brewer(palette="Set1") +
     ggtitle(top_title)  +
-    scale_y_continuous(labels = dollar) +
+    scale_y_continuous(labels = dollar, limits = c(y_min, y_max), breaks = seq(y_min, y_max, by = y_unit)) +
     of_dollars_and_data_theme +
     labs(x = "Age Group" , y = "Net Worth ($)")
   
@@ -107,12 +125,35 @@ for (j in edcl_list){
   # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
   
-  # Create a plotly interactive plot as well
-  to_post <- plot_ly(data = to_plot, x = ~agecl, y = ~value, color = ~`Net Worth Percentile`) %>%
-                add_lines()
-                
-  # Post it publically on the ofdollarsanddata plotly profile
-  plotly_POST(x = to_post, filename =  paste0("03-networth_edcl_", n), sharing =  "public")
+#   xaxis <- list(title = "Age Group",
+#                 showline = TRUE,
+#                 showgrid = FALSE,
+#                 showticklabels = TRUE,
+#                 linecolor = 'rgb(204, 204, 204)',
+#                 linewidth = 2,
+#                 autotick = FALSE,
+#                 ticks = 'outside',
+#                 tickcolor = 'rgb(204, 204, 204)',
+#                 tickwidth = 2,
+#                 ticklen = 5,
+#                 tickfont = list(family = 'Arial',
+#                                 size = 12,
+#                                 color = 'rgb(82, 82, 82)'))
+#   
+#   yaxis <- list(title = "Net Worth ($)",
+#                 showgrid = FALSE,
+#                 zeroline = TRUE,
+#                 showline = TRUE,
+#                 showticklabels = TRUE)
+#  
+#   # Create a plotly interactive plot as well
+#   to_post <- plot_ly(data = to_plot, x = ~agecl, y = ~value, color = ~`Net Worth Percentile`) %>%
+#                 add_lines() %>%
+#                 layout(title = top_title, xaxis = xaxis, yaxis = yaxis,
+#                 autosize = FALSE)
+#                 
+#   # Post it publically on the ofdollarsanddata plotly profile
+#   plotly_POST(x = to_post, filename =  paste0("03-networth_edcl_", n), sharing =  "public")
     
   # Increment the counter
   n <- n + 1
