@@ -73,6 +73,26 @@ scf_stack <- mutate(scf_stack, married = married %% 2,
                     male = hhsex %% 2) %>%
               select(-hhsex, - race)
 
+# Define strings for each age class based on the definitions above
+scf_stack$agecl <- ifelse(scf_stack[,"agecl"] == 1, "<35", 
+                          ifelse(scf_stack[,"agecl"] == 2, "35-44",
+                                 ifelse(scf_stack[,"agecl"] == 3, "45-54",   
+                                        ifelse(scf_stack[,"agecl"] == 4, "55-64",
+                                               ifelse(scf_stack[,"agecl"] == 5, "65-74",
+                                                      ifelse(scf_stack[,"agecl"] == 6, "75+", "99"))))))
+
+# Define strings for education class
+scf_stack$edcl <- ifelse(scf_stack[,"edcl"]  == 1, "No High School Diploma/GED", 
+                         ifelse(scf_stack[,"edcl"] == 2, "High School Diploma/GED",
+                                ifelse(scf_stack[,"edcl"] == 3, "Some College",   
+                                       ifelse(scf_stack[,"edcl"] == 4, "College Degree", "99"))))
+
+# Make edcl into a factor
+scf_stack$edcl <- factor(scf_stack$edcl,levels = c("No High School Diploma/GED", 
+                                                   "High School Diploma/GED", 
+                                                   "Some College", 
+                                                   "College Degree"))
+
 # Save down data to permanent file
 saveRDS(scf_stack, paste0(localdir, "03-scf-stack.Rds"))
 
