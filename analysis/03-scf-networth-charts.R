@@ -50,7 +50,7 @@ scf_stack$edcl <- factor(scf_stack$edcl,levels = c("No High School Diploma/GED",
 
 # Create lists of education class and age class to loop over
 edcl_list  <- sort(unique(scf_stack$edcl))
-
+  
 # Loop through the education list in order to create plots
 # Create a counter
 n <- 1
@@ -124,41 +124,10 @@ for (j in edcl_list){
   
   # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
-  
-#   xaxis <- list(title = "Age Group",
-#                 showline = TRUE,
-#                 showgrid = FALSE,
-#                 showticklabels = TRUE,
-#                 linecolor = 'rgb(204, 204, 204)',
-#                 linewidth = 2,
-#                 autotick = FALSE,
-#                 ticks = 'outside',
-#                 tickcolor = 'rgb(204, 204, 204)',
-#                 tickwidth = 2,
-#                 ticklen = 5,
-#                 tickfont = list(family = 'Arial',
-#                                 size = 12,
-#                                 color = 'rgb(82, 82, 82)'))
-#   
-#   yaxis <- list(title = "Net Worth ($)",
-#                 showgrid = FALSE,
-#                 zeroline = TRUE,
-#                 showline = TRUE,
-#                 showticklabels = TRUE)
-#  
-#   # Create a plotly interactive plot as well
-#   to_post <- plot_ly(data = to_plot, x = ~agecl, y = ~value, color = ~`Net Worth Percentile`) %>%
-#                 add_lines() %>%
-#                 layout(title = top_title, xaxis = xaxis, yaxis = yaxis,
-#                 autosize = FALSE)
-#                 
-#   # Post it publically on the ofdollarsanddata plotly profile
-#   plotly_POST(x = to_post, filename =  paste0("03-networth_edcl_", n), sharing =  "public")
     
   # Increment the counter
   n <- n + 1
 }
-
 
 
 # ############################  End  ################################## #
