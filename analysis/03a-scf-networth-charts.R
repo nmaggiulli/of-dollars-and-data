@@ -34,7 +34,7 @@ scf_stack$agecl <- ifelse(scf_stack[,"agecl"] == 1, "<35",
                    ifelse(scf_stack[,"agecl"] == 3, "45-54",   
                    ifelse(scf_stack[,"agecl"] == 4, "55-64",
                    ifelse(scf_stack[,"agecl"] == 5, "65-74",
-                   ifelse(scf_stack[,"agecl"] == 6, "Over 75", "99"))))))
+                   ifelse(scf_stack[,"agecl"] == 6, "75+", "99"))))))
 
 # Define strings for education class
 scf_stack$edcl <- ifelse(scf_stack[,"edcl"]  == 1, "No High School Diploma/GED", 
@@ -54,6 +54,7 @@ edcl_list  <- sort(unique(scf_stack$edcl))
 # Loop through the education list in order to create plots
 # Create a counter
 n <- 1
+
 for (j in edcl_list){
   # Filter the data to the correct age and education 
   # Then group by year and calculate networth percentiles
@@ -66,9 +67,9 @@ for (j in edcl_list){
 
   # Alter certain variables to be factors
   to_plot$`Net Worth Percentile` <- factor(to_plot$`Net Worth Percentile`,
-                                           levels = c("75th", "50th", "25th", "10th"))
+                                           levels = c("10th", "25th", "50th", "75th"))
   to_plot$agecl <- factor(to_plot$agecl,levels = c("<35", "35-44", "45-54", "55-64",
-                                                 "65-74", "Over 75"))
+                                                 "65-74", "75+"))
   
   y_unit <- 10^ceiling(min(log10(abs(max(to_plot$value))), log10(abs(min(to_plot$value)))))
   
@@ -84,8 +85,6 @@ for (j in edcl_list){
   }
   
   y_max <- create_max_min(y_max, y_unit, ceiling)
-  
-  print(paste0(n, " ", y_min, " ", y_max, " ", y_unit))
     
   # Assign the data frame to another name to exmaine after plotting 
   assign(paste0("to_plot_", n), to_plot) 
