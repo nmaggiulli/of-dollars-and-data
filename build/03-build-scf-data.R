@@ -93,6 +93,10 @@ scf_stack$edcl <- factor(scf_stack$edcl,levels = c("No High School Diploma/GED",
                                                    "Some College", 
                                                    "College Degree"))
 
+# Make agecl into a factor
+scf_stack$agecl <- factor(scf_stack$agecl,levels = c("<35", "35-44", "45-54", "55-64",
+                                                   "65-74", "75+"))
+
 # Save down data to permanent file
 saveRDS(scf_stack, paste0(localdir, "03-scf-stack.Rds"))
 
