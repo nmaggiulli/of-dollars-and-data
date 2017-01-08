@@ -10,10 +10,24 @@ source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
 ########################## Start Program Here ######################### #
 
 # Read in productivity data from tab-delimited text file on the web
-bls_productivity <- read.csv("https://download.bls.gov/pub/time.series/pr/pr.data.1.AllData", 
+# Use function to make this dynamic
+read_in_bls <- function(string){
+  name <- deparse(substitute(string))
+  temp_name <- read.csv(paste0("https://download.bls.gov/pub/time.series/pr/pr.", name), 
                              header = TRUE, 
                              sep = "\t")
+  
+  saveRDS(temp_name, paste0(importdir, "04-bls-productivity/bls_productivity_", name, ".Rds"))
+}
 
-saveRDS(bls_productivity, paste0(importdir, "04-bls-productivity/bls_productivity.Rds"))
+read_in_bls(data.1.AllData)
+read_in_bls(class)
+read_in_bls(measure)
+read_in_bls(sector)
+read_in_bls(series)
+
+
+
+
 
 # ############################  End  ################################## #
