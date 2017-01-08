@@ -34,6 +34,8 @@ last_year  <- max(scf_stack$year)
 # Create lists of education class and age class to loop over
 edcl_list  <- sort(unique(scf_stack$edcl))
 
+# Create a function to make the data needed for plotly
+# I did this since it does not look like plot_ly can run inside a loop
 create_plotly_data <- function(edcl_string, out){
   to_plot <- filter(scf_stack, edcl == edcl_string, year == 2013) %>%
     group_by(year, agecl) %>%
@@ -44,10 +46,11 @@ create_plotly_data <- function(edcl_string, out){
     gather(`Net Worth Percentile`, value, -year, -agecl)
 }
 
+# Run the function to create 2 data sets for plotting
 to_plot_1 <- create_plotly_data("High School Diploma/GED")
 to_plot_2 <- create_plotly_data("College Degree")
 
-
+# Create an x-axis for the plot_ly plot
 xaxis <- list(title = "Age Group",
               showline = TRUE,
               showgrid = TRUE,
@@ -63,13 +66,14 @@ xaxis <- list(title = "Age Group",
                               size = 12,
                               color = 'rgb(82, 82, 82)'))
 
+# Create an y-axis for the plot_ly plot
 yaxis <- list(title = "Net Worth as of 2013 ($)",
               showgrid = TRUE,
               zeroline = TRUE,
               showline = TRUE,
               showticklabels = TRUE)
  
-# Create a plotly interactive plot as well
+# Use the information above and create an interactive plot_ly plot
 to_post_1 <- plot_ly(data = to_plot_1, x = ~agecl, y = ~value, color = ~`Net Worth Percentile`) %>%
         add_lines() %>%
         layout(title = "Education Level: High School Diploma/GED", xaxis = xaxis, yaxis = yaxis)

@@ -31,14 +31,18 @@ last_year  <- max(scf_stack$year)
 # Create lists of education class and age class to loop over
 edcl_list  <- sort(unique(scf_stack$edcl))
 
+# Create a function to plot the networth charts by type
+# Type will define the type of chart
 plot_networth <- function(type){  
-  # Loop through the education list in order to create plots
+  
   # Create a counter
   n <- 1
-
+  
+  # Loop through the education list in order to create plots
   for (j in edcl_list){
-    # Filter the data to the correct age and education 
+    # Filter the data to the correct education level
     # Then group by year and calculate networth percentiles
+    # For type == 1 also subset to the last year in the data
     if (type == 1){
       to_plot <- filter(scf_stack, edcl == j, year == last_year) %>%
                       group_by(year, agecl) %>%
@@ -62,6 +66,7 @@ plot_networth <- function(type){
         }
     }
   
+    # Convert the Net Worth percentiles to factors
     if (type == 1 || type == 2){
     # Alter certain variables to be factors
     to_plot$`Net Worth Percentile` <- factor(to_plot$`Net Worth Percentile`,
@@ -71,8 +76,10 @@ plot_networth <- function(type){
                                                levels = c("90th"))
     }
     
+    # Define the y_unit for the y-axis
     y_unit <- 10^ceiling(min(log10(abs(max(to_plot$value))), log10(abs(min(to_plot$value)))))
     
+    # Function to find a rounded max/min based on the specifications of y_unit
     create_max_min <- function(x, unit, ceilfloor) {
       ceilfloor(x/unit)*unit
     }
@@ -80,10 +87,13 @@ plot_networth <- function(type){
     y_max <- create_max_min(max(to_plot$value), y_unit, ceiling)
     y_min <- create_max_min(min(to_plot$value), y_unit, floor)
     
+    # If the distance between the max and min is too large, increase y_unit
+    # until the distance is less than 10 ticks away
     while (ceiling(abs(y_max - y_min))/y_unit > 10){
       y_unit <- y_unit * 2
     }
     
+    # Define a new y_max if the y_unit has changed
     y_max <- create_max_min(y_max, y_unit, ceiling)
       
     # Assign the data frame to another name to exmaine after plotting 
@@ -96,7 +106,7 @@ plot_networth <- function(type){
       # Create a dynamic title based upon the agecl and edcl
       top_title <- paste0("Education Level:  ", j, "\n", last_year)
       
-      # Create plot with the correct theme
+      # Create plot with the correct theme and for the last year only
       plot <- ggplot(to_plot, aes(x = agecl, y = value, col = `Net Worth Percentile`, group = `Net Worth Percentile`)) +
         geom_line() +
         scale_colour_brewer(palette="Set1") +
@@ -113,7 +123,7 @@ plot_networth <- function(type){
       # Create a dynamic title based upon the agecl and edcl
       top_title <- paste0("Education Level:  ", j, "\nBy Age Group Over Time")
       
-      # Create plot with the correct theme
+      # Create plot with the correct theme and make it a facet to show multiple age groups
       plot <- ggplot(to_plot, aes(x = year, y = value, col = `Net Worth Percentile`)) +
         geom_line() +
         facet_grid(. ~ agecl) +
@@ -154,10 +164,10 @@ plot_networth <- function(type){
 # Create charts by education level with age group as X-axis
 plot_networth(1)
 
-# Create charts for each age edc group, year as the x-axis
+# Create charts for each age edc group, year as the x-axis (uses facet)
 plot_networth(2)
 
-# Create charts for each age edc group, year as the x-axis (for the 90th percentile)
+# Create charts for each age edc group, year as the x-axis (uses facet for the 90th percentile)
 plot_networth(3)
 
 
