@@ -9,13 +9,11 @@ source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
 
 ########################## Start Program Here ######################### #
 
-# Data was found here:  https://download.bls.gov/pub/time.series/pr/
+# Read in productivity data from tab-delimited text file on the web
+bls_productivity <- read.csv("https://download.bls.gov/pub/time.series/pr/pr.data.1.AllData", 
+                             header = TRUE, 
+                             sep = "\t")
 
-# Read in productivity data from tab-delimited text file
-bls_productivity <- read.table(paste0(importdir, "04-bls-productivity/pr.data.1.AllData.txt"), 
-                               header = TRUE,
-                               sep = "\t")
-
-saveRDS(bls_productivity, paste0(localdir, "04-raw-bls-productivity"))
+saveRDS(bls_productivity, paste0(importdir, "04-bls-productivity/bls_productivity.Rds"))
 
 # ############################  End  ################################## #
