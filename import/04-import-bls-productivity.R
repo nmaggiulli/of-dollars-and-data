@@ -12,7 +12,7 @@ source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
 # Read in productivity data from tab-delimited text file on the web
 # Use function to make this dynamic
 read_in_bls <- function(string){
-  name <- deparse(substitute(string))
+  name      <- deparse(substitute(string))
   temp_name <- read.csv(paste0("https://download.bls.gov/pub/time.series/pr/pr.", name), 
                              header = TRUE, 
                              sep = "\t")
