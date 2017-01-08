@@ -15,6 +15,7 @@ library(gridExtra)
 library(gtable)
 library(plotly)
 library(RColorBrewer)
+library(ggrepel)
 
 ########################## Start Program Here ######################### #
 
@@ -46,9 +47,9 @@ plot_networth <- function(type){
     if (type == 1){
       to_plot <- filter(scf_stack, edcl == j, year == last_year) %>%
                       group_by(year, agecl) %>%
-                  summarise(`10th` = quantile(networth, probs=0.1),
-                            `25th` = quantile(networth, probs=0.25),
-                            `50th` = quantile(networth, probs=0.5)) %>%
+                  summarise(`10th Percentile` = quantile(networth, probs=0.1),
+                            `25th Percentile` = quantile(networth, probs=0.25),
+                            `50th Percentile` = quantile(networth, probs=0.5)) %>%
                 gather(`Net Worth Percentile`, value, -year, -agecl)
     } else if (type == 2 || type == 3){
       if (type == 2){
@@ -67,10 +68,13 @@ plot_networth <- function(type){
     }
   
     # Convert the Net Worth percentiles to factors
-    if (type == 1 || type == 2){
+    if (type == 1){
     # Alter certain variables to be factors
-    to_plot$`Net Worth Percentile` <- factor(to_plot$`Net Worth Percentile`,
-                                             levels = c("10th", "25th", "50th"))
+      to_plot$`Net Worth Percentile` <- factor(to_plot$`Net Worth Percentile`,
+                                             levels = c("10th Percentile", "25th Percentile", "50th Percentile"))
+    } else if (type == 2){
+      to_plot$`Net Worth Percentile` <- factor(to_plot$`Net Worth Percentile`,
+                                               levels = c("10th", "25th", "50th"))
     } else if (type == 3){
       to_plot$`Net Worth Percentile` <- factor(to_plot$`Net Worth Percentile`,
                                                levels = c("90th"))
@@ -109,7 +113,11 @@ plot_networth <- function(type){
       # Create plot with the correct theme and for the last year only
       plot <- ggplot(to_plot, aes(x = agecl, y = value, col = `Net Worth Percentile`, group = `Net Worth Percentile`)) +
         geom_line() +
-        scale_colour_brewer(palette="Set1") +
+        geom_text_repel(data = filter(to_plot, agecl == "55-64"), 
+                        aes(agecl, value, label = `Net Worth Percentile`, family = "my_font"), 
+                        size = 2.8,
+                        nudge_y = 10) +
+        scale_colour_brewer(palette="Set1", guide = FALSE) +
         ggtitle(top_title)  +
         scale_y_continuous(labels = dollar, limits = c(y_min, y_max), breaks = seq(y_min, y_max, by = y_unit)) +
         of_dollars_and_data_theme +
