@@ -25,6 +25,7 @@ read_in_bls(class)
 read_in_bls(measure)
 read_in_bls(sector)
 read_in_bls(series)
+read_in_bls(duration)
 
 
 
