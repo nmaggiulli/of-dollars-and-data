@@ -91,11 +91,12 @@ plot <- ggplot(to_plot, aes(x = year_quarter, y = value, col = measure_name)) +
   ggtitle(top_title)  +
   scale_x_date(breaks = seq(first_year_quarter, last_year_quarter, 365.25*7), date_labels = "%Y") +
   of_dollars_and_data_theme +
-  labs(x = "Year" , y = "Value")
+  
+  labs(x = "Year" , y = "Index (1987 = 100)")
 
 # Add a source and note string for the plots
 source_string <- "Source:  Bureau of Labor Statistics (OfDollarsAndData.com)"
-note_string   <- "Note:  Indexed to 100 in Q1 1987." 
+note_string   <- "Note:  The Business sector excludes government, private households, and select nonprofits." 
 
 # Turn plot into a gtable for adding text grobs
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
