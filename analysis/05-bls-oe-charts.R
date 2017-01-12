@@ -26,10 +26,24 @@ bls_oe <- readRDS(paste0(localdir, "05-bls-oe.Rds"))
 bls_oe_filtered <- filter(bls_oe, areatype_name == "National",
                         datatype_name %in% c("Hourly 10th percentile wage", 
                                              "Hourly 25th percentile wage",
-                                             "Hourly 50th percentile wage",
+                                             "Hourly median wage",
                                              "Hourly 75th percentile wage",
                                              "Hourly 90th percentile wage"),
-                        str_trim(value) !=  "-")
+                        str_trim(value) !=  "-") %>%
+                        select(year, value, occupation_name, datatype_name, footnote_codes)
+
+# Treat the datatype variable as a factor
+bls_oe_filtered$datatype_name <- factor(bls_oe_filtered$datatype_name,
+                                         levels = c("Hourly 10th percentile wage", 
+                                                    "Hourly 25th percentile wage", 
+                                                    "Hourly median wage",
+                                                    "Hourly 75th percentile wage",
+                                                    "Hourly 90th percentile wage"))
+
+# bls_oe_filtered2 <- filter(bls_oe,
+#                           datatype_name %in% c("Employment",
+#                                                "Employment per 1,000 jobs"),
+#                           str_trim(value) !=  "-") 
 
 
 # ############################  End  ################################## #
