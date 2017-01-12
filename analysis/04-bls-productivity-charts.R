@@ -56,7 +56,7 @@ for (i in 1:nrow(to_plot)){
 midpoint <- (max(to_plot$value) + min(to_plot$value)) / 2
 
 # Create a dynamic title based upon the agecl and edcl
-top_title <- "Comparing Labor Productivity and Employment\n1987 - 2016"
+top_title <- "While Manufacturing Productivity Soars,\nManufacturing Employment Is In Decline\n1987 - 2016"
 
 # Create a ggplot of value by year_quarter
 # Use geom_text_repel for better labelings
