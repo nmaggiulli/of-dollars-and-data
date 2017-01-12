@@ -1,0 +1,54 @@
+cat("\014") # Clear your console
+rm(list = ls()) #clear your environment
+
+########################## Load in header file ######################## #
+source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
+
+########################## Load in Libraries ########################## #
+
+library(dplyr)
+library(zoo)
+
+########################## Start Program Here ######################### #
+
+# Load in raw BLS productivity data
+bls_oe <-readRDS(paste0(importdir, "05-bls-occupational-employment/bls_oe_data.1.AllData.Rds"))
+
+# Load in other datasets and create a code based on their row number
+# Will use these datasets to merge to the main productivity dataset
+create_index <- function(string){
+  name            <- deparse(substitute(string))
+  temp            <- readRDS(paste0(importdir, "05-bls-occupational-employment/bls_oe_", name, ".Rds"))
+  new_col         <- paste0(name, "_name")
+  old_col         <- paste0(name, "_code")
+  temp[, new_col] <-  temp[, old_col]
+  temp[, old_col] <- rownames(temp)
+  temp            <- temp[, c(old_col, new_col)]
+  return(temp)
+}
+
+areatype    <- create_index(areatype)
+datatype    <- create_index(datatype)
+industry    <- create_index(industry)
+occupation  <- create_index(occupation)
+
+# Parse the series ID based on the "pr.txt" file here:  https://download.bls.gov/pub/time.series/oe/
+bls_oe <- mutate(bls_oe, areatype_code = substr(series_id, 4, 4),
+                           industry_code = substr(series_id, 12, 17),
+                           occupation_code = substr(series_id, 18, 23),
+                           datatype_code = substr(series_id, 24, 25))
+
+# Merge on the sector, measure, and class information
+bls_oe <- bls_oe %>%
+                  left_join(areatype) %>%
+                    left_join(industry) %>%
+                      left_join(occupation) %>%
+                        left_join(datatype) %>%
+                    select(series_id, year, value, footnote_codes, 
+                          areatype_name, industry_name, occupation_name, datatype_name)
+
+# Save down final build before doing analysis
+saveRDS(bls_oe, paste0(localdir, "05-bls-oe.Rds"))
+
+
+# ############################  End  ################################## #
