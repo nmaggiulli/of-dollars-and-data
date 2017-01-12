@@ -145,7 +145,7 @@ plot_networth <- function(type){
     }
     
     # Add a source and note string for the plots
-    source_string <- "Source:  Federal Reserve Board, Survey of Consumer Finances"
+    source_string <- "Source:  Federal Reserve Board, Survey of Consumer Finances (OfDollarsAndData.com)"
     note_string   <- "Note:  Net worth percentiles are shown at the household level.  Includes home equity." 
     
     # Turn plot into a gtable for adding text grobs

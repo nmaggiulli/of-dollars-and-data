@@ -94,7 +94,7 @@ plot <- ggplot(to_plot, aes(x = year_quarter, y = value, col = measure_name)) +
   labs(x = "Year" , y = "Value")
 
 # Add a source and note string for the plots
-source_string <- "Source:  Bureau of Labor Statistics"
+source_string <- "Source:  Bureau of Labor Statistics (OfDollarsAndData.com)"
 note_string   <- "Note:  Indexed to 100 in Q1 1987." 
 
 # Turn plot into a gtable for adding text grobs

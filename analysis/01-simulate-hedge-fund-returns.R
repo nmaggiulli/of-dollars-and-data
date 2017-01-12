@@ -133,7 +133,7 @@ plot_sim(
   n_periods = 50,
   file_name = "hf_over_client_2_and_20_sp500_return.jpeg",
   top_title = "On Average, the Hedge Fund is Richer\nThan Its Clients In Less Than 20 Years",
-  source_string = "Source:  Simulated returns",
+  source_string = "Source:  Simulated returns (OfDollarsAndData.com)",
   note_string = "Note:  Assumes a 2% management fee and a 20% performance fee."
 )
 
@@ -149,7 +149,7 @@ plot_sim(
   n_periods = 50,
   file_name = "hf_over_client_1.4_and_17_sp500_return.jpeg",
   top_title = "On Average, the Hedge Fund is Richer\nThan Its Clients In Less Than 25 Years",
-  source_string = "Source:  Simulated returns",
+  source_string = "Source:  Simulated returns (OfDollarsAndData.com)",
   note_string = "Note:  Assumes a 1.4% management fee and a 17% performance fee."
 )
 
@@ -164,7 +164,7 @@ plot_sim(
   n_periods = 1500,
   file_name = "vanguard_over_client_0.05pct_sp500_return.jpeg",
   top_title = "A Low-Cost Index Fund Would Take\nAlmost 1,500 Years To Be Richer Than Its Clients",
-  source_string = "Source:  Simulated returns",
+  source_string = "Source:  Simulated returns (OfDollarsAndData.com)",
   note_string = "Note:  Assumes a 0.05% management fee and no performance fee."
 )
 
