@@ -24,7 +24,6 @@ read_in_bls(areatype)
 read_in_bls(datatype)
 read_in_bls(industry)
 read_in_bls(occupation)
-read_in_bls(sector)
 read_in_bls(data.1.AllData)
 
 
