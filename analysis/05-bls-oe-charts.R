@@ -29,8 +29,10 @@ bls_oe_filtered <- filter(bls_oe, areatype_name == "National",
                                              "Hourly median wage",
                                              "Hourly 75th percentile wage",
                                              "Hourly 90th percentile wage"),
+                        industry_name == "Cross-industry, Private Ownership Only",
                         str_trim(value) !=  "-") %>%
-                        select(year, value, occupation_name, datatype_name, footnote_codes)
+                        select(year, value, footnote_codes, area_name, areatype_name,
+                               industry_name, occupation_name, datatype_name)
 
 # Treat the datatype variable as a factor
 bls_oe_filtered$datatype_name <- factor(bls_oe_filtered$datatype_name,
@@ -40,10 +42,25 @@ bls_oe_filtered$datatype_name <- factor(bls_oe_filtered$datatype_name,
                                                     "Hourly 75th percentile wage",
                                                     "Hourly 90th percentile wage"))
 
-# bls_oe_filtered2 <- filter(bls_oe,
-#                           datatype_name %in% c("Employment",
-#                                                "Employment per 1,000 jobs"),
-#                           str_trim(value) !=  "-") 
+bls_oe_filtered$value <- as.numeric(as.character(bls_oe_filtered$value))
+
+# Remove pure duplicates
+bls_oe_long <- distinct(bls_oe_filtered) %>%
+                    unite(group, industry_name, occupation_name, datatype_name)
+
+# Choose the lower "value" for any duplicates remaining             
+bls_oe_long <- bls_oe_long[order(bls_oe_long$group, abs(bls_oe_long$value)), ]
+bls_oe_long     <- bls_oe_long[!duplicated(bls_oe_long$group),]
+
+# Recreate the original vars before dedupping
+bls_oe_long     <- separate(bls_oe_long, sep = "_", group, c("industry_name", "occupation_name", "datatype_name"))
+
+# Turn the long dataset into a wide dataset
+# Also calculate the percentage diff between the top and bottom percentiles
+bls_oe_wide <-  spread(bls_oe_long, datatype_name, value) %>%
+                mutate(pct75_10_diff = `Hourly 75th percentile wage` / `Hourly 10th percentile wage` - 1) %>%
+                arrange(pct75_10_diff)
+
 
 
 # ############################  End  ################################## #
