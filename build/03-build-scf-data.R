@@ -43,7 +43,7 @@ for (x in year_list){
                     'homeeq','hdebt', 'fin', 'income', 'resdbt',
                     'agecl', 'hhsex', 'race', 'edcl', 'married', 'kids', 
                     'savres1', 'savres2', 'savres3', 'savres4', 'savres5',
-                    'savres6', 'savres7', 'savres8', 'savres9')
+                    'savres6', 'savres7', 'savres8', 'savres9', 'wgt')
   
   # Write a function to subset our data
   subset_data <- function(name){
