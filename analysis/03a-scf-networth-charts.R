@@ -16,6 +16,7 @@ library(gtable)
 library(plotly)
 library(RColorBrewer)
 library(ggrepel)
+library(Hmisc)
 
 ########################## Start Program Here ######################### #
 
@@ -47,22 +48,22 @@ plot_networth <- function(type){
     if (type == 1){
       to_plot <- filter(scf_stack, edcl == j, year == last_year) %>%
                       group_by(year, agecl) %>%
-                  summarise(`10th Percentile` = quantile(networth, probs=0.1),
-                            `25th Percentile` = quantile(networth, probs=0.25),
-                            `50th Percentile` = quantile(networth, probs=0.5)) %>%
+                  summarise(`10th Percentile` = wtd.quantile(networth, weights = wgt, probs=0.1),
+                            `25th Percentile` = wtd.quantile(networth, weights = wgt, probs=0.25),
+                            `50th Percentile` = wtd.quantile(networth, weights = wgt, probs=0.5)) %>%
                 gather(`Net Worth Percentile`, value, -year, -agecl)
     } else if (type == 2 || type == 3){
       if (type == 2){
         to_plot <- filter(scf_stack, edcl == j) %>%
           group_by(year, agecl) %>%
-            summarise(`10th` = quantile(networth, probs=0.1),
-                    `25th` = quantile(networth, probs=0.25),
-                    `50th` = quantile(networth, probs=0.5)) %>%
+            summarise(`10th` = wtd.quantile(networth, weights = wgt, probs=0.1),
+                    `25th` = wtd.quantile(networth, weights = wgt, probs=0.25),
+                    `50th` = wtd.quantile(networth, weights = wgt, probs=0.5)) %>%
             gather(`Net Worth Percentile`, value, -year, -agecl)
         } else if (type == 3){
           to_plot <- filter(scf_stack, edcl == j) %>%
             group_by(year, agecl) %>%
-            summarise(`90th` = quantile(networth, probs=0.90)) %>%  
+            summarise(`90th` = quantile(networth, weights = wgt, probs=0.90)) %>%  
             gather(`Net Worth Percentile`, value, -year, -agecl)
         }
     }

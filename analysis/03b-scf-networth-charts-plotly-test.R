@@ -15,6 +15,7 @@ library(gridExtra)
 library(gtable)
 library(plotly)
 library(RColorBrewer)
+library(Hmisc)
 
 ########################## Start Program Here ######################### #
 
@@ -39,10 +40,10 @@ edcl_list  <- sort(unique(scf_stack$edcl))
 create_plotly_data <- function(edcl_string, out){
   to_plot <- filter(scf_stack, edcl == edcl_string, year == 2013) %>%
     group_by(year, agecl) %>%
-    summarise(`10th` = quantile(networth, probs=0.1),
-              `25th` = quantile(networth, probs=0.25),
-              `50th` = quantile(networth, probs=0.5),
-              `75th` = quantile(networth, probs=0.75)) %>%
+    summarise(`10th` = wtd.quantile(networth, weights = wgt, probs=0.1),
+              `25th` = wtd.quantile(networth, weights = wgt, probs=0.25),
+              `50th` = wtd.quantile(networth, weights = wgt, probs=0.5),
+              `75th` = wtd.quantile(networth, weights = wgt, probs=0.75)) %>%
     gather(`Net Worth Percentile`, value, -year, -agecl)
 }
 
