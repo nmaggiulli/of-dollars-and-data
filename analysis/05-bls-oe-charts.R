@@ -113,7 +113,7 @@ plot <- ggplot(to_plot, aes(x = `Hourly median wage`, y = pct75_10_diff)) +
 
 # Add a source and note string for the plots
 source_string <- "Source:  Bureau of Labor Statistics (OfDollarsAndData.com)"
-note_string   <- paste0("Note:  ", n_occupations_removed, " occupations were removed due to incomplete data.") 
+note_string   <- paste0("Note:  ", n_occupations_removed, " occupations were removed due to incomplete data.  Data shown is for 2015.") 
 
 # Turn plot into a gtable for adding text grobs
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
