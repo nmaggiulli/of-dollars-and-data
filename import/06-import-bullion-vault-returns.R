@@ -10,7 +10,7 @@ library(readxl)
 
 ########################## Start Program Here ######################### #
 
-bv_returns <- read_excel(paste0(importdir, "06-bullion-vault-asset-returns/asset-returns-bullion-vault-1975-2014.xlsx"))
+bv_returns <- read_excel(paste0(importdir, "06-bullion-vault-asset-returns/asset-returns-bullion-vault-1976-2015.xlsx"))
 
 # Make all of the returns into real returns
 # Create a function
