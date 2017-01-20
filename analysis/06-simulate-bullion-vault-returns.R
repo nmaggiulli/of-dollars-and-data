@@ -113,7 +113,9 @@ ggplot(eff, aes(x = sd, y = exp_return)) + geom_point(alpha = .1, color = ealdar
                        round(eff_optimal_point$exp_return * 100, digits = 2),"%\nSharpe: ",
                        round(eff_optimal_point$sharpe * 100, digits = 2), "%", sep=""), hjust=0, vjust=1.2) +
   ggtitle("Efficient Frontier\nand Optimal Portfolio") + labs(x = "Risk (standard deviation of portfolio variance)", y ="Real Return") +
-  of_dollars_and_data_theme
+  of_dollars_and_data_theme +
+  scale_x_continuous(label = percent) +
+  scale_y_continuous(label = percent)
 
-# Simulate the portfolio returns
+# Simulate the portfolio value
 
