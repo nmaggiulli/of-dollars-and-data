@@ -121,13 +121,14 @@ plot_sim <- function(
   
   # Save the plot  
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
+  print(n_periods_until_50pct)
 }
 
 # This first simulation assumes a 2 and 20 traditional hedge fund fee structure
 plot_sim(
   hedge_fund_management_fee = 0.02, 
   hedge_fund_performance_fee = 0.2, 
-  hedge_fund_watermark = 0, 
+  hedge_fund_watermark = 0.00, 
   sample_mean_return = 0.1, 
   sample_sd_return = 0.2,
   n_periods = 50,
