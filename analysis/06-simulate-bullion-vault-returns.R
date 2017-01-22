@@ -31,6 +31,9 @@ bv_returns <- readRDS(paste0(localdir, "06-bv-returns.Rds"))
 # Subset the returns to a smaller time period (for robustness)
 # bv_returns <- filter(bv_returns, year(year) > 1985)
 
+min_year <- min(year(bv_returns$year))
+max_year <- max(year(bv_returns$year))
+
 # This seed allows us to have reproducible random sampling
 set.seed(12345)    
 
@@ -121,7 +124,7 @@ plot <- ggplot(eff, aes(x = sd, y = exp_return)) + geom_point(alpha = .1, color 
            label=paste("Risk: ", round(eff_optimal_point$sd * 100, digits = 2),"%\nReal Return: ",
                        round(eff_optimal_point$exp_return * 100, digits = 2),"%\nSharpe: ",
                        round(eff_optimal_point$sharpe * 100, digits = 2), "%", sep=""), hjust=0, vjust=1.2) +
-  ggtitle("Efficient Frontier\nand Optimal Portfolio") + labs(x = "Risk (standard deviation of portfolio variance)", y ="Real Return") +
+  ggtitle(paste0("Efficient Frontier and Optimal Portfolio\n")) + labs(x = "Risk (standard deviation of portfolio variance)", y ="Real Return") +
   of_dollars_and_data_theme +
   scale_x_continuous(label = percent) +
   scale_y_continuous(label = percent)
@@ -130,7 +133,7 @@ plot <- ggplot(eff, aes(x = sd, y = exp_return)) + geom_point(alpha = .1, color 
 file_path = paste0(exportdir, "06-simulate-bv-returns/bv-efficient-frontier.jpeg")
 
 # Add a source and note string for the plots
-source_string <- "Source:  Bullion Vault (OfDollarsAndData.com)"
+source_string <- paste0("Source:  BullionVault U.S. Asset Class Performance Data, ", min_year, "-", max_year," (OfDollarsAndData.com)")
 note_string   <- paste0("Note:  Assumes no asset can be >33% of the portfolio and shorting is not allowed.") 
 
 # Turn plot into a gtable for adding text grobs
@@ -192,24 +195,43 @@ median_end_value <- quantile(value_matrix[, n_years], probs = 0.5)
 
 # Caluclate the maximum drawdown for each simulation
 max_drawdown <- 0
-max_drawdown_matrix      <- matrix(NA, nrow = n_simulations, ncol = 1)
+max_drawdown_pct_matrix      <- matrix(NA, nrow = n_simulations, ncol = 1)
+max_drawdown_dollar_matrix   <- matrix(NA, nrow = n_simulations, ncol = 1)
 
 for (k in 1:n_simulations){
   drawdown <- maxDrawDown(value_matrix[k,])$maxdrawdown
   from <- maxDrawDown(value_matrix[k,])$from
   to <- maxDrawDown(value_matrix[k,])$to
-  max_drawdown_matrix[k, 1] <- drawdown / value_matrix[k, from]
+  max_drawdown_pct_matrix[k, 1]    <- drawdown / value_matrix[k, from]
+  max_drawdown_dollar_matrix[k, 1] <- drawdown
 }
 
-max_drawdown <- max(max_drawdown_matrix)
-min_drawdown <- min(max_drawdown_matrix)
-median_drawdown <- quantile(max_drawdown_matrix, probs = 0.5)
+# Calculate summary statistics on the max, min, and median drawdowns
+calculate_drawdown <- function(name){
+  type <- deparse(substitute(name))
+  matrix <- get(paste0("max_drawdown_", type, "_matrix"))
+  max    <- max(matrix)
+  min    <- min(matrix)
+  median <- quantile(matrix, probs = 0.5)
+  assign(paste0("max_drawdown_", type), max)
+  assign(paste0("min_drawdown_", type), min)
+  assign(paste0("median_drawdown_", type), median)
+  if (type == "pct"){
+  print(paste0("Maximum drawdown: ", max*100, "%"))
+  print(paste0("Minimum drawdown: ", min*100, "%"))
+  print(paste0("Median drawdown: ", median*100, "%"))
+  } else if (type == "dollar"){
+    print(paste0("Maximum drawdown: $", max))
+    print(paste0("Minimum drawdown: $", min))
+    print(paste0("Median drawdown: $", median))
+  }
+}
 
-print(total_invested_capital)
-print(max_end_value)
-print(min_end_value)
-print(median_end_value)
+calculate_drawdown(pct)
+calculate_drawdown(dollar)
 
-print(max_drawdown)
-print(min_drawdown)
-print(median_drawdown)
+# Print other summary stats as well
+print(paste0("Total invested capital: $", total_invested_capital))
+print(paste0("Maximum Ending Value: $", max_end_value))
+print(paste0("Minimum Ending Value: $", min_end_value))
+print(paste0("Median Ending Value: $", median_end_value))
