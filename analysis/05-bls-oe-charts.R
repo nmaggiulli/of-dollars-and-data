@@ -109,7 +109,7 @@ plot <- ggplot(to_plot, aes(x = `Hourly median wage`, y = pct75_10_diff)) +
     # I defined the x axis manually as the dynamic way was not precise enough
     scale_x_continuous(limits = c(0, 75), breaks = seq(0, 75, 15), labels = dollar) +
     ggtitle(top_title)  +
-    labs(x = "Hourly Median Wage", y = "Hourly Wage Percentage Increase\nBetween the 75th and 10th Percentiles")
+    labs(x = "Hourly Median Wage", y = "Hourly Wage Percentage Increase\nBetween the 10th and 75th Percentiles")
 
 # Add a source and note string for the plots
 source_string <- "Source:  Bureau of Labor Statistics (OfDollarsAndData.com)"
@@ -150,7 +150,7 @@ xaxis <- list(title = "Hourly Median Wage",
                               color = 'rgb(82, 82, 82)'))
 
 # Create an y-axis for the plot_ly plot
-yaxis <- list(title = "Hourly Wage Percentage Increase\nBetween the 75th and 10th Percentiles",
+yaxis <- list(title = "Hourly Wage % Increase\nBetween the 75th and 10th Percentiles",
               showgrid = TRUE,
               zeroline = TRUE,
               showline = TRUE,
