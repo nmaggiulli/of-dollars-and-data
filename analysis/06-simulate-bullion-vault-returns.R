@@ -28,107 +28,92 @@ library(fTrading)
 # Load in BV returns
 full_bv_returns <- readRDS(paste0(localdir, "06-bv-returns.Rds"))
 
-# Get the number of years before subsetting
+# Get the number of years in case we subset later
 n_years_full <- nrow(full_bv_returns)
 
-# Set the size of the rolling period
-rolling_period <- 20
-
-# Create a dataset to hold the results
-results_df <- data.frame(matrix(ncol = 11, nrow = (n_years_full - rolling_period)))
+# Define the number of simulations (this will be used later)
+n_simulations <- 10000
 
 # This seed allows us to have reproducible random sampling
 set.seed(12345)    
 
-for (k in 1:(n_years_full - rolling_period)){
-  print(k)
-  # Subset the returns to a smaller time period (for robustness)
-  bv_returns <- full_bv_returns[k:(k+rolling_period-1),]
+bv_returns <- full_bv_returns
+
+min_year <- min(year(bv_returns$year))
+max_year <- max(year(bv_returns$year))
+
+# Define the number of years
+n_years <- nrow(bv_returns)
+
+# Drop the year and the risk free rate from the return to just have returns
+returns <- bv_returns[, -which(names(bv_returns) %in% c("year", "tbill_3m"))]
+
+n_assets <- ncol(returns)
+
+avg_rf  <- colMeans(bv_returns[, "tbill_3m"])
+
+eff_frontier <- function (returns, short = "no", max_allocation = NULL, risk_premium_upper_limit = .5, risk_increment = .005){
+  # return argument should be a m x n matrix with one column per security
+  # short argument is whether short-selling is allowed; default is no (short selling prohibited)
+  # max.allocation is the maximum % allowed for any one security (reduces concentration)
+  # risk.premium.up is the upper limit of the risk premium modeled (see for loop below)
+  # risk.increment is the increment (by) value used in the for loop
+
+  # Create the covariance of returns
+  cov_matrix <- cov(returns)
+  n          <- ncol(cov_matrix)
   
-  min_year <- min(year(bv_returns$year))
-  max_year <- max(year(bv_returns$year))
+  # Create initial Amat and bvec assuming only equality constraint is that weight >= 0
+  Amat <- matrix (1, nrow = n)
+  bvec <- 1
+  meq <- 1
   
-  # Define the number of simulations (this will be used later)
-  n_simulations <- 100
-  
-  # Define the number of years
-  n_years <- nrow(bv_returns)
-  
-  # Drop the year and the risk free rate from the return to just have returns
-  returns <- bv_returns[, -which(names(bv_returns) %in% c("year", "tbill_3m"))]
-  
-  n_assets <- ncol(returns)
-  
-  avg_rf  <- colMeans(bv_returns[, "tbill_3m"])
-  
-  eff_frontier <- function (returns, short = "no", max_allocation = NULL, risk_premium_upper_limit = .5, risk_increment = .005){
-    # return argument should be a m x n matrix with one column per security
-    # short argument is whether short-selling is allowed; default is no (short selling prohibited)
-    # max.allocation is the maximum % allowed for any one security (reduces concentration)
-    # risk.premium.up is the upper limit of the risk premium modeled (see for loop below)
-    # risk.increment is the increment (by) value used in the for loop
-  
-    # Create the covariance of returns
-    cov_matrix <- cov(returns)
-    n          <- ncol(cov_matrix)
-    
-    # Create initial Amat and bvec assuming only equality constraint is that weight >= 0
-    Amat <- matrix (1, nrow = n)
-    bvec <- 1
-    meq <- 1
-    
-    # Then modify the Amat and bvec if short-selling is prohibited
-    if(short == "no"){
-      Amat <- cbind(1, diag(n))
-      bvec <- c(bvec, rep(0, n))
-    }
-    
-    # And modify Amat and bvec if a max allocation (concentration) is specified
-    if(!is.null(max_allocation)){
-      if(max_allocation > 1 | max_allocation <0){
-        stop("max.allocation must be greater than 0 and less than 1")
-      }
-      if(max_allocation * n < 1){
-        stop("Need to set max_allocation higher; not enough assets to add to 1")
-      }
-      Amat <- cbind(Amat, -diag(n))
-      bvec <- c(bvec, rep(-max_allocation, n))
-    }
-    
-    # Calculate the number of loops based on how high to vary the risk premium and by what increment
-    loops <- risk_premium_upper_limit / risk_increment + 1
-    loop  <- 1
-    
-    # Initialize a matrix to contain allocation and statistics
-    # This is not necessary, but speeds up processing and uses less memory
-    eff <- matrix(nrow=loops, ncol=n+3)
-    # Now I need to give the matrix column names
-    colnames(eff) <- c(colnames(returns), "sd", "exp_return", "sharpe")
-    
-    # Loop through the quadratic program solver
-    for (i in seq(from = 0, to = risk_premium_upper_limit, by = risk_increment)){
-      dvec                   <- colMeans(returns) * i # This moves the solution up along the efficient frontier
-      sol                    <- solve.QP(cov_matrix, dvec = dvec, Amat = Amat, bvec = bvec, meq = meq)
-      eff[loop,"sd"]         <- sqrt(sum(sol$solution * colSums((cov_matrix * sol$solution))))
-      eff[loop,"exp_return"] <- as.numeric(sol$solution %*% colMeans(returns))
-      eff[loop,"sharpe"]     <- (eff[loop,"exp_return"] - avg_rf) / eff[loop,"sd"]
-      eff[loop,1:n]          <- sol$solution
-      loop <- loop+1
-    }
-    
-    return(as.data.frame(eff))
+  # Then modify the Amat and bvec if short-selling is prohibited
+  if(short == "no"){
+    Amat <- cbind(1, diag(n))
+    bvec <- c(bvec, rep(0, n))
   }
   
-  eff <- eff_frontier(returns=returns, short = "no", max_allocation = .33, risk_premium_upper_limit = .5, risk_increment = .001)
+  # And modify Amat and bvec if a max allocation (concentration) is specified
+  if(!is.null(max_allocation)){
+    if(max_allocation > 1 | max_allocation <0){
+      stop("max.allocation must be greater than 0 and less than 1")
+    }
+    if(max_allocation * n < 1){
+      stop("Need to set max_allocation higher; not enough assets to add to 1")
+    }
+    Amat <- cbind(Amat, -diag(n))
+    bvec <- c(bvec, rep(-max_allocation, n))
+  }
   
-  # Plot the efficient frontier
-  eff_optimal_point <- eff[eff$sharpe == max(eff$sharpe),]
-  results_df[k, ] <- eff_optimal_point
+  # Calculate the number of loops based on how high to vary the risk premium and by what increment
+  loops <- risk_premium_upper_limit / risk_increment + 1
+  loop  <- 1
+  
+  # Initialize a matrix to contain allocation and statistics
+  # This is not necessary, but speeds up processing and uses less memory
+  eff <- matrix(nrow=loops, ncol=n+3)
+  # Now I need to give the matrix column names
+  colnames(eff) <- c(colnames(returns), "sd", "exp_return", "sharpe")
+  
+  # Loop through the quadratic program solver
+  for (i in seq(from = 0, to = risk_premium_upper_limit, by = risk_increment)){
+    dvec                   <- colMeans(returns) * i # This moves the solution up along the efficient frontier
+    sol                    <- solve.QP(cov_matrix, dvec = dvec, Amat = Amat, bvec = bvec, meq = meq)
+    eff[loop,"sd"]         <- sqrt(sum(sol$solution * colSums((cov_matrix * sol$solution))))
+    eff[loop,"exp_return"] <- as.numeric(sol$solution %*% colMeans(returns))
+    eff[loop,"sharpe"]     <- (eff[loop,"exp_return"] - avg_rf) / eff[loop,"sd"]
+    eff[loop,1:n]          <- sol$solution
+    loop <- loop+1
+  }
+  
+  return(as.data.frame(eff))
 }
 
-colnames(results_df) <- colnames(eff_optimal_point)
+eff <- eff_frontier(returns=returns, short = "no", max_allocation = .33, risk_premium_upper_limit = .5, risk_increment = .001)
 
-avg_results <- colMeans(results_df)
+# Plot the efficient frontier
+eff_optimal_point <- eff[eff$sharpe == max(eff$sharpe),]
 
 # Color Scheme
 ealred  <- "#7D110C"
@@ -174,7 +159,7 @@ ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 sim_vec <- seq(1, n_years, 1)
 
 # Drop unneeded columns
-optimal_weights <- as.data.frame(t(avg_results[1:n_assets]))
+optimal_weights <- as.data.frame((eff_optimal_point[1:n_assets]))
 
 # Round any weights less than 0.05% to zero
 optimal_weights <- t(apply(optimal_weights[,], 2, function(x) ifelse(x < 0.0005, 0, x)))
