@@ -16,7 +16,7 @@ bv_returns <- read_excel(paste0(importdir, "06-bullion-vault-asset-returns/asset
 # Create a function
 convert_to_real <- function(var){
   var_string <- var
-  bv_returns[, var_string] <- bv_returns[, var_string] - bv_returns[, "us_cpi"]
+  bv_returns[, var_string] <- bv_returns[, var_string] - bv_returns[, "CPI"]
   assign("bv_returns", bv_returns, envir = .GlobalEnv)
 }
 
@@ -25,7 +25,7 @@ var_list <- colnames(bv_returns)
 
 # Remove year and CPI from the looping list
 var_list <- var_list[var_list != "year"]
-var_list <- var_list[var_list != "us_cpi"] 
+var_list <- var_list[var_list != "CPI"] 
 
 # Loop through the list of vars to convert the returns to real returns
 for (x in var_list){
@@ -33,7 +33,7 @@ for (x in var_list){
 }
 
 # Remove CPI as it is not an asset
-bv_returns[, "us_cpi"] <- NULL
+bv_returns[, "CPI"] <- NULL
 
 # Save down the data
 saveRDS(bv_returns, paste0(localdir, "06-bv-returns.Rds"))
