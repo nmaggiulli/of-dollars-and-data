@@ -29,7 +29,7 @@ library(fTrading)
 full_bv_returns <- readRDS(paste0(localdir, "06-bv-returns.Rds"))
 
 # Define the number of simulations (this will be used later)
-n_simulations <- 10000
+n_simulations <- 1000
 
 # This seed allows us to have reproducible random sampling
 set.seed(12345)    
@@ -192,71 +192,73 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
     return(as.data.frame(eff))
   }
   
+  # Set the maximum allocation for any one asset
+  # 1 means that any one asset can comprise the entire portfolio
   max_alloc <- 1
   
   eff <- eff_frontier(returns=returns, short = "no", max_allocation = max_alloc, risk_premium_upper_limit = 0.5, risk_increment = .001)
 
 ############################### Create Additional Portfolios ###############################   
 
-# Initialize all weights as empty data frames
-stock_bond_50_50 <- data.frame(matrix(nrow = 1, ncol = 0))
-equal_weighted   <- data.frame(matrix(nrow = 1, ncol = 0))
-all_stock        <- data.frame(matrix(nrow = 1, ncol = 0))
-all_gold         <- data.frame(matrix(nrow = 1, ncol = 0))
+  # Initialize all weights as empty data frames
+  stock_bond_50_50 <- data.frame(matrix(nrow = 1, ncol = 0))
+  equal_weighted   <- data.frame(matrix(nrow = 1, ncol = 0))
+  all_stock        <- data.frame(matrix(nrow = 1, ncol = 0))
+  all_gold         <- data.frame(matrix(nrow = 1, ncol = 0))
+    
+  # Stock + Bond 50-50  
+  for (j in colnames(eff[1:n_assets])){
+    if (j == "S&P 500" | j == "Treasury 10yr"){
+      stock_bond_50_50[j] <- 0.5
+    } else{
+      stock_bond_50_50[j] <- 0
+    }
+  }
+    
+  # Equal Weighted 
+  for (j in colnames(eff[1:n_assets])){
+    equal_weighted[j] <- 1/n_assets
+  }
   
-# Stock + Bond 50-50  
-for (j in colnames(eff[1:n_assets])){
-  if (j == "S&P 500" | j == "Treasury 10yr"){
-    stock_bond_50_50[j] <- 0.5
-  } else{
-    stock_bond_50_50[j] <- 0
-  }
-}
+  # All U.S. Stock  
+  for (j in colnames(eff[1:n_assets])){
+    if (j == "S&P 500"){
+      all_stock[j] <- 1
+    } else{
+      all_stock[j] <- 0
+    }
+  }  
   
-# Equal Weighted 
-for (j in colnames(eff[1:n_assets])){
-  equal_weighted[j] <- 1/n_assets
-}
-
-# All U.S. Stock  
-for (j in colnames(eff[1:n_assets])){
-  if (j == "S&P 500"){
-    all_stock[j] <- 1
-  } else{
-    all_stock[j] <- 0
+  # All Gold  
+  for (j in colnames(eff[1:n_assets])){
+    if (j == "Gold"){
+      all_gold[j] <- 1
+    } else{
+      all_gold[j] <- 0
+    }
+  }  
+  
+  find_ret_sd_sharpe <- function(df){
+    cov_matrix <- cov(returns)
+    utc <- upper.tri(cov_matrix)
+    wt_var <- sum(diag(cov_matrix) * df^2)
+    wt_cov <- sum(df[row(cov_matrix)[utc]] *
+                    df[col(cov_matrix)[utc]] *
+                    cov_matrix[utc])
+    df$sd <- sqrt(wt_var + 2 * wt_cov)
+    df$exp_return <- as.numeric(sum(t(df[1:n_assets]) * colMeans(returns)))
+    df$sharpe     <- (df$exp_return - avg_rf) / df$sd
+    return(df)
   }
-}  
-
-# All Gold  
-for (j in colnames(eff[1:n_assets])){
-  if (j == "Gold"){
-    all_gold[j] <- 1
-  } else{
-    all_gold[j] <- 0
-  }
-}  
-
-find_ret_sd_sharpe <- function(df){
-  cov_matrix <- cov(returns)
-  utc <- upper.tri(cov_matrix)
-  wt_var <- sum(diag(cov_matrix) * df^2)
-  wt_cov <- sum(df[row(cov_matrix)[utc]] *
-                  df[col(cov_matrix)[utc]] *
-                  cov_matrix[utc])
-  df$sd <- sqrt(wt_var + 2 * wt_cov)
-  df$exp_return <- as.numeric(sum(t(df[1:n_assets]) * colMeans(returns)))
-  df$sharpe     <- (df$exp_return - avg_rf) / df$sd
-  return(df)
-}
-
-stock_bond_50_50 <- find_ret_sd_sharpe(stock_bond_50_50)
-equal_weighted   <- find_ret_sd_sharpe(equal_weighted)
-all_stock        <- find_ret_sd_sharpe(all_stock)
-all_gold         <- find_ret_sd_sharpe(all_gold)
+  
+  stock_bond_50_50 <- find_ret_sd_sharpe(stock_bond_50_50)
+  equal_weighted   <- find_ret_sd_sharpe(equal_weighted)
+  all_stock        <- find_ret_sd_sharpe(all_stock)
+  all_gold         <- find_ret_sd_sharpe(all_gold)
   
 ############################### Efficient Frontier Plot ###############################    
   # Plot the efficient frontier
-  eff_optimal_point <- eff[eff$sharpe == max(eff$sharpe),]
+  optimal <- eff[eff$sharpe == max(eff$sharpe),]
   
   # Color Scheme
   ealred  <- "#7D110C"
@@ -265,24 +267,24 @@ all_gold         <- find_ret_sd_sharpe(all_gold)
   ealdark  <- "#423C30"
   plot <- ggplot(eff, aes(x = sd, y = exp_return)) + geom_point(alpha = .1, color = ealdark) +
     # Add optimal point
-    geom_point(data = eff_optimal_point, aes(x = sd, y = exp_return), color = ealred, size = 5) +
-    geom_text_repel(data = eff_optimal_point, label = "Optimal Portfolio", family = "my_font", size = 3.5, nudge_y = 0.02, max.iter = 5000) +
+    geom_point(data = optimal, aes(x = sd, y = exp_return), color = ealred, size = 5) +
+    geom_text_repel(data = optimal, label = "Optimal Portfolio", family = "my_font", size = 3.5, nudge_x = -0.02, nudge_y = 0.009, max.iter = 5000) +
     # Add S&P 500 only
     geom_point(data = all_stock, aes(x = sd, y = exp_return), color = "green", size = 2) +
-    geom_text_repel(data = all_stock, label = "S&P 500 Only", family = "my_font", size = 3, max.iter = 5000) +
+    geom_text_repel(data = all_stock, label = "S&P 500 Only", family = "my_font", size = 3, nudge_y = -0.004, max.iter = 5000) +
     # Add 50-50 portfolio
     geom_point(data = stock_bond_50_50, aes(x = sd, y = exp_return), color = "blue", size = 2) +
-    geom_text_repel(data = stock_bond_50_50, label = "50-50 Stock/Bond", family = "my_font", size = 3, nudge_x = 0.02, max.iter = 5000) +
+    geom_text_repel(data = stock_bond_50_50, label = "50-50 Stock/Bond", family = "my_font", size = 3, nudge_x = 0.03, max.iter = 5000) +
     # Add all Gold
     geom_point(data = all_gold, aes(x = sd, y = exp_return), color = "#FFD700", size = 2) +
-    geom_text_repel(data = all_gold, label = "Gold Only", family = "my_font", size = 3, max.iter = 5000) +
+    geom_text_repel(data = all_gold, label = "Gold Only", family = "my_font", size = 3, nudge_x = -0.015, max.iter = 5000) +
     # Add Equal weighted portfolio
     geom_point(data = equal_weighted, aes(x = sd, y = exp_return), color = "purple", size = 2) +
-    geom_text_repel(data = equal_weighted, label = "Equal Weighted", family = "my_font", size = 3, nudge_y = -0.005, nudge_x = 0.002, max.iter = 5000) +
+    geom_text_repel(data = equal_weighted, label = "Equal Weighted", family = "my_font", size = 3, nudge_y = -0.004, nudge_x = 0.002, max.iter = 5000) +
     ggtitle(paste0("Efficient Frontier and Optimal Portfolio\n")) + labs(x = "Risk (standard deviation of portfolio variance)", y ="Real Return") +
     of_dollars_and_data_theme +
     scale_x_continuous(label = percent) +
-    scale_y_continuous(label = percent, limits = c(0.02, .12), breaks = seq(0.02, 0.12, 0.02))
+    scale_y_continuous(label = percent, limits = c(0.02, .10), breaks = seq(0.02, 0.10, 0.02))
   
   # Set the file_path based on the function input 
   file_path = paste0(exportdir, "06-simulate-bv-returns/bv-efficient-frontier.jpeg")
@@ -307,84 +309,136 @@ all_gold         <- find_ret_sd_sharpe(all_gold)
   # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
-############################### Simulate the Value Paths ###############################    
-  # Simulate the portfolio value
-  # Create a simulation vector
-  sim_vec <- seq(1, n_years, 1)
-  
-  # Drop unneeded columns
-  optimal_weights <- as.data.frame((eff_optimal_point[1:n_assets]))
-  
-  # Round any weights less than 0.05% to zero
-  optimal_weights <- t(apply(optimal_weights[,], 2, function(x) ifelse(x < 0.0005, 0, x)))
-  
-  # Initialize all matrices used for returns and value paths
-  sampled_years_matrix    <- matrix(NA, nrow = n_simulations, ncol = n_years)
-  sampled_returns         <- matrix(NA, nrow = n_simulations, ncol = n_assets)
-  portfolio_return_matrix <- matrix(NA, nrow = n_simulations, ncol = n_years)
-  value_matrix            <- matrix(NA, nrow = n_simulations, ncol = n_years)
+############################### Simulate the Value Paths ###############################  
   
   # Setup a yearly cash addition into the portfolio.  
   # This cash addition happens at the beginning of each return year
   yearly_cash_add <- 5000 
   
-  returns_for_simulation <- full_bv_returns[, -which(names(full_bv_returns) %in% c("year", "tbill_3m"))]
+  # Create a simulation vector
+  sim_vec <- seq(1, n_years, 1)
+  
+  # Initialize a matrix for the sampled years
+  sampled_years_matrix    <- matrix(NA, nrow = n_simulations, ncol = n_years)
   
   # Sample returns only once if you want to do sensitivities
   for (i in 1:n_years){
     sampled_years_matrix[, i]    <- sample(sim_vec, n_simulations, replace = TRUE)
   }
+
+  # Make a function to simulate the value path of the portfolio
+  simulate_value_paths <- function(weights){
+    wts <- get(weights)
+    
+    # Drop unneeded columns
+    optimal_weights <- as.data.frame((wts[1:n_assets]))
+
+    # Round any weights less than 0.05% to zero
+    optimal_weights <- t(apply(optimal_weights[,], 2, function(x) ifelse(x < 0.0005, 0, x)))
+    
+    # Initialize all matrices used for returns and value paths
+    sampled_returns         <- matrix(NA, nrow = n_simulations, ncol = n_assets)
+    portfolio_return_matrix <- matrix(NA, nrow = n_simulations, ncol = n_years)
+    value_matrix            <- matrix(NA, nrow = n_simulations, ncol = n_years)
+    
+    returns_for_simulation <- full_bv_returns[, -which(names(full_bv_returns) %in% c("year", "Tbill 3m"))]
+    
+    # Simulate the value paths now that you have the sampled return year indices
+    # Make sure to grab the whole year so the correlations are preserved
+    for (i in 1:n_years){
+      for (j in 1:n_assets){
+        sampled_returns[, j] <- 1 + unlist(returns_for_simulation[sampled_years_matrix[,i], j])
+      }
+      portfolio_return_matrix[, i] <- rowSums(t(as.vector(optimal_weights) * t(sampled_returns)))
+      if (i == 1){
+        value_matrix[, i] <- yearly_cash_add * (portfolio_return_matrix[ , i])
+      } else {
+        value_matrix[, i] <- (value_matrix[, i - 1] + yearly_cash_add) * (portfolio_return_matrix[, i])
+      }
+    }
+    return(value_matrix)
+  }
   
-  # Simulate the value paths now that you have the sampled return year indices
-  # Make sure to grab the whole year so the correlations are preserved
-  for (i in 1:n_years){
-    for (j in 1:n_assets){
-      sampled_returns[, j] <- 1 + unlist(returns_for_simulation[sampled_years_matrix[,i], j])
+  # Create a portfolio list to loop through
+  portfolio_list <- c("optimal", 
+                      "all_stock", 
+                      "stock_bond_50_50", 
+                      "equal_weighted",
+                      "all_gold")
+  
+  # Simulate the value paths for all portfolios in list
+  for (n in portfolio_list){
+    vp <- simulate_value_paths(n)
+    assign(paste0("vp_", n), vp, envir = .GlobalEnv)
+  }
+  
+  ############################### Plot the Drawdowns ###############################  
+  
+  # Create function to calculate the drawdown path
+  calc_drawdown <- function(vp){
+    dd <- rep(0, length(vp))
+    for (i in 1:(length(vp) - 1)){
+      if (vp[, i] > vp[, (i+1)]){
+        dd[i] <- vp[, i] - vp[, (i+1)]
+      }
     }
-    portfolio_return_matrix[, i] <- rowSums(t(as.vector(optimal_weights) * t(sampled_returns)))
-    if (i == 1){
-      value_matrix[, i] <- yearly_cash_add * (portfolio_return_matrix[ , i])
-    } else {
-      value_matrix[, i] <- (value_matrix[, i - 1] + yearly_cash_add) * (portfolio_return_matrix[, i])
-    }
+    return(dd)
+  }
+  
+  get_drawdowns <- function(value_matrix){
+    # Define the number of periods for plotting
+    periods <- seq(1, n_years)
+    
+    value_matrix <- as.data.frame(get(value_matrix))
+    
+    value_matrix$final_value <- value_matrix[, n_years]
+    
+    # Order the value path and select the median final value
+    value_matrix <- arrange(value_matrix, final_value)
+    
+    # Filter to the median value in the value matrix                 
+    for_drawdown <- value_matrix[ (n_simulations / 2),1:n_years]
+    
+    # Get the drawdown series and return it
+    dd <- calc_drawdown(for_drawdown)
+    return(dd)
+  }
+    
+  for (n in portfolio_list){
+    dd <- get_drawdowns(paste0("vp_", n))
+    assign(paste0("dd_", n), dd, envir = .GlobalEnv)
+  }
+    
+    # Set the file_path based on the function input 
+    file_path = paste0(exportdir, "06-simulate-bv-returns/bv-drawdowns.jpeg")
+    
+    top_title <- "Drawdown"
+      
+    # Plot the fund capital over client capital
+    # Each colored line is its own simulation
+    plot <- ggplot()
+    
+    # Turn plot into a gtable for adding text grobs
+    my_gtable   <- ggplot_gtable(ggplot_build(plot))
+    
+    source_string <- "Source:  Simulated returns, BullionVault (OfDollarsAndData.com)"
+    note_string <- paste0("Note:  Assumes annual investment of $", formatC(yearly_cash_add, format="d", big.mark=','),".") 
+    
+    # Make the source and note text grobs
+    source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
+                            gp =gpar(fontfamily = "my_font", fontsize = 8))
+    note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+                            gp =gpar(fontfamily = "my_font", fontsize = 8))
+    
+    # Add the text grobs to the bototm of the gtable
+    my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
+    my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
+    
+    # Save the plot  
+    ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
   }
 
-############################### Plot the Drawdowns ###############################  
-  # Define the number of periods for plotting
-  periods <- seq(1, n_years)
   
-  # Plot a subset of the simulations to see the differences that certain weightings have.
-  to_plot <- as.data.frame(t(value_matrix))
-  to_plot <- as.data.frame(cbind(rowMeans(to_plot), periods))
-  
-  # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "06-simulate-bv-returns/bv-drawdowns.jpeg")
-  
-  top_title <- ""
-    
-  # Plot the fund capital over client capital
-  # Each colored line is its own simulation
-  plot <- ggplot()
-  
-  # Turn plot into a gtable for adding text grobs
-  my_gtable   <- ggplot_gtable(ggplot_build(plot))
-  
-  source_string <- "Source:  Simulated returns, BullionVault (OfDollarsAndData.com)"
-  note_string <- paste0("Note:  Assumes annual investment of $", formatC(yearly_cash_add, format="d", big.mark=','),".") 
-  
-  # Make the source and note text grobs
-  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  
-  # Add the text grobs to the bototm of the gtable
-  my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
-  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
-  
-  # Save the plot  
-  ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
-
 ############################### Calculate Useful Stats ###############################    
   # Calculate end values and invested capital
   total_invested_capital <- n_years * yearly_cash_add
