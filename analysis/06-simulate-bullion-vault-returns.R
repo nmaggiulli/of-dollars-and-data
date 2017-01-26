@@ -370,16 +370,20 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
   for (n in portfolio_list){
     vp <- simulate_value_paths(n)
     assign(paste0("vp_", n), vp, envir = .GlobalEnv)
+    rm(vp)
   }
   
   ############################### Plot the Drawdowns ###############################  
   
   # Create function to calculate the drawdown path
-  calc_drawdown <- function(vp){
-    dd <- rep(0, length(vp))
+  drawdown_path <- function(vp){
+    dd      <- rep(0, length(vp))
+    loc_max <- 0
     for (i in 1:(length(vp) - 1)){
-      if (vp[, i] > vp[, (i+1)]){
-        dd[i] <- vp[, i] - vp[, (i+1)]
+      if (vp[, i] < loc_max & i != 1){
+        dd[i] <- vp[, i] - loc_max
+      } else{
+        loc_max <- vp[, i]
       }
     }
     return(dd)
@@ -400,23 +404,59 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
     for_drawdown <- value_matrix[ (n_simulations / 2),1:n_years]
     
     # Get the drawdown series and return it
-    dd <- calc_drawdown(for_drawdown)
+    dd <- drawdown_path(for_drawdown)
     return(dd)
   }
-    
+  
+  # Get the drawdowns in the value paths for all portfolios
   for (n in portfolio_list){
-    dd <- get_drawdowns(paste0("vp_", n))
-    assign(paste0("dd_", n), dd, envir = .GlobalEnv)
+    dd              <- get_drawdowns(paste0("vp_", n))
+    df              <- as.data.frame(dd)
+    df["year"]      <- seq(1, n_years, 1)
+    df["value"]     <- df["dd"]
+    df["portfolio"] <- n
+    df["dd"]        <- NULL
+    assign(paste0("dd_", n), df, envir = .GlobalEnv)
+    rm(df)
+  }
+  
+  # Stack the drawdowns
+  dd_stack <- rbind(dd_optimal, 
+                    dd_all_stock,
+                    dd_stock_bond_50_50,
+                    dd_equal_weighted,
+                    dd_all_gold)
+  
+  for (i in 1:nrow(dd_stack)){
+    if (dd_stack[i, "portfolio"] == "optimal"){
+      dd_stack[i, "portfolio"] <- "Optimal"
+    } else if (dd_stack[i, "portfolio"] == "all_stock"){
+      dd_stack[i, "portfolio"] <- "S&P 500 Only"
+    } else if (dd_stack[i, "portfolio"] == "stock_bond_50_50"){
+      dd_stack[i, "portfolio"] <- "50-50 Stock/Bond"
+    } else if (dd_stack[i, "portfolio"] == "equal_weighted"){
+      dd_stack[i, "portfolio"] <- "Equal Weighted"
+    } else if (dd_stack[i, "portfolio"] == "all_gold"){
+      dd_stack[i, "portfolio"] <- "Gold Only"
+    }
   }
     
     # Set the file_path based on the function input 
-    file_path = paste0(exportdir, "06-simulate-bv-returns/bv-drawdowns.jpeg")
+    file_path = paste0(exportdir, "06-simulate-bv-returns/bv-drawdowns-less-risky.jpeg")
     
-    top_title <- "Drawdown"
+    top_title <- "Drawdowns by Portfolio"
       
-    # Plot the fund capital over client capital
-    # Each colored line is its own simulation
-    plot <- ggplot()
+    # Limit to the less risky portfolios first
+    dd_plot <- dplyr::filter(dd_stack, portfolio != "S&P 500 Only" & portfolio != "Gold Only")
+    
+    plot <- ggplot(dd_plot, aes(x = year, y = value)) +
+      geom_area(stat = "identity", fill = "red") +
+      facet_wrap(~portfolio) +
+      ggtitle(top_title) +
+      guides(fill = FALSE) +
+      of_dollars_and_data_theme +
+      scale_y_continuous(label = dollar) +
+      labs(x = "Year", y = "Portfolio Value Lost")
     
     # Turn plot into a gtable for adding text grobs
     my_gtable   <- ggplot_gtable(ggplot_build(plot))
@@ -436,60 +476,97 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
     
     # Save the plot  
     ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
-  }
+    
+    # Set the file_path based on the function input 
+    file_path = paste0(exportdir, "06-simulate-bv-returns/bv-drawdowns-more-risky.jpeg")
+    
+    top_title <- "Drawdowns by Portfolio"
+    
+    # Limit to the less risky portfolios first
+    dd_plot <- dplyr::filter(dd_stack, portfolio != "Equal Weighted" & portfolio != "50-50 Stock/Bond")
+    
+    plot <- ggplot(dd_plot, aes(x = year, y = value)) +
+      geom_area(stat = "identity", fill = "red") +
+      facet_wrap(~portfolio) +
+      ggtitle(top_title) +
+      guides(fill = FALSE) +
+      of_dollars_and_data_theme +
+      scale_y_continuous(label = dollar) +
+      labs(x = "Year", y = "Portfolio Value Lost")
+    
+    # Turn plot into a gtable for adding text grobs
+    my_gtable   <- ggplot_gtable(ggplot_build(plot))
+    
+    source_string <- "Source:  Simulated returns, BullionVault (OfDollarsAndData.com)"
+    note_string <- paste0("Note:  Median simulation based on final portfolio value shown.  Assumes annual investment of $", formatC(yearly_cash_add, format="d", big.mark=','),".") 
+    
+    # Make the source and note text grobs
+    source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
+                            gp =gpar(fontfamily = "my_font", fontsize = 8))
+    note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+                            gp =gpar(fontfamily = "my_font", fontsize = 8))
+    
+    # Add the text grobs to the bototm of the gtable
+    my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
+    my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
+    
+    # Save the plot  
+    ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
 
   
-############################### Calculate Useful Stats ###############################    
+############################### Calculate Useful Stats ###############################  
+    
+  # Initialize results data.frame and a counter for the rows
+  results_df <- data.frame(matrix(nrow = length(portfolio_list), ncol = 0))
+  i <- 1
+    
   # Calculate end values and invested capital
-  total_invested_capital <- n_years * yearly_cash_add
-  max_end_value <- max(value_matrix[, n_years])
-  min_end_value <- min(value_matrix[, n_years])
-  median_end_value <- quantile(value_matrix[, n_years], probs = 0.5)
-  
-  # Caluclate the maximum drawdown for each simulation
-  max_drawdown <- 0
-  max_drawdown_pct_matrix      <- matrix(NA, nrow = n_simulations, ncol = 1)
-  max_drawdown_dollar_matrix   <- matrix(NA, nrow = n_simulations, ncol = 1)
-  
-  for (x in 1:n_simulations){
-    drawdown <- maxDrawDown(value_matrix[x,])$maxdrawdown
-    from <- maxDrawDown(value_matrix[x,])$from
-    to <- maxDrawDown(value_matrix[x,])$to
-    if (drawdown > 0){
-      max_drawdown_pct_matrix[x, 1]    <- drawdown / value_matrix[x, from]
-      max_drawdown_dollar_matrix[x, 1] <- drawdown
-    } else{
-      max_drawdown_pct_matrix[x, 1]    <- 0
-      max_drawdown_dollar_matrix[x, 1] <- drawdown
+  for (n in portfolio_list){
+    value_matrix                            <- get(paste0("vp_",n))
+    results_df[i, "portfolio"]              <- n
+    results_df[i, "total_invested_capital"] <- n_years * yearly_cash_add
+    results_df[i, "min_end_value"]          <- min(value_matrix[, n_years])
+    results_df[i, "median_end_value"]       <- quantile(value_matrix[, n_years], probs = 0.5)
+    results_df[i, "max_end_value"]          <- max(value_matrix[, n_years])
+    
+    # Caluclate the maximum drawdown for each simulation
+    max_drawdown <- 0
+    max_drawdown_pct_matrix      <- matrix(NA, nrow = n_simulations, ncol = 1)
+    max_drawdown_dollar_matrix   <- matrix(NA, nrow = n_simulations, ncol = 1)
+    
+    for (x in 1:n_simulations){
+      drawdown <- maxDrawDown(value_matrix[x,])$maxdrawdown
+      from     <- maxDrawDown(value_matrix[x,])$from
+      to       <- maxDrawDown(value_matrix[x,])$to
+      if (drawdown > 0){
+        max_drawdown_pct_matrix[x, 1]    <- drawdown / value_matrix[x, from]
+        max_drawdown_dollar_matrix[x, 1] <- drawdown
+      } else{
+        max_drawdown_pct_matrix[x, 1]    <- 0
+        max_drawdown_dollar_matrix[x, 1] <- drawdown
+      }
     }
+    
+    # Calculate summary statistics on the max, min, and median drawdowns
+    calculate_drawdown <- function(name){
+      results <- get("results_df")
+      type <- deparse(substitute(name))
+      matrix <- get(paste0("max_drawdown_", type, "_matrix"))
+      minname <- paste0("min_drawdown_", type)
+      medianname <- paste0("median_drawdown_", type)
+      maxname <- paste0("max_drawdown_", type)
+      results[i, minname]    <- min(matrix)
+      results[i, medianname] <- quantile(matrix, probs = 0.5)
+      results[i, maxname]    <- max(matrix)
+      print(results)
+      assign("results_df", results, envir = .GlobalEnv)
+    }
+
+    calculate_drawdown(dollar)
+    calculate_drawdown(pct)
+    i <- i + 1
   }
   
-  # Calculate summary statistics on the max, min, and median drawdowns
-  calculate_drawdown <- function(name){
-    type <- deparse(substitute(name))
-    matrix <- get(paste0("max_drawdown_", type, "_matrix"))
-    max    <- max(matrix)
-    min    <- min(matrix)
-    median <- quantile(matrix, probs = 0.5)
-    assign(paste0("max_drawdown_", type), max)
-    assign(paste0("min_drawdown_", type), min)
-    assign(paste0("median_drawdown_", type), median)
-    if (type == "pct"){
-    print(paste0("Maximum drawdown: ", max*100, "%"))
-    print(paste0("Minimum drawdown: ", min*100, "%"))
-    print(paste0("Median drawdown: ", median*100, "%"))
-    } else if (type == "dollar"){
-      print(paste0("Maximum drawdown: $", max))
-      print(paste0("Minimum drawdown: $", min))
-      print(paste0("Median drawdown: $", median))
-    }
-  }
+  write.csv(results_df, paste0(exportdir, "06-simulate-bv-returns/portfolio-stats.csv"))
+    
   
-  calculate_drawdown(pct)
-  calculate_drawdown(dollar)
-  
-  # Print other summary stats as well
-  print(paste0("Total invested capital: $", total_invested_capital))
-  print(paste0("Maximum Ending Value: $", max_end_value))
-  print(paste0("Minimum Ending Value: $", min_end_value))
-  print(paste0("Median Ending Value: $", median_end_value))
