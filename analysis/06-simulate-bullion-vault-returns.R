@@ -377,13 +377,15 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
   
   # Create function to calculate the drawdown path
   drawdown_path <- function(vp){
-    dd      <- rep(0, length(vp))
-    loc_max <- 0
-    for (i in 1:(length(vp) - 1)){
-      if (vp[, i] < loc_max & i != 1){
-        dd[i] <- vp[, i] - loc_max
-      } else{
-        loc_max <- vp[, i]
+    dd      <- matrix(0, nrow = n_simulations, ncol = n_years)
+    for (j in 1:n_simulations){
+      loc_max <- 0
+      for (i in 1:(n_years-1)){
+        if (vp[j, i] < loc_max & i != 1){
+          dd[j, i] <- vp[j, i] - loc_max
+        } else{
+          loc_max <- vp[j, i]
+        }
       }
     }
     return(dd)
@@ -401,7 +403,7 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
     value_matrix <- arrange(value_matrix, final_value)
     
     # Filter to the median value in the value matrix                 
-    for_drawdown <- value_matrix[ (n_simulations / 2),1:n_years]
+    for_drawdown <- value_matrix[ , 1:n_years]
     
     # Get the drawdown series and return it
     dd <- drawdown_path(for_drawdown)
@@ -411,11 +413,23 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
   # Get the drawdowns in the value paths for all portfolios
   for (n in portfolio_list){
     dd              <- get_drawdowns(paste0("vp_", n))
-    df              <- as.data.frame(dd)
-    df["year"]      <- seq(1, n_years, 1)
-    df["value"]     <- df["dd"]
-    df["portfolio"] <- n
-    df["dd"]        <- NULL
+    year            <- seq(1, n_years, 1)
+    df              <- cbind(as.data.frame(t(dd)), year)
+    df              <- melt(df, id.vars = "year")
+    
+    if (n == "optimal" ){
+      portfolio_name <- "Optimal"
+    } else if (n == "all_stock"){
+      portfolio_name <- "S&P 500 Only"
+    } else if (n == "stock_bond_50_50"){
+      portfolio_name <- "50-50 Stock/Bond"
+    } else if (n == "equal_weighted"){
+      portfolio_name <- "Equal Weighted"
+    } else if (n == "all_gold"){
+      portfolio_name <- "Gold Only"
+    }
+    
+    df["portfolio"] <- portfolio_name
     assign(paste0("dd_", n), df, envir = .GlobalEnv)
     rm(df)
   }
@@ -426,31 +440,17 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
                     dd_stock_bond_50_50,
                     dd_equal_weighted,
                     dd_all_gold)
-  
-  for (i in 1:nrow(dd_stack)){
-    if (dd_stack[i, "portfolio"] == "optimal"){
-      dd_stack[i, "portfolio"] <- "Optimal"
-    } else if (dd_stack[i, "portfolio"] == "all_stock"){
-      dd_stack[i, "portfolio"] <- "S&P 500 Only"
-    } else if (dd_stack[i, "portfolio"] == "stock_bond_50_50"){
-      dd_stack[i, "portfolio"] <- "50-50 Stock/Bond"
-    } else if (dd_stack[i, "portfolio"] == "equal_weighted"){
-      dd_stack[i, "portfolio"] <- "Equal Weighted"
-    } else if (dd_stack[i, "portfolio"] == "all_gold"){
-      dd_stack[i, "portfolio"] <- "Gold Only"
-    }
-  }
     
     # Set the file_path based on the function input 
     file_path = paste0(exportdir, "06-simulate-bv-returns/bv-drawdowns-less-risky.jpeg")
     
-    top_title <- "Drawdowns by Portfolio"
+    top_title <- "Maximum Portfolio Losses"
       
     # Limit to the less risky portfolios first
     dd_plot <- dplyr::filter(dd_stack, portfolio != "S&P 500 Only" & portfolio != "Gold Only")
     
     plot <- ggplot(dd_plot, aes(x = year, y = value)) +
-      geom_area(stat = "identity", fill = "red") +
+      geom_bar(stat = "identity", position = "dodge", fill = "red", alpha = 0.2) +
       facet_wrap(~portfolio) +
       ggtitle(top_title) +
       guides(fill = FALSE) +
@@ -462,7 +462,7 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
     my_gtable   <- ggplot_gtable(ggplot_build(plot))
     
     source_string <- "Source:  Simulated returns, BullionVault (OfDollarsAndData.com)"
-    note_string <- paste0("Note:  Assumes annual investment of $", formatC(yearly_cash_add, format="d", big.mark=','),".") 
+    note_string <- paste0("Note:  Assumes annual investment of $", formatC(yearly_cash_add, format="d", big.mark=',')," and annual rebalancing of the portfolio.") 
     
     # Make the source and note text grobs
     source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
@@ -480,13 +480,13 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
     # Set the file_path based on the function input 
     file_path = paste0(exportdir, "06-simulate-bv-returns/bv-drawdowns-more-risky.jpeg")
     
-    top_title <- "Drawdowns by Portfolio"
+    top_title <- "The Optimal Portfolio Has Far Less Risk\n For A Similar Level of Return"
     
     # Limit to the less risky portfolios first
     dd_plot <- dplyr::filter(dd_stack, portfolio != "Equal Weighted" & portfolio != "50-50 Stock/Bond")
     
     plot <- ggplot(dd_plot, aes(x = year, y = value)) +
-      geom_area(stat = "identity", fill = "red") +
+      geom_bar(stat = "identity", position = "dodge", fill = "red", alpha = 0.2) +
       facet_wrap(~portfolio) +
       ggtitle(top_title) +
       guides(fill = FALSE) +
@@ -496,9 +496,6 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
     
     # Turn plot into a gtable for adding text grobs
     my_gtable   <- ggplot_gtable(ggplot_build(plot))
-    
-    source_string <- "Source:  Simulated returns, BullionVault (OfDollarsAndData.com)"
-    note_string <- paste0("Note:  Median simulation based on final portfolio value shown.  Assumes annual investment of $", formatC(yearly_cash_add, format="d", big.mark=','),".") 
     
     # Make the source and note text grobs
     source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
