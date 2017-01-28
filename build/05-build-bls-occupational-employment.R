@@ -44,7 +44,7 @@ bls_oe <- mutate(bls_oe,
 # Pad the area data with leading zeroes on area_code
 area$area_code <- str_pad(area$area_code, 7, pad = "0")
 
-# Merge on the sector, measure, and class information
+# Merge on the area, areatype, industry, occupation, and datatype information
 bls_oe <- bls_oe                %>%
           left_join(areatype)   %>%
           left_join(area)       %>%

@@ -27,7 +27,7 @@ read_in_bls(industry)
 read_in_bls(occupation)
 read_in_bls(data.1.AllData)
 
-# Process area separetly because the column names that match areatype
+# Process area separately because the column names that match areatype
 area <- read.csv(paste0("https://download.bls.gov/pub/time.series/oe/oe.area"), 
                       header = TRUE, 
                       sep = "\t",
