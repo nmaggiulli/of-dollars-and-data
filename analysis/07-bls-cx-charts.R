@@ -22,6 +22,20 @@ library(ggrepel)
 # Load data fom local library
 bls_cx <- readRDS(paste0(localdir, "07-bls-cx.Rds"))
 
+read_in <- function(string){
+  temp <- readRDS(paste0(localdir, "07-bls-cx-", string, ".Rds"))
+  return(temp)
+}
+
+names <- c("item", "demographics", "characteristics", "subcategory", "category")
+
+for (i in names){
+  tmpname <- paste0(i)
+  df      <- read_in(i)
+  assign(tmpname, df, envir = .GlobalEnv)
+  rm(df)
+  rm(tmpname)
+}
 
 
 # ############################  End  ################################## #

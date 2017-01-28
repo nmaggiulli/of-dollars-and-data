@@ -76,5 +76,12 @@ bls_cx <- bls_cx                     %>%
 # Save down final build before doing analysis
 saveRDS(bls_cx, paste0(localdir, "07-bls-cx.Rds"))
 
+# Save down other built datasets for reference
+saveRDS(item,            paste0(localdir, "07-bls-cx-item.Rds"))
+saveRDS(demographics,    paste0(localdir, "07-bls-cx-demographics.Rds"))
+saveRDS(characteristics, paste0(localdir, "07-bls-cx-characteristics.Rds"))
+saveRDS(subcategory,     paste0(localdir, "07-bls-cx-subcategory.Rds"))
+saveRDS(category,        paste0(localdir, "07-bls-cx-category.Rds"))
+
 
 # ############################  End  ################################## #
