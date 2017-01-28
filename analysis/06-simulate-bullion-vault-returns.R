@@ -380,7 +380,7 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
     dd      <- matrix(0, nrow = n_simulations, ncol = n_years)
     for (j in 1:n_simulations){
       loc_max <- 0
-      for (i in 1:(n_years-1)){
+      for (i in 1:(n_years)){
         if (vp[j, i] < loc_max & i != 1){
           dd[j, i] <- vp[j, i] - loc_max
         } else{
@@ -444,13 +444,13 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
     # Set the file_path based on the function input 
     file_path = paste0(exportdir, "06-simulate-bv-returns/bv-drawdowns-less-risky.jpeg")
     
-    top_title <- "Maximum Portfolio Losses"
+    top_title <- "Maximum Portfolio Losses\n Across All Simulations"
       
     # Limit to the less risky portfolios first
     dd_plot <- dplyr::filter(dd_stack, portfolio != "S&P 500 Only" & portfolio != "Gold Only")
     
     plot <- ggplot(dd_plot, aes(x = year, y = value)) +
-      geom_bar(stat = "identity", position = "dodge", fill = "red", alpha = 0.2) +
+      geom_bar(stat = "identity", position = "dodge", fill = "red", alpha = 0.15) +
       facet_wrap(~portfolio) +
       ggtitle(top_title) +
       guides(fill = FALSE) +
@@ -483,24 +483,29 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
     top_title <- "The Optimal Portfolio Has Far Less Risk\n For A Similar Level of Return"
     
     # Limit to the less risky portfolios first
-    dd_plot <- dplyr::filter(dd_stack, portfolio != "Equal Weighted" & portfolio != "50-50 Stock/Bond")
+    dd_plot_pre <- dplyr::filter(dd_stack, portfolio != "Equal Weighted" & portfolio != "50-50 Stock/Bond")
+    
+    dd_plot <- dplyr::filter(dd_plot_pre, value > -3 * 10^6)
     
     plot <- ggplot(dd_plot, aes(x = year, y = value)) +
-      geom_bar(stat = "identity", position = "dodge", fill = "red", alpha = 0.2) +
+      geom_bar(stat = "identity", position = "dodge", fill = "red", alpha = 0.15) +
       facet_wrap(~portfolio) +
       ggtitle(top_title) +
       guides(fill = FALSE) +
       of_dollars_and_data_theme +
       scale_y_continuous(label = dollar) +
       labs(x = "Year", y = "Portfolio Value Lost")
+      
     
     # Turn plot into a gtable for adding text grobs
     my_gtable   <- ggplot_gtable(ggplot_build(plot))
     
+    new_note <- paste0(note_string, "\n   ",nrow(dd_plot_pre) - nrow(dd_plot)," larger drawdowns from the S&P and Gold portfolios were removed for visual clarity.")
+    
     # Make the source and note text grobs
     source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
                             gp =gpar(fontfamily = "my_font", fontsize = 8))
-    note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+    note_grob   <- textGrob(new_note, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.2, "inches"),
                             gp =gpar(fontfamily = "my_font", fontsize = 8))
     
     # Add the text grobs to the bototm of the gtable
@@ -555,7 +560,6 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
       results[i, minname]    <- min(matrix)
       results[i, medianname] <- quantile(matrix, probs = 0.5)
       results[i, maxname]    <- max(matrix)
-      print(results)
       assign("results_df", results, envir = .GlobalEnv)
     }
 
@@ -565,5 +569,3 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
   }
   
   write.csv(results_df, paste0(exportdir, "06-simulate-bv-returns/portfolio-stats.csv"))
-    
-  
