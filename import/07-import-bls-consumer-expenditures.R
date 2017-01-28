@@ -16,7 +16,7 @@ read_in_bls <- function(string){
   name      <- deparse(substitute(string))
   temp_name <- read.csv(paste0("https://download.bls.gov/pub/time.series/cx/cx.", name), 
                              header = TRUE, 
-                             sep = "\t")
+                             sep = "\t", row.names = NULL)
   
   saveRDS(temp_name, paste0(importdir, "07-bls-consumer-expenditures/bls_cx_", name, ".Rds"))
 }
@@ -26,7 +26,6 @@ read_in_bls(data.1.AllData)
 read_in_bls(category)
 read_in_bls(demographics)
 read_in_bls(subcategory)
-
 read_in_bls(characteristics)
 read_in_bls(item)
 
