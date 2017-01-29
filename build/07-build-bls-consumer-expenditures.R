@@ -71,7 +71,8 @@ bls_cx <- bls_cx                     %>%
           left_join(category)        %>%
             select(series_id, year, value, footnote_codes, item_name,
                    demographics_name, characteristics_name,
-                   subcategory_name, category_name)
+                   subcategory_name, category_name,
+                   item_code, characteristics_code, demographics_code)
 
 # Save down final build before doing analysis
 saveRDS(bls_cx, paste0(localdir, "07-bls-cx.Rds"))
