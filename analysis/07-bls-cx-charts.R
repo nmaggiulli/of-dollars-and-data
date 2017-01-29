@@ -63,8 +63,8 @@ for (i in 1:nrow(loop_list)){
                         value, 
                         label = characteristics_name, 
                         family = "my_font"), 
-                    size = 3)+
-    scale_color_discrete(guide=FALSE) +
+                    size = 3) +
+    scale_color_discrete(guide = FALSE) +
     scale_y_continuous(label = dollar) +
     ggtitle(paste0(loop_list[i, 1], "\n", loop_list[i, 2]))  +
     of_dollars_and_data_theme +
