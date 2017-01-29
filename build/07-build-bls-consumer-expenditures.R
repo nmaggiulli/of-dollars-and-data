@@ -71,7 +71,7 @@ bls_cx <- bls_cx                     %>%
           left_join(category)        %>%
             select(series_id, year, value, footnote_codes, item_name,
                    demographics_name, characteristics_name,
-                   subcategory_name, category_name,
+                   subcategory_name, category_name, subcategory_code,
                    item_code, characteristics_code, demographics_code)
 
 # Save down final build before doing analysis
