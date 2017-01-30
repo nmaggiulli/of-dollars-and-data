@@ -65,34 +65,35 @@ bls_cx_expenditures <-  bls_cx_expenditures %>%
                             left_join(bls_cx_income)      %>%
                             mutate(share = value / income) %>%
                             filter(item_name != "Total average annual expenditures")
-  
-# Create a list for looping
-loop_list <- unique(select(bls_cx_expenditures, item_name, demographics_name))
+ 
+bls_cx_to_plot <- filter(bls_cx_expenditures, item_name %in% 
+                           c("Food at home",
+                             "Electricity",
+                             "Gasoline and motor oil",
+                             "Health insurance",
+                             "Rented dwellings",
+                             "Vehicle insurance"
+                           )
+                         )
+
+loop_list <- unique(select(bls_cx_to_plot,characteristics_name))
 
 for (i in 1:nrow(loop_list)){
-  to_plot              <- filter(bls_cx_expenditures, item_name == loop_list[i, 1], 
-                                 demographics_name == loop_list[i, 2])
-  last_year            <- max(to_plot$year)
-  item_code            <- unique(to_plot$item_code)
-  demographics_code    <- unique(to_plot$demographics_code)
+  to_plot <- filter(bls_cx_to_plot, characteristics_name == loop_list[i, 1])
+  last_year <- max(to_plot$year)
   
   # Set the file_path 
-  file_path = paste0(exportdir, "07-bls-consumer-expenditures/", item_code, "-", demographics_code, ".jpeg")
+  file_path = paste0(exportdir, "07-bls-consumer-expenditures/", loop_list[i, 1], ".jpeg")
   
   # Plot the time trends
-  plot <- ggplot(to_plot, aes(x = year, y = share, col = characteristics_name))  +
-    geom_line() +
-    geom_text_repel(data = filter(to_plot, year == last_year),
-                    aes(year, 
-                        share, 
-                        label = characteristics_name, 
-                        family = "my_font"), 
-                    size = 3) +
+  plot <- ggplot(to_plot, aes(x = year, y = share, col = item_name, fill = item_name))  +
+    geom_area() +
     scale_color_discrete(guide = FALSE) +
+    scale_fill_discrete(guide = FALSE) +
     scale_y_continuous(label = percent) +
-    ggtitle(paste0(loop_list[i, 1], "\n", loop_list[i, 2]))  +
+    ggtitle(paste0("Key Expenditures Share of After-Tax Income\n", loop_list[i, 1]))  +
     of_dollars_and_data_theme +
-    labs(x = "Year" , y = "Share of Total After-Tax Income (%)")
+    labs(x = "Year" , y = "Share of After-Tax Income")
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
@@ -111,10 +112,11 @@ for (i in 1:nrow(loop_list)){
   my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
   
   # Save the plot  
-  ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
+  ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-# Now plot Income minus Total Average Expenses
+
+########################### Now plot Income minus Total Average Expenses ######################
   to_plot <- bls_cx_income %>%
                     left_join(bls_cx_tot_avg_exp) %>%
                     mutate(inc_minus_exp = income - year_avg_exp)
