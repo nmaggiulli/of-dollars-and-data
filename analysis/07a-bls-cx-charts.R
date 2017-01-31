@@ -39,14 +39,22 @@ for (i in names){
 }
 
 # Filter main cx data
-bls_cx_filtered <- filter(bls_cx, 
+bls_cx_expenditures <- filter(bls_cx, 
                           category_name == "Expenditures")
 
+bls_cx_income <- filter(bls_cx, subcategory_name == "Income after taxes") %>%
+  mutate(income = value) %>%
+  select(year, demographics_name, characteristics_name, income)
+
+bls_cx_expenditures <-  bls_cx_expenditures %>%
+  inner_join(bls_cx_income)      %>%
+  mutate(share = value / income)
+
 # Create a list for looping
-loop_list <- unique(select(bls_cx_filtered, item_name, demographics_name))
+loop_list <- unique(select(bls_cx_expenditures, item_name, demographics_name))
 
 for (i in 1:nrow(loop_list)){
-  to_plot              <- filter(bls_cx_filtered, item_name == loop_list[i, 1], 
+  to_plot              <- filter(bls_cx_expenditures, item_name == loop_list[i, 1], 
                                  demographics_name == loop_list[i, 2])
   last_year            <- max(to_plot$year)
   item_code            <- unique(to_plot$item_code)
@@ -56,19 +64,19 @@ for (i in 1:nrow(loop_list)){
   file_path = paste0(exportdir, "07-bls-consumer-expenditures/", item_code, "-", demographics_code, ".jpeg")
   
   # Plot the time trends
-  plot <- ggplot(to_plot, aes(x = year, y = value, col = characteristics_name))  +
+  plot <- ggplot(to_plot, aes(x = year, y = share, col = characteristics_name))  +
     geom_line() +
     geom_text_repel(data = filter(to_plot, year == last_year),
                     aes(year, 
-                        value, 
+                        share, 
                         label = characteristics_name, 
                         family = "my_font"), 
                     size = 3)+
     scale_color_discrete(guide=FALSE) +
-    scale_y_continuous(label = dollar) +
+    scale_y_continuous(label = percent) +
     ggtitle(paste0(loop_list[i, 1], "\n", loop_list[i, 2]))  +
     of_dollars_and_data_theme +
-    labs(x = "Year" , y = "Annual Expenditure")
+    labs(x = "Year" , y = "Annual Share")
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
