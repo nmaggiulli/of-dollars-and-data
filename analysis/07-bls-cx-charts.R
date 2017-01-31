@@ -38,12 +38,18 @@ for (i in names){
   rm(tmpname)
 }
 
+max_year <- max(bls_cx$year)
+
+inc_characteristics_list <- c("Lowest 20 percent income quintile",
+                              "Second 20 percent income quintile",
+                              "Third 20 percent income quintile", 
+                              "Fourth 20 percent income quintile",
+                              "Highest 20 percent income quintile")
+
 # Filter main cx data
 bls_cx_expenditures <- filter(bls_cx, category_name == "Expenditures",
                               demographics_name == "Quintiles of income before taxes",
-                              characteristics_name %in% c("Third 20 percent income quintile", 
-                                                          "Lowest 20 percent income quintile",
-                                                          "Highest 20 percent income quintile")
+                              characteristics_name %in% inc_characteristics_list
                               )
 
 bls_cx_tot_avg_exp <- filter(bls_cx_expenditures,
@@ -53,12 +59,13 @@ bls_cx_tot_avg_exp <- filter(bls_cx_expenditures,
 
 bls_cx_income <- filter(bls_cx, subcategory_name == "Income after taxes",
                         demographics_name == "Quintiles of income before taxes",
-                        characteristics_name %in% c("Third 20 percent income quintile", 
-                                                    "Lowest 20 percent income quintile",
-                                                    "Highest 20 percent income quintile")
+                        characteristics_name %in% inc_characteristics_list
                         ) %>%
                         mutate(income = value) %>%
                         select(year, demographics_name, characteristics_name, income)
+
+current_inc <- filter(bls_cx_income, year == max_year)
+current_exp <- filter(bls_cx_tot_avg_exp, year == max_year)
                               
 bls_cx_expenditures <-  bls_cx_expenditures %>%
                             left_join(bls_cx_tot_avg_exp) %>% 
@@ -79,19 +86,45 @@ bls_cx_to_plot <- filter(bls_cx_expenditures, item_name %in%
 loop_list <- unique(select(bls_cx_to_plot,characteristics_name))
 
 for (i in 1:nrow(loop_list)){
-  to_plot <- filter(bls_cx_to_plot, characteristics_name == loop_list[i, 1])
-  last_year <- max(to_plot$year)
+  to_plot     <- filter(bls_cx_to_plot, characteristics_name == loop_list[i, 1])
+  last_year   <- max(to_plot$year)
+  first_year  <- min(to_plot$year)
+  last        <- filter(to_plot, year == last_year) %>%
+                    arrange(desc(item_name))
+  last$cumsum <- cumsum(last$share)
   
   # Set the file_path 
   file_path = paste0(exportdir, "07-bls-consumer-expenditures/", loop_list[i, 1], ".jpeg")
   
+  if(loop_list[i,1] == "Lowest 20 percent income quintile"){
+    top_title <- "The Lowest 20 Percent of Income\nSpend Mostly on Basic Necessities"
+  } else if (loop_list[i,1] == "Second 20 percent income quintile"){
+    top_title <- "The Next 20 Percent is Doing Better\n But Not Much"
+  } else if (loop_list[i,1] == "Highest 20 percent income quintile"){
+    top_title <- "The Top 20 Percent Spends Much Less\nOn Basic Necessities"
+  } else{
+    top_title <- paste0("Key Expenditures as a Percentage of\n After-Tax Income\n", loop_list[i,1])
+  }
+  
   # Plot the time trends
   plot <- ggplot(to_plot, aes(x = year, y = share, col = item_name, fill = item_name))  +
     geom_area() +
+    geom_text_repel(data = last,
+                    aes(year, 
+                        cumsum, 
+                        label = item_name,
+                        family = "my_font"), 
+                    size = 3,
+                    nudge_y = -0.01,
+                    nudge_x = -2,
+                    col = "black",
+                    max.iter = 5000) +
+    geom_hline(yintercept = 1) +
     scale_color_discrete(guide = FALSE) +
     scale_fill_discrete(guide = FALSE) +
-    scale_y_continuous(label = percent) +
-    ggtitle(paste0("Key Expenditures Share of After-Tax Income\n", loop_list[i, 1]))  +
+    scale_y_continuous(label = percent, limits = c(0, 1.3), breaks = seq(0, 1.3, 0.1)) +
+    scale_x_continuous(breaks = seq(first_year, last_year, 5)) +
+    ggtitle(top_title)  +
     of_dollars_and_data_theme +
     labs(x = "Year" , y = "Share of After-Tax Income")
   
@@ -99,7 +132,7 @@ for (i in 1:nrow(loop_list)){
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
   source_string <- "Source:  Bureau of Labor Statistics, Consumer Expenditures (OfDollarsAndData.com)"
-  note_string   <- "Note:  " 
+  note_string   <- "Note:  Excludes other basic necessities for clarity." 
   
   # Make the source and note text grobs
   source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
@@ -129,22 +162,17 @@ for (i in 1:nrow(loop_list)){
   # Plot the time trends
   plot <- ggplot(to_plot, aes(x = year, y = inc_minus_exp, col = characteristics_name))  +
     geom_line() +
-    geom_text_repel(data = filter(to_plot, year == last_year),
-                    aes(year, 
-                        inc_minus_exp, 
-                        label = inc_minus_exp, 
-                        family = "my_font"), 
-                    nudge_y = -1000,
-                    size = 3,
-                    max.iter = 5000) +
-    geom_text_repel(data = filter(to_plot, year == last_year),
+    geom_hline(yintercept = 0) +
+    geom_text_repel(data = filter(to_plot, year == last_year, characteristics_name %in% c(
+                    "Highest 20 percent income quintile",
+                    "Lowest 20 percent income quintile")
+                    ),
                     aes(year, 
                         inc_minus_exp, 
                         label = characteristics_name, 
                         family = "my_font"), 
-                    nudge_y = 1000,
-                    size = 3, 
-                    max.iter = 5000) +
+                    nudge_y = -500,
+                    size = 3) +
     scale_color_discrete(guide = FALSE) +
     scale_y_continuous(label = dollar) +
     ggtitle("After-Tax Income Minus Expenses")  +
