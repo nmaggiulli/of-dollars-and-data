@@ -91,7 +91,7 @@ for (i in 1:nrow(loop_list)){
   file_path = paste0(exportdir, "07-bls-consumer-expenditures/", loop_list[i, 1], ".jpeg")
   
   if(loop_list[i,1] == "Lowest 20 percent income quintile"){
-    top_title <- "The Lowest 20 Percent of Income\nSpends More Than They Earn\non Basic Necessities"
+    top_title <- "The Lowest 20 Percent of Income\nSpend More Than They Earn\non Basic Necessities"
   } else if (loop_list[i,1] == "Second 20 percent income quintile"){
     top_title <- "The Next 20 Percent is Doing Better,\n But Not Much"
   } else if (loop_list[i,1] == "Highest 20 percent income quintile"){
@@ -101,27 +101,51 @@ for (i in 1:nrow(loop_list)){
   }
   
   # Plot the time trends
-  plot <- ggplot(to_plot, aes(x = year, y = share, col = item_name, fill = item_name))  +
-    geom_area() +
-    geom_text_repel(data = last,
-                    aes(year, 
-                        cumsum, 
-                        label = item_name,
-                        family = "my_font"), 
-                    size = 3,
-                    nudge_y = -0.10,
-                    nudge_x = -3.1,
-                    col = "black",
-                    segment.alpha = 0,
-                    max.iter = 5000) +
-    geom_hline(yintercept = 1, color = "black", linetype="dashed") +
-    scale_color_discrete(guide = FALSE) +
-    scale_fill_discrete(guide = FALSE) +
-    scale_y_continuous(label = percent, limits = c(0, 2.25), breaks = seq(0, 2.25, 0.25)) +
-    scale_x_continuous(breaks = seq(first_year, last_year, 5)) +
-    ggtitle(top_title)  +
-    of_dollars_and_data_theme +
-    labs(x = "Year" , y = "Share of After-Tax Income")
+  if (loop_list[i,1] == "Highest 20 percent income quintile"){
+    plot <- ggplot(to_plot, aes(x = year, y = share, col = item_name, fill = item_name))  +
+      geom_area() +
+      geom_text_repel(data = last,
+                      aes(year, 
+                          cumsum, 
+                          label = item_name,
+                          family = "my_font"), 
+                      size = 3,
+                      nudge_y = -0.05,
+                      nudge_x = -3.1,
+                      col = "black",
+                      segment.alpha = .5,
+                      max.iter = 5000) +
+      geom_hline(yintercept = 1, color = "black", linetype="dashed") +
+      scale_color_discrete(guide = FALSE) +
+      scale_fill_discrete(guide = FALSE) +
+      scale_y_continuous(label = percent, limits = c(0, 2.75), breaks = seq(0, 2.75, 0.25)) +
+      scale_x_continuous(breaks = seq(first_year, last_year, 5)) +
+      ggtitle(top_title)  +
+      of_dollars_and_data_theme +
+      labs(x = "Year" , y = "Share of After-Tax Income")
+  } else{
+    plot <- ggplot(to_plot, aes(x = year, y = share, col = item_name, fill = item_name))  +
+      geom_area() +
+      geom_text_repel(data = last,
+                      aes(year, 
+                          cumsum, 
+                          label = item_name,
+                          family = "my_font"), 
+                      size = 3,
+                      nudge_y = -0.09,
+                      nudge_x = -3.1,
+                      col = "black",
+                      segment.alpha = 0,
+                      max.iter = 5000) +
+      geom_hline(yintercept = 1, color = "black", linetype="dashed") +
+      scale_color_discrete(guide = FALSE) +
+      scale_fill_discrete(guide = FALSE) +
+      scale_y_continuous(label = percent, limits = c(0, 2.75), breaks = seq(0, 2.75, 0.25)) +
+      scale_x_continuous(breaks = seq(first_year, last_year, 5)) +
+      ggtitle(top_title)  +
+      of_dollars_and_data_theme +
+      labs(x = "Year" , y = "Share of After-Tax Income")
+  }
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
@@ -171,7 +195,7 @@ for (i in 1:nrow(loop_list)){
                     size = 3) +
     scale_color_discrete(guide = FALSE) +
     scale_y_continuous(label = dollar, breaks = seq(-20000, 60000, 10000), limits=c(-20000, 60000)) +
-    ggtitle("40% of U.S. Households Spend More Than They Earn")  +
+    ggtitle("40% of U.S. Households Spent\nMore Than They Earned in 2015")  +
     of_dollars_and_data_theme +
     labs(x = "Year" , y = "After-Tax Income Minus Expenses")
   
