@@ -93,7 +93,7 @@ for (i in 1:nrow(loop_list)){
   if(loop_list[i,1] == "Lowest 20 percent income quintile"){
     top_title <- "The Lowest 20 Percent of Income\nSpends More Than They Earn\non Basic Necessities"
   } else if (loop_list[i,1] == "Second 20 percent income quintile"){
-    top_title <- "The Next 20 Percent is Doing Better\n But Not Much"
+    top_title <- "The Next 20 Percent is Doing Better,\n But Not Much"
   } else if (loop_list[i,1] == "Highest 20 percent income quintile"){
     top_title <- "The Top 20 Percent Spends Much Less\nOn Basic Necessities"
   } else{
@@ -171,7 +171,7 @@ for (i in 1:nrow(loop_list)){
                     size = 3) +
     scale_color_discrete(guide = FALSE) +
     scale_y_continuous(label = dollar, breaks = seq(-20000, 60000, 10000), limits=c(-20000, 60000)) +
-    ggtitle("After-Tax Income Minus Expenses")  +
+    ggtitle("40% of U.S. Households Spend More Than They Earn")  +
     of_dollars_and_data_theme +
     labs(x = "Year" , y = "After-Tax Income Minus Expenses")
   
