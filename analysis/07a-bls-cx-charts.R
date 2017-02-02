@@ -38,9 +38,15 @@ for (i in names){
   rm(tmpname)
 }
 
+#Add an item list
+item_list <- c("Food", "Housing", "Transportation", "Healthcare")
+
 # Filter main cx data
 bls_cx_expenditures <- filter(bls_cx, 
-                          category_name == "Expenditures")
+                          category_name == "Expenditures",
+                          characteristics_name != "Total complete income reporters",
+                          characteristics_name != "Incomplete income reports",
+                          item_name %in% item_list)
 
 bls_cx_income <- filter(bls_cx, subcategory_name == "Income after taxes") %>%
   mutate(income = value) %>%

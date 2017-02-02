@@ -66,27 +66,21 @@ bls_cx_income <- filter(bls_cx, subcategory_name == "Income after taxes",
 
 current_inc <- filter(bls_cx_income, year == max_year)
 current_exp <- filter(bls_cx_tot_avg_exp, year == max_year)
-                              
+ 
+#Add an item list
+item_list <- c("Food", "Housing", "Transportation", "Healthcare") 
+                             
 bls_cx_expenditures <-  bls_cx_expenditures %>%
                             left_join(bls_cx_tot_avg_exp) %>% 
                             left_join(bls_cx_income)      %>%
                             mutate(share = value / income) %>%
-                            filter(item_name != "Total average annual expenditures")
- 
-bls_cx_to_plot <- filter(bls_cx_expenditures, item_name %in% 
-                           c("Food at home",
-                             "Electricity",
-                             "Gasoline and motor oil",
-                             "Health insurance",
-                             "Rented dwellings",
-                             "Vehicle insurance"
-                           )
-                         )
+                            filter(item_name %in% item_list)
 
-loop_list <- unique(select(bls_cx_to_plot,characteristics_name))
+
+loop_list <- unique(select(bls_cx_expenditures,characteristics_name))
 
 for (i in 1:nrow(loop_list)){
-  to_plot     <- filter(bls_cx_to_plot, characteristics_name == loop_list[i, 1])
+  to_plot     <- filter(bls_cx_expenditures, characteristics_name == loop_list[i, 1])
   last_year   <- max(to_plot$year)
   first_year  <- min(to_plot$year)
   last        <- filter(to_plot, year == last_year) %>%
@@ -97,7 +91,7 @@ for (i in 1:nrow(loop_list)){
   file_path = paste0(exportdir, "07-bls-consumer-expenditures/", loop_list[i, 1], ".jpeg")
   
   if(loop_list[i,1] == "Lowest 20 percent income quintile"){
-    top_title <- "The Lowest 20 Percent of Income\nSpend Mostly on Basic Necessities"
+    top_title <- "The Lowest 20 Percent of Income\nSpends More Than They Earn\non Basic Necessities"
   } else if (loop_list[i,1] == "Second 20 percent income quintile"){
     top_title <- "The Next 20 Percent is Doing Better\n But Not Much"
   } else if (loop_list[i,1] == "Highest 20 percent income quintile"){
@@ -115,14 +109,15 @@ for (i in 1:nrow(loop_list)){
                         label = item_name,
                         family = "my_font"), 
                     size = 3,
-                    nudge_y = -0.01,
-                    nudge_x = -2,
+                    nudge_y = -0.10,
+                    nudge_x = -3.1,
                     col = "black",
+                    segment.alpha = 0,
                     max.iter = 5000) +
-    geom_hline(yintercept = 1) +
+    geom_hline(yintercept = 1, color = "black", linetype="dashed") +
     scale_color_discrete(guide = FALSE) +
     scale_fill_discrete(guide = FALSE) +
-    scale_y_continuous(label = percent, limits = c(0, 1.3), breaks = seq(0, 1.3, 0.1)) +
+    scale_y_continuous(label = percent, limits = c(0, 2.25), breaks = seq(0, 2.25, 0.25)) +
     scale_x_continuous(breaks = seq(first_year, last_year, 5)) +
     ggtitle(top_title)  +
     of_dollars_and_data_theme +
@@ -132,7 +127,7 @@ for (i in 1:nrow(loop_list)){
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
   source_string <- "Source:  Bureau of Labor Statistics, Consumer Expenditures (OfDollarsAndData.com)"
-  note_string   <- "Note:  Excludes other basic necessities for clarity." 
+  note_string   <- "Note:  Excludes expenses related to education, entertainment, apparel, and other services." 
   
   # Make the source and note text grobs
   source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
@@ -162,7 +157,7 @@ for (i in 1:nrow(loop_list)){
   # Plot the time trends
   plot <- ggplot(to_plot, aes(x = year, y = inc_minus_exp, col = characteristics_name))  +
     geom_line() +
-    geom_hline(yintercept = 0) +
+    geom_hline(yintercept = 0, col = "black") +
     geom_text_repel(data = filter(to_plot, year == last_year, characteristics_name %in% c(
                     "Highest 20 percent income quintile",
                     "Lowest 20 percent income quintile")
@@ -171,10 +166,11 @@ for (i in 1:nrow(loop_list)){
                         inc_minus_exp, 
                         label = characteristics_name, 
                         family = "my_font"), 
-                    nudge_y = -500,
+                    nudge_y = -4000,
+                    segment.colour = "white",
                     size = 3) +
     scale_color_discrete(guide = FALSE) +
-    scale_y_continuous(label = dollar) +
+    scale_y_continuous(label = dollar, breaks = seq(-20000, 60000, 10000), limits=c(-20000, 60000)) +
     ggtitle("After-Tax Income Minus Expenses")  +
     of_dollars_and_data_theme +
     labs(x = "Year" , y = "After-Tax Income Minus Expenses")
@@ -183,7 +179,7 @@ for (i in 1:nrow(loop_list)){
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
   source_string <- "Source:  Bureau of Labor Statistics, Consumer Expenditures (OfDollarsAndData.com)"
-  note_string   <- "Note:  " 
+  note_string   <- "Note:  Income includes government assisstance.  Expenditures are average annual expenditures." 
   
   # Make the source and note text grobs
   source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
