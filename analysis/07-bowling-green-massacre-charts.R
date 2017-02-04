@@ -38,7 +38,7 @@ religion_df$victims_by_religion <- rep(0, nrow(religion_df))
 
 # Show percentage of total airtime given by large Media outlets
 airtime_df <- as.data.frame(matrix(NA, nrow=4, ncol=0))
-airtime_df$media <- c("Fox News", "CNN", "MSNBC", "All Others")
+airtime_df$media <- c("Fox News", "CNN", "MSNBC", "Others")
 
 airtime_df$pct_airtime <- as.numeric(rep(0, nrow(airtime_df)))
 
@@ -159,7 +159,7 @@ plot <- ggplot(airtime_df, aes(x =  media, y = pct_airtime, fill = media, col = 
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
 
 source_string <- "Source: Nielsen Media (OfDollarsAndData.com)"
-note_string   <- "Note:  'All Others' excludes Breitbart news." 
+note_string   <- "Note:  'Others' excludes Breitbart news." 
 
 # Make the source and note text grobs
 source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
