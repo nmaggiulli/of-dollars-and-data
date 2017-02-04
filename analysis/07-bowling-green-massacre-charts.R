@@ -51,7 +51,7 @@ file_path = paste0(exportdir, "07-bowling-green-massacre-charts/victims.jpeg")
     scale_color_discrete(guide = FALSE) +
     scale_y_continuous(limits = c(-1, 500)) +
     scale_x_continuous(breaks = seq(min(years), max(years), 1)) +
-    ggtitle("Number of Bowling Green Massacre Deaths\n2011-2017")  +
+    ggtitle("Number of Bowling Green Massacre Deaths\n2011 - 2017")  +
     of_dollars_and_data_theme +
     labs(x = "Year" , y = "Number of People Killed")
 
