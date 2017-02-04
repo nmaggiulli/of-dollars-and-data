@@ -18,7 +18,7 @@ read_in_bls <- function(string){
                              header = TRUE, 
                              sep = "\t", row.names = NULL)
   
-  saveRDS(temp_name, paste0(importdir, "07-bls-consumer-expenditures/bls_cx_", name, ".Rds"))
+  saveRDS(temp_name, paste0(importdir, "08-bls-consumer-expenditures/bls_cx_", name, ".Rds"))
 }
 
 

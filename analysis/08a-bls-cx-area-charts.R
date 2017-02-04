@@ -20,10 +20,10 @@ library(ggrepel)
 ########################## Start Program Here ######################### #
 
 # Load data fom local library
-bls_cx <- readRDS(paste0(localdir, "07-bls-cx.Rds"))
+bls_cx <- readRDS(paste0(localdir, "08-bls-cx.Rds"))
 
 read_in <- function(string){
-  temp <- readRDS(paste0(localdir, "07-bls-cx-", string, ".Rds"))
+  temp <- readRDS(paste0(localdir, "08-bls-cx-", string, ".Rds"))
   return(temp)
 }
 
@@ -88,7 +88,7 @@ for (i in 1:nrow(loop_list)){
   last$cumsum <- cumsum(last$share)
   
   # Set the file_path 
-  file_path = paste0(exportdir, "07-bls-consumer-expenditures/", loop_list[i, 1], ".jpeg")
+  file_path = paste0(exportdir, "08-bls-consumer-expenditures/", loop_list[i, 1], ".jpeg")
   
   if(loop_list[i,1] == "Lowest 20 percent income quintile"){
     top_title <- "The Lowest 20 Percent of Income\nSpend More Than They Earn\non Basic Necessities"
@@ -176,7 +176,7 @@ for (i in 1:nrow(loop_list)){
   last_year <- max(to_plot$year)
   
   # Set the file_path 
-  file_path = paste0(exportdir, "07-bls-consumer-expenditures/income-minus-expenses.jpeg")
+  file_path = paste0(exportdir, "08-bls-consumer-expenditures/income-minus-expenses.jpeg")
   
   # Plot the time trends
   plot <- ggplot(to_plot, aes(x = year, y = inc_minus_exp, col = characteristics_name))  +

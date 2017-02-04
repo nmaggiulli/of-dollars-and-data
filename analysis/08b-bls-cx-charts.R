@@ -20,10 +20,10 @@ library(ggrepel)
 ########################## Start Program Here ######################### #
 
 # Load data fom local library
-bls_cx <- readRDS(paste0(localdir, "07-bls-cx.Rds"))
+bls_cx <- readRDS(paste0(localdir, "08-bls-cx.Rds"))
 
 read_in <- function(string){
-  temp <- readRDS(paste0(localdir, "07-bls-cx-", string, ".Rds"))
+  temp <- readRDS(paste0(localdir, "08-bls-cx-", string, ".Rds"))
   return(temp)
 }
 
@@ -67,7 +67,7 @@ for (i in 1:nrow(loop_list)){
   demographics_code    <- unique(to_plot$demographics_code)
   
   # Set the file_path 
-  file_path = paste0(exportdir, "07-bls-consumer-expenditures/", item_code, "-", demographics_code, ".jpeg")
+  file_path = paste0(exportdir, "08-bls-consumer-expenditures/", item_code, "-", demographics_code, ".jpeg")
   
   # Plot the time trends
   plot <- ggplot(to_plot, aes(x = year, y = share, col = characteristics_name))  +
