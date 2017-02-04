@@ -12,13 +12,13 @@ library(stringr)
 ########################## Start Program Here ######################### #
 
 # Load in raw BLS productivity data
-bls_cx <-readRDS(paste0(importdir, "07-bls-consumer-expenditures/bls_cx_data.1.AllData.Rds"))
+bls_cx <-readRDS(paste0(importdir, "08-bls-consumer-expenditures/bls_cx_data.1.AllData.Rds"))
 
 # Load in other datasets and create a code based on their row number
 # Will use these datasets to merge to the main productivity dataset
 create_index <- function(string){
   name            <- deparse(substitute(string))
-  temp            <- readRDS(paste0(importdir, "07-bls-consumer-expenditures/bls_cx_", name, ".Rds"))
+  temp            <- readRDS(paste0(importdir, "08-bls-consumer-expenditures/bls_cx_", name, ".Rds"))
   if (name %in% c("category", "subcategory")){
     new_col         <- paste0(name, "_name")
     old_col         <- paste0(name, "_text")
@@ -75,14 +75,14 @@ bls_cx <- bls_cx                     %>%
                    item_code, characteristics_code, demographics_code)
 
 # Save down final build before doing analysis
-saveRDS(bls_cx, paste0(localdir, "07-bls-cx.Rds"))
+saveRDS(bls_cx, paste0(localdir, "08-bls-cx.Rds"))
 
 # Save down other built datasets for reference
-saveRDS(item,            paste0(localdir, "07-bls-cx-item.Rds"))
-saveRDS(demographics,    paste0(localdir, "07-bls-cx-demographics.Rds"))
-saveRDS(characteristics, paste0(localdir, "07-bls-cx-characteristics.Rds"))
-saveRDS(subcategory,     paste0(localdir, "07-bls-cx-subcategory.Rds"))
-saveRDS(category,        paste0(localdir, "07-bls-cx-category.Rds"))
+saveRDS(item,            paste0(localdir, "08-bls-cx-item.Rds"))
+saveRDS(demographics,    paste0(localdir, "08-bls-cx-demographics.Rds"))
+saveRDS(characteristics, paste0(localdir, "08-bls-cx-characteristics.Rds"))
+saveRDS(subcategory,     paste0(localdir, "08-bls-cx-subcategory.Rds"))
+saveRDS(category,        paste0(localdir, "08-bls-cx-category.Rds"))
 
 
 # ############################  End  ################################## #
