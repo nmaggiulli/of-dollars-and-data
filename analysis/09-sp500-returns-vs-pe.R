@@ -24,7 +24,10 @@ library(ggrepel)
 sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
 
 # Subset S&P 500 returns
-sp500_ret_pe <- filter(sp500_ret_pe, cape != "NA", Date < 2017.01 & Date > 1909.01)
+sp500_ret_pe <- filter(sp500_ret_pe, cape != "NA", Date < 2017.01)
+
+first_year <- floor(min(sp500_ret_pe$Date))
+last_year <- floor(max(sp500_ret_pe$Date))
 
 # Convert the cape to a numeric
 sp500_ret_pe$cape <- as.numeric(sp500_ret_pe$cape)
@@ -50,19 +53,22 @@ plot_ret_pe <- function(var){
   filter_line <- paste0("!is.na(",yvar,")")
   to_plot     <- filter_(sp500_ret_pe, filter_line)
   
+  ymax <- ceiling(max(to_plot[, yvar]) * 10)/ 10
+  ymin <- floor(min(to_plot[, yvar]) * 10) / 10
+  
   # Set the file_path for the next output
   file_path = paste0(exportdir, "09-sp500-returns-pe/returns-", var,"-year.jpeg")
   
   plot <- ggplot(data = to_plot, aes_string(x = "cape", y = yvar)) +
     geom_point() +
-    geom_smooth() +
-    scale_y_continuous(label = percent, limits = c(-0.1, 0.3)) +
+    geom_smooth(method = "lm", se = FALSE) +
+    scale_y_continuous(label = percent, limits = c(ymin, ymax)) +
     ggtitle(paste0("S&P P/E Ratio vs. ", var, " Year  \nCompound Growth Rate")) +
     of_dollars_and_data_theme +
     labs(x = "S&P 500 P/E Ratio" , y = "S&P 500 Compound Annual Growth Rate (%)")
   
   # Add a source and note string for the plots
-  source_string <- paste0("Source:  Yahoo Finance, Irrational Exhuberence by Robert Shiller (OfDollarsAndData.com)")
+  source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
   note_string   <- paste0("Note:  Growth rate shown is the growth of real returns with reinvested dividends.") 
   
   # Turn plot into a gtable for adding text grobs
