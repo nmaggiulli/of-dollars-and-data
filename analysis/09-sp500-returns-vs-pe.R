@@ -63,13 +63,13 @@ plot_ret_pe <- function(var){
     geom_point() +
     geom_smooth(method = "lm", se = FALSE) +
     scale_y_continuous(label = percent, limits = c(ymin, ymax)) +
-    ggtitle(paste0("S&P P/E Ratio vs. ", var, " Year  \nCompound Growth Rate")) +
+    ggtitle(paste0("S&P 500 Annualized Real Return\n(Over ", var, " Years) vs. P/E Ratio")) +
     of_dollars_and_data_theme +
-    labs(x = "S&P 500 P/E Ratio" , y = "S&P 500 Compound Annual Growth Rate (%)")
+    labs(x = "S&P 500 P/E Ratio" , y = "S&P 500 Annualized Real Return (%)")
   
   # Add a source and note string for the plots
   source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
-  note_string   <- paste0("Note:  Growth rate shown is the growth of real returns with reinvested dividends.") 
+  note_string   <- paste0("Note:  Annualized real returns include reinvested dividends.") 
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
