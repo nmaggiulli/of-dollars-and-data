@@ -23,20 +23,20 @@ library(lubridate)
 # Load in S&P data from Shiller
 sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
 
-# Get the first and last year in the data for plot printing
-first_year <- floor(min(sp500_ret_pe$Date))
-last_year  <- floor(max(sp500_ret_pe$Date))
-
 # Create a function to determine the percentage of the total return that is related to price (not dividends)
 # Also use it to find the percentage of months that represent the total return over the period being used
-filter_year <- function(x){
+filter_year <- function(date_var){
   
-  sp500_ret_pe <- filter(sp500_ret_pe, Date >= x)
+  # Get the first and last year in the data for plot printing
+  sp500_ret_pe <- filter(sp500_ret_pe, Date >= date_var)
+  
+  first_year <- floor(min(sp500_ret_pe$Date))
+  last_year  <- floor(max(sp500_ret_pe$Date))
 
   sp500_total_ret <- (sp500_ret_pe[nrow(sp500_ret_pe), "price_plus_div"]/sp500_ret_pe[1, "price_plus_div"]) - 1
   sp500_price_ret <- (sp500_ret_pe[nrow(sp500_ret_pe), "real_price"]/sp500_ret_pe[1, "real_price"]) - 1
   sp500_div_ret <- sp500_ret_pe[nrow(sp500_ret_pe), "n_shares"]   
-  print(paste0("Price return starting at ", x, " accounted for: ", round(100 * (sp500_price_ret / (sp500_price_ret + sp500_div_ret))), "% of the total return."))
+  print(paste0("Price return starting at ", date_var, " accounted for: ", round(100 * (sp500_price_ret / (sp500_price_ret + sp500_div_ret))), "% of the total return."))
   
   sp500_ret_pe <- arrange(sp500_ret_pe, desc(ret_1_month))
   
@@ -56,21 +56,9 @@ filter_year <- function(x){
   }
   filtered <- filter(sp500_ret_pe, before_total == 1, is.na(lead(before_total)))
   print(paste0("It took ", round(100 * filtered$pct_of_months), "% of months to equal the total return"))
-  if (x == 1871.01){
-    assign("to_plot", sp500_ret_pe, envir = .GlobalEnv)
-  }
-  return(round(100 * filtered$pct_of_months))
-}
-
-# Loop over the years for exploratory purposes
-# I use this output for extra explanations in my posts
-for (j in seq(1871.01, 2011.01, 10)){
-  if (j == 1871.01){
-    pct_of_total_ret <- filter_year(j)
-  } else{
-    test <- filter_year(j)
-  }
-}
+  to_plot <- filter(sp500_ret_pe, !is.na(ret_1_month))
+  n_months <- nrow(to_plot)
+  pct_of_total_ret <- round(100 * filtered$pct_of_months)
 
 # Alter before_total flag to reflect 2 for all times where it is NA
 to_plot[, "before_total"] <- apply(to_plot[, "before_total"], 1, function(x){ifelse(!is.na(x), x, 0)})
@@ -79,46 +67,45 @@ to_plot[, "before_total"] <- apply(to_plot[, "before_total"], 1, function(x){ife
 to_plot[which(to_plot$ret_1_month < 0), "before_total"] <- -1
 
 # Get the max, middle, and min y_filter for the labels
-max_y_filter <- max(to_plot$ret_1_month, na.rm = TRUE)
-middle_y_filter <- median(to_plot$ret_1_month, na.rm = TRUE)
-min_y_filter <- min(to_plot$ret_1_month, na.rm = TRUE)
+max_y_filter <- max(to_plot$ret_1_month)
+min_y_filter <- min(to_plot$ret_1_month)
 
 # Find the ymax and ymin for plotting the heights of the y axis properly
 ymax <- ceiling(max(to_plot[, "ret_1_month"]) * 10)/ 10
 ymin <- floor(min(to_plot[, "ret_1_month"]) * 10) / 10
 
 # Set the file_path for the next output
-file_path = paste0(exportdir, "09-sp500-returns-pe/top-monthly-returns.jpeg")
+file_path = paste0(exportdir, "09-sp500-returns-pe/top-monthly-returns-",first_year,".jpeg")
 
 # Create the plot with labels using geom_text_repel
-plot <- ggplot(data = to_plot, aes(x = reorder(Date, -ret_1_month), y = ret_1_month, col = as.factor(before_total))) +
+plot <- ggplot(data = to_plot, aes(x = reorder(Date, -ret_1_month), y = ret_1_month, col = as.factor(before_total), fill =  as.factor(before_total))) +
   geom_bar(stat = "identity") +
   geom_text_repel(data = filter(to_plot, ret_1_month == max_y_filter),
                   aes(x  = reorder(Date, -ret_1_month),
-                      y = 0.1,
+                      y = ymax/3,
                       col = as.factor(before_total),
-                  label = str_wrap("These returns represent all of the gains since 1871", width = 20),
+                  label = str_wrap(paste0("These returns represent all of the gains since ", first_year), width = 20),
                   family = "my_font"),
-                  nudge_x = 450,
-                  nudge_y = 0.2) +
-  geom_text_repel(data = filter(to_plot, ret_1_month == middle_y_filter),
+                  nudge_x = n_months/4,
+                  nudge_y = ymax/2) +
+  geom_text_repel(data = to_plot[round(nrow(to_plot)/2), ],
                   aes(x  = reorder(Date, -ret_1_month),
                       y = 0,
                       col = as.factor(before_total),
                       label = "These gains are canceled out",
                       family = "my_font"),
-                      nudge_x = 0,
-                      nudge_y = -0.1) +
+                      nudge_y = ymin/2) +
   geom_text_repel(data = filter(to_plot, ret_1_month == min_y_filter),
                   aes(x  = reorder(Date, -ret_1_month),
-                      y = -0.11,
+                      y = ymin/2,
                       col = as.factor(before_total),
                       label = "by these losses",
                       family = "my_font"),
-                      nudge_x = -820,
-                      nudge_y = -.035) +
+                      nudge_x = -(n_months/2),
+                      nudge_y = ymin/4) +
   scale_y_continuous(label = percent, limits = c(ymin, ymax)) +
   scale_color_discrete(guide = FALSE) +
+  scale_fill_discrete(guide = FALSE) +
   ggtitle(paste0(pct_of_total_ret,"% of Monthly U.S. Stock Returns\nRepresent The Entire Gain Since ", first_year)) +
   of_dollars_and_data_theme +
   theme(axis.text.x=element_blank(),
@@ -127,7 +114,7 @@ plot <- ggplot(data = to_plot, aes(x = reorder(Date, -ret_1_month), y = ret_1_mo
 
 # Add a source and note string for the plots
 source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
-note_string   <- paste0("Note:  Real returns include reinvested dividends.")
+note_string   <- paste0("Note:  Real returns include reinvested dividends. ",  formatC(n_months, format="d", big.mark=','), " monthly returns are shown.")
 
 # Turn plot into a gtable for adding text grobs
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
@@ -145,6 +132,14 @@ my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
 # Save the gtable
 ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
+}
 
+# Run the function for the full period
+filter_year(1871.01)
+
+# Loop over each decade from 1880-2010
+for (j in seq(1880.01, 2010.01, 10)){
+  filter_year(j)  
+}
 
 # ############################  End  ################################## #
