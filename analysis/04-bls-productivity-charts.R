@@ -49,7 +49,7 @@ for (i in 1:nrow(to_plot)){
   } else {
     pct_change <- (to_plot[i, "value"] - last_value) / last_value
     last_value <- to_plot[i, "value"]
-    to_plot[i, "value"] <- (1 + pct_change) * to_plot[i-1, "value"]
+    to_plot[i, "value"] <- (1 + pct_change) * to_plot[i - 1, "value"]
   }
 }
 
