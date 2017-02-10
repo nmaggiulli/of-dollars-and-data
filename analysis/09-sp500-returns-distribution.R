@@ -21,23 +21,14 @@ library(lubridate)
 ########################## Start Program Here ######################### #
 
 # Load in S&P data from Shiller
-
 sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
-
-sp500_ret_pe$year_month <- as.Date(paste0(substring(sp500_ret_pe$Date,
-                                                    1,
-                                                    4),
-                                                    "-",
-                                          substring(sp500_ret_pe$Date,
-                                                    6,
-                                                    7),
-                                          "-01"))
 
 # Get the first and last year in the data for plot printing
 first_year <- floor(min(sp500_ret_pe$Date))
 last_year  <- floor(max(sp500_ret_pe$Date))
 
 # Create a function to determine the percentage of the total return that is related to price (not dividends)
+# Also use it to find the percentage of months that represent the total return over the period being used
 filter_year <- function(x){
   
   sp500_ret_pe <- filter(sp500_ret_pe, Date >= x)
@@ -72,6 +63,7 @@ filter_year <- function(x){
 }
 
 # Loop over the years for exploratory purposes
+# I use this output for extra explanations in my posts
 for (j in seq(1871.01, 2011.01, 10)){
   if (j == 1871.01){
     pct_of_total_ret <- filter_year(j)
@@ -86,16 +78,19 @@ to_plot[, "before_total"] <- apply(to_plot[, "before_total"], 1, function(x){ife
 # Alter before_total flag to equal -1 when the 1-month return is below zero
 to_plot[which(to_plot$ret_1_month < 0), "before_total"] <- -1
 
+# Get the max, middle, and min y_filter for the labels
 max_y_filter <- max(to_plot$ret_1_month, na.rm = TRUE)
 middle_y_filter <- median(to_plot$ret_1_month, na.rm = TRUE)
 min_y_filter <- min(to_plot$ret_1_month, na.rm = TRUE)
 
+# Find the ymax and ymin for plotting the heights of the y axis properly
 ymax <- ceiling(max(to_plot[, "ret_1_month"]) * 10)/ 10
 ymin <- floor(min(to_plot[, "ret_1_month"]) * 10) / 10
 
 # Set the file_path for the next output
 file_path = paste0(exportdir, "09-sp500-returns-pe/top-monthly-returns.jpeg")
 
+# Create the plot with labels using geom_text_repel
 plot <- ggplot(data = to_plot, aes(x = reorder(Date, -ret_1_month), y = ret_1_month, col = as.factor(before_total))) +
   geom_bar(stat = "identity") +
   geom_text_repel(data = filter(to_plot, ret_1_month == max_y_filter),
@@ -128,7 +123,7 @@ plot <- ggplot(data = to_plot, aes(x = reorder(Date, -ret_1_month), y = ret_1_mo
   of_dollars_and_data_theme +
   theme(axis.text.x=element_blank(),
         axis.ticks.x=element_blank()) +
-  labs(x = "Highest to Lowest 1-Month Real Return" , y = "U.S. Stock Real 1-Month Return (%)")
+  labs(x = "Highest to Lowest 1-Month Real Return" , y = "U.S. Stock Real 1-Month Return")
 
 # Add a source and note string for the plots
 source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
