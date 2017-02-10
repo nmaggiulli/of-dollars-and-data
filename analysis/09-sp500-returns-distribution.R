@@ -49,7 +49,7 @@ filter_year <- function(date_var){
       sp500_ret_pe[i, "before_total"] <- 1
       sp500_ret_pe[i, "ret_cumulative"] <- (1 + sp500_ret_pe[i, "ret_1_month"]) * sp500_ret_pe[(i-1), "ret_cumulative"]
       sp500_ret_pe[i, "pct_of_months"] <- i/nrow(sp500_ret_pe)
-      if(sp500_ret_pe[i, "ret_cumulative"] > sp500_total_ret){
+      if((sp500_ret_pe[i, "ret_cumulative"] - 1) > sp500_total_ret){
         break
       }
     }
