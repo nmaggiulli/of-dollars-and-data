@@ -86,6 +86,10 @@ to_plot[, "before_total"] <- apply(to_plot[, "before_total"], 1, function(x){ife
 # Alter before_total flag to equal -1 when the 1-month return is below zero
 to_plot[which(to_plot$ret_1_month < 0), "before_total"] <- -1
 
+max_y_filter <- max(to_plot$ret_1_month, na.rm = TRUE)
+middle_y_filter <- median(to_plot$ret_1_month, na.rm = TRUE)
+min_y_filter <- min(to_plot$ret_1_month, na.rm = TRUE)
+
 ymax <- ceiling(max(to_plot[, "ret_1_month"]) * 10)/ 10
 ymin <- floor(min(to_plot[, "ret_1_month"]) * 10) / 10
 
@@ -94,6 +98,30 @@ file_path = paste0(exportdir, "09-sp500-returns-pe/top-monthly-returns.jpeg")
 
 plot <- ggplot(data = to_plot, aes(x = reorder(Date, -ret_1_month), y = ret_1_month, col = as.factor(before_total))) +
   geom_bar(stat = "identity") +
+  geom_text_repel(data = filter(to_plot, ret_1_month == max_y_filter),
+                  aes(x  = reorder(Date, -ret_1_month),
+                      y = 0.1,
+                      col = as.factor(before_total),
+                  label = str_wrap("These returns represent all of the gains since 1871", width = 20),
+                  family = "my_font"),
+                  nudge_x = 450,
+                  nudge_y = 0.2) +
+  geom_text_repel(data = filter(to_plot, ret_1_month == middle_y_filter),
+                  aes(x  = reorder(Date, -ret_1_month),
+                      y = 0,
+                      col = as.factor(before_total),
+                      label = "These gains are canceled out",
+                      family = "my_font"),
+                      nudge_x = 0,
+                      nudge_y = -0.1) +
+  geom_text_repel(data = filter(to_plot, ret_1_month == min_y_filter),
+                  aes(x  = reorder(Date, -ret_1_month),
+                      y = -0.11,
+                      col = as.factor(before_total),
+                      label = "by these losses",
+                      family = "my_font"),
+                      nudge_x = -820,
+                      nudge_y = -.035) +
   scale_y_continuous(label = percent, limits = c(ymin, ymax)) +
   scale_color_discrete(guide = FALSE) +
   ggtitle(paste0(pct_of_total_ret,"% of Monthly U.S. Stock Returns\nRepresent The Entire Gain Since ", first_year)) +
