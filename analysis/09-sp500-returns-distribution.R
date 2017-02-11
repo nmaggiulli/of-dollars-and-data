@@ -32,12 +32,25 @@ filter_year <- function(date_var){
   
   first_year <- floor(min(sp500_ret_pe$Date))
   last_year  <- floor(max(sp500_ret_pe$Date))
+  
+  for (i in 1:nrow(sp500_ret_pe)){
+    if (i == 1){
+      sp500_ret_pe[i, "n_shares"] <- 1
+      sp500_ret_pe[i, "new_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
+      sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
+    } else{
+      sp500_ret_pe[i, "n_shares"] <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "real_price"]
+      sp500_ret_pe[i, "new_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
+      sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
+      sp500_ret_pe[i, "ret_1_month"] <- sp500_ret_pe[i, "price_plus_div"]/sp500_ret_pe[(i - 1), "price_plus_div"] - 1
+    }
+  }
 
   sp500_total_ret <- (sp500_ret_pe[nrow(sp500_ret_pe), "price_plus_div"]/sp500_ret_pe[1, "price_plus_div"]) - 1
   sp500_price_ret <- (sp500_ret_pe[nrow(sp500_ret_pe), "real_price"]/sp500_ret_pe[1, "real_price"]) - 1
   sp500_div_ret <- sp500_ret_pe[nrow(sp500_ret_pe), "n_shares"]   
   print(paste0("Price return starting at ", date_var, " accounted for: ", round(100 * (sp500_price_ret / (sp500_price_ret + sp500_div_ret))), "% of the total return."))
-  
+  print(paste0("The total return is:  ", round(100 * sp500_total_ret), "%"))
   sp500_ret_pe <- arrange(sp500_ret_pe, desc(ret_1_month))
   
   for (i in 1:nrow(sp500_ret_pe)){
@@ -82,27 +95,27 @@ plot <- ggplot(data = to_plot, aes(x = reorder(Date, -ret_1_month), y = ret_1_mo
   geom_bar(stat = "identity") +
   geom_text_repel(data = filter(to_plot, ret_1_month == max_y_filter),
                   aes(x  = reorder(Date, -ret_1_month),
-                      y = ymax/3,
+                      y = ymax / 3,
                       col = as.factor(before_total),
                   label = str_wrap(paste0("These returns represent all of the gains since ", first_year), width = 20),
                   family = "my_font"),
-                  nudge_x = n_months/4,
-                  nudge_y = ymax/2) +
-  geom_text_repel(data = to_plot[round(nrow(to_plot)/2), ],
+                  nudge_x = n_months / 4,
+                  nudge_y = ymax / 2) +
+  geom_text_repel(data = to_plot[round(nrow(to_plot)/ 2), ],
                   aes(x  = reorder(Date, -ret_1_month),
                       y = 0,
                       col = as.factor(before_total),
                       label = "These gains are canceled out",
                       family = "my_font"),
-                      nudge_y = ymin/2) +
+                      nudge_y = ymin / 2) +
   geom_text_repel(data = filter(to_plot, ret_1_month == min_y_filter),
                   aes(x  = reorder(Date, -ret_1_month),
-                      y = ymin/2,
+                      y = ymin / 2,
                       col = as.factor(before_total),
                       label = "by these losses",
                       family = "my_font"),
-                      nudge_x = -(n_months/2),
-                      nudge_y = ymin/4) +
+                      nudge_x = -(n_months / 2),
+                      nudge_y = ymin / 4) +
   scale_y_continuous(label = percent, limits = c(ymin, ymax)) +
   scale_color_discrete(guide = FALSE) +
   scale_fill_discrete(guide = FALSE) +
@@ -114,7 +127,7 @@ plot <- ggplot(data = to_plot, aes(x = reorder(Date, -ret_1_month), y = ret_1_mo
 
 # Add a source and note string for the plots
 source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
-note_string   <- paste0("Note:  Real returns include reinvested dividends. ",  formatC(n_months, format="d", big.mark=','), " monthly returns are shown.")
+note_string   <- paste0("Note:  Real returns include reinvested dividends.  ",  formatC(n_months, format="d", big.mark=','), " monthly returns are shown.")
 
 # Turn plot into a gtable for adding text grobs
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
