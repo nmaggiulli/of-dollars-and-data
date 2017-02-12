@@ -16,7 +16,7 @@ library(gtable)
 library(RColorBrewer)
 library(stringr)
 library(ggrepel)
-library(lubridate)
+library(stats)
 
 ########################## Start Program Here ######################### #
 
@@ -148,6 +148,45 @@ my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
 # Save the gtable
 ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
+#Try a histogram plot as well
+
+# Set the file_path for the next output
+file_path = paste0(exportdir, "09-sp500-returns-pe/hist-returns-",first_year,".jpeg")
+
+# Create the plot with labels using geom_text_repel
+plot <- ggplot(data = to_plot, aes(x = ret_1_month)) +
+      geom_histogram(aes(y=..density..), 
+                     colour = "red", 
+                     fill = "red",
+                     binwidth = 0.01) +
+  stat_function(fun=dnorm, args=list(mean=mean(to_plot$ret_1_month), sd=sd(to_plot$ret_1_month))) +
+  ggtitle(paste0("Histogram of Real Returns Starting in ", first_year)) +
+  of_dollars_and_data_theme +
+  labs(x = "U.S. Stock Real 1-Month Return" , y = "Count")
+
+# Add a source and note string for the plots
+source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
+note_string   <- paste0("Note:  Real returns include reinvested dividends.  ",  formatC(n_months, format="d", big.mark=','), " monthly returns are shown.")
+
+# Turn plot into a gtable for adding text grobs
+my_gtable   <- ggplot_gtable(ggplot_build(plot))
+
+# Make the source and note text grobs
+source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
+                        gp =gpar(fontfamily = "my_font", fontsize = 8))
+note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+                        gp =gpar(fontfamily = "my_font", fontsize = 8))
+
+# Add the text grobs to the bototm of the gtable
+my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
+my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
+
+# Save the gtable
+ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+
+# Try out a normality 
+print(shapiro.test(to_plot$ret_1_month))
+
 }
 
 # Run the function for the full period
@@ -155,7 +194,7 @@ filter_year(1871.01)
 
 # Loop over each decade from 1880-2010
 for (j in seq(1880.01, 2010.01, 10)){
-  filter_year(j)  
+  filter_year(j)
 }
 
 # ############################  End  ################################## #
