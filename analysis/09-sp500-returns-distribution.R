@@ -77,7 +77,7 @@ filter_year <- function(date_var){
 # Alter before_total flag to reflect 2 for all times where it is NA
 to_plot[, "before_total"] <- apply(to_plot[, "before_total"], 1, function(x){ifelse(!is.na(x), x, 0)})
 
-print(head(to_plot[, c("Date", "pct_of_months", "before_total")], 10))
+print(paste0("Number of months for cumulative gains:  ", nrow(filter(to_plot, before_total == 1))))
 
 # Alter before_total flag to equal -1 when the 1-month return is below zero
 to_plot[which(to_plot$ret_1_month < 0), "before_total"] <- -1
@@ -192,9 +192,8 @@ print(shapiro.test(to_plot$ret_1_month))
 # Run the function for the full period
 filter_year(1871.01)
 
-# Loop over each decade from 1880-2010
-for (j in seq(1880.01, 2010.01, 10)){
-  filter_year(j)
-}
+# Run it for 2000.01 - 2016.12
+filter_year(2000.01)
+
 
 # ############################  End  ################################## #
