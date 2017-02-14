@@ -35,33 +35,35 @@ filter_year <- function(date_var){
   
   for (i in 1:nrow(sp500_ret_pe)){
     if (i == 1){
-      sp500_ret_pe[i, "n_shares"] <- 1
-      sp500_ret_pe[i, "new_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
+      sp500_ret_pe[i, "n_shares"]       <- 1
+      sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
       sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
     } else{
-      sp500_ret_pe[i, "n_shares"] <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "real_price"]
-      sp500_ret_pe[i, "new_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
+      sp500_ret_pe[i, "n_shares"]       <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "real_price"]
+      sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
       sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
-      sp500_ret_pe[i, "ret_1_month"] <- sp500_ret_pe[i, "price_plus_div"]/sp500_ret_pe[(i - 1), "price_plus_div"] - 1
+      sp500_ret_pe[i, "ret_1_month"]    <- sp500_ret_pe[i, "price_plus_div"]/sp500_ret_pe[(i - 1), "price_plus_div"] - 1
     }
   }
 
   sp500_total_ret <- (sp500_ret_pe[nrow(sp500_ret_pe), "price_plus_div"]/sp500_ret_pe[1, "price_plus_div"]) - 1
   sp500_price_ret <- (sp500_ret_pe[nrow(sp500_ret_pe), "real_price"]/sp500_ret_pe[1, "real_price"]) - 1
-  sp500_div_ret <- sp500_ret_pe[nrow(sp500_ret_pe), "n_shares"]   
+  sp500_div_ret   <- sp500_ret_pe[nrow(sp500_ret_pe), "n_shares"]   
+  
   print(paste0("Price return starting at ", date_var, " accounted for: ", round(100 * (sp500_price_ret / (sp500_price_ret + sp500_div_ret))), "% of the total return."))
   print(paste0("The total return is:  ", round(100 * sp500_total_ret), "%"))
-  sp500_ret_pe <- arrange(sp500_ret_pe, desc(ret_1_month))
+  
+  sp500_ret_pe   <- arrange(sp500_ret_pe, desc(ret_1_month))
   
   for (i in 1:nrow(sp500_ret_pe)){
     if (i == 1){
       sp500_ret_pe[i, "ret_cumulative"] <- (1 + sp500_ret_pe[i, "ret_1_month"])
-      sp500_ret_pe[i, "pct_of_months"] <- i/nrow(sp500_ret_pe)
-      sp500_ret_pe[i, "before_total"] <- 1
+      sp500_ret_pe[i, "pct_of_months"]  <- i/nrow(sp500_ret_pe)
+      sp500_ret_pe[i, "before_total"]   <- 1
     } else {
-      sp500_ret_pe[i, "before_total"] <- 1
+      sp500_ret_pe[i, "before_total"]   <- 1
       sp500_ret_pe[i, "ret_cumulative"] <- (1 + sp500_ret_pe[i, "ret_1_month"]) * sp500_ret_pe[(i-1), "ret_cumulative"]
-      sp500_ret_pe[i, "pct_of_months"] <- i/nrow(sp500_ret_pe)
+      sp500_ret_pe[i, "pct_of_months"]  <- i/nrow(sp500_ret_pe)
       if((sp500_ret_pe[i, "ret_cumulative"] - 1) > sp500_total_ret){
         break
       }
@@ -70,8 +72,8 @@ filter_year <- function(date_var){
   
   filtered <- filter(sp500_ret_pe, before_total == 1, is.na(lead(before_total)))
   print(paste0("It took ", round(100 * filtered$pct_of_months), "% of months to equal the total return"))
-  to_plot <- filter(sp500_ret_pe, !is.na(ret_1_month))
-  n_months <- nrow(to_plot)
+  to_plot          <- filter(sp500_ret_pe, !is.na(ret_1_month))
+  n_months         <- nrow(to_plot)
   pct_of_total_ret <- round(100 * filtered$pct_of_months)
 
 # Alter before_total flag to reflect 2 for all times where it is NA
