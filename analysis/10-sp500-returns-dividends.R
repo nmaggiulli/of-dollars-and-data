@@ -57,24 +57,33 @@ filter_year <- function(date_var){
   
   to_plot <- select(sp500_ret_pe, Date, div_ret_pct)
 
-  print(head(to_plot))
+  to_plot$year_month <- as.Date(paste0(substring(to_plot$Date,
+                                                      1,
+                                                      4),
+                                            "-",
+                                            substring(to_plot$Date,
+                                                      6,
+                                                      7),
+                                            "-01"))
+  
+  print(paste0("Dividends represent ", 100*round(to_plot[nrow(to_plot), "div_ret_pct"], digits = 3), "% of cumulative returns."))
   
 # Set the file_path for the next output
-file_path = paste0(exportdir, "10-sp500-returns-dividends/top-monthly-returns-",first_year,".jpeg")
+file_path = paste0(exportdir, "10-sp500-returns-dividends/top-monthly-returns-", first_year,".jpeg")
 
 # Create the plot with labels using geom_text_repel
-plot <- ggplot(data = to_plot, aes(x = Date, y = div_ret_pct)) +
-  geom_area(stat = "identity") +
+plot <- ggplot(data = to_plot, aes(x = year_month, y = div_ret_pct)) +
+  geom_area(fill = "darkgreen", col = "darkgreen") +
   scale_color_discrete(guide = FALSE) +
   scale_fill_discrete(guide = FALSE) +
   scale_y_continuous(label = percent, limits = c(0, 1)) +
   ggtitle(paste0("Dividends As A Share of Total U.S. Stock Returns\n", first_year, " - ", last_year)) +
   of_dollars_and_data_theme +
-  labs(x = "Year" , y = "Share of Total Return by Type")
+  labs(x = "Year" , y = "Share of Total Return")
 
 # Add a source and note string for the plots
 source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
-note_string   <- paste0("Note:  Real returns shown with percentage of dividends reinvested.")
+note_string   <- paste0("Note:  Assumes the dividend return is 100% when the total price return is negative.")
 
 # Turn plot into a gtable for adding text grobs
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
@@ -96,9 +105,6 @@ ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
 # Run the function for the full period
 filter_year(1871.01)
-
-# Run it for 2000.01 - 2016.12
-filter_year(2000.01)
 
 
 # ############################  End  ################################## #
