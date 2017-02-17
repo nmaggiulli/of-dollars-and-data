@@ -40,7 +40,8 @@ for (x in year_list){
   #   6 = retirement, 7 = liquidity/the future, 8 = investment, 9 = no particular reason
   
   vars_to_keep <- c('networth', 'debt', 'asset', 
-                    'homeeq','hdebt', 'fin', 'income', 'resdbt',
+                    'homeeq', 'hdebt', 'fin', 'resdbt', 
+                    'income', 'wageinc', 'intdivinc',
                     'agecl', 'hhsex', 'race', 'edcl', 'married', 'kids', 
                     'savres1', 'savres2', 'savres3', 'savres4', 'savres5',
                     'savres6', 'savres7', 'savres8', 'savres9', 'wgt')
