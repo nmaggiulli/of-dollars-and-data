@@ -16,13 +16,13 @@ library(gtable)
 library(RColorBrewer)
 library(ggrepel)
 library(reldist)
+library(Hmisc)
+library(lazyeval)
 
 ########################## Start Program Here ######################### #
 
 # Load data fom local library
 scf_stack <- readRDS(paste0(localdir, "03-scf-stack.Rds"))
-
-scf_stack <- select(scf_stack, income, networth, wageinc, intdivinc, year, edcl, agecl, wgt)
 
 year_list <- unique(scf_stack$year)
 edcl_list <- unique(scf_stack$edcl)
@@ -73,11 +73,65 @@ file_path = paste0(exportdir, "10-scf-income-inequality/overall.jpeg")
   # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
+# Plot each var individually
+plot_var_percentile <- function(x){  
+  to_plot <-  scf_stack %>%
+              group_by(year) %>%
+              summarise_(`10th Percentile` = interp(
+                        ~wtd.quantile(var, weights = wgt, probs=0.1), 
+                        var = as.name(x)),
+                        `30th Percentile` = interp(
+                          ~wtd.quantile(var, weights = wgt, probs=0.3), 
+                          var = as.name(x)),
+                        `50th Percentile` = interp(
+                          ~wtd.quantile(var, weights = wgt, probs=0.5), 
+                          var = as.name(x)),
+                        `70th Percentile` = interp(
+                          ~wtd.quantile(var, weights = wgt, probs=0.7), 
+                          var = as.name(x)),
+                        `90th Percentile` = interp(
+                          ~wtd.quantile(var, weights = wgt, probs=0.9), 
+                          var = as.name(x))
+                        ) %>%
+              gather("percentiles", value, -year)
   
-#   summarise(`10th Percentile` = wtd.quantile(networth, weights = wgt, probs=0.1),
-#             `25th Percentile` = wtd.quantile(networth, weights = wgt, probs=0.25),
-#             `50th Percentile` = wtd.quantile(networth, weights = wgt, probs=0.5)) %>%
-# gather(`Net Worth Percentile`, value, -year, -agecl)
+  # Set the file_path based on the loopfunction input 
+  file_path = paste0(exportdir, "10-scf-income-inequality/", x, ".jpeg")
+  
+  plot <- ggplot(to_plot, aes(x = year, y = value, col = percentiles)) +
+    geom_line() +
+    scale_color_brewer(palette = "Set1", guide = FALSE) +
+    ggtitle(paste0(x)) +
+    of_dollars_and_data_theme +
+    labs(x = "Year" , y = x)
+  
+  # Add a source and note string for the plots
+  source_string <- "Source:  Federal Reserve Board, Survey of Consumer Finances (OfDollarsAndData.com)"
+  note_string   <- "Note:  Calculates the weighted average." 
+  
+  # Turn plot into a gtable for adding text grobs
+  my_gtable   <- ggplot_gtable(ggplot_build(plot))
+  
+  # Make the source and note text grobs
+  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
+                          gp =gpar(fontfamily = "my_font", fontsize = 8))
+  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+                          gp =gpar(fontfamily = "my_font", fontsize = 8))
+  
+  # Add the text grobs to the bototm of the gtable
+  my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
+  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
+  
+  # Save the gtable
+  ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+  
+}
+
+plot_var_percentile("wageinc")
+plot_var_percentile("networth")
+plot_var_percentile("intdivinc")
+plot_var_percentile("bussefarminc")
+plot_var_percentile("ssretinc")
 
 
 
