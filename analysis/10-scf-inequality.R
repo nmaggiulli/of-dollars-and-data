@@ -16,6 +16,7 @@ library(gtable)
 library(RColorBrewer)
 library(ggrepel)
 library(Hmisc)
+library(reldist)
 library(stringr)
 
 ########################## Start Program Here ######################### #
@@ -42,7 +43,7 @@ i <- 1
   to_plot <- gather(to_plot, key, value, -year)
 
 # Set the file_path based on the loopfunction input 
-file_path = paste0(exportdir, "10-scf-income-inequality/inequality-by-type.jpeg")
+file_path = paste0(exportdir, "10-scf-inequality/inequality-by-type.jpeg")
 
   plot <- ggplot(to_plot, aes(x = year, y = value, col = key)) +
     geom_line() +
@@ -61,7 +62,7 @@ file_path = paste0(exportdir, "10-scf-income-inequality/inequality-by-type.jpeg"
   
   # Add a source and note string for the plots
   source_string <- "Source:  Federal Reserve Board, Survey of Consumer Finances (OfDollarsAndData.com)"
-  note_string   <- "Note:  The inequality measure is a Gini coefficient weighted at the household level." 
+  note_string   <- "Note:  The inequality measure is a weighted Gini coefficient." 
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
