@@ -41,7 +41,7 @@ for (x in year_list){
   
   vars_to_keep <- c('networth', 'debt', 'asset', 
                     'homeeq', 'hdebt', 'fin', 'resdbt', 
-                    'income', 'wageinc', 'intdivinc',
+                    'income', 'wageinc', 'intdivinc', 'bussefarminc', 'equitinc', 'ssretinc',
                     'agecl', 'hhsex', 'race', 'edcl', 'married', 'kids', 
                     'savres1', 'savres2', 'savres3', 'savres4', 'savres5',
                     'savres6', 'savres7', 'savres8', 'savres9', 'wgt')
