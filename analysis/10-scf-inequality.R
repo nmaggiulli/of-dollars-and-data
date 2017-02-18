@@ -24,6 +24,8 @@ library(stringr)
 # Load data fom local library
 scf_stack <- readRDS(paste0(localdir, "03-scf-stack.Rds"))
 
+scf_stack[is.na(scf_stack$equitinc), "equitinc"] <- 0
+
 year_list <- unique(scf_stack$year)
 edcl_list <- unique(scf_stack$edcl)
 agecl_list <- unique(scf_stack$agecl)
@@ -34,9 +36,10 @@ i <- 1
   for (y in year_list){
       filtered <- filter(scf_stack, year == y)
       to_plot[i, "Net Worth"]                    <- gini(filtered$networth, filtered$wgt)
-      to_plot[i, "Total Income"]                 <- gini(filtered$income, filtered$wgt)
       to_plot[i, "Wages"]                        <- gini(filtered$wageinc, filtered$wgt)
       to_plot[i, "Interest and Dividend Income"] <- gini(filtered$intdivinc, filtered$wgt)
+      to_plot[i, "Assets"]                       <- gini(filtered$asset, filtered$wgt)
+      to_plot[i, "Equity Income"]                <- gini(filtered$equitinc, filtered$wgt)
       to_plot[i, "year"]                         <- y
       i <- i + 1
   }
@@ -47,15 +50,22 @@ file_path = paste0(exportdir, "10-scf-inequality/inequality-by-type.jpeg")
 
   plot <- ggplot(to_plot, aes(x = year, y = value, col = key)) +
     geom_line() +
-    geom_text_repel(data = filter(to_plot, year == 2004), 
+    geom_text_repel(data = filter(to_plot, year == 2004, key != "Interest and Dividend Income"), 
                     aes(year, 
                         col = key,
                         label = str_wrap(key, width = 30),
                         family = "my_font"),
                     max.iter =  3000,
                     nudge_y = -0.035) +
+    geom_text_repel(data = filter(to_plot, year == 2004, key == "Interest and Dividend Income"), 
+                    aes(year, 
+                        col = key,
+                        label = str_wrap(key, width = 30),
+                        family = "my_font"),
+                    max.iter =  3000,
+                    nudge_y = 0.035) +
     scale_color_brewer(palette = "Set1", guide = FALSE) +
-    ggtitle(paste0("Net Worth and Dividends Exhibit More Inequality\nThan Wage Income in the U.S.")) +
+    ggtitle(paste0("Financial Assets Exhibit More Inequality\nThan Wage Income in the U.S.")) +
     of_dollars_and_data_theme +
     scale_y_continuous(limits = c(0.4, 1), breaks = seq(0.4, 1, 0.1)) +
     labs(x = "Year" , y = "Inequality Measure (0 = Equality, 1 = Inequality)")
