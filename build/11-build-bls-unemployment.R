@@ -32,16 +32,30 @@ for (i in loop_list){
 # Load in the area and area_type
 area <- readRDS(paste0(importdir, "11-bls-unemployment/bls_unemployment_area.Rds"))
 
-area <- select(area, area_type_code, area_code) %>%
-          mutate(area_text = area_code, area_code = area_type_code) %>%
-            select(area_code, area_text)
+area <- select(area, area_type_code, area_code, row.names) %>%
+          mutate(area_text = area_code, 
+                 area_code = area_type_code,
+                 area_type_code = row.names) %>%
+            select(area_code, area_text, area_type_code)
+
+area_type <- readRDS(paste0(importdir, "11-bls-unemployment/bls_unemployment_area_type.Rds"))
+
+area_type <- mutate(area_type, area_type_text = area_type_code,
+                    area_type_code = rownames(area_type)) %>%
+            select(area_type_text, area_type_code)
+
+areas <- area %>%
+          left_join(area_type) %>%
+          select(area_code, area_text, area_type_text, area_type_code)
 
 # Define the area on the ue stack
-ue_stack <- mutate(ue_stack, area_code = substr(series_id, 4, 18))
+ue_stack <- mutate(ue_stack, 
+                   area_code = substr(series_id, 4, 18),
+                   measure_code = substr(series_id, 19, 20))
 
 # Join the area data to the stack
 ue_stack <- ue_stack %>%
-              left_join(area)
+              left_join(areas)
 
 # Save down RDS
 saveRDS(ue_stack, paste0(localdir, "11-bls-ue.Rds"))
