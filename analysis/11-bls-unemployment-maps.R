@@ -83,12 +83,12 @@ plot_year <- function(yr){
   # Set the file_path based on the function input 
   file_path = paste0(exportdir, "11-bls-unemployment/state-map-", yr, ".jpg")
   
-  plot <- ggplot() + geom_polygon(data = to_plot, 
+  plot <- ggplot() + geom_polygon(data = to_plot,
                            aes(x = long, 
-                               y = lat, 
+                               y = lat,
                                group = group, 
                                fill = as.numeric(to_plot$value)),
-                           colour="white") + 
+                           ) + 
   scale_fill_continuous(low = "thistle2", high = "darkred", guide= FALSE) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Unemployment Rate in ", yr)) +
@@ -129,7 +129,7 @@ frames <- lapply(years_list, function(yr){
   image_read(paste0(exportdir, "11-bls-unemployment/state-map-", yr, ".jpg"))
 })
 
-image_write(image_animate(image_join(frames), fps = 1), 
+image_write(image_animate(image_join(frames), fps = 2), 
             paste0(exportdir, "11-bls-unemployment/all_maps.gif"))
 
 
