@@ -40,23 +40,21 @@ n_years    <- length(years_list)
 all_counties <- map_data("county")
 
 ue_stack$comma     <- gregexpr(pattern =',',ue_stack$area_text)
-ue_stack$len       <- length(ue_stack$area_text)
+ue_stack$len       <- nchar(as.character(ue_stack$area_text))
 ue_stack$region    <- trimws(
                         tolower(
-                          state.name[
-                            unlist(sapply(
-                              X = substr(ue_stack$area_text, 
-                                as.numeric(ue_stack$comma) + 2, 
-                                as.numeric(ue_stack$len)),
-                              FUN = function(x){
-                                if (x != "District of Columbia"){
-                                  grep(x, state.abb)
-                                } else{
-                                  x
-                                }
+                          unlist(sapply(
+                            X = substr(ue_stack$area_text, 
+                              as.numeric(ue_stack$comma) + 2, 
+                              as.numeric(ue_stack$len)),
+                            FUN = function(x){
+                              if (x != "District of Columbia"){
+                                state.name[grep(x, state.abb)]
+                              } else{
+                                x
                               }
-                            ))
-                          ]
+                            }
+                          ))
                         )
                       )
 
@@ -72,6 +70,9 @@ ue_stack$subregion <- trimws(
                           )
                         )
                       )
+
+# Set the subregion manually for DC
+ue_stack[ue_stack$region == "district of columbia", "subregion"] <- "washington"
 
 plot_year <- function(yr){
   to_plot <- ue_stack %>%
