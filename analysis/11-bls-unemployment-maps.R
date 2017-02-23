@@ -21,10 +21,13 @@ library(magick)
 ########################## Start Program Here ######################### #
 
 # Load in data
-ue_stack <- readRDS(paste0(localdir, "11-bls-ue.Rds"))
+ue_stack_orig <- readRDS(paste0(localdir, "11-bls-ue.Rds"))
+
+# Load data fom local library
+bls_oe <- readRDS(paste0(localdir, "05-bls-oe.Rds"))
 
 # Filter the data to be only for annual unemployment rates and for states
-ue_stack <- filter(ue_stack, period == "M13", area_type_code == "F", measure_code == "03")
+ue_stack <- filter(ue_stack_orig, year >= 2007, period == "M13", area_type_code == "F", measure_code == "03")
 
 # Also remove PR
 ue_stack <- ue_stack[grepl(", PR", ue_stack$area_text) != 1,]
@@ -33,12 +36,9 @@ ue_stack <- ue_stack[grepl(", PR", ue_stack$area_text) != 1,]
 years_list <- unique(ue_stack$year)
 n_years    <- length(years_list)
 
-# Get state data for the map
-#all_states <- map_data("state")
+months_list <- unique(ue_stack$period)
 
-# Get counties data for the map
-all_counties <- map_data("county")
-
+# Clean up the names on UE to match with the map data
 ue_stack$comma     <- gregexpr(pattern =',',ue_stack$area_text)
 ue_stack$len       <- nchar(as.character(ue_stack$area_text))
 ue_stack$region    <- trimws(
@@ -60,13 +60,12 @@ ue_stack$region    <- trimws(
 
 ue_stack$subregion <- trimws(
                         tolower(
-                          gsub("Parish", "", 
-                          gsub("County", "", 
+                          gsub("city|parish|county|/|\\.| |'", "", ignore.case = TRUE,
                              substr(
                                ue_stack$area_text, 
                                1, 
-                               as.numeric(ue_stack$comma) - 1)
-                          )
+                               as.numeric(ue_stack$comma) - 1
+                            )
                           )
                         )
                       )
@@ -74,24 +73,42 @@ ue_stack$subregion <- trimws(
 # Set the subregion manually for DC
 ue_stack[ue_stack$region == "district of columbia", "subregion"] <- "washington"
 
+# Get state data for the map
+#all_states <- map_data("state")
+
+# Get counties data for the map
+all_counties <- map_data("county")
+
+all_counties$subregion <- gsub(" |\\.|city", "", ignore.case = TRUE,
+                               all_counties$subregion
+                          )
+
+ue_unique <- unique(ue_stack[, c("region", "subregion")])
+county_unique <- unique(all_counties[, c("region", "subregion")])
+
+in_county_not_ue <- anti_join(county_unique, ue_unique)
+in_ue_not_county <- anti_join(ue_unique, county_unique)
+
+y_max <- max(as.numeric(ue_stack$value), na.rm = TRUE)
+y_min <- min(as.numeric(ue_stack$value), na.rm = TRUE)
+
 plot_year <- function(yr){
   to_plot <- ue_stack %>%
                 filter(year == yr) %>%
                 left_join(all_counties)
   
-  
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "11-bls-unemployment/state-map-", yr, ".jpg")
+  file_path = paste0(exportdir, "11-bls-unemployment/county-map-", yr, ".jpg")
   
   plot <- ggplot() + geom_polygon(data = to_plot,
                            aes(x = long, 
                                y = lat,
                                group = group, 
-                               fill = as.numeric(to_plot$value)),
+                               fill = as.numeric(to_plot$value))
                            ) + 
-  scale_fill_continuous(low = "thistle2", high = "darkred", guide= FALSE) +
+  scale_fill_continuous(low = "thistle2", high = "darkred", guide= FALSE, limits = c(y_min, y_max)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Unemployment Rate in ", yr)) +
+  ggtitle(paste0("Unemployment Rate by County\n", yr)) +
   theme(axis.ticks.x = element_blank(), 
         axis.ticks.y = element_blank(),
         axis.text.x = element_blank(),
@@ -103,7 +120,6 @@ plot_year <- function(yr){
   )
   # Add a source and note string for the plots
   source_string <- "Source:  Bureau of Labor Statistics (OfDollarsAndData.com)"
-  note_string   <- "Note:  To do." 
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
@@ -111,12 +127,9 @@ plot_year <- function(yr){
   # Make the source and note text grobs
   source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
                           gp =gpar(fontfamily = "my_font", fontsize = 8))
-  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
   
   # Add the text grobs to the bototm of the gtable
   my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
-  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
   
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
@@ -125,11 +138,12 @@ for (i in years_list){
   plot_year(i)
 }
 
+
 frames <- lapply(years_list, function(yr){
-  image_read(paste0(exportdir, "11-bls-unemployment/state-map-", yr, ".jpg"))
+  image_read(paste0(exportdir, "11-bls-unemployment/county-map-", yr, ".jpg"))
 })
 
-image_write(image_animate(image_join(frames), fps = 2), 
+image_write(image_animate(image_join(frames), fps = 1), 
             paste0(exportdir, "11-bls-unemployment/all_maps.gif"))
 
 
