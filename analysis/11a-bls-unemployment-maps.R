@@ -70,9 +70,6 @@ ue_stack$subregion <- trimws(
 # Set the subregion manually for DC
 ue_stack[ue_stack$region == "district of columbia", "subregion"] <- "washington"
 
-# Get state data for the map
-#all_states <- map_data("state")
-
 # Get counties data for the map
 all_counties <- map_data("county")
 
