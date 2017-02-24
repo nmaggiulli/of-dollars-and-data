@@ -20,11 +20,8 @@ library(magick)
 
 ########################## Start Program Here ######################### #
 
-# Load in data
+# Load in UE data
 ue_stack_orig <- readRDS(paste0(localdir, "11-bls-ue.Rds"))
-
-# Load data fom local library
-bls_oe <- readRDS(paste0(localdir, "05-bls-oe.Rds"))
 
 # Filter the data to be only for annual unemployment rates and for states
 ue_stack <- filter(ue_stack_orig, year >= 2007, period == "M13", area_type_code == "F", measure_code == "03")
