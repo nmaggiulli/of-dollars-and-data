@@ -92,7 +92,7 @@ plot_year <- function(yr){
                 left_join(all_counties)
   
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "11-bls-unemployment/ue-county-map-", yr, ".jpg")
+  file_path = paste0(exportdir, "11-bls-maps/ue-county-map-", yr, ".jpg")
   
   plot <- ggplot() + geom_polygon(data = to_plot,
                            aes(x = long, 
@@ -134,11 +134,11 @@ for (i in years_list){
 
 
 frames <- lapply(years_list, function(yr){
-  image_read(paste0(exportdir, "11-bls-unemployment/ue-county-map-", yr, ".jpg"))
+  image_read(paste0(exportdir, "11-bls-maps/ue-county-map-", yr, ".jpg"))
 })
 
 image_write(image_animate(image_join(frames), fps = 1), 
-            paste0(exportdir, "11-bls-unemployment/ue-county-maps.gif"))
+            paste0(exportdir, "11-bls-maps/ue-county-maps.gif"))
 
 
 
