@@ -48,6 +48,12 @@ areas <- area %>%
           left_join(area_type) %>%
           select(area_code, area_text, area_type_text, area_type_code)
 
+# Load in measure data as well
+measure <- readRDS(paste0(importdir, "11-bls-unemployment/bls_unemployment_measure.Rds"))
+measure <- mutate(measure, 
+                  measure_text = measure_code,
+                  measure_code = rownames(measure))
+
 # Define the area on the ue stack
 ue_stack <- mutate(ue_stack, 
                    area_code = substr(series_id, 4, 18),
@@ -55,7 +61,8 @@ ue_stack <- mutate(ue_stack,
 
 # Join the area data to the stack
 ue_stack <- ue_stack %>%
-              left_join(areas)
+              left_join(areas) %>%
+              left_join(measure)
 
 # Save down RDS
 saveRDS(ue_stack, paste0(localdir, "11-bls-ue.Rds"))

@@ -28,6 +28,7 @@ read_in_bls <- function(string){
 
 read_in_bls("area")
 read_in_bls("area_type")
+read_in_bls("measure")
 read_in_bls("data.0.CurrentU90-94")
 read_in_bls("data.0.CurrentU95-99")
 read_in_bls("data.0.CurrentU00-04")
