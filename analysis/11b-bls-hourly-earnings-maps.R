@@ -61,14 +61,13 @@ plot_quintile <- function(q){
                 left_join(all_states)
   
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "11-bls-maps/oe-state-map-", q, ".jpg")
+  file_path = paste0(exportdir, "11-bls-maps/state-map-oe-", q, ".jpg")
   
   plot <- ggplot() + geom_polygon(data = to_plot,
                            aes(x = long, 
                                y = lat,
                                group = group, 
-                               fill = as.numeric(to_plot$value)),
-                           colour = "white"
+                               fill = as.numeric(to_plot$value))
                            ) + 
   scale_fill_continuous(low = "thistle2", high = "darkred", guide= FALSE, limits = c(y_min, y_max)) +
   of_dollars_and_data_theme +
@@ -105,12 +104,12 @@ for (i in quintile_list){
 
 # Read in the completed frames
 frames <- lapply(quintile_list, function(q){
-  image_read(paste0(exportdir, "11-bls-maps/oe-state-map-", q, ".jpg"))
+  image_read(paste0(exportdir, "11-bls-maps/state-map-oe-", q, ".jpg"))
 })
 
 # Create a GIF from the images
 image_write(image_animate(image_join(frames), fps = 1), 
-            paste0(exportdir, "11-bls-maps/oe-state-maps.gif"))
+            paste0(exportdir, "11-bls-maps/all-state-oe-maps.gif"))
 
 
 
