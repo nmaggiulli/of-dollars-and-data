@@ -238,6 +238,7 @@ plot_year_measure <- function(yr, measure, geo){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
+# Loop through each year, geo, measure to create the plots
 for (i in years_list){
   for (g in geo_list){
     for (m in measure_list){
@@ -251,6 +252,7 @@ for (i in years_list){
   }
 }
 
+# Loop through the geographies and measures to create the GIFs
 for (m in measure_list){
   for (g in geo_list){
     # Create vars based on the geo variable
