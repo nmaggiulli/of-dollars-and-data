@@ -21,13 +21,22 @@ library(magick)
 ########################## Start Program Here ######################### #
 
 # Load in UE data
-ue_stack <- readRDS(paste0(localdir, "11-bls-ue.Rds"))
+ue_stack <- readRDS(paste0(localdir, "11-bls-ue.Rds")) %>%
+              select(year, period, area_text, measure_text, area_type_code, value)
+
+# Create 2016 data for the states only (take mean of the months)
+ue_2016 <- filter(ue_stack, area_type_code == "A", year == 2016) %>%
+              group_by(year, area_text, measure_text, area_type_code) %>%
+                summarise(value = mean(as.numeric(value)),
+                          period = "M13") %>%
+                  select(year, period, area_text, measure_text, area_type_code, value)
 
 # Filter the data to be only for annual unemployment rates and for states
 ue_stack <- filter(ue_stack, 
                    year >= 2007, 
                    period == "M13", 
-                   area_type_code == "A" | area_type_code == "F")
+                   area_type_code == "A" | area_type_code == "F") %>%
+                    rbind(ue_2016)
 
 # Also remove PR
 ue_stack <- ue_stack[grepl(", PR", ue_stack$area_text) != 1,]
@@ -233,8 +242,8 @@ for (i in years_list){
   for (g in geo_list){
     for (m in measure_list){
       if ((i > first_year & g == "all_states") | 
-          (i >= first_year & m == "unemployment rate") |
-          (i > first_year & g == "all_counties" & m == "labor force")
+          (i >= first_year & m == "unemployment rate" & i < 2016) |
+          (i > first_year & g == "all_counties" & m == "labor force" & i < 2016)
       ){
         plot_year_measure(i, m, g)
       }
@@ -245,35 +254,34 @@ for (i in years_list){
 for (m in measure_list){
   for (g in geo_list){
     # Create vars based on the geo variable
-    if (g == "all_counties"){
+    if (g == "all_counties" & (m == "unemployment rate" | m == "labor force")){
       geoname <- "county"
       at_code <- "F"
+      if (m == "unemployment rate"){
+        yr_list <- years_list[1:(length(years_list) - 1)]
+      } else {
+        yr_list <- years_list[2:(length(years_list) - 1)]
+      }
     } else {
       geoname <- "state"
       at_code <- "A"
+      if (m != "unemployment rate"){
+        yr_list <- years_list[2:length(years_list)]
+      } else {
+        yr_list <- years_list
+      }
     }
     
-    # Read in the the individual images
-    if (m == "unemployment rate"){
-      frames <- lapply(years_list, function(yr){
-        image_read(paste0(exportdir, "11-bls-maps/", geoname, "-map-", m, "-", yr, ".jpg"))
-      })
-      
-      # Make animation from the frames read in during the prior step
-      image_write(image_animate(image_join(frames), fps = 1), 
-                  paste0(exportdir, "11-bls-maps/all-", geoname, "-", m,"-maps.gif"))
-      
-    } else if (geoname == "state" | 
-               (geoname == "county" & m == "labor force")){
-      frames <- lapply(years_list[2:length(years_list)], function(yr){
-        image_read(paste0(exportdir, "11-bls-maps/", geoname, "-map-", m, "-", yr, ".jpg"))
-      })
-      
-      # Make animation from the frames read in during the prior step
-      image_write(image_animate(image_join(frames), fps = 1), 
-                  paste0(exportdir, "11-bls-maps/all-", geoname, "-", m,"-maps.gif"))
-    }
-  }
+  # Read in the the individual images
+  frames <- lapply(yr_list, function(yr){
+    image_read(paste0(exportdir, "11-bls-maps/", geoname, "-map-", m, "-", yr, ".jpg"))
+  })
+  
+  # Make animation from the frames read in during the prior step
+  image_write(image_animate(image_join(frames), fps = 1), 
+              paste0(exportdir, "11-bls-maps/all-", geoname, "-", m,"-maps.gif"))
+  
+  }      
 }
 
 
