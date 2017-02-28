@@ -23,7 +23,7 @@ read_in_bls <- function(string){
                           sep = "\t", row.names = NULL)  
   }
   
-  saveRDS(temp_name, paste0(importdir, "11-bls-unemployment/bls_unemployment_", name, ".Rds"))
+  saveRDS(temp_name, paste0(importdir, "12-bls-unemployment/bls_unemployment_", name, ".Rds"))
 }
 
 read_in_bls("area")
