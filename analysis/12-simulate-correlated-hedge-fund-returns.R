@@ -109,15 +109,14 @@ run_sim <- function(hf_outperformance,
   }
   assign("client_hf_matrix", client_hf_matrix, envir = .GlobalEnv)
   assign("client_market_matrix", client_hf_matrix, envir = .GlobalEnv)
-  print(paste0("Final market value: ",format(mean(client_market_matrix[, n_years]), big.mark = ",")))
-  print(paste0("Final hedge fund value: ", format(mean(client_hf_matrix[, n_years]), big.mark = ",")))
+  print(paste0("The hedge fund outperformed the market (net of fees) in ", sum(client_hf_matrix[, n_years] > client_market_matrix[, n_years])/n_simulations * 100, "% of simulations"))
 }
 
 
 
 # Set simulation parameters
 run_sim(
-  hf_outperformance = 0.015,
+  hf_outperformance = 0.01,
   hf_management_fee = 0.01, 
   hf_performance_fee = 0.3, 
   hf_deduct_fees = 1,
