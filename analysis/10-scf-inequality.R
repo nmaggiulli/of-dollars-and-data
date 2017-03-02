@@ -45,7 +45,7 @@ i <- 1
   }
   to_plot <- gather(to_plot, key, value, -year)
 
-# Set the file_path based on the loopfunction input 
+# Set the file_path based on the loop function input 
 file_path = paste0(exportdir, "10-scf-inequality/inequality-by-type.jpeg")
 
   plot <- ggplot(to_plot, aes(x = year, y = value, col = key)) +
