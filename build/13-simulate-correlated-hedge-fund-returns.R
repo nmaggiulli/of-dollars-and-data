@@ -9,11 +9,6 @@ source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
 library(MASS)
 library(tidyr)
 library(dplyr)
-library(ggplot2)
-library(scales)
-library(grid)
-library(gridExtra)
-library(gtable)
 
 ########################## Start Program Here ######################### #
 
@@ -123,6 +118,8 @@ run_sim <- function(hf_outperformance,
   return(sum(client_hf_matrix[, n_years] > client_market_matrix[, n_years])/n_simulations)
 }
 
+# Code to do a quick sample run for testing
+# I could delete it and do a checkout later in Git, but I am lazy
 # run_sim(
 #   hf_outperformance              = 0,
 #   hf_management_fee              = 0.02,
