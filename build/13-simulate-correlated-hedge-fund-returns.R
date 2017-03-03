@@ -34,7 +34,7 @@ sd_market         <- 0.2
 run_sim <- function(hf_outperformance, 
                     hf_management_fee,
                     hf_performance_fee,
-                    hf_performance_above_alpha,
+                    hf_performance_above_benchmark,
                     management_and_performance_fee,
                     hf_deduct_fees,
                     market_management_fee,
@@ -73,21 +73,21 @@ run_sim <- function(hf_outperformance,
                    Sigma = cov_matrix,
                    empirical = TRUE)
     
-    # Determine if there is any alpha for each simulation
-    if (hf_performance_above_alpha == 1){
-      alpha <- pmax(0, ret[, 2] - ret[, 1])
+    # Determine if there is any ret_above_benchmark for each simulation
+    if (hf_performance_above_benchmark == 1){
+      ret_above_benchmark <- pmax(0, ret[, 2] - ret[, 1])
     } else {
-      alpha <- pmax(0, ret[, 2])
+      ret_above_benchmark <- pmax(0, ret[, 2])
     }
     
     if (i == 1){
       client_market_matrix[, i] <- initial_client_capital * (1 + ret[, 1]) * (1 - market_management_fee)
       management_fee            <- initial_client_capital * hf_management_fee
       if (management_and_performance_fee == 0){
-        performance_fee           <- initial_client_capital * alpha * hf_performance_fee  
+        performance_fee           <- initial_client_capital * ret_above_benchmark * hf_performance_fee  
         hf_final_fee              <- pmax(management_fee, performance_fee)
       } else {
-        performance_fee           <- pmax(0, ((initial_client_capital * alpha - management_fee) * hf_performance_fee))
+        performance_fee           <- pmax(0, ((initial_client_capital * ret_above_benchmark - management_fee) * hf_performance_fee))
         hf_final_fee              <- management_fee + performance_fee
       }
       client_hf_matrix[, i]     <- (initial_client_capital * (1 + ret[, 2])) - hf_final_fee
@@ -100,10 +100,10 @@ run_sim <- function(hf_outperformance,
       client_market_matrix[, i] <- client_market_matrix[, (i - 1)] * (1 + ret[, 1]) * (1 - market_management_fee)
       management_fee            <- client_hf_matrix[, (i - 1)] * hf_management_fee
       if (management_and_performance_fee == 0){
-        performance_fee           <- client_hf_matrix[, (i - 1)] * alpha * hf_performance_fee  
+        performance_fee           <- client_hf_matrix[, (i - 1)] * ret_above_benchmark * hf_performance_fee  
         hf_final_fee              <- pmax(0, pmax(management_fee, performance_fee) - fee_deduction)
       } else {
-        performance_fee           <- pmax(0, ((client_hf_matrix[, (i - 1)] * alpha - management_fee) * hf_performance_fee))
+        performance_fee           <- pmax(0, ((client_hf_matrix[, (i - 1)] * ret_above_benchmark - management_fee) * hf_performance_fee))
         hf_final_fee              <- management_fee + performance_fee
       }
       client_hf_matrix[, i]     <- (client_hf_matrix[, (i - 1)] * (1 + ret[, 2])) - hf_final_fee
@@ -124,7 +124,7 @@ run_sim <- function(hf_outperformance,
 #   hf_outperformance              = 0,
 #   hf_management_fee              = 0.02,
 #   hf_performance_fee             = 0.2,
-#   hf_performance_above_alpha     = 1,
+#   hf_performance_above_benchmark = 1,
 #   management_and_performance_fee = 0,
 #   hf_deduct_fees                 = 1,
 #   market_management_fee          = 0.0005,
@@ -135,7 +135,7 @@ run_sim <- function(hf_outperformance,
 results <- data.frame(hf_outperformance              = numeric(),
                       hf_management_fee              = numeric(),
                       hf_performance_fee             = numeric(),
-                      hf_performance_above_alpha     = integer(),
+                      hf_performance_above_benchmark = integer(),
                       management_and_performance_fee = integer(),
                       hf_deduct_fees                 = integer(),
                       market_management_fee          = numeric(),
@@ -172,7 +172,7 @@ for (o in seq(0, 0.04, by = 0.01)){
       results[i, "hf_outperformance"]              <- o
       results[i, "hf_management_fee"]              <- mf
       results[i, "hf_performance_fee"]             <- pf
-      results[i, "hf_performance_above_alpha"]     <- paa
+      results[i, "hf_performance_above_benchmark"] <- paa
       results[i, "management_and_performance_fee"] <- map
       results[i, "hf_deduct_fees"]                 <- df
       results[i, "market_management_fee"]          <- 0.0005
@@ -183,7 +183,7 @@ for (o in seq(0, 0.04, by = 0.01)){
         hf_outperformance              = o,
         hf_management_fee              = mf,
         hf_performance_fee             = pf,
-        hf_performance_above_alpha     = paa,
+        hf_performance_above_benchmark = paa,
         management_and_performance_fee = map,
         hf_deduct_fees                 = df,
         market_management_fee          = 0.0005,
