@@ -25,33 +25,36 @@ hf_results <- readRDS(paste0(localdir, "13-hf-correlation-results.Rds"))
 # Loop through rows to add additional info to the data frame
 for (i in 1:nrow(hf_results)){
   if (hf_results[i, "scenario"] == 1){
-    hf_results[i, "scenario_name"] <- "1% management or 30% of alpha"
+    hf_results[i, "scenario_name"] <- "1 or 30"
   } else if (hf_results[i, "scenario"] == 2){
-    hf_results[i, "scenario_name"] <- "2% management and 20% performance"
+    hf_results[i, "scenario_name"] <- "2 and 20"
   } else if (hf_results[i, "scenario"] == 3){
-    hf_results[i, "scenario_name"] <- "1% management and 17% performance"
+    hf_results[i, "scenario_name"] <- "1 and 17"
   }
 }
 
-unique_outperformance <- unique(hf_results$hf_outperformance)
+unique_outperformance <- unique(hf_results$hf_corr_to_market)
 for (j in unique_outperformance){
-  to_plot <- filter(hf_results, hf_outperformance == j)
+  to_plot <- filter(hf_results, hf_corr_to_market == j)
   
   file_path = paste0(exportdir, "13-simulate-correlated-hedge-fund-returns/hf-outperform-", j ,".jpeg")
   
-  plot <- ggplot(to_plot, aes(x = hf_corr_to_market, y = hf_outperform_pct, col = scenario_name)) +
+  plot <- ggplot(to_plot, aes(x = hf_outperformance, y = hf_outperform_pct, col = scenario_name)) +
             geom_line() +
-            geom_text_repel(data = filter(to_plot, hf_corr_to_market == 0.5), 
-                    aes(hf_corr_to_market, 
+            geom_hline(yintercept = 0.5, linetype = "dashed") +
+            geom_text_repel(data = filter(to_plot, hf_outperformance == 0.02), 
+                    aes(hf_outperformance, 
                         col = scenario_name,
                         label = str_wrap(scenario_name, width = 18),
-                        family = "my_font")) +
+                        family = "my_font"),
+                    max.iter = 3000,
+                    nudge_y = -0.03) +
           scale_color_brewer(palette = "Set1", guide = FALSE) +
-          ggtitle(paste0("Hedge Fund Performance Relative to Market\n(Assumes ", 100*j, "% Annual Outperformance)")) +
+          ggtitle(paste0("Hedge Fund Performance Relative to Market\n(Assumes Correlation to Market = ", j,")")) +
           of_dollars_and_data_theme +
           scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.1), label = percent) +
-          scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
-          labs(x = "Hedge Fund Correlation to Market" , y = "Percentage of Simulations Where Fund\nOutperforms The Market (Net of Fees)")
+          scale_x_continuous(limits = c(0, 0.04), breaks = seq(0, 0.04, 0.01), label = percent) +
+          labs(x = "Hedge Fund Annual Outperformance (Before Fees)" , y = "Percentage of Simulations Where Fund\nOutperforms The Market (Net of Fees)")
   
   # Add a source and note string for the plots
   source_string <- "Source:  Simulated returns (OfDollarsAndData.com)"
