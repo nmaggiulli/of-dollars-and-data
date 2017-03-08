@@ -141,7 +141,9 @@ results <- data.frame(hf_outperformance              = numeric(),
                       market_management_fee          = numeric(),
                       hf_corr_to_market              = numeric(),
                       hf_outperform_pct              = numeric(),
-                      scenario                       = integer()
+                      scenario                       = integer(),
+                      mu_market                      = numeric(),
+                      sd_market                      = numeric()
                       )
 
 # Loop through outperformance, correlation, and other sensitivities
@@ -163,7 +165,7 @@ for (o in seq(0, 0.04, by = 0.01)){
         df  <- 0
       } else if (scenario == 3){
         mf  <- 0.01
-        pf  <- 0.17
+        pf  <- 0.0
         paa <- 0
         map <- 1
         df  <- 0
@@ -178,6 +180,8 @@ for (o in seq(0, 0.04, by = 0.01)){
       results[i, "market_management_fee"]          <- 0.0005
       results[i, "hf_corr_to_market"]              <- c
       results[i, "scenario"]                       <- scenario
+      results[i, "mu_market"]                      <- mu_market
+      results[i, "sd_market"]                      <- sd_market
       
       results[i, "hf_outperform_pct"] <- run_sim(
         hf_outperformance              = o,

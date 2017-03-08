@@ -22,6 +22,9 @@ library(stringr)
 # Load data fom local library
 hf_results <- readRDS(paste0(localdir, "13-hf-correlation-results.Rds"))
 
+mu_market <- mean(hf_results$mu_market)
+sd_market <- mean(hf_results$sd_market)
+
 # Loop through rows to add additional info to the data frame
 for (i in 1:nrow(hf_results)){
   if (hf_results[i, "scenario"] == 1){
@@ -29,7 +32,7 @@ for (i in 1:nrow(hf_results)){
   } else if (hf_results[i, "scenario"] == 2){
     hf_results[i, "scenario_name"] <- "2 and 20"
   } else if (hf_results[i, "scenario"] == 3){
-    hf_results[i, "scenario_name"] <- "1 and 17"
+    hf_results[i, "scenario_name"] <- "1 and 0"
   }
 }
 
@@ -58,7 +61,7 @@ for (j in unique_outperformance){
   
   # Add a source and note string for the plots
   source_string <- "Source:  Simulated returns (OfDollarsAndData.com)"
-  note_string   <- "Note:  Assumes the market fund has an annual expense ratio of 5 basis points." 
+  note_string   <- paste0("Note:  Assumes the market has a ", 100*mu_market ,"% annual return and ", 100*sd_market, "% standard deviation.") 
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
