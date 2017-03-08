@@ -44,7 +44,7 @@ run_sim <- function(hf_outperformance,
   # Set the mean and standard deviation for the hedge fund
   # This assumes some level of outperformance by the hedge fund
   mu_hf             <- mu_market + hf_outperformance                                 
-  sd_hf             <- sd_market                              
+  sd_hf             <- sd_market                             
   
   # Correlation between the market and the hedge fund (~0.9 based on recent data)
   rho   <- hf_corr_to_market
@@ -121,14 +121,14 @@ run_sim <- function(hf_outperformance,
 # Code to do a quick sample run for testing
 # I could delete it and do a checkout later in Git, but I am lazy
 # run_sim(
-#   hf_outperformance              = 0,
-#   hf_management_fee              = 0.02,
-#   hf_performance_fee             = 0.2,
+#   hf_outperformance              = 0.01,
+#   hf_management_fee              = 0,
+#   hf_performance_fee             = 0.5,
 #   hf_performance_above_benchmark = 1,
 #   management_and_performance_fee = 0,
-#   hf_deduct_fees                 = 1,
+#   hf_deduct_fees                 = 0,
 #   market_management_fee          = 0.0005,
-#   hf_corr_to_market              = 0.7
+#   hf_corr_to_market              = 0.9
 # )
 
 # Create a matrix to store the results
@@ -149,24 +149,24 @@ results <- data.frame(hf_outperformance              = numeric(),
 # Loop through outperformance, correlation, and other sensitivities
 i <- 1
 for (o in seq(0, 0.04, by = 0.01)){
-  for (c in seq(0, 0.9, by = 0.1)){
+  for (c in c(0, 0.5, 0.9)){
     for (scenario in seq(1, 3, by = 1)){
       if (scenario == 1){
         mf  <- 0.01
         pf  <- 0.3
-        paa <- 1
+        pab <- 1
         map <- 0
         df  <- 1
       } else if (scenario == 2){
         mf  <- 0.02
         pf  <- 0.2
-        paa <- 0
+        pab <- 0
         map <- 1
         df  <- 0
       } else if (scenario == 3){
         mf  <- 0.01
         pf  <- 0.0
-        paa <- 0
+        pab <- 0
         map <- 1
         df  <- 0
       }
@@ -174,7 +174,7 @@ for (o in seq(0, 0.04, by = 0.01)){
       results[i, "hf_outperformance"]              <- o
       results[i, "hf_management_fee"]              <- mf
       results[i, "hf_performance_fee"]             <- pf
-      results[i, "hf_performance_above_benchmark"] <- paa
+      results[i, "hf_performance_above_benchmark"] <- pab
       results[i, "management_and_performance_fee"] <- map
       results[i, "hf_deduct_fees"]                 <- df
       results[i, "market_management_fee"]          <- 0.0005
@@ -187,7 +187,7 @@ for (o in seq(0, 0.04, by = 0.01)){
         hf_outperformance              = o,
         hf_management_fee              = mf,
         hf_performance_fee             = pf,
-        hf_performance_above_benchmark = paa,
+        hf_performance_above_benchmark = pab,
         management_and_performance_fee = map,
         hf_deduct_fees                 = df,
         market_management_fee          = 0.0005,
