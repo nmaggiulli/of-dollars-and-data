@@ -53,11 +53,11 @@ for (j in unique_outperformance){
                     max.iter = 3000,
                     nudge_y = -0.03) +
           scale_color_brewer(palette = "Set1", guide = FALSE) +
-          ggtitle(paste0("Hedge Fund Performance Relative to Market\n(Assumes Correlation to Market = ", j,")")) +
+          ggtitle(paste0("Active Fund Performance Relative to Market\n(Assumes Correlation to Market = ", j,")")) +
           of_dollars_and_data_theme +
           scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.1), label = percent) +
           scale_x_continuous(limits = c(0, 0.04), breaks = seq(0, 0.04, 0.01), label = percent) +
-          labs(x = "Hedge Fund Annual Outperformance (Before Fees)" , y = "Percentage of Simulations Where Fund\nOutperforms The Market (Net of Fees)")
+          labs(x = "Active Fund Annual Outperformance (Before Fees)" , y = "Percentage of Simulations Where Fund\nOutperforms The Market (Net of Fees)")
   
   # Add a source and note string for the plots
   source_string <- "Source:  Simulated returns (OfDollarsAndData.com)"
