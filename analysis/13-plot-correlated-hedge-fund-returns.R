@@ -61,7 +61,7 @@ for (j in unique_outperformance){
   
   # Add a source and note string for the plots
   source_string <- "Source:  Simulated returns (OfDollarsAndData.com)"
-  note_string   <- paste0("Note:  Assumes the fund's returns have a correlation of ", j, " with the market's returns.") 
+  note_string   <- paste0("Note:  Assumes the fund's returns have a correlation of ", j, " with the market return.") 
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
