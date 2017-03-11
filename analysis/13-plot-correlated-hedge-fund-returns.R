@@ -53,7 +53,7 @@ for (j in unique_outperformance){
                     max.iter = 3000,
                     nudge_y = -0.03) +
           scale_color_brewer(palette = "Set1", guide = FALSE) +
-          ggtitle(paste0("Active Fund Performance Relative to Market\n(Assumes Correlation to Market = ", j,")")) +
+          ggtitle(paste0("Some Fee Structures Require More\nOutperformance To Beat the Market")) +
           of_dollars_and_data_theme +
           scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.1), label = percent) +
           scale_x_continuous(limits = c(0, 0.04), breaks = seq(0, 0.04, 0.01), label = percent) +
@@ -61,7 +61,7 @@ for (j in unique_outperformance){
   
   # Add a source and note string for the plots
   source_string <- "Source:  Simulated returns (OfDollarsAndData.com)"
-  note_string   <- paste0("Note:  Assumes the market has a ", 100*mu_market ,"% annual return and ", 100*sd_market, "% standard deviation.") 
+  note_string   <- paste0("Note:  Assumes the fund's returns have a correlation of ", j, "with the market's returns.") 
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
