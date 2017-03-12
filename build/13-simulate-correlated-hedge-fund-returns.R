@@ -20,9 +20,9 @@ library(dplyr)
 #
 
 # Set the initial client capital and number of simulations
-n_simulations <- 10000
+n_simulations          <- 10000
 initial_client_capital <- 1 * 10^6      
-n_years <- 40
+n_years                <- 40
 
 # This seed allows us to have reproducible random sampling
 set.seed(12345)                                   
@@ -81,8 +81,8 @@ run_sim <- function(hf_outperformance,
     }
     
     if (i == 1){
-      client_market_matrix[, i] <- initial_client_capital * (1 + ret[, 1]) * (1 - market_management_fee)
-      management_fee            <- initial_client_capital * hf_management_fee
+      client_market_matrix[, i]   <- initial_client_capital * (1 + ret[, 1]) * (1 - market_management_fee)
+      management_fee              <- initial_client_capital * hf_management_fee
       if (management_and_performance_fee == 0){
         performance_fee           <- initial_client_capital * ret_above_benchmark * hf_performance_fee  
         hf_final_fee              <- pmax(management_fee, performance_fee)
@@ -90,15 +90,15 @@ run_sim <- function(hf_outperformance,
         performance_fee           <- pmax(0, ((initial_client_capital * ret_above_benchmark - management_fee) * hf_performance_fee))
         hf_final_fee              <- management_fee + performance_fee
       }
-      client_hf_matrix[, i]     <- (initial_client_capital * (1 + ret[, 2])) - hf_final_fee
+      client_hf_matrix[, i]       <- (initial_client_capital * (1 + ret[, 2])) - hf_final_fee
       if (hf_deduct_fees == 1){
         fee_deduction             <- sapply(performance_fee, function(x){ ifelse(x == 0, management_fee, 0)})
       }else {
         fee_deduction <- 0
       }
     } else {
-      client_market_matrix[, i] <- client_market_matrix[, (i - 1)] * (1 + ret[, 1]) * (1 - market_management_fee)
-      management_fee            <- client_hf_matrix[, (i - 1)] * hf_management_fee
+      client_market_matrix[, i]   <- client_market_matrix[, (i - 1)] * (1 + ret[, 1]) * (1 - market_management_fee)
+      management_fee              <- client_hf_matrix[, (i - 1)] * hf_management_fee
       if (management_and_performance_fee == 0){
         performance_fee           <- client_hf_matrix[, (i - 1)] * ret_above_benchmark * hf_performance_fee  
         hf_final_fee              <- pmax(0, pmax(management_fee, performance_fee) - fee_deduction)
@@ -106,7 +106,7 @@ run_sim <- function(hf_outperformance,
         performance_fee           <- pmax(0, ((client_hf_matrix[, (i - 1)] * ret_above_benchmark - management_fee) * hf_performance_fee))
         hf_final_fee              <- management_fee + performance_fee
       }
-      client_hf_matrix[, i]     <- (client_hf_matrix[, (i - 1)] * (1 + ret[, 2])) - hf_final_fee
+      client_hf_matrix[, i]       <- (client_hf_matrix[, (i - 1)] * (1 + ret[, 2])) - hf_final_fee
       if (hf_deduct_fees == 1){
         fee_deduction             <- sapply(performance_fee, function(x){ ifelse(x == 0, management_fee, 0)})
       }else {
