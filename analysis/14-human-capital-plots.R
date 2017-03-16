@@ -15,15 +15,16 @@ library(grid)
 library(gridExtra)
 library(gtable)
 library(ggrepel)
+library(stringr)
 
 ########################## Start Program Here ######################### #
 
-n_years_working           <- 33
-starting_income           <- 100000
+n_years_working           <- 40
+starting_income           <- 50000
 discount_rate             <- 0.03
-savings_rate              <- 0.1
+savings_rate              <- 0.15
 annual_return             <- 0.05
-growth_rate               <- 0.02
+growth_rate               <- 0.0
 starting_financial_assets <- 0
 
 assets <- data.frame(matrix(NA, nrow = n_years_working+1, ncol = 0))
@@ -78,13 +79,32 @@ file_path = paste0(exportdir, "14-human-capital-plots/human-capital-lifetime-plo
 # Create plot
 plot <- ggplot(data = assets_long, aes(x = year, y = value, fill = asset_type, alpha = alpha)) +
           geom_bar(stat = "identity", position = "dodge") +
+          geom_text_repel(data = filter(assets_long, 
+                                        year == 3, 
+                                        asset_type == "human_capital"),
+            aes(x = year, 
+                y= value,
+                col = asset_type,
+                label = str_wrap("Present Value of Human Capital", width = 18),
+                family = "my_font"),
+            nudge_x = 12) +
+          geom_text_repel(data = filter(assets_long, 
+                                year == (n_years_working-4), 
+                                asset_type == "financial_assets"),
+                  aes(x = year, 
+                      y= value,
+                      col = asset_type,
+                      label = "Financial Assets",
+                      family = "my_font"),
+                  nudge_y = y_max/3) +
           scale_alpha_continuous(guide = FALSE) +
           geom_hline(data = assets_long, yintercept = fin_max, col = "red") +
           scale_fill_brewer(palette = "Set1", guide = FALSE) +
+          scale_colour_brewer(palette = "Set1", guide = FALSE) +
           scale_y_continuous(label = dollar, breaks = seq(0, y_max, 200000), limits = c(0, y_max)) +
           of_dollars_and_data_theme +
           labs(x = "Years" , y = "Value (in real $)") +
-          ggtitle(paste0("XX"))
+          ggtitle(paste0("As You Age, Your Financial Assets\nShould Replace Your Human Capital"))
 
   # Add a source and note string for the plots
   source_string <- "Source:  Simulated data (OfDollarsAndData.com)"
