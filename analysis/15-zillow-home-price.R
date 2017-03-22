@@ -15,8 +15,6 @@ library(gridExtra)
 library(gtable)
 library(RColorBrewer)
 library(stringr)
-library(maps)
-library(magick)
 
 ########################## Start Program Here ######################### #
 
@@ -26,25 +24,18 @@ plot_data <- function(file_name, yr, top_title){
   to_plot <- filter_(to_plot, ~year >= yr) %>%
               arrange_(~RegionID, ~year) 
   
-  to_plot <- mutate(to_plot, region = tolower(RegionName))
-  
   print(head(to_plot))
   
   # Get the years list
   first_year  <- min(to_plot$year)
   last_year   <- max(to_plot$year)
   
-  # Get states data for the map
-  all_states           <- map_data("state")
-  all_states$subregion <- NULL
-  
   # Create a diff variable for % changes over time
   to_plot <- to_plot %>%
               filter(year== first_year | year == last_year) %>%
               arrange(RegionID, year) %>%
               mutate(diff = price/lag(price) - 1) %>%
-              filter(year == last_year) %>%
-                left_join(all_states)
+              filter(year == last_year)
   
   # Find the range of y-values for mapping
   y_max <- max(to_plot$diff, na.rm = TRUE)
@@ -56,24 +47,10 @@ plot_data <- function(file_name, yr, top_title){
   print(head(to_plot))
   
   # Create the plot
-  plot <- ggplot() + geom_polygon(data = to_plot,
-                           aes(x = long, 
-                               y = lat,
-                               group = group, 
-                               fill = to_plot$diff)
-                           ) + 
-  scale_fill_continuous(low = "thistle2", high = "darkred", guide= FALSE, limits = c(y_min, y_max)) +
+  plot <- ggplot() +
   of_dollars_and_data_theme +
-  ggtitle(top_title) +
-  theme(axis.ticks.x = element_blank(), 
-        axis.ticks.y = element_blank(),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-      axis.title.x = element_blank(),
-      axis.title.y = element_blank(),
-      axis.line.x = element_blank(),
-      axis.line.y = element_blank()
-  )
+  ggtitle(top_title) 
+  
   # Add a source and note string for the plots
   source_string <- "Source:  Zillow Research (OfDollarsAndData.com)"
   
@@ -109,17 +86,6 @@ plot_data("state_zhvi_bottomtier",
           "Median Sold Price Bottom Tier Homes\n2000 - 2017")
 
     
-  # Read in the the individual images
-  # frames <- lapply(yr_list, function(yr){
-  #   image_read(paste0(exportdir, "12-bls-maps/", geoname, "-map-", m, "-", yr, ".jpg"))
-  # })
-  # 
-  # # Make animation from the frames read in during the prior step
-  # image_write(image_animate(image_join(frames), fps = 1), 
-  #             paste0(exportdir, "12-bls-maps/all-", geoname, "-", m,"-maps.gif"))
-  # 
-  #    
-  # 
 
 
 
