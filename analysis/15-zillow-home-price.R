@@ -8,6 +8,7 @@ source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
 
 library(dplyr)
 library(ggplot2)
+library(ggrepel)
 library(tidyr)
 library(scales)
 library(grid)
@@ -21,10 +22,7 @@ library(tools)
 
 start_year <- as.Date("2000-01-01")
 
-
-# Read in data frames
-metro_mediansold_all <- readRDS(paste0(localdir, "15_metro_mediansold_all.Rds"))
-
+# Write function to read in a particular tier
 read_in_tier <- function(name){
   string <- deparse(substitute(name))
   temp <- readRDS(paste0(localdir, "15_metro_zhvi_", string,"tier.Rds"))
@@ -37,11 +35,44 @@ read_in_tier(top)
 read_in_tier(middle)
 read_in_tier(bottom)
 
+# Combine all tiers
 all_tiers <- bind_rows(metro_zhvi_top, metro_zhvi_bottom, metro_zhvi_middle)
 
+# Find a list of all cities with all 3 tiers
+regions_3_tiers <- all_tiers %>%
+                  filter(year == start_year, !is.na(price)) %>%
+                  unite(region_type, RegionID, type, sep = "_") %>%
+                  group_by(RegionName) %>%
+                  summarise(n_tiers = length(unique(region_type))) %>%
+                  filter(n_tiers == 3) %>%
+                  select(RegionName)
+
+# Subset tiers to only those with non-NA prices across all 3 regions
+all_tiers <- all_tiers %>%
+                inner_join(regions_3_tiers) %>%
+                arrange(RegionID, type, year)
+
+# Get the start_year_price for each metro area
+start_year_price <- all_tiers %>%
+                      filter(year == start_year) %>%
+                      mutate(start_year_price = price) %>%
+                      select(RegionID, start_year_price, type)
+
+# Join on the start_year to create the index
+all_tiers <- all_tiers %>%
+              inner_join(start_year_price) %>%
+              mutate(index = (price/start_year_price - 1)*100 + 100) 
+
+# Find a unique list of metros
 unique_metros <- unique(all_tiers$RegionName)
 
 for (n in unique_metros){
+  
+  # Get the US middle tier home price as its own series
+  us_middle_tier <- filter(all_tiers, 
+                           RegionName == "United States",
+                           type == 'Middle')
+  us_middle_tier$type <- "U.S. Middle"
 
   # Subset the data to plot by the region name
   to_plot <- filter(all_tiers, RegionName == n) %>%
@@ -50,21 +81,17 @@ for (n in unique_metros){
   # Get the region_id for file naming
   region_id <- unique(to_plot$RegionID)
   
+  if (n != "United States"){
+    # Bind the US middle tier to the data
+    to_plot <- bind_rows(to_plot, us_middle_tier)
+  }
+  
   # Get the years list
   first_year  <- min(to_plot$year)
   last_year   <- max(to_plot$year)
   
-  # Create the index for the price series
-  for (i in 1:nrow(to_plot)){
-    if (to_plot[i, "year"] == first_year){
-      last_value <- to_plot[i, "price"]
-      to_plot[i, "index"] <- 100
-    } else {
-      pct_change <- (to_plot[i, "price"] - last_value) / last_value
-      last_value <- to_plot[i, "price"]
-      to_plot[i, "index"] <- (1 + pct_change) * to_plot[i - 1, "index"]
-    }
-  }
+  # Find y-max
+  y_max <- max(to_plot$index, na.rm = TRUE)
   
   # Set the file_path based on the function input 
   file_path = paste0(exportdir, "15-zillow-home-price/zhvi-", region_id ,".jpeg")
@@ -77,9 +104,9 @@ for (n in unique_metros){
                                 index, 
                                 label = type,
                                 family = "my_font")) +
-            scale_color_discrete(guide = FALSE) +
+            scale_color_manual(guide = FALSE, values=my_palette) +
             of_dollars_and_data_theme +
-            scale_y_continuous(limits = c(50, 300)) +
+            scale_y_continuous(limits = c(50, 350), breaks = seq(50, 350, 50)) +
             ggtitle(paste0("Home Sale Values By Tier\n", n)) +
             labs(x = "Year", y = "Index (2000 = 100)")
   
@@ -94,7 +121,7 @@ for (n in unique_metros){
                           gp =gpar(fontfamily = "my_font", fontsize = 8))
   
   # Add the text grobs to the bototm of the gtable
-  note_string <- paste0("Note:  ")
+  note_string <- paste0("Note:  The maximum index value is ", round(y_max), " representing a ", round(y_max - 100), "% change in price.")
   note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
                         gp =gpar(fontfamily = "my_font", fontsize = 8))
   
