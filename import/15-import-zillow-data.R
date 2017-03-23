@@ -11,22 +11,22 @@ source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
 
 # Create tempfile to download zip data into
 temp <- tempfile()
-download.file("http://files.zillowstatic.com/research/public/State.zip",temp)
+download.file("http://files.zillowstatic.com/research/public/Metro.zip",temp)
 
 # List the files before selecting which ones to keep
 unzip(temp, list = TRUE)
 
 import_file <- function(path, name){
-  test <- read.table(unz(temp, paste0("State/", path)), sep = ",", header = TRUE)
-  saveRDS(test, paste0(importdir, "15-zillow-home-price/", name, ".Rds"))
+  test <- read.table(unz(temp, paste0("Metro/Metro_", path)), sep = ",", header = TRUE)
+  saveRDS(test, paste0(importdir, "15-zillow-home-price/metro_", name, ".Rds"))
 }
 
 # Keep median sold price per square foot and median rental price per square foot
-import_file("State_MedianSoldPricePerSqft_AllHomes.csv", "state_mediansold_sqft_all")
-import_file("State_MedianSoldPrice_AllHomes.csv", "state_mediansold_all")
-import_file("State_Zhvi_TopTier.csv", "state_zhvi_toptier")
-import_file("State_Zhvi_BottomTier.csv", "state_zhvi_bottomtier")
-import_file("State_Zhvi_MiddleTier.csv", "state_zhvi_middletier")
+import_file("MedianSoldPricePerSqft_AllHomes.csv", "mediansold_sqft_all")
+import_file("MedianSoldPrice_AllHomes.csv", "mediansold_all")
+import_file("Zhvi_TopTier.csv", "zhvi_toptier")
+import_file("Zhvi_BottomTier.csv", "zhvi_bottomtier")
+import_file("Zhvi_MiddleTier.csv", "zhvi_middletier")
 
 unlink(temp)
 
