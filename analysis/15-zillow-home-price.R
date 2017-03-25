@@ -17,6 +17,7 @@ library(gtable)
 library(RColorBrewer)
 library(stringr)
 library(tools)
+library(lubridate)
 
 ########################## Start Program Here ######################### #
 
@@ -63,6 +64,14 @@ all_tiers <- all_tiers %>%
               inner_join(start_year_price) %>%
               mutate(index = (price/start_year_price - 1)*100 + 100) 
 
+# For exploratory purposes
+biggest_change <- all_tiers %>%
+                    group_by(RegionName, type) %>%
+                    summarise(max_index = max(index),
+                              min_index = min(index)) %>%
+                    mutate(max_minus_min = max_index - min_index) %>%
+                    arrange(max_minus_min)
+
 # Find a unique list of metros
 unique_metros <- unique(all_tiers$RegionName)
 
@@ -90,6 +99,12 @@ for (n in unique_metros){
   first_year  <- min(to_plot$year)
   last_year   <- max(to_plot$year)
   
+  # Get start starting and ending home values of the middle tier
+  middle_start <- filter(to_plot, type == "Middle", year == first_year) %>%
+                    select(price)
+  middle_end   <- filter(to_plot, type == "Middle", year == last_year) %>%
+                    select(price)
+  
   # Find y-max
   y_max <- max(to_plot$index, na.rm = TRUE)
   
@@ -106,8 +121,9 @@ for (n in unique_metros){
                                 family = "my_font")) +
             scale_color_manual(guide = FALSE, values=my_palette) +
             of_dollars_and_data_theme +
-            scale_y_continuous(limits = c(50, 350), breaks = seq(50, 350, 50)) +
-            ggtitle(paste0("Home Sale Values By Tier\n", n)) +
+            scale_y_continuous() +
+            scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
+            ggtitle(paste0("Zillow Home Value Index By Tier\n", n)) +
             labs(x = "Year", y = "Index (2000 = 100)")
   
   # Add a source and note string for the plots
@@ -121,7 +137,14 @@ for (n in unique_metros){
                           gp =gpar(fontfamily = "my_font", fontsize = 8))
   
   # Add the text grobs to the bototm of the gtable
-  note_string <- paste0("Note:  The maximum index value is ", round(y_max), " representing a ", round(y_max - 100), "% change in price.")
+  note_string <- paste0("Note:  A middle tier home was valued at $", 
+                        formatC(as.numeric(middle_start), format="f", digits=0, big.mark=","), 
+                        " in ", 
+                        year(start_year), 
+                        " and $", 
+                        formatC(as.numeric(middle_end), format="f", digits=0, big.mark=","), 
+                        " in 2017.")
+  
   note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
                         gp =gpar(fontfamily = "my_font", fontsize = 8))
   
