@@ -72,23 +72,103 @@ biggest_change <- all_tiers %>%
                     mutate(max_minus_min = max_index - min_index) %>%
                     arrange(max_minus_min)
 
+# Create charts for particular summary areas
+
+## Bottom Declines
+bottom_cities <- c("Chicago, IL", "Detroit, MI", "Atlanta, GA", "St. Louis, MO")
+
+## High volatility
+highvol_cities <- c("Riverside, CA", "Stockton, CA", "Key West, FL", "Hilo, HI")
+
+## Low Volatility
+lowvol_cities <- c("Boulder, CO", "Erie, PA", "Ithaca, NY", "Johnson City, TN")
+
+# Get the US middle tier home price as its own series
+us_middle_tier <- filter(all_tiers, 
+                         RegionName == "United States",
+                         type == 'Middle')
+us_middle_tier$type <- "U.S. Middle"
+
+# Start for-loop for the 3 facet wraps to make
+for (i in 1:3){
+  if (i == 1){
+    cities  <- bottom_cities
+    outname <- "bottom-cities-facet"
+    title   <- "Some Areas Shown Larger Inequality\nAcross Housing Tiers"
+  } else if (i == 2){
+    cities  <- highvol_cities
+    outname <- "highvol-cities-facet"
+    title   <- "Some Areas Had An Amplified Boom and Bust"
+  } else if (i == 3){
+    cities  <- lowvol_cities
+    outname <- "lowvol-cities-facet"
+    title   <- "Some Areas Shown No Evidence\nOf The Housing Crisis"
+  }
+  
+  # Stack the middle tier US data frame 4 times
+  us_changed <- bind_rows(us_middle_tier, us_middle_tier, us_middle_tier, us_middle_tier)
+  
+  # Change the region name to reflect the names of the cities
+  us_changed$RegionName <- rep(cities, each = nrow(us_middle_tier))
+  
+  # Filter the all_tiers data to the cities we care about
+  to_plot <- filter(all_tiers, RegionName %in% (cities))
+  
+  # Bind the US data with the cities we care about
+  to_plot <- bind_rows(us_changed, to_plot)
+  
+  # Get the years list
+  first_year  <- min(to_plot$year)
+  last_year   <- max(to_plot$year)
+  
+  # Plot the result
+  # Set the file_path based on the function input 
+  file_path = paste0(exportdir, "15-zillow-home-price/", outname, ".jpeg")
+  
+  # Create the plot
+  plot <- ggplot(to_plot, aes(x = year, y = index, col = type)) +
+    geom_line() +
+    facet_wrap(~RegionName) +
+    scale_color_manual(guide = FALSE, values=my_palette) +
+    of_dollars_and_data_theme +
+    scale_y_continuous() +
+    scale_x_date(date_breaks = "2 years", date_labels = "%y") +
+    ggtitle(title) +
+    labs(x = "Year", y = "Index (2000 = 100)")
+  
+  # Add a source and note string for the plots
+  source_string <- paste0("Source:  Zillow, ", year(start_year),"-2017 (OfDollarsAndData.com)")
+  
+  # Turn plot into a gtable for adding text grobs
+  my_gtable   <- ggplot_gtable(ggplot_build(plot))
+  
+  # Make the source and note text grobs
+  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
+                          gp =gpar(fontfamily = "my_font", fontsize = 8))
+  
+  # Add the text grobs to the bototm of the gtable
+  note_string <- paste0("Note:  The black line represents the middle U.S. housing tier.")
+  
+  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+                          gp =gpar(fontfamily = "my_font", fontsize = 8))
+  
+  # Add the text grobs to the bototm of the gtable
+  my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
+  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
+  
+  ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+}
+
+## This is for the individual charts with US middle tier included
+
 # Find a unique list of metros
 unique_metros <- unique(all_tiers$RegionName)
 
 for (n in unique_metros){
-  
-  # Get the US middle tier home price as its own series
-  us_middle_tier <- filter(all_tiers, 
-                           RegionName == "United States",
-                           type == 'Middle')
-  us_middle_tier$type <- "U.S. Middle"
 
   # Subset the data to plot by the region name
   to_plot <- filter(all_tiers, RegionName == n) %>%
               arrange(RegionID, type, year)
-  
-  # Get the region_id for file naming
-  region_id <- unique(to_plot$RegionID)
   
   if (n != "United States"){
     # Bind the US middle tier to the data
@@ -109,7 +189,7 @@ for (n in unique_metros){
   y_max <- max(to_plot$index, na.rm = TRUE)
   
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "15-zillow-home-price/zhvi-", region_id ,".jpeg")
+  file_path = paste0(exportdir, "15-zillow-home-price/zhvi-", n ,".jpeg")
   
   # Create the plot
   plot <- ggplot(to_plot, aes(x = year, y = index, col = type)) +
@@ -127,7 +207,7 @@ for (n in unique_metros){
             labs(x = "Year", y = "Index (2000 = 100)")
   
   # Add a source and note string for the plots
-  source_string <- "Source:  Zillow Research (OfDollarsAndData.com)"
+  source_string <- paste0("Source:  Zillow, ", year(start_year),"-2017 (OfDollarsAndData.com)")
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
