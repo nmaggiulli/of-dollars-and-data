@@ -94,15 +94,15 @@ for (i in 1:3){
   if (i == 1){
     cities  <- bottom_cities
     outname <- "bottom-cities-facet"
-    title   <- "Some Areas Shown Larger Inequality\nAcross Housing Tiers"
+    title   <- "Some Areas Experienced Recovery\nDifferently Across Housing Tiers"
   } else if (i == 2){
     cities  <- highvol_cities
     outname <- "highvol-cities-facet"
-    title   <- "Some Areas Had An Amplified Boom and Bust"
+    title   <- "Some Areas Had an Amplified Boom and Bust"
   } else if (i == 3){
     cities  <- lowvol_cities
     outname <- "lowvol-cities-facet"
-    title   <- "Some Areas Shown No Evidence\nOf The Housing Crisis"
+    title   <- "Some Areas Showed No Evidence\nof the Housing Crisis"
   }
   
   # Stack the middle tier US data frame 4 times
@@ -137,7 +137,7 @@ for (i in 1:3){
     labs(x = "Year", y = "Index (2000 = 100)")
   
   # Add a source and note string for the plots
-  source_string <- paste0("Source:  Zillow, ", year(start_year),"-2017 (OfDollarsAndData.com)")
+  source_string <- paste0("Source:  Zillow Group, ", year(start_year),"-2017 (OfDollarsAndData.com)")
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
@@ -203,11 +203,11 @@ for (n in unique_metros){
             of_dollars_and_data_theme +
             scale_y_continuous() +
             scale_x_date(date_breaks = "2 years", date_labels = "%Y") +
-            ggtitle(paste0("Zillow Home Value Index By Tier\n", n)) +
+            ggtitle(paste0("Zillow Home Value Index by Tier\n", n)) +
             labs(x = "Year", y = "Index (2000 = 100)")
   
   # Add a source and note string for the plots
-  source_string <- paste0("Source:  Zillow, ", year(start_year),"-2017 (OfDollarsAndData.com)")
+  source_string <- paste0("Source:  Zillow Group, ", year(start_year),"-2017 (OfDollarsAndData.com)")
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
