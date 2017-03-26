@@ -21,10 +21,6 @@ windowsFonts(my_font=windowsFont("Libre Baskerville"))
 
 require(ggplot2)
 
-# Create a custom palette with black using COlorBrewer
-# From here:  http://colorbrewer2.org/#type=qualitative&scheme=Set1&n=7
-my_palette <- c("#E41A1C", "#4DAF4A", "#377EB8", "#000000", "#984EA3", "#FF7F00", "#A65628")
-
 # Make a theme that matches the OfDollarsAndData.com blog
 of_dollars_and_data_theme <- theme(
                   plot.title       = element_text(family = "my_font", size = 14, face = "bold", hjust = 0.5, margin = margin(0, 0, 10, 0)),

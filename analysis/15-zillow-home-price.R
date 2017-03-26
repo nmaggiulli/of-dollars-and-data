@@ -21,7 +21,13 @@ library(lubridate)
 
 ########################## Start Program Here ######################### #
 
+# Set start year to be 2000
 start_year <- as.Date("2000-01-01")
+
+# Create a custom palette with black using COlorBrewer
+# From here:  http://colorbrewer2.org/#type=qualitative&scheme=Set1&n=7
+my_palette <- c("#E41A1C", "#4DAF4A", "#377EB8", "#000000", "#984EA3", "#FF7F00", "#A65628")
+
 
 # Write function to read in a particular tier
 read_in_tier <- function(name){
