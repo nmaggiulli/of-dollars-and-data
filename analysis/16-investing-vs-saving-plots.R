@@ -172,7 +172,7 @@ assets_df$type  <- "investment_pct"
     scale_x_continuous(breaks = seq(0, n_years_working, 5)) +
     of_dollars_and_data_theme +
     labs(x = "Years" , y = "Percentage of Total Assets") +
-    ggtitle(paste0("Percentage of Total Assets Attributable To\nInvestment Returns"))
+    ggtitle(paste0("Percentage of Total Assets That\nCome From Investment Gains"))
   
   # Add a source and note string for the plots
   source_string <- "Source:  Simulated data (OfDollarsAndData.com)"
