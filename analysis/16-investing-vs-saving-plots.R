@@ -158,7 +158,10 @@ assets_df  <- convert_to_df(asset_matrix, "total_assets")
 assets_df$pct   <-  1 - ((seq(1, n_years_working + 1) * (income * savings_rate)) / assets_df$value)
 assets_df$type  <- "investment_pct"
 
-## Create 2ndt plot
+## Create 2nd plot
+  
+  # Get the maximum percentage for the data frame
+  ymax <- max(assets_df$pct)
   
   # Set the file path
   file_path = paste0(exportdir, "16-investing-vs-saving/pct-of-total-assets.jpeg")
@@ -166,9 +169,10 @@ assets_df$type  <- "investment_pct"
   # Create plot 
   plot <- ggplot(data = assets_df, aes(x = year, y = pct, fill = type)) +
     geom_area() +
+    geom_hline(yintercept = ymax, col = my_palette[1], linetype = 2) +
     scale_color_manual(values = my_palette, guide = FALSE) +
     scale_fill_manual(values = my_palette, guide = FALSE) +
-    scale_y_continuous(labels = percent, limits = c(0, 1)) +
+    scale_y_continuous(labels = percent, limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
     scale_x_continuous(breaks = seq(0, n_years_working, 5)) +
     of_dollars_and_data_theme +
     labs(x = "Years" , y = "Percentage of Total Assets") +
