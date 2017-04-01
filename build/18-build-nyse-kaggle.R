@@ -30,8 +30,7 @@ nyse_fundamentals_final <- select(nyse_fundamentals,
                                   Income.Tax, Liabilities,
                                   Net.Cash.Flow, Net.Income,
                                   Operating.Income, Total.Assets,
-                                  Total.Equity, Total.Revenue,
-                                  Earnings.Per.Share)
+                                  Total.Equity, Total.Revenue)
 
 # Bring in the adjusted prices as well
 nyse_price_adj <- read.table(unz(paste0(importdir, "18-nyse-kaggle/nyse.zip"), 
