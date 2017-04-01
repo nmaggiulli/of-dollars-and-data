@@ -44,7 +44,7 @@ nyse_price_adj <- read.table(unz(paste0(importdir, "18-nyse-kaggle/nyse.zip"),
 nyse_price_adj <- select(nyse_price_adj, date, close, symbol)
 
 # Save down the files
-saveRDS(nyse_fundamentals, paste0(localdir, "18-nyse-fundamentals.Rds"))
+saveRDS(nyse_fundamentals_final, paste0(localdir, "18-nyse-fundamentals.Rds"))
 saveRDS(nyse_price_adj, paste0(localdir, "18-nyse-price-adj.Rds"))
 
 
