@@ -108,6 +108,42 @@ plot_ret_pe <- function(var){
   # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
   
+  if (var == 5) {
+    # Set the file_path for the next output
+    file_path = paste0(exportdir, "17-sp500-returns-pe/returns-", var,"-year-fit.jpeg")
+    
+    plot <- ggplot(data = to_plot, aes(x = cape, y = value)) +
+      geom_point() +
+      geom_smooth(method = "lm") +
+      geom_hline(yintercept = 0, col = "black") +
+      scale_color_manual(guide = FALSE) +
+      scale_y_continuous(label = percent, limits = c(-0.15, 0.35)) +
+      scale_x_continuous(limits = c(0, 45)) +
+      ggtitle(paste0("As Stocks Get More Expensive\nTheir Future Returns Generally Decrease")) +
+      of_dollars_and_data_theme +
+      labs(x = "S&P 500 P/E Ratio" , y = "S&P 500 Annualized Real Return (%)")
+    
+    # Add a source and note string for the plots
+    source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
+    note_string   <- paste0("Note:  Annualized real returns include reinvested dividends.") 
+    
+    # Turn plot into a gtable for adding text grobs
+    my_gtable   <- ggplot_gtable(ggplot_build(plot))
+    
+    # Make the source and note text grobs
+    source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
+                            gp =gpar(fontfamily = "my_font", fontsize = 8))
+    note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+                            gp =gpar(fontfamily = "my_font", fontsize = 8))
+    
+    # Add the text grobs to the bototm of the gtable
+    my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
+    my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
+    
+    # Save the gtable
+    ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+  }
+  
 }
 
 for (x in returns_to_calc){
