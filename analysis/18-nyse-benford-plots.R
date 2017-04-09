@@ -77,7 +77,9 @@ for (i in 1:nrow(vars_df)){
     benford_stats                <- bind_rows(benford_stats, new_stats)
   }
   sname <- vars_df[i,2]
-  to_plot <- filter(benford_stats, shortname == sname)
+  to_plot <- filter(benford_stats, shortname == sname) %>%
+                mutate(pct =  count/n_obs, 
+                       benford_pct = benford_count/n_obs)
   
   # Set the file path
   file_path = paste0(exportdir, "18-nyse-benford-plots/benford-", sname,".jpeg")
@@ -89,28 +91,29 @@ for (i in 1:nrow(vars_df)){
   }
   
   # Create plot 
-  plot <- ggplot(data = to_plot, aes(x = leading_digit, y = count)) +
+  plot <- ggplot(data = to_plot, aes(x = leading_digit, y = pct)) +
     geom_bar(stat = "identity", col = "black", fill = "black") +
-    geom_point(data =  to_plot, aes(x = leading_digit, y = benford_count), col = "red", size = 5) +
+    geom_point(data =  to_plot, aes(x = leading_digit, y = benford_pct), col = "red", size = 5) +
     geom_text_repel(data = filter(to_plot, leading_digit == "1"),
                     aes(x = leading_digit,
-                        y = (benford_count*0.75)),
-                    label = "Actual Frequency",
+                        y = (benford_pct*0.75)),
+                    label = "Actual Percentage",
                     col =  "black",
                     family = "my_font",
-                    nudge_y = 60,
+                    nudge_y = 0.05,
                     nudge_x = 2.2) +
     geom_text_repel(data = filter(to_plot, leading_digit == "5"),
                     aes(x = leading_digit,
-                        y = benford_count),
-                    label = "Expected Frequency\nUnder Benford's Law",
+                        y = benford_pct),
+                    label = "Expected Percentage\nUnder Benford's Law",
                     col =  "red",
                     family = "my_font",
-                    nudge_y = 130,
+                    nudge_y = 0.1,
                     nudge_x = 1) +
     scale_color_manual(values = my_palette, guide = FALSE) +
+    scale_y_continuous(label = percent) +
     of_dollars_and_data_theme +
-    labs(x = "Leading Digit" , y = "Frequency") +
+    labs(x = "Leading Digit" , y = "Percentage of Total") +
     ggtitle(paste0("Actual Values vs. Benford's Law\n", string))
   
   # Add a source and note string for the plots
