@@ -114,11 +114,11 @@ for (i in 1:nrow(vars_df)){
     scale_y_continuous(label = percent) +
     of_dollars_and_data_theme +
     labs(x = "Leading Digit" , y = "Percentage of Total") +
-    ggtitle(paste0("Actual Values vs. Benford's Law\n", string))
+    ggtitle(paste0("Actual Percentages vs. Benford's Law\n", string))
   
   # Add a source and note string for the plots
   source_string <- "Source:  NYSE data from Kaggle, 2010 - 2016 (OfDollarsAndData.com)"
-  note_string   <- paste0("Note:  The probability of seeing this result by chance is ", p_value, "%, when running a KS test.") 
+  note_string   <- paste0("Note:  The probability of seeing this result is ", p_value, "%, when running a KS test.") 
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
