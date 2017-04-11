@@ -84,9 +84,9 @@ plot_ret_pe <- function(var){
     scale_color_manual(values = my_palette, guide = FALSE) +
     scale_y_continuous(label = percent, limits = c(-0.15, 0.35)) +
     scale_x_continuous(limits = c(0, 45)) +
-    ggtitle(paste0("S&P 500 Annualized Real Return\n(Over ", var, " Years) vs. P/E Ratio")) +
+    ggtitle(paste0("U.S. Stocks Annualized Real Return\n(Over ", var, " Years) vs. P/E Ratio")) +
     of_dollars_and_data_theme +
-    labs(x = "S&P 500 P/E Ratio" , y = "S&P 500 Annualized Real Return (%)")
+    labs(x = "U.S. Stocks P/E Ratio" , y = "Annualized Future Real Return (%)")
 
   # Add a source and note string for the plots
   source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
@@ -121,7 +121,7 @@ plot_ret_pe <- function(var){
       scale_x_continuous(limits = c(0, 45)) +
       ggtitle(paste0("As Stocks Get More Expensive\nTheir Future Returns Generally Decrease")) +
       of_dollars_and_data_theme +
-      labs(x = "S&P 500 P/E Ratio" , y = "S&P 500 Annualized Real Return (%)")
+      labs(x = "U.S. Stocks P/E Ratio" , y = "Annualized Future Real Return (%)")
     
     # Add a source and note string for the plots
     source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
