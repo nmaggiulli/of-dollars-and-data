@@ -24,17 +24,27 @@ library(BenfordTests)
 # From here:  http://colorbrewer2.org/#type=qualitative&scheme=Set1&n=7
 my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00", "#A65628")
 
+# Read in data
 nyse_fundamentals <- readRDS(paste0(localdir, "18-nyse-fundamentals.Rds"))
 
+# Add vars to test
 vars_to_test <- c("Accounts.Payable", "Accounts.Receivable", "Capital.Expenditures",
                   "Cash.and.Cash.Equivalents", "Depreciation", "Earnings.Before.Interest.and.Tax",
                   "Goodwill", "Gross.Profit", "Income.Tax",
                   "Net.Income", "Operating.Income", "Total.Assets",
                   "Total.Equity", "Total.Revenue")
 
+# Also give them a short name for file naming
 vars_shortname <- c("accounts_payable", "accounts_receivable", "capex", "cash", "depreciation", "ebit",
                     "goodwill", "gross_profit", "income_tax",
                     "net_income", "operating_income", "tot_assets", "tot_equity", "tot_revenue")
+
+# Flip the sign on capex
+nyse_fundamentals[, "Capital.Expenditures"] <- abs(nyse_fundamentals[, "Capital.Expenditures"])
+
+# Remove any values that go below zero
+nyse_fundamentals <- as.data.frame(apply(nyse_fundamentals[, vars_to_test], 2, function(x) {ifelse(x < 0, 0, x)}))
+
 
 # Bind the full names with short names
 vars_df <- as.data.frame(cbind(vars_to_test, vars_shortname))
