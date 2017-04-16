@@ -45,7 +45,6 @@ nyse_fundamentals[, "Capital.Expenditures"] <- abs(nyse_fundamentals[, "Capital.
 # Remove any values that go below zero
 nyse_fundamentals <- as.data.frame(apply(nyse_fundamentals[, vars_to_test], 2, function(x) {ifelse(x < 0, 0, x)}))
 
-
 # Bind the full names with short names
 vars_df <- as.data.frame(cbind(vars_to_test, vars_shortname))
 
@@ -57,7 +56,7 @@ create_bedford_counts <- function(df, name_df){
   var_string              <- paste0(name_df[,1])
   temp                    <- select_(df, var_string) 
   temp[, var_string]      <- as.character(temp[,  var_string])
-  temp["leading_digit"]  <- gsub("-?0?\\.?(\\d).*", "\\1", temp[, var_string])
+  temp["leading_digit"]  <- gsub("(\\d).*", "\\1", temp[, var_string])
   
   temp <- temp %>%
             inner_join(benford_digits)
