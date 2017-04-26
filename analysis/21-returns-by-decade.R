@@ -97,7 +97,7 @@ plot_returns <- function(n_years, ymin, ymax, yby){
                         label = round(start_date, digits=0),
                         family = "my_font")
                     ) +
-    ggtitle(paste0("What Decade You Start In Matters\n(", n_years, " Year S&P 500 Returns)")) +
+    ggtitle(paste0("What Decade You Start In Matters\n(", n_years, " Year Returns for S&P 500)")) +
     of_dollars_and_data_theme +
     labs(x = "Year" , y = "Index (Year 1 = 100)")
   
