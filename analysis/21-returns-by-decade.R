@@ -83,7 +83,7 @@ plot_returns <- function(n_years, ymin, ymax, yby){
   }
     
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "21-the-end-is-everything/", n_years ,"yr-returns-by-decade.jpeg")
+  file_path = paste0(exportdir, "21-returns-by-decade/", n_years ,"yr-returns-by-decade.jpeg")
   
   plot <- ggplot(data = to_plot, aes(x = period, y = price, col = as.factor(start_date))) +
     geom_line(alpha = 0.5) +
@@ -159,7 +159,7 @@ plot_diversified <- function(n_years, wt_sp500){
   }
   
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "21-the-end-is-everything/", n_years ,"yr-wstock-", as.character(wt_sp500), "-pct.jpeg")
+  file_path = paste0(exportdir, "21-returns-by-decade/", n_years ,"yr-wstock-", as.character(wt_sp500), "-pct.jpeg")
   
   plot <- ggplot(data = to_plot, aes(x = period, y = price, col = as.factor(start_date))) +
     geom_line(alpha = 0.5) +
