@@ -178,7 +178,7 @@ plot_diversified <- function(n_years, wt_sp500){
   
   # Add a source and note string for the plots
   source_string <- paste0("Source:  http://www.stern.nyu.edu/~adamodar/pc/datasets/histretSP.xls (OfDollarsAndData.com)")
-  note_string   <- paste0("Note:  Adjusts for inflaton using FRED CPI data.  Portfolio contains the S&P 500 index and 10 year U.S. bonds.") 
+  note_string   <- paste0("Note:  Adjusts for inflaton using FRED CPI data.") 
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
