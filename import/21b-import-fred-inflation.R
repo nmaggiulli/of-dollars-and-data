@@ -1,0 +1,31 @@
+cat("\014") # Clear your console
+rm(list = ls()) #clear your environment
+
+########################## Load in header file ######################## #
+source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
+
+########################## Load in Libraries ########################## #
+
+library(quantmod)
+library(dplyr)
+
+########################## Start Program Here ######################### #
+
+# Get the inflation data
+getSymbols('CPIAUCNS',src='FRED')
+
+cpi <- data.frame(date = index(CPIAUCNS), 
+                  CPIAUCNS, row.names=NULL)
+
+cpi <- cpi %>%
+          mutate(year = as.numeric(substr(date, 1, 4))) %>%
+          group_by(year) %>%
+          summarize(index = mean(CPIAUCNS)) %>%
+          mutate(rate_cpi = index/lag(index) - 1) %>%
+          select(year, rate_cpi)
+
+saveRDS(cpi, paste0(localdir, "21-FRED-cpi.Rds"))
+
+
+
+# ############################  End  ################################## #
