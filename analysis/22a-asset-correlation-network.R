@@ -9,13 +9,6 @@ source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
 library(dplyr)
 library(ggplot2)
 library(tidyr)
-library(scales)
-library(grid)
-library(gridExtra)
-library(gtable)
-library(RColorBrewer)
-library(stringr)
-library(ggrepel)
 library(igraph)
 
 ########################## Start Program Here ######################### #
