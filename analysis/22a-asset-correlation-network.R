@@ -16,8 +16,7 @@ library(igraph)
 # Read in BV data
 bv <- readRDS(paste0(localdir, "06-bv-returns.Rds"))
 
-
-# # Reproduce colors from ggplot
+## Reproduce colors from ggplot
 gg_color_hue <- function(n) {
   hues = seq(15, 375, length = n + 1)
   hcl(h = hues, l = 65, c = 100)[1:n]
