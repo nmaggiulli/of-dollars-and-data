@@ -172,7 +172,7 @@ plot_diversified <- function(n_years, wt_sp500){
                         label = round(start_date, digits=0),
                         family = "my_font")
     ) +
-    ggtitle(paste0(100*wt_sp500, "% Stock ", 100*(1-wt_sp500),"% Bond Portfolio\n(", n_years, " Year Returns)")) +
+    ggtitle(paste0(100*wt_sp500, "% Stock, ", 100*(1-wt_sp500),"% Bond Portfolio\n(", n_years, " Year Returns)")) +
     of_dollars_and_data_theme +
     labs(x = "Year" , y = "Index (Year 1 = 100)")
   
