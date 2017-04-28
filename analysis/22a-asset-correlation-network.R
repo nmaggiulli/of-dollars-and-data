@@ -37,22 +37,7 @@ years_list <- seq(as.numeric(substr(min(unique(bv$year)), 1, 4)) + 4,
 
 years_list <- 1980
 
-# Make footnote function for plot
-# makeFootnote <- function(footnoteText=
-#                            format(Sys.time(), "%d %b %Y"),
-#                          size= .7, color= grey(.5))
-# {
-#   require(grid)
-#   pushViewport(viewport())
-#   grid.text(label= footnoteText ,
-#             x = unit(1,"npc") - unit(2, "mm"),
-#             y= unit(2, "mm"),
-#             just=c("right", "bottom"),
-#             gp=gpar(cex= size, col=color))
-#   popViewport()
-# }
-
-pdf(paste0(exportdir, "xx-bv-correlations/5-yr-correlations-1980-2015.pdf"))
+pdf(paste0(exportdir, "22-bv-correlations/5-yr-correlations-1980-2015.pdf"))
 for (y in years_list){
   bv_subset <- filter(bv, 
                       year > as.POSIXct(paste0(y - 5, "-12-31"), format = "%Y-%m-%d"),
