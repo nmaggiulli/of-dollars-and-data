@@ -13,9 +13,7 @@ library(scales)
 library(grid)
 library(gridExtra)
 library(gtable)
-library(stringr)
 library(lubridate)
-library(ggrepel)
 
 ########################## Start Program Here ######################### #
 
@@ -91,7 +89,7 @@ for (k in 1:length(varlist)){
 # I use Git Bash + magick because this is way faster than creating the GIF in R
 # After navigating to the correct folder, use this command:
 #
-# magick convert -delay 20 loop -0 *.jpeg all_draws.gif
+# magick convert -delay 120 loop -0 *.jpeg all_assets_rank.gif
 #
 # 
 
