@@ -23,8 +23,6 @@ bv <- readRDS(paste0(localdir, "06-bv-returns.Rds")) %>%
                `T-Bill 3m` = `Tbill 3m`) %>%
           select(-`Treasury 10yr`, -`Tbill 3m`)
 
-# bv <- filter(bv, year(year) > 1989)
-
 min_year <- min(year(bv$year))
 max_year <- max(year(bv$year))
 
@@ -58,7 +56,7 @@ for (k in 1:length(varlist)){
           # geom_text(data = filter(df, year == min(df$year)), aes(label = key), hjust = 0, size = 4.5) +
           # geom_text(data = filter(df, year == max(df$year)), aes(label = key), hjust = 1, size = 4.5) +
           scale_color_manual(values = c("grey", gg_color_hue(length(varlist))[k]), guide = FALSE) +
-          ggtitle(paste0("Rank Over Time\n", varlist[k])) +
+          ggtitle(paste0("Real Return Rank\n", varlist[k])) +
           xlab("Year") +
           ylab("Rank") +
           of_dollars_and_data_theme +
