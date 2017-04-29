@@ -53,14 +53,14 @@ for (k in 1:length(varlist)){
           geom_line(size = 2.5, data = df %>% filter(key  == varlist[k])) +
           geom_point(size = 4, alpha = 0.25, data = df) +
           geom_point(size = 1.75, color = "white", data = df) +
-          # geom_text(data = filter(df, year == min(df$year)), aes(label = key), hjust = 0, size = 4.5) +
-          # geom_text(data = filter(df, year == max(df$year)), aes(label = key), hjust = 1, size = 4.5) +
           scale_color_manual(values = c("grey", gg_color_hue(length(varlist))[k]), guide = FALSE) +
           ggtitle(paste0("Real Return Rank\n", varlist[k])) +
           xlab("Year") +
           ylab("Rank") +
           of_dollars_and_data_theme +
-          scale_y_continuous(trans =  "reverse", breaks = seq(1, length(varlist), 1))
+          scale_y_continuous(trans =  "reverse", breaks = seq(1, length(varlist), 1)) +
+          scale_x_datetime(breaks=seq(as.POSIXct("1980-01-02 00:00:00",tz="CET"),as.POSIXct("2015-01-02 00:00:00",tz="CET"),"5 years"),
+                           labels=date_format("%Y"))
   
   # Add a source and note string for the plots
   source_string <- paste0("Source:  BullionVault U.S. Asset Class Performance Data, ", min_year, "-", max_year," (OfDollarsAndData.com)")
