@@ -19,8 +19,8 @@ library(lubridate)
 
 # Read in BV data
 bv <- readRDS(paste0(localdir, "06-bv-returns.Rds")) %>%
-        mutate(`Treasury 10 Year` = `Treasury 10yr`,
-               `T-Bill 3m` = `Tbill 3m`) %>%
+        mutate(`10 Year Treasury Bonds` = `Treasury 10yr`,
+               `3m T-Bills` = `Tbill 3m`) %>%
           select(-`Treasury 10yr`, -`Tbill 3m`)
 
 min_year <- min(year(bv$year))
@@ -87,7 +87,7 @@ for (k in 1:length(varlist)){
 # I use Git Bash + magick because this is way faster than creating the GIF in R
 # After navigating to the correct folder, use this command:
 #
-# magick convert -delay 120 loop -0 *.jpeg all_assets_rank.gif
+# magick convert -delay 150 loop -0 *.jpeg all_assets_rank.gif
 #
 # 
 
