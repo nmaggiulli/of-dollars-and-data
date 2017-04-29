@@ -14,7 +14,7 @@ library(readxl)
 # http://banners.bullionvault.com/en/us-annual-asset-performance-comparison-1976-2015.pdf
 #
 
-bv_returns <- read_excel(paste0(importdir, "06-bullion-vault-asset-returns/asset-returns-bullion-vault-1976-2015.xlsx"))
+bv_returns <- read_excel(paste0(importdir, "06-bullion-vault-asset-returns/asset-returns-bullion-vault-1976-2016.xlsx"))
 
 # Make all of the returns into real returns
 # Create a function
