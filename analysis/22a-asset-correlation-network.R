@@ -27,8 +27,6 @@ years_list <- seq(as.numeric(substr(min(unique(bv$year)), 1, 4)) + 4,
                   as.numeric(substr(max(unique(bv$year)), 1, 4)),
                   1)
 
-years_list <- 1980
-
 pdf(paste0(exportdir, "22-bv-correlations/5-yr-correlations-1980-2015.pdf"))
 for (y in years_list){
   bv_subset <- filter(bv, 
@@ -112,10 +110,11 @@ for (y in years_list){
   l[8, 1] <- 0
   l[8, 2] <- 1.5
   
-  plot(g, layout = l, main = paste0("Correlation Over Previous 5 Years\n", y))
+  plot(g, layout = l, main = paste0("Correlation Between Different Assets\n", y-4, "-", y))
   text(-1.75, -1.5, 
        label = paste0("Source:  BullionVault U.S. Asset Class Performance Data," , min(years_list)-4, "-", max(years_list)," (OfDollarsAndData.com)",
-                      "\nNote: Correlations between -0.5 and 0.5 are excluded.  Red lines correspond to positive\ncorrelations, while blue lines correspond to negative correlations."),
+                      "\nNote: Correlations between -0.5 and 0.5 are excluded.  Red lines correspond to positive correlations,\n",
+                      "while blue lines correspond to negative correlations.  Thicker lines correspond to larger correlations."),
        cex = 0.75,
        adj = 0)
 }
