@@ -27,7 +27,7 @@ years_list <- seq(as.numeric(substr(min(unique(bv$year)), 1, 4)) + 4,
                   as.numeric(substr(max(unique(bv$year)), 1, 4)),
                   1)
 
-pdf(paste0(exportdir, "22-bv-correlations/5-yr-correlations-1980-2015.pdf"))
+pdf(paste0(exportdir, "22-bv-network-and-rank-plots/5-yr-correlations-1980-2015.pdf"))
 for (y in years_list){
   bv_subset <- filter(bv, 
                       year > as.POSIXct(paste0(y - 5, "-12-31"), format = "%Y-%m-%d"),

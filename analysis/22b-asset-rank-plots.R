@@ -46,7 +46,7 @@ for (k in 1:length(varlist)){
             mutate(c = ifelse(key == varlist[k], "1", "0"))
   
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "22-bv-correlations/rank-", varlist[k] ,"-by-year.jpeg")
+  file_path = paste0(exportdir, "22-bv-network-and-rank-plots/rank-", varlist[k] ,"-by-year.jpeg")
   
   plot <-ggplot(mapping = aes(year, y = rank, group = key, color = c)) +
           geom_line(size = 1.7, alpha = 0.25, data = df) +
@@ -58,7 +58,7 @@ for (k in 1:length(varlist)){
           xlab("Year") +
           ylab("Rank") +
           of_dollars_and_data_theme +
-          scale_y_continuous(trans =  "reverse", breaks = seq(1, length(varlist), 1)) +
+          scale_y_continuous(trans =  "reverse", breaks = seq(1, 3, 1)) +
           scale_x_datetime(breaks=seq(as.POSIXct("1980-01-02 00:00:00",tz="CET"),as.POSIXct("2015-01-02 00:00:00",tz="CET"),"5 years"),
                            labels=date_format("%Y"))
   
