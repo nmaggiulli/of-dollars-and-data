@@ -58,7 +58,7 @@ for (k in 1:length(varlist)){
           xlab("Year") +
           ylab("Rank") +
           of_dollars_and_data_theme +
-          scale_y_continuous(trans =  "reverse", breaks = seq(1, 3, 1)) +
+          scale_y_continuous(trans =  "reverse", breaks = seq(1, length(varlist), 1)) +
           scale_x_datetime(breaks=seq(as.POSIXct("1980-01-02 00:00:00",tz="CET"),as.POSIXct("2015-01-02 00:00:00",tz="CET"),"5 years"),
                            labels=date_format("%Y"))
   
