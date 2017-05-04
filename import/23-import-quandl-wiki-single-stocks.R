@@ -11,7 +11,7 @@ library(dplyr)
 
 ########################## Start Program Here ######################### #
 
-tickers <- c("AAPL", "AMZN", "TSLA", "XOM")
+tickers <- c("AAPL", "AMZN", "TSLA", "XOM", "GOOG", "KO", "GE", "GS")
 
 for (t in 1:length(tickers)){
   string     <- paste0("WIKI/", tickers[t])
@@ -22,7 +22,7 @@ for (t in 1:length(tickers)){
   assign(tickers[t], out, envir = .GlobalEnv)
 }
 
-all_wiki_stocks <- bind_rows(AAPL, AMZN, TSLA, XOM)
+all_wiki_stocks <- bind_rows(AAPL, AMZN, TSLA, XOM, GOOG, KO, GE, GS)
 saveRDS(all_wiki_stocks, paste0(localdir, "23-wiki-single-stocks.Rds"))
 
 # ############################  End  ################################## #
