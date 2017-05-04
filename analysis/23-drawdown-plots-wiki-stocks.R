@@ -21,7 +21,8 @@ library(ggrepel)
 
 # Read in data for individual stocks and sp500 Shiller data
 all_wiki_stocks <- readRDS(paste0(localdir, "23-wiki-single-stocks.Rds"))
-sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
+sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+                    filter(Date > 1960)
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){
@@ -36,7 +37,13 @@ for (i in 1:nrow(sp500_ret_pe)){
   }
 }
 
-sp500_ret_pe <- select(sp500_ret_pe, Date, price_plus_div)
+sp500_ret_pe <- select(sp500_ret_pe, Date, price_plus_div) %>%
+                  mutate(Date = as.Date(paste0(
+                    substring(as.character(Date), 1, 4),
+                    "-", 
+                    ifelse(substring(as.character(Date), 6, 7) == "1", "10", substring(as.character(Date), 6, 7)),
+                    "-01", 
+                    "%Y-%m-%d")))
   
 # Create function to calculate the drawdown path
 drawdown_path <- function(vp){
@@ -55,13 +62,19 @@ drawdown_path <- function(vp){
   return(dd)
 }
 
-tickers <- c("AAPL", "AMZN", "TSLA", "XOM", "KO", "GS", "GE")
+tickers <- c("AAPL", "AMZN", "XOM", "GS", "GE", "S&P 500")
   
 for (t in 1:length(tickers)){
-  temp <- filter(all_wiki_stocks, ticker == tickers[t]) %>%
-            arrange(Date) %>%
-            select(Date, price_plus_div)
-        
+  if (t < length(tickers)){
+    temp <- filter(all_wiki_stocks, ticker == tickers[t]) %>%
+              arrange(Date) %>%
+              select(Date, price_plus_div)
+    source_string <- "Source:  Quandl Wiki EOD stock prices (OfDollarsAndData.com)"
+  } else {
+    temp <- sp500_ret_pe
+    source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm, 1871 - 2016 (OfDollarsAndData.com)"
+  }
+  
   to_plot        <- drawdown_path(temp)
       
   # Set the file_path based on the function input 
@@ -80,7 +93,6 @@ for (t in 1:length(tickers)){
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
-  source_string <- "Source:  Quandl Wiki EOD stock prices (OfDollarsAndData.com)"
   note_string <- paste0("Note:  Adjusted for stock splits and dividends.") 
   
   # Make the source and note text grobs
