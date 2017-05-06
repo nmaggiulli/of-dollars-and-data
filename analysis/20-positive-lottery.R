@@ -35,8 +35,10 @@ sd      <- 1.5
 # Sample data
 q <- data.frame(x = rnorm(n_draws, mean, sd))
 
+# Loop through all draws
 for (i in 1:n_draws){
 
+  # For naming the file
   if (i < 10){
     i_string <- paste0("0", i)
   } else {
@@ -45,6 +47,7 @@ for (i in 1:n_draws){
   # Set the file_path for the next output
   file_path = paste0(exportdir, "20-positive-lottery/draw_", i_string,".jpeg")
   
+  # Grab data in increasing increments and only color the last observation
   to_plot <- data.frame(x = q[1:i,])
   to_plot$col <- c(rep(0, i-1), 1)
   

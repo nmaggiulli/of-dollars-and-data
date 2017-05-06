@@ -23,6 +23,7 @@ bv <- readRDS(paste0(localdir, "06-bv-returns.Rds")) %>%
                `3 Month T-Bills` = `Tbill 3m`) %>%
           select(-`Treasury 10yr`, -`Tbill 3m`)
 
+# Create min and max years for plots
 min_year <- min(year(bv$year))
 max_year <- max(year(bv$year))
 

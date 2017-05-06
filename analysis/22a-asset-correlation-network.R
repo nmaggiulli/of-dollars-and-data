@@ -27,8 +27,13 @@ years_list <- seq(as.numeric(substr(min(unique(bv$year)), 1, 4)) + 4,
                   as.numeric(substr(max(unique(bv$year)), 1, 4)),
                   1)
 
+# Create PDF
 pdf(paste0(exportdir, "22-bv-network-and-rank-plots/5-yr-correlations-1980-2015.pdf"))
+
+# Loop through years
 for (y in years_list){
+  
+  # Filter data to the relevant subset of time (5 years)
   bv_subset <- filter(bv, 
                       year > as.POSIXct(paste0(y - 5, "-12-31"), format = "%Y-%m-%d"),
                       year < as.POSIXct(paste0(y, "-12-31"), format = "%Y-%m-%d"))
@@ -86,8 +91,8 @@ for (y in years_list){
   
   # Set the color
   E(g)$color      <- c_scale[c_seq]
-  
-  # Set the layout manually
+   
+  # Set the layout manually (this will take a while)
   # Risky stocks/bonds
   l[1, 1] <- -1.5
   l[1, 2] <- 0
@@ -110,6 +115,7 @@ for (y in years_list){
   l[8, 1] <- 0
   l[8, 2] <- 1.5
   
+  # Plot the network
   plot(g, layout = l, main = paste0("Correlation Between Different Assets\n", y-4, "-", y))
   text(-1.75, -1.5, 
        label = paste0("Source:  BullionVault U.S. Asset Class Performance Data," , min(years_list)-4, "-", max(years_list)," (OfDollarsAndData.com)",

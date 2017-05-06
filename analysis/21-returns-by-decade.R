@@ -45,6 +45,7 @@ hist_bond_stock <- filter(hist_bond_stock, Date < starting_date) %>%
                              ret_10yr_bond = ret_10yr_bond/100 - rate_cpi) %>%
                       select(Date, ret_sp500, ret_10yr_bond)
 
+# Create Date min and max vars for plotting
 first_year <- floor(min(sp500_ret_pe$Date))
 last_year <- floor(max(sp500_ret_pe$Date))
 
@@ -61,6 +62,7 @@ for (i in 1:nrow(sp500_ret_pe)){
   }
 }
 
+# Create a function for custom plotting
 plot_returns <- function(n_years, ymin, ymax, yby){
 
   # Create a date sequence for each decade
@@ -197,8 +199,10 @@ plot_diversified <- function(n_years, wt_sp500){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
+# Create a vector for specific year lengths
 n_years_vector <- c(20, 30, 40)
 
+# Plot returns for specific years
 for (n in n_years_vector){
   if (n == 20){
     y_min <- 0

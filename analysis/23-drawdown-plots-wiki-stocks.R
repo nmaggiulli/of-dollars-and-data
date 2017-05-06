@@ -37,6 +37,7 @@ for (i in 1:nrow(sp500_ret_pe)){
   }
 }
 
+# Change the Date to a Date type for plotting the S&P data
 sp500_ret_pe <- select(sp500_ret_pe, Date, price_plus_div) %>%
                   mutate(Date = as.Date(paste0(
                     substring(as.character(Date), 1, 4),
@@ -45,7 +46,7 @@ sp500_ret_pe <- select(sp500_ret_pe, Date, price_plus_div) %>%
                     "-01", 
                     "%Y-%m-%d")))
   
-# Create function to calculate the drawdown path
+# Create function to calculate the drawdowns over time
 drawdown_path <- function(vp){
   dd      <- data.frame(Date = as.Date(1:nrow(vp), origin=Sys.Date()), pct = numeric(nrow(vp)))
   loc_max <- 0
@@ -62,8 +63,10 @@ drawdown_path <- function(vp){
   return(dd)
 }
 
+# Tickers to plot
 tickers <- c("AAPL", "AMZN", "XOM", "GS", "GE", "S&P 500")
   
+# Loop through tickers
 for (t in 1:length(tickers)){
   if (t < length(tickers)){
     temp <- filter(all_wiki_stocks, ticker == tickers[t]) %>%
@@ -75,13 +78,16 @@ for (t in 1:length(tickers)){
     source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm, 1871 - 2016 (OfDollarsAndData.com)"
   }
   
+  # Run function on specific data for drawdowns
   to_plot        <- drawdown_path(temp)
       
   # Set the file_path based on the function input 
   file_path = paste0(exportdir, "23-market-mirage/drawdowns-", tickers[t], ".jpeg")
   
+  # Create title with ticker in subtitle
   top_title <- paste0("Drawdowns Over Time\n", tickers[t])
   
+  # Create the plot object
   plot <- ggplot(to_plot, aes(x = Date, y = pct)) +
     geom_area(fill = "red") +
     ggtitle(top_title) +
