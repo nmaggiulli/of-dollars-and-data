@@ -82,7 +82,7 @@ for (t in 1:length(tickers)){
   to_plot        <- drawdown_path(temp)
       
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "23-market-mirage/drawdowns-", tickers[t], ".jpeg")
+  file_path = paste0(exportdir, "23-drawdown-plots/drawdowns-", tickers[t], ".jpeg")
   
   # Create title with ticker in subtitle
   top_title <- paste0("Drawdowns Over Time\n", tickers[t])
