@@ -64,37 +64,53 @@ drawdown_path <- function(vp){
 }
 
 # Tickers to plot
-tickers <- c("AAPL", "AMZN", "XOM", "GS", "GE", "S&P 500")
+# 
+tickers <- c("AAPL", "AMZN", "XOM", "GE", "GS", "S&P 500")
   
+# Have a start date
+date_start <- "1997-05-15"
+
 # Loop through tickers
 for (t in 1:length(tickers)){
+  print(tickers[t])
   if (t < length(tickers)){
-    temp <- filter(all_wiki_stocks, ticker == tickers[t]) %>%
+    temp <- filter(all_wiki_stocks, ticker == tickers[t], Date >= date_start) %>%
               arrange(Date) %>%
               select(Date, price_plus_div)
-    source_string <- "Source:  Quandl Wiki EOD stock prices (OfDollarsAndData.com)"
+    source_string <- "Source:  Quandl, http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"
+    # Run function on specific data for drawdowns
+    dd        <- drawdown_path(temp)
   } else {
-    temp <- sp500_ret_pe
-    source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm, 1871 - 2016 (OfDollarsAndData.com)"
+    temp <- filter(sp500_ret_pe, Date >= date_start)
+    # Run function on specific data for drawdowns
+    dd        <- drawdown_path(temp)
   }
+  if (t == 1){
+    to_plot <- cbind(dd, rep(tickers[t], nrow(dd)))
+  } else{
+    to_plot <- bind_rows(to_plot, cbind(dd, rep(tickers[t], nrow(dd))))
+  }
+}  
+
+names(to_plot) <- c(names(to_plot[, 1:2]), "ticker")
   
-  # Run function on specific data for drawdowns
-  to_plot        <- drawdown_path(temp)
       
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "23-drawdown-plots/drawdowns-", tickers[t], ".jpeg")
+  file_path = paste0(exportdir, "23-drawdown-plots/drawdowns-facet.jpeg")
   
   # Create title with ticker in subtitle
-  top_title <- paste0("Drawdowns Over Time\n", tickers[t])
+  top_title <- paste0("Individual Stock Drawdowns Can Be\nMore Extreme Than the Market")
   
   # Create the plot object
   plot <- ggplot(to_plot, aes(x = Date, y = pct)) +
     geom_area(fill = "red") +
+    facet_grid(~ticker) +
     ggtitle(top_title) +
     guides(fill = FALSE) +
     of_dollars_and_data_theme +
     scale_y_continuous(label = percent) +
-    labs(x = "Year", y = "Percentage of Value Lost")
+    scale_x_date(date_labels = "%y") +
+    labs(x = "Year (2000-2015)", y = "Percentage of Value Lost")
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
@@ -113,7 +129,7 @@ for (t in 1:length(tickers)){
   
   # Save the plot  
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
-}
+
 
 # ############################  End  ################################## #
 
