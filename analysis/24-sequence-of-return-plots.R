@@ -46,7 +46,7 @@ for (i in 1:n_years){
 
 value_path <- gather(value_path, scenario, value, -year)
   
-for (i in 2:n_years){      
+for (i in 1:n_years){      
   to_plot <- filter(value_path, year <= i)
   
   # Set the file_path based on the function input 
