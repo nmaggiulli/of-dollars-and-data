@@ -105,17 +105,16 @@ for (s_date in s_dates){
   test_market(cape_min = 20, cape_max = 30, start_date = s_date)
   test_market(cape_min = 15, cape_max = 30, start_date = s_date)
   test_market(cape_min = 10, cape_max = 30, start_date = s_date)
-  
+
   test_market(cape_min = 25, cape_max = 25, start_date = s_date)
   test_market(cape_min = 20, cape_max = 25, start_date = s_date)
   test_market(cape_min = 15, cape_max = 25, start_date = s_date)
-  
+
   test_market(cape_min = 999, cape_max = 999, start_date = s_date)
 }
 
-write.csv(results_df, paste0(exportdir, "24-market-timing-tests/timing-results.csv"))
+write.csv(results_df, paste0(exportdir, "26a-market-timing-tests/timing-results.csv"))
 
-
-# For 1881.01 the max point is cape_min = 15, cape_max = 32 with final value $908,902
+            
 
 # ############################  End  ################################## #
