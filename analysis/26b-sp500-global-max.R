@@ -67,7 +67,10 @@ sp500_ret_pe %<>%
 
 # Get the years sequence and add the last year a few extra times for the GIF
 years <- seq(first_year, last_year, 1)
-years <- c(years, rep(last_year, 15))
+
+years <- years[which(years %% 2 == 0)]
+
+years <- c(years, rep(last_year, 12))
 
 
 for (i in 2:length(years)){
@@ -119,7 +122,7 @@ for (i in 2:length(years)){
 # I use Git Bash + magick because this is way faster than creating the GIF in R
 # After navigating to the correct folder, use this command:
 #
-# magick convert -delay 5 loop -0 *.jpeg all_sp500_plots.gif
+# magick convert -delay 10 loop -0 *.jpeg all_sp500_plots.gif
 
 # Section to plot the number of months between global maxima
 global_max_vec <- sp500_ret_pe$global_max
@@ -144,7 +147,7 @@ print(paste0("Median between peaks:", median(max_dist_vec)))
 df_months <- data.frame(x = sp500_ret_pe$Date, y = max_dist_vec) 
 
 # File path to save plot
-file_path = paste0(exportdir, "26b-sp500-global-max/sp500-peaks-global-maxima.jpeg")
+file_path = paste0(exportdir, "26a-market-timing-tests/sp500-peaks-global-maxima.jpeg")
 
 plot <- ggplot(to_plot, aes(x = x)) +
   geom_area(data = df_months, aes(y = y), fill = "blue", stat = "identity") +
