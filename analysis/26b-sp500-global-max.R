@@ -21,7 +21,7 @@ library(ggrepel)
 
 # Load in S&P data from Shiller
 sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
-                    filter(cape != "NA", Date < 2017.01)
+                    filter(Date >= 1880.01, Date < 2017.01)
 
 first_year <- floor(min(sp500_ret_pe$Date))
 last_year <- floor(max(sp500_ret_pe$Date))
@@ -60,6 +60,8 @@ base_breaks <- function(n = 10){
 orig_price <- as.numeric(sp500_ret_pe[1, "price_plus_div"])
 
 years <- seq(first_year, last_year, 1)
+
+years <- c(years, rep(last_year, 8))
 
 for (i in 2:length(years)){
   to_plot <- sp500_ret_pe %>%
@@ -111,7 +113,7 @@ for (i in 2:length(years)){
 # I use Git Bash + magick because this is way faster than creating the GIF in R
 # After navigating to the correct folder, use this command:
 #
-# magick convert -delay 10 loop -0 *.jpeg all_sp500_plots.gif
+# magick convert -delay 5 loop -0 *.jpeg all_sp500_plots.gif
 
 # Section to plot the number of months between global maxima
 global_max_vec <- sp500_ret_pe$global_max
@@ -120,10 +122,11 @@ counter <- 1
 
 for (j in 2:length(global_max_vec)){
   if (global_max_vec[j] == 1){
-    max_dist_vec <- c(max_dist_vec, counter)
     counter      <- 1
+    max_dist_vec <- c(max_dist_vec, counter)
   } else if (global_max_vec[j] == 0){
-    counter <- counter + 1
+    counter      <- counter + 1
+    max_dist_vec <- c(max_dist_vec, counter)
   }
 }
 
@@ -132,16 +135,21 @@ print(paste0("Avg between peaks:", mean(max_dist_vec)))
 print(paste0("Median between peaks:", median(max_dist_vec)))
 
 # File path to save plot
-file_path = paste0(exportdir, "26c-sp500-global-max/sp500-dist-to-global-max.jpeg")
+file_path = paste0(exportdir, "26b-sp500-global-max/sp500-peaks-global-maxima.jpeg")
 
-ggplot(as.data.frame(max_dist_vec), aes(x=seq(1, length(max_dist_vec), 1), y = max_dist_vec)) +
-  geom_bar(stat = "identity") +
+plot <- ggplot(as.data.frame(max_dist_vec), aes(x = sp500_ret_pe[2:nrow(sp500_ret_pe),"Date"], y = max_dist_vec)) +
+  geom_area(fill = "red") +
+  of_dollars_and_data_theme +
+  scale_y_continuous(breaks = seq(0, 150, 25)) + 
+  scale_x_continuous(limits = c(1880, 2020), breaks = seq(1880, 2020, 20)) +
+  labs(x = "Date", y = "Number of Months From Previous Peak") +
+  ggtitle("Most Market Peaks Occur\nIn Consecutive Months")
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
 
 source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
-note_string   <- paste0("Note:  Red points represent the highest value of the S&P 500 as of that point in time.")
+note_string   <- paste0("Note:  Shows the number of months between peaks for the S&P 500 real return with dividends.")
 
 # Make the source and note text grobs
 source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
