@@ -129,6 +129,29 @@ global_max_vec <- sp500_ret_pe$global_max
 max_dist_vec   <- c()
 counter        <- 1
 
+# Loop through global max to get the counts between peaks
+for (j in 1:length(global_max_vec)){
+  if (global_max_vec[j] == 1){
+    max_dist_vec <- c(max_dist_vec, counter)
+    counter      <- 1
+  } else if (global_max_vec[j] == 0){
+    counter      <- counter + 1
+  }
+}
+
+# Print summary stats about the max distance vector
+print(paste0("Max between peaks:", max(max_dist_vec)))
+print(paste0("Avg between peaks:", mean(max_dist_vec)))
+print(paste0("Median between peaks:", median(max_dist_vec)))
+
+# Get percentages of 1 month peaks over all peaks
+table(max_dist_vec[which(max_dist_vec < 5)])/length(max_dist_vec)
+
+# Re-run the max distance vector for the number of months between peaks plot
+global_max_vec <- sp500_ret_pe$global_max
+max_dist_vec   <- c()
+counter        <- 1
+
 for (j in 1:length(global_max_vec)){
   if (global_max_vec[j] == 1){
     counter      <- 1
@@ -139,17 +162,13 @@ for (j in 1:length(global_max_vec)){
   }
 }
 
-print(paste0("Max between peaks:", max(max_dist_vec)))
-print(paste0("Avg between peaks:", mean(max_dist_vec)))
-print(paste0("Median between peaks:", median(max_dist_vec)))
-
 # Create a data frame for the max_dist_vec
 df_months <- data.frame(x = sp500_ret_pe$Date, y = max_dist_vec) 
 
 # File path to save plot
 file_path = paste0(exportdir, "26a-market-timing-tests/sp500-peaks-global-maxima.jpeg")
 
-plot <- ggplot(to_plot, aes(x = x)) +
+plot <- ggplot(df_months, aes(x = x)) +
   geom_area(data = df_months, aes(y = y), fill = "blue", stat = "identity") +
   of_dollars_and_data_theme +
   scale_x_continuous(limits = c(1880, 2020), breaks = seq(1880, 2020, 20)) +
