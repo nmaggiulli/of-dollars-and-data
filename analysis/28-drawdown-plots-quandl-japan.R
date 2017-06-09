@@ -30,44 +30,62 @@ jpy_quandl <- readRDS(paste0(localdir, "28-quandl-japan.Rds")) %>%
               select(date, close_price, year, month, day) %>%
               group_by(year, month) %>%
               arrange(year, month, day) %>%
-              filter(row_number() == 1) %>%
+              filter(row_number() == 1, date < "2017-01-01") %>%
               ungroup() %>%
+              mutate(date = year + month/100) %>%
               select(date, close_price)
+
+sp500 <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+                filter(cape != "NA", Date < 2017.01, Date >= 1960.01) %>%
+                mutate(date = Date,
+                       close_price = real_price) %>%
+                select(date, close_price)
 
 # Set some parameters for the DCA
 monthly_savings <- 100
 
+# Years vector
 years_vector <- seq(1960, 1995, 5)
 
 for (i in 1:length(years_vector)){
-  prices <- filter(jpy_quandl, year(date) >= years_vector[i])
+  prices_jpy <- filter(jpy_quandl, date >= years_vector[i])
+  prices_us  <- filter(sp500, date >= years_vector[i])
   
-  for (j in 1:nrow(prices)){
+  for (j in 1:nrow(prices_jpy)){
     if (j == 1){
-      prices[j, "value_dca"]     <- monthly_savings
-      prices[j, "value_lumpsum"] <- monthly_savings*(nrow(prices))
-      prices[j, "cost_basis"]    <- monthly_savings
+      prices_jpy[j, "japan"]       <- monthly_savings
+      prices_jpy[j, "cost_basis"]  <- monthly_savings
+      prices_us[j, "us"]           <- monthly_savings
     } else {
-      prices[j, "value_dca"]     <- prices[(j-1), "value_dca"] * (prices[j, "close_price"] / prices[(j-1), "close_price"]) + monthly_savings
-      prices[j, "value_lumpsum"] <- prices[(j-1), "value_lumpsum"] * (prices[j, "close_price"] / prices[(j-1), "close_price"])
-      prices[j, "cost_basis"]    <- prices[(j-1), "cost_basis"] + monthly_savings
+      prices_jpy[j, "japan"]      <- prices_jpy[(j-1), "japan"] * (prices_jpy[j, "close_price"] / prices_jpy[(j-1), "close_price"]) + monthly_savings
+      prices_jpy[j, "cost_basis"] <- prices_jpy[(j-1), "cost_basis"] + monthly_savings
+      prices_us[j, "us"]          <- prices_us[(j-1), "us"] * (prices_us[j, "close_price"] / prices_us[(j-1), "close_price"]) + monthly_savings
     }
   }
   
+  prices_combined <- prices_jpy %>%
+                      select(-close_price) %>%
+                      left_join(prices_us) %>%
+                      select(-close_price) %>%
+                      bind_cols(data.frame(months = rep(seq(1, 12), nrow(prices_jpy)/12))) %>%
+                      mutate(date = as.Date(paste0(round(date, 0), "-", months, "-01"))) %>%
+                      select(-months)
+  
   # Reshape the data
-  to_plot <- prices %>%
-              select(-close_price) %>%
-              gather(key, value, -date)
+  to_plot <- prices_combined %>%
+              gather(key, value, -date) 
+
   
   # Set file path
   file_path = paste0(exportdir, "28-quandl-japan/plot-", years_vector[i] ,".jpeg")
   
  plot <- ggplot(to_plot, aes(x = date, y = value, col = key)) +
-    geom_line() +
-    scale_color_discrete(guide = FALSE) +
+   geom_line() +
+   scale_color_discrete(guide = FALSE) +
+   scale_y_continuous(label = dollar) + 
    of_dollars_and_data_theme +
    labs(x = "Date", y = "Value") +
-   ggtitle("Japanese Stock Market\n", years_vector[i])
+   ggtitle(paste0("Japanese vs. U.S. Stock Markets\nStarting in ", years_vector[i]))
  
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
