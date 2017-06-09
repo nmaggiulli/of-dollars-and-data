@@ -18,6 +18,6 @@ for (t in 1:length(tickers)){
   temp       <- Quandl(string)
 }
 
-saveRDS(temp, paste0(localdir, "28-wiki-japan.Rds"))
+saveRDS(temp, paste0(localdir, "28-quandl-japan.Rds"))
 
 # ############################  End  ################################## #

@@ -64,7 +64,7 @@ for (i in 1:length(years_vector)){
   
  plot <- ggplot(to_plot, aes(x = date, y = value, col = key)) +
     geom_line() +
-    scale_color_continuous(guide = FALSE) +
+    scale_color_discrete(guide = FALSE) +
    of_dollars_and_data_theme +
    labs(x = "Date", y = "Value") +
    ggtitle("Japanese Stock Market\n", years_vector[i])
