@@ -2,7 +2,7 @@ cat("\014") # Clear your console
 rm(list = ls()) #clear your environment
 
 ########################## Load in header file ######################## #
-source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
+source(file.path("C:/Users/nmaggiulli/git/of-dollars-and-data/header.R"))
 
 ########################## Load in Libraries ########################## #
 
@@ -20,7 +20,11 @@ library(lubridate)
 
 ########################## Start Program Here ######################### #
 
-# Read in data for the Japanese stock market
+# Read in data for the Japanese CPI and stock market 
+jpy_cpi <- readRDS(paste0(localdir, "28-fred-cpi-japan.Rds")) %>%
+            select(year, index)
+
+# Bring in stock market data, change the date format, and adjust for CPI
 jpy_quandl <- readRDS(paste0(localdir, "28-quandl-japan.Rds")) %>%
               mutate(close_price = `Close Price`,
                      date = Date,
@@ -33,19 +37,21 @@ jpy_quandl <- readRDS(paste0(localdir, "28-quandl-japan.Rds")) %>%
               filter(row_number() == 1, date < "2017-01-01") %>%
               ungroup() %>%
               mutate(date = year + month/100) %>%
-              select(date, close_price)
+              select(date, year, close_price) %>%
+              left_join(jpy_cpi) %>%
+              mutate(real_price = close_price/index * 100) %>%
+              select(date, real_price)
 
 sp500 <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
                 filter(cape != "NA", Date < 2017.01, Date >= 1960.01) %>%
-                mutate(date = Date,
-                       close_price = real_price) %>%
-                select(date, close_price)
+                mutate(date = Date) %>%
+                select(date, real_price)
 
 # Set some parameters for the DCA
 monthly_savings <- 100
 
 # Years vector
-years_vector <- seq(1960, 1995, 5)
+years_vector <- seq(1960, 2002, 2)
 
 for (i in 1:length(years_vector)){
   prices_jpy <- filter(jpy_quandl, date >= years_vector[i])
@@ -57,16 +63,16 @@ for (i in 1:length(years_vector)){
       prices_jpy[j, "cost_basis"]  <- monthly_savings
       prices_us[j, "us"]           <- monthly_savings
     } else {
-      prices_jpy[j, "japan"]      <- prices_jpy[(j-1), "japan"] * (prices_jpy[j, "close_price"] / prices_jpy[(j-1), "close_price"]) + monthly_savings
+      prices_jpy[j, "japan"]      <- prices_jpy[(j-1), "japan"] * (prices_jpy[j, "real_price"] / prices_jpy[(j-1), "real_price"]) + monthly_savings
       prices_jpy[j, "cost_basis"] <- prices_jpy[(j-1), "cost_basis"] + monthly_savings
-      prices_us[j, "us"]          <- prices_us[(j-1), "us"] * (prices_us[j, "close_price"] / prices_us[(j-1), "close_price"]) + monthly_savings
+      prices_us[j, "us"]          <- prices_us[(j-1), "us"] * (prices_us[j, "real_price"] / prices_us[(j-1), "real_price"]) + monthly_savings
     }
   }
   
   prices_combined <- prices_jpy %>%
-                      select(-close_price) %>%
+                      select(-real_price) %>%
                       left_join(prices_us) %>%
-                      select(-close_price) %>%
+                      select(-real_price) %>%
                       bind_cols(data.frame(months = rep(seq(1, 12), nrow(prices_jpy)/12))) %>%
                       mutate(date = as.Date(paste0(round(date, 0), "-", months, "-01"))) %>%
                       select(-months)
@@ -85,13 +91,13 @@ for (i in 1:length(years_vector)){
    scale_y_continuous(label = dollar) + 
    of_dollars_and_data_theme +
    labs(x = "Date", y = "Value") +
-   ggtitle(paste0("Japanese vs. U.S. Stock Markets\nStarting in ", years_vector[i]))
+   ggtitle(paste0("Dollar Cost Averaging in Japan vs. U.S.\nStarting in ", years_vector[i]))
  
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
-  source_string <- "Source: Simulated returns (OfDollarsAndData.com)"
-  note_string   <- paste0("Note:  Does not adjust for inflation.")
+  source_string <- "Source: Quandl, FRED, Robert Shiller (OfDollarsAndData.com)"
+  note_string   <- paste0("Note:  Shows real price changes with a monthly investment of $", monthly_savings, ".")
   
   # Make the source and note text grobs
   source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
