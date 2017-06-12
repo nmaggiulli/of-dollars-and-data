@@ -68,10 +68,9 @@ sp500_ret_pe %<>%
 # Get the years sequence and add the last year a few extra times for the GIF
 years <- seq(first_year, last_year, 1)
 
-years <- years[which(years %% 2 == 0)]
+years <- years[which(years %% 4 == 0)]
 
 years <- c(years, rep(last_year, 12))
-
 
 for (i in 2:length(years)){
   to_plot <- sp500_ret_pe %>%
