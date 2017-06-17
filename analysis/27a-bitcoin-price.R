@@ -44,7 +44,7 @@ plot <- ggplot(bcoin, aes(x = date, y = value)) +
 # Turn plot into a gtable for adding text grobs
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
 
-source_string <- "Source:  https://blockchain.info, Quandl (OfDollarsAndData.com)"
+source_string <- "Source:  Quandl, https://blockchain.info (OfDollarsAndData.com)"
 
 # Make the source and note text grobs
 source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),

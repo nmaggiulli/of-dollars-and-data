@@ -41,9 +41,9 @@ drawdown_path <- function(vp){
   return(dd)
 }
 
-date_sequence <- seq(as.Date("2010/09/01"), as.Date("2017/06/17"), "month")
+date_sequence <- seq(as.Date("2010/09/01"), as.Date("2017/06/17"), "3 months")
 
-date_sequence <- c(date_sequence, rep(date_sequence[length(date_sequence)], 8))
+date_sequence <- c(date_sequence, rep(date_sequence[length(date_sequence)], 5))
 
 for (i in 1:length(date_sequence)){
   filtered <- filter(bcoin, date < date_sequence[i])
@@ -60,7 +60,7 @@ for (i in 1:length(date_sequence)){
   file_path = paste0(exportdir, "27b-quandl-bitcoin-drawdowns/drawdowns-bitcoin-", i_string,".jpeg")
 
   # Create title with ticker in subtitle
-  top_title <- paste0("Bitcoin Has Regular Drawdowns of Over 50%")
+  top_title <- paste0("Bitcoin Has Experienced Multiple\nDrawdowns of Over 50%")
   
   # Create the plot object
   plot <- ggplot(to_plot, aes(x = date, y = pct)) +
@@ -75,7 +75,7 @@ for (i in 1:length(date_sequence)){
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
-  source_string <- "Source:  Quandl (OfDollarsAndData.com)"
+  source_string <- "Source:  Quandl, https://blockchain.info (OfDollarsAndData.com)"
   note_string <- paste0("Note:  Drawdowns are based on the USD price for Bitcoin.") 
   
   # Make the source and note text grobs
@@ -96,6 +96,6 @@ for (i in 1:length(date_sequence)){
 # I use Git Bash + magick because this is way faster than creating the GIF in R
 # After navigating to the correct folder, use this command:
 #
-# magick convert -delay 10 loop -0 *.jpeg all_plots.gif
+# magick convert -delay 20 loop -0 *.jpeg all_plots.gif
 
 # ############################  End  ################################## #
