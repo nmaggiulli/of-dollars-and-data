@@ -1,5 +1,5 @@
 # Set dataroot location
-dataroot <- "C:/Users/Nick/data/of-dollars-and-data/"
+dataroot <- "C:/Users/nmaggiulli/data/of-dollars-and-data/"
 
 # Set dataset libraries
 localdir <- paste0(dataroot, "datasets/local/")
@@ -20,6 +20,11 @@ options(StringsAsFactors=FALSE)
 windowsFonts(my_font=windowsFont("Libre Baskerville"))
 
 require(ggplot2)
+require(Quandl)
+
+quandl_api_key <- read.table(paste0(programroot, "quandl_api_key.txt"))
+
+Quandl.api_key(as.character(quandl_api_key$V1))
 
 # Make a theme that matches the OfDollarsAndData.com blog
 of_dollars_and_data_theme <- theme(
@@ -37,6 +42,3 @@ of_dollars_and_data_theme <- theme(
                   panel.grid.minor = element_blank(),
                   panel.border     = element_blank(),
                   panel.background = element_blank())
-
-# Import the plotly_api_key
-plotly_api_key <- read.table(paste0(importdir,"plotly_api_key.txt"))$V1
