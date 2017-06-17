@@ -22,7 +22,7 @@ windowsFonts(my_font=windowsFont("Libre Baskerville"))
 require(ggplot2)
 require(Quandl)
 
-quandl_api_key <- read.table(paste0(programroot, "quandl_api_key.txt"))
+quandl_api_key <- read.table(paste0(importdir, "quandl_api_key.txt"))
 
 Quandl.api_key(as.character(quandl_api_key$V1))
 
