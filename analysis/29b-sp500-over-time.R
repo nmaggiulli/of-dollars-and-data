@@ -16,7 +16,6 @@ library(gtable)
 library(RColorBrewer)
 library(stringr)
 library(ggrepel)
-library(magick)
 
 ########################## Start Program Here ######################### #
 
