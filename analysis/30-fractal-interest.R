@@ -61,14 +61,16 @@ interest3 <- data.frame(year = 3, marker= c(3),
 
 all_data <- bind_rows(principal, interest1, interest2, interest3)
 
-for (i in 0:3){
+plot_sequence <- c(0, 1, 2, 3, 3)
 
-  to_plot <- filter(all_data, year <= i)
+for (i in 1:length(plot_sequence)){
+
+  to_plot <- filter(all_data, year <= plot_sequence[i])
 
   # Set the file_path for the next output
   file_path = paste0(exportdir, "30-fractal-compounding/compounding-year-", i, ".jpeg")
   
-if (i == 0){
+if (i == 1){
   plot <- ggplot(to_plot, aes(x = marker, lower=lower, middle=middle, upper=upper, ymin=ymin, ymax=ymax, 
                               fill=as.factor(color), width=1)) +
       geom_boxplot(stat="identity") +
@@ -78,21 +80,8 @@ if (i == 0){
       scale_fill_manual(guide = FALSE, values=my_palette) +
       theme(axis.text.x = element_blank(),
             axis.title.x = element_blank()) +
-    ggtitle(paste0("Compounding Becomes Fractal\nYear ", i)) +
+    ggtitle(paste0("Compounding Becomes Fractal Over Time\nYear ", plot_sequence[i])) +
     labs(y = "Value ($)")
-} else if (i == 1){
-  plot <- ggplot(to_plot, aes(x = marker, lower=lower, middle=middle, upper=upper, ymin=ymin, ymax=ymax, 
-                              fill=as.factor(color), width=1)) +
-    geom_boxplot(stat="identity") +
-    of_dollars_and_data_theme +
-    scale_x_continuous(limits = c(-5, 5)) +
-    scale_y_continuous(limits = c(0, 200), breaks = seq(0,200, 20)) +
-    scale_fill_manual(guide = FALSE, values=my_palette) +
-    theme(axis.text.x = element_blank(),
-          axis.title.x = element_blank()) +
-    ggtitle(paste0("Compounding Becomes Fractal\nYear ", i)) +
-    labs(y = "Value ($)") +
-    annotate("segment", x = -4.5, xend = -3.7, y = 115, yend = 115, colour="black", size=1, arrow=arrow())
 } else if (i == 2){
   plot <- ggplot(to_plot, aes(x = marker, lower=lower, middle=middle, upper=upper, ymin=ymin, ymax=ymax, 
                               fill=as.factor(color), width=1)) +
@@ -103,10 +92,9 @@ if (i == 0){
     scale_fill_manual(guide = FALSE, values=my_palette) +
     theme(axis.text.x = element_blank(),
           axis.title.x = element_blank()) +
-    ggtitle(paste0("Compounding Becomes Fractal\nYear ", i)) +
+    ggtitle(paste0("Compounding Becomes Fractal Over Time\nYear ", plot_sequence[i])) +
     labs(y = "Value ($)") +
-    annotate("segment", x = -4.5, xend = -3.7, y = 115, yend = 115, colour="black", size=1, arrow=arrow()) +
-    annotate("segment", x = -2.5, xend = -1.7, y = 165, yend = 165, colour="black", size=1, arrow=arrow())
+    annotate("segment", x = -4.5, xend = -3.7, y = 115, yend = 115, colour="black", size=1, arrow=arrow())
 } else if (i == 3){
   plot <- ggplot(to_plot, aes(x = marker, lower=lower, middle=middle, upper=upper, ymin=ymin, ymax=ymax, 
                               fill=as.factor(color), width=1)) +
@@ -117,7 +105,21 @@ if (i == 0){
     scale_fill_manual(guide = FALSE, values=my_palette) +
     theme(axis.text.x = element_blank(),
           axis.title.x = element_blank()) +
-    ggtitle(paste0("Compounding Becomes Fractal\nYear ", i)) +
+    ggtitle(paste0("Compounding Becomes Fractal Over Time\nYear ", plot_sequence[i])) +
+    labs(y = "Value ($)") +
+    annotate("segment", x = -4.5, xend = -3.7, y = 115, yend = 115, colour="black", size=1, arrow=arrow()) +
+    annotate("segment", x = -2.5, xend = -1.7, y = 165, yend = 165, colour="black", size=1, arrow=arrow())
+} else if (i >= 4){
+  plot <- ggplot(to_plot, aes(x = marker, lower=lower, middle=middle, upper=upper, ymin=ymin, ymax=ymax, 
+                              fill=as.factor(color), width=1)) +
+    geom_boxplot(stat="identity") +
+    of_dollars_and_data_theme +
+    scale_x_continuous(limits = c(-5, 5)) +
+    scale_y_continuous(limits = c(0, 200), breaks = seq(0,200, 20)) +
+    scale_fill_manual(guide = FALSE, values=my_palette) +
+    theme(axis.text.x = element_blank(),
+          axis.title.x = element_blank()) +
+    ggtitle(paste0("Compounding Becomes Fractal Over Time\nYear ", plot_sequence[i])) +
     labs(y = "Value ($)") +
     annotate("segment", x = -4.5, xend = -3.7, y = 115, yend = 115, colour="black", size=1, arrow=arrow()) +
     annotate("segment", x = -2.5, xend = -1.7, y = 165, yend = 165, colour="black", size=1, arrow=arrow()) +
@@ -146,6 +148,12 @@ if (i == 0){
     # Save the gtable
     ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
+
+# Instead of creating these images as a GIF in R, do it in Bash
+# I use Git Bash + magick because this is way faster than creating the GIF in R
+# After navigating to the correct folder, use this command:
+#
+# magick convert -delay 110 loop -0 *.jpeg all_plots.gif
 
 
 # ############################  End  ################################## #
