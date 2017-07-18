@@ -2,22 +2,22 @@ cat("\014") # Clear your console
 rm(list = ls()) #clear your environment
 
 ########################## Load in header file ######################## #
-source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
+source(file.path("C:/Users/nmaggiulli/git/of-dollars-and-data/header.R"))
 
 ########################## Load in Libraries ########################## #
 
 library(gdata)
+library(readxl)
 
 ########################## Start Program Here ######################### #
 
 # Add link to the file path
-link_to_file <- "http://www.stern.nyu.edu/~adamodar/pc/datasets/histretSP.xls"
+link_to_file <- paste0(importdir, "21a-damodaran-nyu-stock-bond-data/histretSP.xlsx")
 
-# Download the xls file using gdata
-hist_ret <- read.xls(link_to_file, perl = "C:/Perl/bin/perl.exe")
+hist_ret <- read_excel(link_to_file)
 
 # Subset to the columns and rows we want for the data
-hist_ret <- hist_ret[16:104, 1:4]
+hist_ret <- hist_ret[18:104, 1:4]
 
 # Rename the columns accordingly
 colnames(hist_ret) <- c("Date", "ret_sp500", "ret_3m_bill", "ret_10yr_bond")
