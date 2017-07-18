@@ -41,8 +41,8 @@ sp500_ret_pe <- filter(sp500_ret_pe, Date < starting_date, Date > 1900)
 # Subset historical bond and stock returns and adjust for CPI using FRED data
 hist_bond_stock <- filter(hist_bond_stock, Date < starting_date) %>%
                       left_join(cpi, by = c("Date" = "year")) %>%
-                      mutate(ret_sp500 = ret_sp500/100 - rate_cpi,
-                             ret_10yr_bond = ret_10yr_bond/100 - rate_cpi) %>%
+                      mutate(ret_sp500 = ret_sp500 - rate_cpi,
+                             ret_10yr_bond = ret_10yr_bond - rate_cpi) %>%
                       select(Date, ret_sp500, ret_10yr_bond)
 
 # Create Date min and max vars for plotting
