@@ -43,7 +43,7 @@ hist_bond_stock <- hist_bond_stock %>%
                       select(Date, ret_sp500, ret_10yr_bond)
 
   
-# Create a date sequence for each decade
+# Create a date sequence that corresponds to each year
 date_seq <- seq(1928, max(hist_bond_stock$Date) - n_years, 1)
 
 # Calculate annual index
