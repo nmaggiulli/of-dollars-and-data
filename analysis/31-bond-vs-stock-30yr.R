@@ -101,6 +101,7 @@ to_plot <- gather(to_plot, key= "asset", value="ret_30yr", -Date)
                             segment.color = 'transparent'
             ) +
             scale_y_continuous(label = percent) +
+            scale_x_continuous(breaks = seq(1960, 2010, 10)) +
             scale_color_discrete(guide = FALSE) +
             ggtitle(paste0("The S&P 500 Has Outperformed U.S. Bonds\nFor Every ",  n_years, "-Year Period Since ", start_year)) +
             of_dollars_and_data_theme +
