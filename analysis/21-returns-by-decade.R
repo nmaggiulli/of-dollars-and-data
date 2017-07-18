@@ -2,7 +2,7 @@ cat("\014") # Clear your console
 rm(list = ls()) #clear your environment
 
 ########################## Load in header file ######################## #
-source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
+source(file.path("C:/Users/nmaggiulli/git/of-dollars-and-data/header.R"))
 
 ########################## Load in Libraries ########################## #
 
@@ -180,7 +180,7 @@ plot_diversified <- function(n_years, wt_sp500){
   
   # Add a source and note string for the plots
   source_string <- paste0("Source:  http://www.stern.nyu.edu/~adamodar/pc/datasets/histretSP.xls (OfDollarsAndData.com)")
-  note_string   <- paste0("Note:  Adjusts for inflaton using FRED CPI data.") 
+  note_string   <- paste0("Note:  Adjusts for inflation using FRED CPI data.") 
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
