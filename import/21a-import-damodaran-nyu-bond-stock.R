@@ -17,7 +17,7 @@ link_to_file <- paste0(importdir, "21a-damodaran-nyu-stock-bond-data/histretSP.x
 hist_ret <- read_excel(link_to_file)
 
 # Subset to the columns and rows we want for the data
-hist_ret <- hist_ret[18:104, 1:4]
+hist_ret <- hist_ret[18:106, 1:4]
 
 # Rename the columns accordingly
 colnames(hist_ret) <- c("Date", "ret_sp500", "ret_3m_bill", "ret_10yr_bond")
