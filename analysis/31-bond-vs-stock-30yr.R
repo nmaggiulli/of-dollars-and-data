@@ -110,7 +110,7 @@ to_plot <- gather(to_plot, key= "asset", value="ret_30yr", -Date)
 
 # Add a source and note string for the plots
 source_string <- paste0("Source:  http://www.stern.nyu.edu/~adamodar/pc/datasets/histretSP.xls (OfDollarsAndData.com)")
-note_string   <- paste0("Note:  Annualized real returns are adjusted for inflaton using FRED CPI data.") 
+note_string   <- paste0("Note:  Annualized real returns are adjusted for inflation using FRED CPI data.") 
 
 # Turn plot into a gtable for adding text grobs
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
