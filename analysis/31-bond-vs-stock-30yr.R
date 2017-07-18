@@ -61,9 +61,9 @@ for (r in 1:nrow(hist_bond_stock)){
 for (i in 1:length(date_seq)){
   ret_yr              <- filter(hist_bond_stock, Date >= date_seq[i], Date <= date_seq[i] + n_years) %>%
                           mutate(`S&P 500` = (index_s / lag(index_s, n = n_years))^(1/n_years) - 1,
-                                `U.S. 10 Year Bond` = (index_b / lag(index_b, n = n_years))^(1/n_years) - 1) %>%
+                                `U.S. 10-Year Bond` = (index_b / lag(index_b, n = n_years))^(1/n_years) - 1) %>%
                           filter(Date == date_seq[i] + n_years) %>%
-                          select(Date, `S&P 500`, `U.S. 10 Year Bond`)
+                          select(Date, `S&P 500`, `U.S. 10-Year Bond`)
   if (i == 1){
     to_plot <- ret_yr
   } else{
@@ -90,7 +90,7 @@ to_plot <- gather(to_plot, key= "asset", value="ret_30yr", -Date)
                             nudge_x  = 10,
                             segment.color = 'transparent'
             ) +
-            geom_text_repel(data = filter(to_plot, Date == min(to_plot$Date), asset == "U.S. 10 Year Bond"),
+            geom_text_repel(data = filter(to_plot, Date == min(to_plot$Date), asset == "U.S. 10-Year Bond"),
                             aes(x = Date, 
                                 y = ret_30yr,
                                 col = as.factor(asset),
