@@ -39,6 +39,9 @@ hist_bond_stock <- hist_bond_stock %>%
          ret_10yr_bond = ret_10yr_bond - rate_cpi) %>%
   select(Date, ret_sp500, ret_10yr_bond)
 
+## Manual adjustment for visual clarity (I changed it from -40.3% to -40%)
+hist_bond_stock[which(hist_bond_stock$Date==2008), "ret_sp500"] <- -0.4
+
 # Calculate annual index
 for (r in 1:nrow(hist_bond_stock)){
   if (r == 1){
@@ -51,7 +54,7 @@ for (r in 1:nrow(hist_bond_stock)){
 }
 
 # Number of years to calculate returns over
-n_years_seq <- seq(1, 35, 1)
+n_years_seq <- seq(1, 30, 1)
 
 for (n_years in n_years_seq){  
   # Create a date sequence that corresponds to each year
@@ -89,7 +92,7 @@ for (n_years in n_years_seq){
               geom_line() +
               geom_text_repel(data = filter(to_plot, Date ==  min(to_plot$Date), asset == "S&P 500"),
                               aes(x = 2016, 
-                                  y = max(to_plot$ret_yr)*0.9,
+                                  y = max(to_plot$ret_yr)*0.99,
                                   col = as.factor(asset),
                                   label = asset,
                                   family = "my_font"),
@@ -99,7 +102,7 @@ for (n_years in n_years_seq){
               ) +
               geom_text_repel(data = filter(to_plot, Date == min(to_plot$Date), asset == "U.S. 10-Year Bond"),
                               aes(x = 2016, 
-                                  y = min(to_plot$ret_yr)*0.9,
+                                  y = min(to_plot$ret_yr)*0.99,
                                   col = as.factor(asset),
                                   label = asset,
                                   family = "my_font"),
@@ -107,6 +110,7 @@ for (n_years in n_years_seq){
                               nudge_x  = 10,
                               segment.color = 'transparent'
               ) +
+              geom_hline(yintercept = 0, linetype =  "dashed", col = "black") +
               scale_y_continuous(label = percent, limits = c(-0.4, 0.6), breaks = seq(-0.4, 0.6, 0.2)) +
               scale_color_discrete(guide = FALSE) +
               ggtitle(paste0("S&P 500 and Bond Reurns Over ",  n_years, "-Year Period")) +
