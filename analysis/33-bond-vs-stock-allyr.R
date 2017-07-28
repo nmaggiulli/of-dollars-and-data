@@ -113,7 +113,7 @@ for (n_years in n_years_seq){
               geom_hline(yintercept = 0, linetype =  "dashed", col = "black") +
               scale_y_continuous(label = percent, limits = c(-0.4, 0.6), breaks = seq(-0.4, 0.6, 0.2)) +
               scale_color_discrete(guide = FALSE) +
-              ggtitle(paste0("S&P 500 and Bond Reurns Over ",  n_years, "-Year Period")) +
+              ggtitle(paste0("S&P 500 and U.S. Bond Returns Over\n",  n_years, "-Year Period")) +
               of_dollars_and_data_theme +
               labs(x = paste0(n_years,"-Year Period Ending") , y = paste0(n_years, "-Year Annualized Real Return"))
   
