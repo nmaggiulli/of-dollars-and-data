@@ -2,11 +2,11 @@ cat("\014") # Clear your console
 rm(list = ls()) #clear your environment
 
 ########################## Load in header file ######################## #
-source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
+source(file.path("C:/Users/nmaggiulli/git/of-dollars-and-data/header.R"))
 
 ########################## Load in Libraries ########################## #
 
-library(readxl)
+library(readr)
 
 ########################## Start Program Here ######################### #
 
@@ -14,7 +14,7 @@ library(readxl)
 # http://banners.bullionvault.com/en/us-annual-asset-performance-comparison-1976-2015.pdf
 #
 
-bv_returns <- read_excel(paste0(importdir, "06-bullion-vault-asset-returns/asset-returns-bullion-vault-1976-2016.xlsx"))
+bv_returns <- read_csv(paste0(importdir, "06-bullion-vault-asset-returns/asset-returns-bullion-vault-1976-2016.csv"))
 
 # Make all of the returns into real returns
 # Create a function
