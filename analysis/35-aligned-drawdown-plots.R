@@ -6,9 +6,7 @@ source(file.path("C:/Users/nmaggiulli/git/of-dollars-and-data/header.R"))
 
 ########################## Load in Libraries ########################## #
 
-library(dplyr)
 library(ggplot2)
-library(reshape2)
 library(scales)
 library(grid)
 library(gridExtra)
@@ -16,14 +14,18 @@ library(gtable)
 library(RColorBrewer)
 library(stringr)
 library(ggrepel)
+library(lubridate)
+library(dplyr)
 
 ########################## Start Program Here ######################### #
 
-# Plotting parameter (how many years after the peak do you want to plot??)
-n_years_after_peak <- 5
+# Create a custom palette with black using COlorBrewer
+# From here:  http://colorbrewer2.org/#type=qualitative&scheme=Set1&n=7
+my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00", "#A65628")
 
 # Read in data for individual stocks and sp500 Shiller data
-sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
+sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+                      filter(Date > "1928-01-01")
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){
@@ -68,62 +70,45 @@ drawdown_path <- function(vp){
 # Use this list to find the most recent peak from each bottom in the data
 dd        <- drawdown_path(sp500_ret_pe)
 
-# Select the date list manually
-date_list <- c("1929-09-01", "1973-03-01", "1987-08-01", "2000-08-01", "2007-10-01")
-
-# Create a counter for the subsets 
-counter            <- 1
-
-# Loop through each date to make a subset
-for (date in date_list){
-  sp500_filtered <- filter(sp500_ret_pe, Date >= as.Date(date), Date < as.Date(date) %m+% months(n_years_after_peak * 12))
-  for (i in 1:nrow(sp500_filtered)){
-    sp500_filtered[i, "month"] <- i
-    if (i == 1){
-      sp500_filtered[i, "index"] <- 100
+# Add markers onto the drawdown path for different drawdown levels
+drawdown_dummy <- function(pct, name){
+  peak <- 1
+  for (i in 1:nrow(dd)){
+    if (dd[i, "pct"] == 0){
+      peak <- 1
+      dd[i, name] <- 0
+    } else if (dd[i, "pct"] < pct & peak == 1){
+      dd[i, name] <- 1
+      peak <- 0
     } else {
-      sp500_filtered[i, "index"] <- sp500_filtered[(i-1), "index"] * (1 + (sp500_filtered[(i), "price_plus_div"]/sp500_filtered[(i-1), "price_plus_div"] - 1))
+      dd[i, name] <- 0
     }
   }
-  
-  # Drop unneeded columns
-  sp500_filtered <- sp500_filtered %>% 
-                      mutate(peak = year(date)) %>%
-                      select(month, peak, index)
-  
-  # Append the rows as we loop through each subset
-  if (counter == 1){
-    to_plot <- sp500_filtered
-  } else{
-    to_plot <- bind_rows(to_plot, sp500_filtered)
-  }
-  counter <- counter + 1
+  assign(name, sum(dd[, name]), envir = .GlobalEnv)
+  assign("dd", dd, envir = .GlobalEnv)
 }
 
+drawdown_dummy(-0.3, "drawdown_30pct")
+drawdown_dummy(-0.4, "drawdown_40pct")
+drawdown_dummy(-0.5, "drawdown_50pct")
+
+# Create drawdown plots
 # Set the file_path based on the function input 
-file_path = paste0(exportdir, "35-aligned-drawdown-plots/sp500-aligned-drawdowns.jpeg")
+file_path = paste0(exportdir, "35-aligned-drawdown-plots/drawdowns-with-markers.jpeg")
 
 # Create title with ticker in subtitle
-top_title <- paste0("Every Market Crash Exhibits Different\nBehavior Over Time")
+top_title <- paste0("The S&P 500 Has Had ", drawdown_30pct, " Drawdowns of \nOver 30% Since the Late 1920s")
 
 # Create the plot object
-plot <- ggplot(to_plot, aes(x = month, y = index, col = as.factor(peak))) +
-  geom_line() +
-  geom_hline(yintercept = 100, linetype =  "dashed", col = "black") +
-  geom_text_repel(data = filter(to_plot, month == max(to_plot$month)), 
-                  aes(x = month, 
-                      y = index, 
-                      col = as.factor(peak), 
-                      label = as.character(peak),
-                      family = "my_font"
-                  ),
-                  max.iter = 3000) +
+plot <- ggplot(dd, aes(x = Date, y = pct)) +
+  geom_area(fill = "red") +
+  geom_point(data = filter(dd, drawdown_30pct == 1), aes(x = Date, y = pct), col = "black") +
   ggtitle(top_title) +
-  guides(col = FALSE) +
+  guides(fill = FALSE) +
   of_dollars_and_data_theme +
-  scale_y_continuous(limits = c(0, 125), breaks = seq(0, 125, 25)) +
-  scale_x_continuous(limits = c(0, n_years_after_peak*12), breaks = seq(0, n_years_after_peak*12, 12)) +
-  labs(x = "Months Since Peak", y = "Real Index (Peak = 100)")
+  scale_y_continuous(label = percent, limits = c(-1, 0)) +
+  scale_x_date(date_labels = "%Y") +
+  labs(x = "Year", y = "Percentage of Inflation-Adjusted Value Lost")
 
 # Turn plot into a gtable for adding text grobs
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
@@ -143,6 +128,96 @@ my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
 
 # Save the plot  
 ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
+
+# Create function to plot aligned drawdowns
+plot_aligned_drawdowns <- function(n_years_after_peak, ymax){
+  
+  ## Create an aligned drawdown plot for specific crashes throughout market history
+  # Select the date list manually
+  if(n_years_after_peak > 8){
+    date_list <- c("1929-09-01", "1973-03-01", "1987-08-01", "2000-08-01")
+  } else {
+    date_list <- c("1929-09-01", "1973-03-01", "1987-08-01", "2000-08-01", "2007-10-01")
+  }
+  
+  # Create a counter for the subsets 
+  counter            <- 1
+  
+  # Loop through each date to make a subset
+  for (date in date_list){
+    sp500_filtered <- filter(sp500_ret_pe, Date >= as.Date(date), Date < as.Date(date) %m+% months(n_years_after_peak * 12))
+    for (i in 1:nrow(sp500_filtered)){
+      sp500_filtered[i, "year"] <- i/12
+      if (i == 1){
+        sp500_filtered[i, "index"] <- 100
+      } else {
+        sp500_filtered[i, "index"] <- sp500_filtered[(i-1), "index"] * (1 + (sp500_filtered[(i), "price_plus_div"]/sp500_filtered[(i-1), "price_plus_div"] - 1))
+      }
+    }
+    
+    # Drop unneeded columns
+    sp500_filtered <- sp500_filtered %>% 
+                        mutate(peak = year(date)) %>%
+                        select(year, peak, index)
+    
+    # Append the rows as we loop through each subset
+    if (counter == 1){
+      to_plot <- sp500_filtered
+    } else{
+      to_plot <- bind_rows(to_plot, sp500_filtered)
+    }
+    counter <- counter + 1
+  }
+  
+  # Set the file_path based on the function input 
+  file_path = paste0(exportdir, "35-aligned-drawdown-plots/sp500-aligned-drawdowns-", n_years_after_peak, ".jpeg")
+  
+  # Create title based on the number of years
+  if (n_years_after_peak == 5){
+    top_title <- paste0("The Most Famous Crashes of the S&P 500\n5 Years After Each Peak") 
+  } else if (n_years_after_peak == 10){
+    top_title <- paste0("10 Years After the Peak, The Dotcom Bubble\nWas Comparable to the Great Depression")
+  }
+  
+  # Create the plot object
+  plot <- ggplot(to_plot, aes(x = year, y = index, col = as.factor(peak))) +
+    geom_line() +
+    geom_hline(yintercept = 100, linetype =  "dashed", col = "black") +
+    geom_text_repel(data = filter(to_plot, year == max(to_plot$year)), 
+                    aes(x = year, 
+                        y = index, 
+                        col = as.factor(peak), 
+                        label = as.character(peak),
+                        family = "my_font"
+                    ), force = 2) +
+    ggtitle(top_title) +
+    scale_color_manual(values =  my_palette, guide = FALSE) +
+    of_dollars_and_data_theme +
+    scale_y_continuous(limits = c(0, ymax), breaks = seq(0, ymax, 25)) +
+    scale_x_continuous(limits = c(0, n_years_after_peak), breaks = seq(0, n_years_after_peak, 1)) +
+    labs(x = "Years Since Peak", y = "Real Index (Peak = 100)")
+  
+  # Turn plot into a gtable for adding text grobs
+  my_gtable   <- ggplot_gtable(ggplot_build(plot))
+  
+  note_string <- paste0("Note:  Real return includes reinvested dividends.") 
+  
+  # Make the source and note text grobs
+  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
+                          gp =gpar(fontfamily = "my_font", fontsize = 8))
+  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+                          gp =gpar(fontfamily = "my_font", fontsize = 8))
+  
+  # Add the text grobs to the bototm of the gtable
+  my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
+  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
+  
+  # Save the plot  
+  ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
+}
+
+plot_aligned_drawdowns(5, 125)
+plot_aligned_drawdowns(10, 275)
 
 # ############################  End  ################################## #
 
