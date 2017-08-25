@@ -225,7 +225,7 @@ for (j in 1:length(drops)){
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
   source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)" 
-  note_string <- paste0("Note:  Red bars correspond to drawdowns and green bars are the subsequent recoveries.") 
+  note_string <- paste0("Note:  Red bars correspond to drawdowns and green bars correspond to the subsequent recoveries.") 
   
   # Make the source and note text grobs
   source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
