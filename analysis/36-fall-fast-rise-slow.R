@@ -92,8 +92,8 @@ bottom_to_peak <- function(drop, j, name){
   
   n_months_recovery_ex_0 <- n_months_recovery[!n_months_recovery %in% c(0)]
   results_df[j, "name"]    <- name
-  results_df[j, "b_p_avg"] <- mean(n_months_recovery_ex_0)
-  results_df[j, "b_p_med"] <- median(n_months_recovery_ex_0)
+  results_df[j, "b_p_med"] <- median(n_months_recovery_ex_0)/12
+  print(paste0("The average number of months from a ", drop, " drawdown to a peak is: ", mean(n_months_recovery_ex_0)))
   assign("results_df", results_df, envir = .GlobalEnv)
 }
 
@@ -116,8 +116,8 @@ peak_to_bottom <- function(drop, j, name){
   
   n_months_to_drop_ex_0 <- n_months_to_drop[!n_months_to_drop %in% c(0)]
   results_df[j, "name"]    <- name
-  results_df[j, "p_b_avg"] <- mean(n_months_to_drop_ex_0)
-  results_df[j, "p_b_med"] <- median(n_months_to_drop_ex_0)
+  results_df[j, "p_b_med"] <- median(n_months_to_drop_ex_0)/12
+  print(paste0("The average number of months from a peak to a ", drop, " drawdown is: ", mean(n_months_to_drop_ex_0)))
   assign("results_df", results_df, envir = .GlobalEnv)
 }
 
@@ -140,8 +140,8 @@ peak_to_known_bottom <- function(drop, j, name){
   
   n_months_to_drop_ex_0 <- n_months_to_drop[!n_months_to_drop %in% c(0)]
   results_df[j, "name"]    <- name
-  results_df[j, "p_kb_avg"] <- mean(n_months_to_drop_ex_0)
-  results_df[j, "p_kb_med"] <- median(n_months_to_drop_ex_0)
+  results_df[j, "p_kb_med"] <- median(n_months_to_drop_ex_0)/12
+  print(paste0("The average number of months from a peak to a known ", drop, " drawdown is: ", mean(n_months_to_drop_ex_0)))
   assign("results_df", results_df, envir = .GlobalEnv)
 }
 
@@ -165,9 +165,9 @@ for (j in 1:length(drops)){
     name <- "50 Percent"
   }
   
+  peak_to_known_bottom(drops[j], j, name)
   bottom_to_peak(drops[j], j, name)
   peak_to_bottom(drops[j], j, name)
-  peak_to_known_bottom(drops[j], j, name)
   
   # First tag the recoveries
   sp500_ret_pe_dd <- arrange(sp500_ret_pe_dd, Date)
