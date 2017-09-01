@@ -2,7 +2,7 @@ cat("\014") # Clear your console
 rm(list = ls()) #clear your environment
 
 ########################## Load in header file ######################## #
-source(file.path("C:/Users/Nick/git/of-dollars-and-data/header.R"))
+source(file.path("C:/Users/nmaggiulli/git/of-dollars-and-data/header.R"))
 
 ########################## Load in Libraries ########################## #
 
@@ -28,6 +28,9 @@ library(fTrading)
 # Load in BV returns
 full_bv_returns <- readRDS(paste0(localdir, "06-bv-returns.Rds"))
 
+# Convert year to a date object
+full_bv_returns$year <- as.Date(full_bv_returns$year, "%d/%m/%y")
+
 # Define the number of simulations (this will be used later)
 n_simulations <- 1000
 
@@ -40,8 +43,7 @@ max_year <- max(year(full_bv_returns$year))
 # Define the number of years
 n_years <- nrow(full_bv_returns)
 
-# Convert year to a date object
-full_bv_returns$year <- as.Date(full_bv_returns$year)
+
 
 melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'asset')
 
