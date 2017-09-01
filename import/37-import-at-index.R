@@ -13,10 +13,10 @@ library(dplyr)
 import_and_index <- function(filename, savename){
   temp <- read.csv(paste0(importdir, "37-at-index/", filename)) %>%
             arrange(year)
-  first_price <- temp[1, "price"]
-  temp2 <- temp %>%
-            mutate(index = price/first_price)
-  saveRDS(temp2, paste0(localdir, savename))
+  for (i in 2:nrow(temp)){
+    temp[i, "ret"] <- temp[(i), "price"]/temp[(i-1), "price"] - 1
+  }
+  saveRDS(temp, paste0(localdir, savename))
 }
 
 import_and_index("wheat-prices-farmdoc.csv", "37-wheat-prices-1966-2016.Rds")
