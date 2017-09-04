@@ -51,7 +51,7 @@ to_plot <- hist_bond_stock
 # Plot the returns to show how much they change over time
 plot <- ggplot(data = to_plot, aes(x = Date, y = ret_10yr_bond)) +
   geom_bar(stat = "identity", fill = "blue") +
-  ggtitle(paste0("U.S. 10 Year Bonds Averaged ", round(avg_ret,2)*100, "% Real Returns\n", min_year, "-", max_year)) +
+  ggtitle(paste0("U.S. 10 Year Bonds Averaged ", round(avg_ret,2)*100, "% Real Returns\n", min_year, " - ", max_year)) +
   scale_y_continuous(labels = percent) +
   of_dollars_and_data_theme +
   labs(x = "Year" , y = "Annual Real Return (%)")
