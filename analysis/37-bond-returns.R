@@ -83,20 +83,22 @@ file_path = paste0(exportdir, "37-bond-returns/bond-stock-by-decade.jpeg")
 to_plot <- hist_bond_stock %>%
             select(decade, ret_10yr_bond) %>%
             group_by(decade) %>%
-              summarize(`U.S. 10-Year Bond` = prod(1 + ret_10yr_bond) - 1) %>%
+              summarize(count = n(),
+                        `U.S. 10-Year Bond` = prod(1 + ret_10yr_bond)^(1/count) - 1) %>%
+              select(-count) %>%
               gather(key=key, value=value, -decade)
               
 
 # Plot the returns to show how much they change over time
 plot <- ggplot(data = to_plot, aes(x = decade, y = value)) +
   geom_bar(stat = "identity", position = "dodge", fill = "blue") +
-  ggtitle(paste0("Bonds Have Had Multiple Decades\nwith Negative Total Real Returns")) +
+  ggtitle(paste0("Bonds Have Had Multiple Decades\nwith Negative Annualized Real Returns")) +
   scale_fill_discrete(guide = FALSE) +
   scale_color_discrete(guide = FALSE) +
   scale_y_continuous(labels = percent) +
   scale_x_continuous(breaks = seq(min(to_plot$decade), max(to_plot$decade), 10)) +
   of_dollars_and_data_theme +
-  labs(x = "Decade" , y = "Decade Total Real Return (%)")
+  labs(x = "Decade" , y = "Annualized Real Return (%)")
 
 # Add a source and note string for the plots
 source_string <- paste0("Source:  http://www.stern.nyu.edu/~adamodar/pc/datasets/histretSP.xls (OfDollarsAndData.com)")
