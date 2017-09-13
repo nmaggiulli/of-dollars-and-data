@@ -31,32 +31,55 @@ full_bv_returns$year <- as.Date(full_bv_returns$year, "%d/%m/%y")
 min_year <- min(year(full_bv_returns$year))
 max_year <- max(year(full_bv_returns$year))
 
-to_plot <- gather(full_bv_returns, key=key, value=value, -year)
-
-for (yr in 1:20){
+# Loop over the years 1-20 and 21 which is a repeat loop
+for (yr in 1:21){
+  
+  to_plot <- gather(full_bv_returns, key=key, value=value, -year)
+  
+  if (yr < 10){
+    file_path <- paste0(exportdir, "39a-joyplot-all-assets/0", yr, "-joyplot.jpeg")
+  } else if (yr < 21){
+    file_path <- paste0(exportdir, "39a-joyplot-all-assets/", yr, "-joyplot.jpeg")
+  } else {
+    file_path <- paste0(exportdir, "39b-joyplot-20yr-only/20-joyplot.jpeg")
+  }
+  
+  # Set the fixed_axis for most of the plots
+  fixed_axis <- 1
+  
+  # Set year to 20 for the 21st loop
+  if (yr == 21){
+    yr <- 20
+    fixed_axis <- 0
+  }
+  
+  # Calculate the annualized returns
   for (i in yr:nrow(to_plot)){
     if (to_plot[(i-yr+1), "key"] == to_plot[i, "key"]){
       start_index <- i - yr + 1
       to_plot[i, "ret"] <- prod(1 + to_plot[(start_index:i), "value"])^(1/yr) - 1
+    } else {
+      to_plot[i, "ret"] <- NA
     }
   }
   
-  if (yr < 10){
-    yr_string <- paste0("0", yr)
+  if (fixed_axis == 1){
+    plot <- ggplot(data = to_plot, aes(x=ret, y=factor(key), fill = factor(key))) +
+      geom_joy_gradient(rel_min_height = 0.01, scale = 3) +
+      scale_fill_discrete(guide = FALSE) +
+      scale_x_continuous(label = percent, limit = c(-0.5, 0.75), breaks = seq(-0.5, 0.75, 0.25)) +
+      of_dollars_and_data_theme +
+      ggtitle(paste0(yr, "-Year Annualized Returns by Asset Class")) +
+      labs(x = paste0(yr, "-Year Annualized Real Return (%)" ), y = "Asset Class")
   } else {
-    yr_string <- yr
+    plot <- ggplot(data = to_plot, aes(x=ret, y=factor(key), fill = factor(key))) +
+      geom_joy_gradient(rel_min_height = 0.01, scale = 3) +
+      scale_fill_discrete(guide = FALSE) +
+      scale_x_continuous(label = percent) +
+      of_dollars_and_data_theme +
+      ggtitle(paste0(yr, "-Year Annualized Returns by Asset Class")) +
+      labs(x = paste0(yr, "-Year Annualized Real Return (%)" ), y = "Asset Class")
   }
-  
-  file_path <- paste0(exportdir, "39-joyplot-all-assets/", yr_string, "-joyplot.jpeg")
-  
-  plot <- ggplot(data = to_plot, aes(x=ret, y=factor(key), fill = factor(key))) +
-    geom_joy_gradient(rel_min_height = 0.01, scale = 3) +
-    scale_fill_discrete(guide = FALSE) +
-    scale_x_continuous(label = percent, limit = c(-0.5, 0.75), breaks = seq(-0.5, 0.75, 0.25)) +
-    of_dollars_and_data_theme +
-    ggtitle(paste0(yr, "-Year Annualized Returns by Asset Class")) +
-    labs(x = paste0(yr, "-Year Annualized Real Return (%)" ), y = "Asset Class")
-  
   
   # Add a source and note string for the plots
   source_string <- paste0("Source:  BullionVault U.S. Asset Class Performance Data, ", min_year, "-", max_year," (OfDollarsAndData.com)")
@@ -83,7 +106,7 @@ for (yr in 1:20){
 # I use Git Bash + magick because this is way faster than creating the GIF in R
 # After navigating to the correct folder, use this command:
 #
-# magick convert -delay 35 loop -0 *.jpeg all_plots.gif
+# magick convert -delay 30 loop -0 *.jpeg all_plots.gif
 
 # ############################  End  ################################## #
 
