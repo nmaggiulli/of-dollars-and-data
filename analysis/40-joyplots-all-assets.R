@@ -37,11 +37,11 @@ for (yr in 1:21){
   to_plot <- gather(full_bv_returns, key=key, value=value, -year)
   
   if (yr < 10){
-    file_path <- paste0(exportdir, "39a-joyplot-all-assets/0", yr, "-joyplot.jpeg")
+    file_path <- paste0(exportdir, "40a-joyplot-all-assets/0", yr, "-joyplot.jpeg")
   } else if (yr < 21){
-    file_path <- paste0(exportdir, "39a-joyplot-all-assets/", yr, "-joyplot.jpeg")
+    file_path <- paste0(exportdir, "40a-joyplot-all-assets/", yr, "-joyplot.jpeg")
   } else {
-    file_path <- paste0(exportdir, "39b-joyplot-20yr-only/20-joyplot.jpeg")
+    file_path <- paste0(exportdir, "40b-joyplot-20yr-only/20-joyplot.jpeg")
   }
   
   # Set the fixed_axis for most of the plots
