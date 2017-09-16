@@ -49,10 +49,16 @@ ProperCase <- function(InputString){
   sapply(lapply(strsplit(InputString," "), SentCase), paste, collapse=" ")
 }
 
-plot_sentiment <- function(start_date, end_date, type, low_y, high_y){
+plot_sentiment <- function(start_date, end_date, highlight_start, highlight_end, type, low_y, high_y){
   
-  to_plot <- filter(sentiment, date >= start_date, date <= end_date,
+  filtered <- filter(sentiment, date >= start_date, date <= end_date,
                     key == type)
+  
+  highlights <- filter(sentiment, date >= highlight_start, date <= highlight_end,
+                       key == type) %>%
+                      mutate(key = "highlight")
+  
+  to_plot <- bind_rows(filtered, highlights)
   
   if (type == "bullish"){
     top_title <- "Bullish Sentiment Broke Records\nNear the Peak of the Tech Bubble"
@@ -62,9 +68,10 @@ plot_sentiment <- function(start_date, end_date, type, low_y, high_y){
   
   file_path <- paste0(exportdir, "39-crowd/", type, "-",  start_date, "-", end_date,".jpeg")
   
-  plot <- ggplot(to_plot, aes(x = date, y = index)) +
+  plot <- ggplot(to_plot, aes(x = date, y = index, col = key)) +
             geom_line() +
             ggtitle(top_title) +
+            scale_color_manual(guide = FALSE, values = c("black", "red")) +
             scale_y_continuous(label = percent, limits = c(low_y, high_y)) +
             scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
             of_dollars_and_data_theme + 
@@ -92,8 +99,15 @@ plot_sentiment <- function(start_date, end_date, type, low_y, high_y){
   
 }
 
-plot_sentiment("1996-01-01", "2002-12-31", "bullish", 0.2, 0.6)
-plot_sentiment("2004-01-01", "2010-12-31", "bearish", 0.15, 0.55)
+plot_sentiment("1996-01-01", "2002-12-31", 
+               "2000-01-01", "2000-08-01", 
+               "bullish", 
+               0.2, 0.6)
+
+plot_sentiment("2004-01-01", "2010-12-31", 
+               "2008-03-01", "2009-04-30",
+               "bearish", 
+               0.15, 0.55)
 
 
 # ############################  End  ################################## #
