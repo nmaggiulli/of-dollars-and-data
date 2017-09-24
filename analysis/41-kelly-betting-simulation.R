@@ -21,11 +21,98 @@ library(dplyr)
 
 ########################## Start Program Here ######################### #
 
-bankroll <- 100
-p_win <- 0.6
-n_simulations <- 1000
+# This seed allows us to have reproducible random sampling
+set.seed(12345)     
 
-flip_results <- runif(n_simulations)
+plot_simulation <- function(df){
+  
+  # Set simulation inputs
+  bankroll <- 100
+  bet_pct_vec <- seq(0.1, 0.5, 0.1)
+  p_win <- df[, "p_win"]
+  n_flips <- df[, "n_flips"]
+  top_title <- df[, "title"]
+  
+  # Get the number of different betting percentages to test
+  n_bet_pcts <- length(bet_pct_vec)
+  
+  # Simulate the flips and create a blank data frame for results
+  flip_results <- runif(n_flips)
+  df_results  <- data.frame(matrix(NA, nrow = n_bet_pcts * (n_flips + 1), ncol = 0))
+  
+  print(flip_results[1:5])
+  
+  index <- 0
+  for (bet_pct in bet_pct_vec){
+    for (i in 1:(n_flips+1)){
+      index <- index + 1
+      df_results[index, "bet_pct"] <- bet_pct
+      df_results[index, "period"] <- i
+      if (i == 1){
+        df_results[index, "bankroll"] <- bankroll
+      } else {
+        if (flip_results[(i - 1)] < p_win){
+          df_results[index, "bankroll"]  <- round(df_results[(index-1), "bankroll"] + (df_results[(index-1), "bankroll"] * bet_pct), 2)   
+        } else {
+          df_results[index, "bankroll"]  <- max(round(df_results[(index-1), "bankroll"] - (df_results[(index-1), "bankroll"] * bet_pct), 2), 0)
+        }
+      }
+    }
+  }
+  
+  to_plot <- df_results
+  
+  file_path <- paste0(exportdir, "41-kelly-betting-simulation/sim_results_flips", n_flips, "_win", (p_win*100), ".jpeg")
+  
+  plot<- ggplot(to_plot, aes(x = period, y = bankroll, col = as.factor(bet_pct))) +
+          geom_line(alpha = 0.5) +
+          scale_y_continuous(label = dollar, trans = log_trans(), breaks = c(100, 10^5)) +
+          ggtitle(top_title)  +
+          of_dollars_and_data_theme +
+          scale_color_discrete(guide = FALSE) +
+          labs(x = "Number of Flips" , y = "Bankroll (on Log Scale)") +
+          geom_text_repel(data = filter(to_plot, period == max(to_plot$period)),
+                          aes(x = period, 
+                              y = bankroll,
+                              col = as.factor(bet_pct),
+                              label = paste0(bet_pct*100, "%"),
+                              family = "my_font"),
+                          max.iter = 5000
+          )
+  
+  # Turn plot into a gtable for adding text grobs
+  my_gtable   <- ggplot_gtable(ggplot_build(plot))
+  
+  source_string <- "Source:  Simulated data (OfDollarsAndData.com)"
+  note_string   <- paste0("Note:  Assumes a win probability of ", p_win*100, "% on even odds.")
+  
+  # Make the source and note text grobs
+  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
+                          gp =gpar(fontfamily = "my_font", fontsize = 8))
+  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+                          gp =gpar(fontfamily = "my_font", fontsize = 8))
+  
+  # Add the text grobs to the bototm of the gtable
+  my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
+  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
+  
+  # Save the plot  
+  ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
+}
+
+flips_vec <- c(100, 1000, 1000)
+p_win_vec <- c(0.6, 0.6, 0.7)
+title_vec <- c("The Optimal Bet Size Can Underperform\nOver Shorter Periods of Time",
+               "Over Longer Periods of Time,\nThe Optimal Bet Size Will Emerge",
+               "As Your Probability of Winning Increases,\nSo Should Your Bet Size")
+
+simulations_to_run <- data.frame(n_flips = flips_vec,
+                                 p_win = p_win_vec,
+                                 title = title_vec)
+
+for (i in 1:nrow(simulations_to_run)){
+  plot_simulation(simulations_to_run[i, ])
+}
 
 # ############################  End  ################################## #
 
