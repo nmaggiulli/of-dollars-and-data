@@ -100,11 +100,10 @@ plot_simulation <- function(df){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
 }
 
-flips_vec <- c(100, 1000, 1000)
-p_win_vec <- c(0.6, 0.6, 0.7)
+flips_vec <- c(100, 1000)
+p_win_vec <- c(0.6, 0.6)
 title_vec <- c("The Optimal Bet Size Can Underperform\nOver Shorter Periods of Time",
-               "Over Longer Periods of Time,\nThe Optimal Bet Size Will Emerge",
-               "As Your Probability of Winning Increases,\nSo Should Your Bet Size")
+               "Over Longer Periods of Time,\nThe Optimal Bet Size Will Emerge")
 
 simulations_to_run <- data.frame(n_flips = flips_vec,
                                  p_win = p_win_vec,
