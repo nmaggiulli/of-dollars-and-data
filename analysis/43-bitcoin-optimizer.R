@@ -127,7 +127,7 @@ wide_returns <- all_prices %>%
   
   avg_rf  <- mean(wide_returns[, "U.S. Short-Term Bond"])
   
-  eff_frontier <- function (returns, short = "no", max_allocation = NULL, risk_premium_upper_limit = .5, risk_increment = .005){
+  eff_frontier <- function (returns, short = "no", max_allocation, risk_premium_upper_limit, risk_increment){
     # return argument should be a m x n matrix with one column per security
     # short argument is whether short-selling is allowed; default is no (short selling prohibited)
     # max.allocation is the maximum % allowed for any one security (reduces concentration)
@@ -204,17 +204,17 @@ wide_returns <- all_prices %>%
 ############################### Create Additional Portfolios ###############################   
 
   # Initialize all weights as empty data frames
-  stock_bond_50_50 <- data.frame(matrix(nrow = 1, ncol = 0))
+  all_gold <- data.frame(matrix(nrow = 1, ncol = 0))
   equal_weighted   <- data.frame(matrix(nrow = 1, ncol = 0))
   all_stock        <- data.frame(matrix(nrow = 1, ncol = 0))
   all_btc         <- data.frame(matrix(nrow = 1, ncol = 0))
     
   # Stock + Bond 50-50  
   for (j in colnames(eff[1:n_assets])){
-    if (j == "U.S. Equities" | j == "Treasury 10yr"){
-      stock_bond_50_50[j] <- 0.5
+    if (j == "Gold"){
+      all_gold[j] <- 1
     } else{
-      stock_bond_50_50[j] <- 0
+      all_gold[j] <- 0
     }
   }
     
@@ -254,9 +254,9 @@ wide_returns <- all_prices %>%
     return(df)
   }
   
-  stock_bond_50_50 <- find_ret_sd_sharpe(stock_bond_50_50)
-  equal_weighted   <- find_ret_sd_sharpe(equal_weighted)
-  all_stock        <- find_ret_sd_sharpe(all_stock)
+  all_gold        <- find_ret_sd_sharpe(all_gold)
+  equal_weighted  <- find_ret_sd_sharpe(equal_weighted)
+  all_stock       <- find_ret_sd_sharpe(all_stock)
   all_btc         <- find_ret_sd_sharpe(all_btc)
   
 ############################### Efficient Frontier Plot ###############################    
@@ -272,13 +272,13 @@ wide_returns <- all_prices %>%
     geom_point(data = optimal, aes(x = sd, y = exp_return), color = ealred, size = 5) +
     geom_text_repel(data = optimal, label = "Optimal Portfolio", family = "my_font", size = 3.5, nudge_x = -0.02, nudge_y = 0.009, max.iter = 5000) +
     # Add S&P 500 only
-    geom_point(data = all_stock, aes(x = sd, y = exp_return), color = "green", size = 2) +
-    geom_text_repel(data = all_stock, label = "S&P 500 Only", family = "my_font", size = 3, nudge_y = -0.004, max.iter = 5000) +
-    # Add 50-50 portfolio
-    #geom_point(data = stock_bond_50_50, aes(x = sd, y = exp_return), color = "blue", size = 2) +
-    #geom_text_repel(data = stock_bond_50_50, label = "50-50 Stock/Bond", family = "my_font", size = 3, nudge_x = 0.03, max.iter = 5000) +
+    #geom_point(data = all_stock, aes(x = sd, y = exp_return), color = "green", size = 2) +
+    #geom_text_repel(data = all_stock, label = "S&P 500 Only", family = "my_font", size = 3, nudge_y = -0.004, max.iter = 5000) +
+    # Add All Gold portfolio
+    geom_point(data = all_gold, aes(x = sd, y = exp_return), color = "gold", size = 2) +
+    geom_text_repel(data = all_gold, label = "Gold Only", family = "my_font", size = 3, nudge_x = 0.03, max.iter = 5000) +
     # Add all Bitcoin
-    geom_point(data = all_btc, aes(x = sd, y = exp_return), color = "#FFD700", size = 2) +
+    geom_point(data = all_btc, aes(x = sd, y = exp_return), color = "red", size = 2) +
     geom_text_repel(data = all_btc, label = "Bitcoin Only", family = "my_font", size = 3, nudge_x = -0.015, max.iter = 5000) +
     # Add Equal weighted portfolio
     #geom_point(data = equal_weighted, aes(x = sd, y = exp_return), color = "purple", size = 2) +
