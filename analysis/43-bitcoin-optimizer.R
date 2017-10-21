@@ -39,9 +39,8 @@ last_year <- max(year(bcoin$date))
 
 bcoin_date <- min(bcoin$date)
 
-# REIT, S&P 500, EM, Gold, Int. Markets, Total Bond, Commodities
-tickers     <- c("VGSIX", "SPY", "VWO", "GLD", "VTMGX", "VBLTX", "VAW", "VBISX")
 asset_class <- c("U.S. REIT", "U.S. Equities", "Emerging Markets", "Gold", "Int. Equities", "U.S. Long-Term Bond", "Commodities", "U.S. Short-Term Bond")
+tickers     <- c("VGSIX", "SPY", "VWO", "GLD", "VTMGX", "VBLTX", "VAW", "VBISX")
 
 
 for (a in 1:length(tickers)){
@@ -283,7 +282,7 @@ wide_returns <- all_prices %>%
     # Add Equal weighted portfolio
     #geom_point(data = equal_weighted, aes(x = sd, y = exp_return), color = "purple", size = 2) +
     #geom_text_repel(data = equal_weighted, label = "Equal Weighted", family = "my_font", size = 3, nudge_y = -0.004, nudge_x = 0.002, max.iter = 5000) +
-    ggtitle(paste0("Did I Mention Bitcoin is Off the Charts?")) + labs(x = "Risk (standard deviation of portfolio variance)", y ="1-Month Return") +
+    ggtitle(paste0("Did I Mention Bitcoin is Off the Charts?")) + labs(x = "Risk (standard deviation of portfolio variance)", y ="Average Monthly Return") +
     of_dollars_and_data_theme +
     scale_x_continuous(label = percent) +
     scale_y_continuous(label = percent)
