@@ -18,7 +18,7 @@ library(dplyr)
 sp500_ret_pe <- read_excel(paste0(importdir, "09-sp500-returns-pe/ie_data.xls"),
                           sheet = "cleaned") %>%
                   filter(!is.na(real_div)) %>%
-                select(Date, real_price, real_div, cape)
+                select(Date, real_price, real_div, cape, CPI)
 
 # Save down the data
 saveRDS(sp500_ret_pe, paste0(localdir, "09-sp500-ret-pe.Rds"))
