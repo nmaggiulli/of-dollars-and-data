@@ -66,7 +66,7 @@ wide_ret <- non_us %>%
             filter(date >= min_date, date <= max_date) %>%
             inner_join(us_filtered) %>%
             select(-month, -year) %>%
-            mutate(UK = UK - ret_cpi,
+            mutate(`U.K.` = `U.K.` - ret_cpi,
                    France = France - ret_cpi,
                    Italy = Italy - ret_cpi,
                    Russia = Russia - ret_cpi,
@@ -96,9 +96,9 @@ to_plot <- all_ret
   plot <- ggplot(data = to_plot, aes(x=value, y=factor(key), fill = factor(key))) +
     geom_joy_gradient(rel_min_height = 0.01, scale = 3) +
     scale_fill_discrete(guide = FALSE) +
-    scale_x_continuous(label = percent) +
+    scale_x_continuous(label = percent, limits = c(-0.35, 0.35)) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("1-Month Real Returns by Equity Market")) +
+    ggtitle(paste0("You Can Also See This When\nComparing Their Return Distributions")) +
     labs(x = paste0("1-Month Real Return (%)" ), y = "Equity Market")
   
   # Add a source and note string for the plots
@@ -124,10 +124,12 @@ to_plot <- all_ret
 ## Create indexed line chart
   file_path <- paste0(exportdir, "44-world-equities/equity_lines.jpeg")
   
+  to_plot <- filter(all_ret, key != "Russia")
+  
   plot <- ggplot(data = to_plot, aes(x=date, y=index, col = factor(key))) +
     geom_line() +
     scale_color_discrete(guide = FALSE) +
-    geom_text_repel(data = filter(to_plot, date == max(to_plot$date), !(key %in% c("Germany", "France", "Russia", "UK", "Spain"))), 
+    geom_text_repel(data = filter(to_plot, date == max(to_plot$date), !(key %in% c("Germany", "France", "U.K.", "Spain"))), 
                     aes(x = date, 
                         y = index, 
                         col = as.factor(key), 
@@ -145,17 +147,7 @@ to_plot <- all_ret
                     max.iter=3000,
                     nudge_y = 300,
                     segment.color = 'transparent') +
-    geom_text_repel(data = filter(to_plot, date == max(to_plot$date), key %in% c("Russia")), 
-                    aes(x = date, 
-                        y = index, 
-                        col = as.factor(key), 
-                        label = as.character(key),
-                        family = "my_font"
-                    ), force = 2,
-                    max.iter=3000,
-                    nudge_y = -270,
-                    segment.color = 'transparent') +
-    geom_text_repel(data = filter(to_plot, date == "2005-01-01", key %in% c("UK")), 
+    geom_text_repel(data = filter(to_plot, date == "2005-01-01", key %in% c("U.K.")), 
                     aes(x = date, 
                         y = index, 
                         col = as.factor(key), 
@@ -187,7 +179,7 @@ to_plot <- all_ret
                     segment.color = 'transparent') +
     scale_x_date() +
     of_dollars_and_data_theme +
-    ggtitle(paste0("World Equity Returns Over Time")) +
+    ggtitle(paste0("Equity Markets Around the World\nExhibit Varied Outcomes")) +
     labs(x = paste0("Date"), y = "Index (Start = 100)")
   
   # Turn plot into a gtable for adding text grobs
