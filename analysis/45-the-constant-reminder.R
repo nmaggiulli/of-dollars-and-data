@@ -72,7 +72,7 @@ for (i in 1:length(years_to_plot)){
   plot <- ggplot(data = to_plot, aes(x = rate_label, y = value, fill = rate_label)) +
     geom_bar(stat="identity") +
     scale_fill_discrete(guide = FALSE) +
-    ggtitle(paste0("Total Wealth\nAfter ", years_to_plot[i], " Years")) +
+    ggtitle(paste0("Total Wealth by Savings Rate\nAfter ", years_to_plot[i], " Years")) +
     scale_y_continuous(label = dollar, limits = c(0, 1000000)) +
     of_dollars_and_data_theme +
     labs(x = "Savings Rate" , y = "Total Wealth")
