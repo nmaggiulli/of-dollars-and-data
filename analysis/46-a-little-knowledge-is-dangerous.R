@@ -25,7 +25,7 @@ library(dplyr)
 # Create fake data for Dunning-Kruger effect
 
 low <- 38
-y <- c(seq(0, 100, 25), seq(99, low), seq(low + 0.5, 65, 0.5))  
+y <- c(seq(0, 100, 25), seq(99, low), seq(low + 0.5, 75, 0.5))  
 x <- seq(0, length(y)-1)
 
 to_plot <- data.frame(x = x, y = y)
@@ -35,6 +35,10 @@ file_path = paste0(exportdir, "46-a-little-knowledge-is-dangerous/dunning-kruege
 
 plot <- ggplot(data = to_plot, aes(x = x, y = y)) +
   geom_line(col= "red") +
+  geom_point(data=filter(to_plot, x == 0), col='black') +
+  geom_point(data=filter(to_plot, y == max(y)), col='black') +
+  geom_point(data=filter(to_plot, y == low), col='black') +
+  geom_point(data=filter(to_plot, x == max(x)), col='black') +
   scale_color_discrete(guide = FALSE) +
   ggtitle(paste0("The Dunning-Kruger Effect for Investors")) +
   of_dollars_and_data_theme +
@@ -46,11 +50,11 @@ plot <- ggplot(data = to_plot, aes(x = x, y = y)) +
   geom_text_repel(data = filter(to_plot, x == 0), 
                   aes(x = x, 
                       y = y, 
-                      label = "401k?  No thanks.  I don't run often.",
+                      label = "401k? I've never run that far before.",
                       family = "my_font"
                   ), col = 'black',
-                  nudge_y = 3,
-                  nudge_x = 36,
+                  nudge_y = 2,
+                  nudge_x = 42,
                   max.iter = 4000,
                   segment.color = 'transparent') +
   geom_text_repel(data = filter(to_plot, y == max(y)), 
@@ -59,16 +63,17 @@ plot <- ggplot(data = to_plot, aes(x = x, y = y)) +
                       label = "I can be the next Warren Buffett",
                       family = "my_font"
                   ), col = 'black',
-                  nudge_x = 36,
+                  nudge_x = 42,
+                  nudge_y = 0,
                   max.iter = 4000,
                   segment.color = 'transparent') +
   geom_text_repel(data = filter(to_plot, y == low), 
                   aes(x = x, 
                       y = y, 
-                      label = "Keep fees low.  God, I hope this works.",
+                      label = "Low Fees + Diversification.\nGod, I hope this works.",
                       family = "my_font"
                   ), col = 'black',
-                  nudge_y = -5.5,
+                  nudge_y = -8,
                   max.iter = 4000,
                   segment.color = 'transparent') +
   geom_text_repel(data = filter(to_plot, x == max(x)), 
@@ -77,10 +82,11 @@ plot <- ggplot(data = to_plot, aes(x = x, y = y)) +
                       label = "The actual\nWarren Buffett",
                       family = "my_font"
                   ), col = 'black',
-                  nudge_y = 4,
+                  nudge_y = 8,
                   max.iter = 4000,
                   segment.color = 'transparent') +
-  labs(x = "Experience\n(Knowledge in Field)" , y = "Confidence")
+  labs(x = "Experience" , 
+       y = "Confidence")
 
 # Add a source and note string for the plots
 source_string <- paste0("Source: Simulated data (OfDollarsAndData.com)")
