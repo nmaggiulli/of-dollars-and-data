@@ -29,10 +29,10 @@ sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
 filter_year <- function(date_var){
   
   # Get the first and last year in the data for plot printing
-  sp500_ret_pe <- filter(sp500_ret_pe, Date >= date_var)
+  sp500_ret_pe <- filter(sp500_ret_pe, date >= date_var)
   
-  first_year <- floor(min(sp500_ret_pe$Date))
-  last_year  <- floor(max(sp500_ret_pe$Date))
+  first_year <- floor(min(sp500_ret_pe$date))
+  last_year  <- floor(max(sp500_ret_pe$date))
   
   for (i in 1:nrow(sp500_ret_pe)){
     if (i == 1){
@@ -97,10 +97,10 @@ ymin <- floor(min(to_plot[, "ret_1_month"]) * 10) / 10
 file_path = paste0(exportdir, "09-sp500-returns-pe/top-monthly-returns-",first_year,".jpeg")
 
 # Create the plot with labels using geom_text_repel
-plot <- ggplot(data = to_plot, aes(x = reorder(Date, -ret_1_month), y = ret_1_month, col = as.factor(before_total), fill =  as.factor(before_total))) +
+plot <- ggplot(data = to_plot, aes(x = reorder(date, -ret_1_month), y = ret_1_month, col = as.factor(before_total), fill =  as.factor(before_total))) +
   geom_bar(stat = "identity") +
   geom_text_repel(data = filter(to_plot, ret_1_month == max_y_filter),
-                  aes(x  = reorder(Date, -ret_1_month),
+                  aes(x  = reorder(date, -ret_1_month),
                       y = ymax / 3,
                       col = as.factor(before_total),
                   label = str_wrap(paste0("These returns represent all of the gains since ", first_year), width = 20),
@@ -108,14 +108,14 @@ plot <- ggplot(data = to_plot, aes(x = reorder(Date, -ret_1_month), y = ret_1_mo
                   nudge_x = n_months / 4,
                   nudge_y = ymax / 2) +
   geom_text_repel(data = to_plot[round(nrow(to_plot)/ 2), ],
-                  aes(x  = reorder(Date, -ret_1_month),
+                  aes(x  = reorder(date, -ret_1_month),
                       y = 0,
                       col = as.factor(before_total),
                       label = "These gains are canceled out",
                       family = "my_font"),
                       nudge_y = ymin / 2) +
   geom_text_repel(data = filter(to_plot, ret_1_month == min_y_filter),
-                  aes(x  = reorder(Date, -ret_1_month),
+                  aes(x  = reorder(date, -ret_1_month),
                       y = ymin / 2,
                       col = as.factor(before_total),
                       label = "by these losses",

@@ -17,7 +17,6 @@ library(gtable)
 library(RColorBrewer)
 library(stringr)
 library(ggrepel)
-library(magick)
 
 ########################## Start Program Here ######################### #
 
@@ -29,10 +28,10 @@ my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00"
 sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
 
 # Subset S&P 500 returns
-sp500_ret_pe <- filter(sp500_ret_pe, cape != "NA", Date < 2017.01)
+sp500_ret_pe <- filter(sp500_ret_pe, !is.na(cape), date < 2017.01)
 
-first_year <- floor(min(sp500_ret_pe$Date))
-last_year <- floor(max(sp500_ret_pe$Date))
+first_year <- floor(min(sp500_ret_pe$date))
+last_year <- floor(max(sp500_ret_pe$date))
 
 for (i in 1:nrow(sp500_ret_pe)){
   if (i == 1){
@@ -45,9 +44,6 @@ for (i in 1:nrow(sp500_ret_pe)){
     sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
   }
 }
-
-# Convert the cape to a numeric
-sp500_ret_pe$cape <- as.numeric(sp500_ret_pe$cape)
 
 # Setup a vector of different returns to calculate
 # This will be for 5 year, 10 year, 20 year, and 30 year returns
@@ -66,8 +62,8 @@ for (i in 1:nrow(sp500_ret_pe)){
 }
 
 sp500_ret_pe_long <- sp500_ret_pe %>%
-                      select(Date, cape, contains("return_")) %>%
-                      gather(key, value, -Date, -cape) %>%
+                      select(date, cape, contains("return_")) %>%
+                      gather(key, value, -date, -cape) %>%
                       filter(!is.na(value)) %>%
                       mutate(below_zero = ifelse(value < 0, 1, 0))
 
@@ -111,7 +107,7 @@ plot_ret_pe <- function(var){
   
   if (var == 5) {
     # Set the file_path for the next output
-    file_path = paste0(exportdir, "17-sp500-returns-pe/returns-", var,"-year-fit.jpeg")
+    file_path = paste0(exportdir, "17-sp500-returns-pe/fit-returns-", var,"-year.jpeg")
     
     plot <- ggplot(data = to_plot, aes(x = cape, y = value)) +
       geom_point() +
@@ -151,14 +147,11 @@ for (x in returns_to_calc){
   plot_ret_pe(x)
 }
 
-# Read in the the individual images
-frames <- lapply(returns_to_calc, function(x){
-  image_read(paste0(exportdir, "17-sp500-returns-pe/returns-", x,"-year.jpeg"))
-})
-
-# Make animation from the frames read in during the prior step
-image_write(image_animate(image_join(frames), fps = 4), 
-            paste0(exportdir, "17-sp500-returns-pe/all-returns-pe.gif"))
+# Instead of creating these images as a GIF in R, do it in Bash
+# I use Git Bash + magick because this is way faster than creating the GIF in R
+# After navigating to the correct folder, use this command:
+#
+# magick convert -delay 25 loop -0 returns-*.jpeg all_plots.gif
 
 
 # ############################  End  ################################## #

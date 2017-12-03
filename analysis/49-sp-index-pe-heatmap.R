@@ -30,7 +30,7 @@ library(dplyr)
 
 # Read in data for sp500 Shiller data
 sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
-  filter(cape != "NA")
+                     filter(!is.na(cape))
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){
@@ -45,24 +45,21 @@ for (i in 1:nrow(sp500_ret_pe)){
   }
 }
 
-# Change the Date to a Date type for plotting the S&P data
-sp500_ret_pe <- select(sp500_ret_pe, Date, cape, price_plus_div) %>%
-  mutate(Date = as.Date(paste0(
-    substring(as.character(Date), 1, 4),
+# Change the date to a date type for plotting the S&P data
+sp500_ret_pe <- select(sp500_ret_pe, date, cape, price_plus_div) %>%
+  mutate(date = as.Date(paste0(
+    substring(as.character(date), 1, 4),
     "-", 
-    ifelse(substring(as.character(Date), 6, 7) == "1", "10", substring(as.character(Date), 6, 7)),
+    ifelse(substring(as.character(date), 6, 7) == "1", "10", substring(as.character(date), 6, 7)),
     "-01", 
     "%Y-%m-%d")),
-    year = year(Date))
-
-# Convert the cape to a numeric
-sp500_ret_pe$cape <- as.numeric(sp500_ret_pe$cape)
+    year = year(date))
 
 #Create function for S&P data
 plot_sp <- function(from_year, to_year, lag_cape, title){
   
   to_plot <- sp500_ret_pe %>%
-                mutate(final_date = lead(Date) - 1,
+                mutate(final_date = lead(date) - 1,
                        cape = lag(cape, n = lag_cape)) %>%
                 filter(year >= from_year, year <= to_year)
   
@@ -76,9 +73,9 @@ plot_sp <- function(from_year, to_year, lag_cape, title){
   
   file_path <- paste0(exportdir, "49-sp-index-pe-heatmap/sp-price-",from_year, "-", to_year, "-lag-", lag_cape ,".jpeg")
   
-  plot <- ggplot(data = to_plot, aes(x=Date, y=index)) +
-    geom_rect(data=to_plot, aes(xmin = Date, ymin = 50, 
-                                 xmax = final_date, ymax = 165000, fill = cape)) +
+  plot <- ggplot(data = to_plot, aes(x=date, y=index)) +
+    geom_rect(data=to_plot, aes(xmin = date, ymin = 50, 
+                                 xmax = final_date, ymax = 170000, fill = cape)) +
     geom_line() +
     scale_fill_gradient(limits = c(4, 44), low="blue", high="red", name = "CAPE\nRange") +
     of_dollars_and_data_theme +
