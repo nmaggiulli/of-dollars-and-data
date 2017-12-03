@@ -7,7 +7,7 @@ source(file.path(paste0(getwd(),"/header.R")))
 
 ########################## Load in Libraries ########################## #
 
-library(dplyr)
+
 library(ggplot2)
 library(tidyr)
 library(scales)
@@ -17,6 +17,7 @@ library(gtable)
 library(RColorBrewer)
 library(stringr)
 library(ggrepel)
+library(dplyr)
 
 ########################## Start Program Here ######################### #
 
@@ -105,7 +106,13 @@ plot_ret_pe <- function(var){
   # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
   
-  if (var == 5) {
+  if (var == 5 | var == 30) {
+    if (var == 5){
+      title <- paste0("As Stocks Get More Expensive\nTheir Future Returns Generally Decrease")
+    } else {
+      title <- paste0("Over Longer Time Periods, CAPE is\nLess Meaningful for Future Returns")
+    }
+    
     # Set the file_path for the next output
     file_path = paste0(exportdir, "17-sp500-returns-pe/fit-returns-", var,"-year.jpeg")
     
@@ -116,9 +123,9 @@ plot_ret_pe <- function(var){
       scale_color_manual(guide = FALSE) +
       scale_y_continuous(label = percent, limits = c(-0.15, 0.35)) +
       scale_x_continuous(limits = c(0, 45)) +
-      ggtitle(paste0("As Stocks Get More Expensive\nTheir Future Returns Generally Decrease")) +
+      ggtitle(title) +
       of_dollars_and_data_theme +
-      labs(x = "U.S. Stocks P/E Ratio" , y = "Annualized Future Real Return (%)")
+      labs(x = "U.S. Stocks P/E Ratio" , y = paste0("Annualized Future Real Return\nFor Next ", var, " Years"))
     
     # Add a source and note string for the plots
     source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
@@ -143,9 +150,12 @@ plot_ret_pe <- function(var){
   
 }
 
-for (x in returns_to_calc){
-  plot_ret_pe(x)
-}
+# for (x in returns_to_calc){
+#   plot_ret_pe(x)
+# }
+
+plot_ret_pe(5)
+plot_ret_pe(30)
 
 # Instead of creating these images as a GIF in R, do it in Bash
 # I use Git Bash + magick because this is way faster than creating the GIF in R

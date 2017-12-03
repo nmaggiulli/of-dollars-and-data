@@ -73,13 +73,16 @@ plot_sp <- function(from_year, to_year, lag_cape, title){
   
   file_path <- paste0(exportdir, "49-sp-index-pe-heatmap/sp-price-",from_year, "-", to_year, "-lag-", lag_cape ,".jpeg")
   
+  y_max <- max(to_plot$index)
+  
   plot <- ggplot(data = to_plot, aes(x=date, y=index)) +
     geom_rect(data=to_plot, aes(xmin = date, ymin = 50, 
-                                 xmax = final_date, ymax = 170000, fill = cape)) +
+                                 xmax = final_date, ymax = y_max, fill = cape)) +
     geom_line() +
     scale_fill_gradient(limits = c(4, 44), low="blue", high="red", name = "CAPE\nRange") +
     of_dollars_and_data_theme +
     scale_y_continuous(label = dollar, trans = log_trans(), breaks = c(0, 1, 10, 100, 1000, 10000, 100000)) +
+    scale_x_date(date_labels = "%Y", breaks = seq(as.Date("1900-01-01"), as.Date("2000-12-31"), by="20 years")) +
     ggtitle(paste0(title)) +
     labs(x = "Date", y = "Real Index (Start = $100)")
   
@@ -103,4 +106,4 @@ plot_sp <- function(from_year, to_year, lag_cape, title){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-plot_sp(1900, 2017, 0, "CAPE Does Not Always Predict\nFuture U.S. Stock Returns")
+plot_sp(1900, 2017, 0, "CAPE May Only Be Useful Near Its Extremes")
