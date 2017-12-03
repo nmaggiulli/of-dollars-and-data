@@ -52,14 +52,18 @@ create_dist_compare <- function(ticker, period, title, from_year, to_year, max, 
   
   to_plot <-df %>%
             mutate(year = year(date),
+                   month = month(date),
                    ret = (value/lag(value) - 1)) %>%
-            select(year, ret)
+            select(year, month, ret)
   
-  file_path <- paste0(exportdir, "49-sp-return-dists/", ticker, "-", lowcase_period, "-distributions-",from_year, "-", to_year, ".jpeg")
+  assign(ticker, to_plot, envir = .GlobalEnv)
+  
+  file_path <- paste0(exportdir, "49b-sp-return-dists/", ticker, "-", lowcase_period, "-distributions-",from_year, "-", to_year, ".jpeg")
 
   plot <- ggplot(data = to_plot, aes(x=ret, y=factor(year), fill = factor(year))) +
     geom_joy_gradient(rel_min_height = 0.01, scale = 3) +
     scale_fill_discrete(guide = FALSE) +
+    scale_color_discrete(guide = FALSE) +
     scale_x_continuous(label = percent, limit = c(-max, max), breaks = seq(-max, max, unit)) +
     of_dollars_and_data_theme +
     ggtitle(paste0(title)) +
@@ -84,9 +88,10 @@ create_dist_compare <- function(ticker, period, title, from_year, to_year, max, 
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-create_dist_compare("SPY", "Daily", "The Narrowing of Daily Volatility\nS&P 500", 2006, 2017, 0.05, 0.01)
-create_dist_compare("SPY", "Monthly", "Monthly Returns 'Normalize' During Good Times\nS&P 500", 2006, 2017, 0.20, 0.05)
-  
-create_dist_compare("BTC", "Monthly", "Bitcoin is Having the Best Year Since 2013", 2010, 2017, 1, 0.25)
+#create_dist_compare("SPY", "Daily", "The Narrowing of Daily Volatility\nS&P 500", 1997, 2003, 0.05, 0.01)
+create_dist_compare("SPY", "Monthly", "SPY", 2006, 2017, 0.25, 0.05)
 
-create_dist_compare("SPY", "Monthly", "S&P 500 Recent History", 1993, 2017, 0.20, 0.05)
+create_dist_compare("VBLTX", "Monthly", "VBLTX", 1995, 2017, 0.25, 0.05)
+
+# This was for Twitter for fun 
+#create_dist_compare("BTC", "Monthly", "Bitcoin Monthly Return Distribution by Year", 2010, 2017, 1, 0.25)
