@@ -16,15 +16,9 @@ programroot <- "~/git/of-dollars-and-data/"
 options(StringsAsFactors=FALSE)
 
 # Set my plotting theme and font
-# Use the LibreBaskerville font
-windowsFonts(my_font=windowsFont("Libre Baskerville"))
+
 
 require(ggplot2)
-require(Quandl)
-
-quandl_api_key <- read.table(paste0(importdir, "quandl_api_key.txt"))
-
-Quandl.api_key(as.character(quandl_api_key$V1))
 
 # Make a theme that matches the OfDollarsAndData.com blog
 of_dollars_and_data_theme <- theme(
