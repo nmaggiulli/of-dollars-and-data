@@ -10,7 +10,7 @@ source(file.path(paste0(getwd(),"/header.R")))
 pkgs <- c("dplyr", "ggplot2", "tidyr", "stringr", "lubridate", 
           "ggjoy", "ggrepel", "scales", "grid", "gridExtra",
           "RColorBrewer", "quadprog", "fTrading", "quantmod",
-          "gtable", "reshape2", "MASS")
+          "gtable", "reshape2", "MASS", "gdata", "readxl")
 
 install.packages(pkgs)
 

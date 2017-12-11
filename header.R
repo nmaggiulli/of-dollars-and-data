@@ -1,8 +1,8 @@
 # Set dataroot location
-dataroot <- "C:/Users/nmaggiulli/data/of-dollars-and-data/"
+dataroot <- "/Users/nmaggiulli/data/of-dollars-and-data/"
 
 # Set dataset libraries
-localdir <- paste0(dataroot, "datasets/local/")
+localdir <- paste0(dataroot, "datasets/")
 
 # Set the import/export directories
 importdir <- paste0(dataroot, "import/")
