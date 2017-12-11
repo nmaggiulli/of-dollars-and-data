@@ -15,9 +15,11 @@ programroot <- "~/git/of-dollars-and-data/"
 # This option is used to prevent strings from being imported as factors
 options(StringsAsFactors=FALSE)
 
-# Set my plotting theme and font
-
-
+# Set my font for MAC (just download and install OTF fonts then use quartzFonts)
+quartzFonts(my_font = quartzFont(c("Libre Baskerville", 
+                                 "Libre Baskerville Bold", 
+                                 "Libre Baskerville Italic",
+                                 "Libre Baskerville Bold")))
 require(ggplot2)
 
 # Make a theme that matches the OfDollarsAndData.com blog
