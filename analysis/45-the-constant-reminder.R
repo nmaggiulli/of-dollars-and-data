@@ -53,7 +53,7 @@ create_value_path(0.15, annual_return, "sr_15_5")
 
 
 results_df <- bind_rows(sr_5_5, sr_10_5, sr_15_5)
-results_df$rate_label <- factor(results_df$rate_label, levels = results_df$rate_label[order(results_df$rate)])
+results_df$rate_label <- factor(results_df$rate_label, levels = unique(results_df$rate_label[order(results_df$rate)]))
 
 years_to_plot <- c(seq(2, n_years_working, 2), n_years_working, n_years_working)
 
@@ -102,7 +102,7 @@ for (i in 1:length(years_to_plot)){
 # I use Git Bash + magick because this is way faster than creating the GIF in R
 # After navigating to the correct folder, use this command:
 #
-# magick convert -delay 30 loop -0 saving-plot-*.jpeg all_plots.gif
+# convert -delay 30 loop -0 saving-plot-*.jpeg all_plots.gif
 
 
 # ############################  End  ################################## #
