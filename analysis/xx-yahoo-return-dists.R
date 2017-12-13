@@ -58,7 +58,7 @@ create_dist_compare <- function(ticker, period, title, from_year, to_year, max, 
   
   assign(ticker, to_plot, envir = .GlobalEnv)
   
-  file_path <- paste0(exportdir, "49b-sp-return-dists/", ticker, "-", lowcase_period, "-distributions-",from_year, "-", to_year, ".jpeg")
+  file_path <- paste0(exportdir, "xx-yahoo-return-dists/", ticker, "-", lowcase_period, "-distributions-",from_year, "-", to_year, ".jpeg")
 
   plot <- ggplot(data = to_plot, aes(x=ret, y=factor(year), fill = factor(year))) +
     geom_joy_gradient(rel_min_height = 0.01, scale = 3) +
@@ -90,8 +90,8 @@ create_dist_compare <- function(ticker, period, title, from_year, to_year, max, 
 
 #create_dist_compare("SPY", "Daily", "The Narrowing of Daily Volatility\nS&P 500", 1997, 2003, 0.05, 0.01)
 create_dist_compare("SPY", "Monthly", "SPY", 2006, 2017, 0.25, 0.05)
-
-create_dist_compare("VBLTX", "Monthly", "VBLTX", 1995, 2017, 0.25, 0.05)
+create_dist_compare("VTV", "Monthly", "VTV", 2006, 2017, 0.25, 0.05)
+create_dist_compare("QVAL", "Monthly", "QVAL", 2006, 2017, 0.25, 0.05)
 
 # This was for Twitter for fun 
 #create_dist_compare("BTC", "Monthly", "Bitcoin Monthly Return Distribution by Year", 2010, 2017, 1, 0.25)
