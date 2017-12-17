@@ -7,9 +7,6 @@ source(file.path(paste0(getwd(),"/header.R")))
 
 ########################## Load in Libraries ########################## #
 
-
-########################## Start Program Here ######################### #
-
 library(ggplot2)
 library(scales)
 library(grid)
@@ -26,7 +23,7 @@ library(tidyr)
 library(ggjoy)
 library(dplyr)
 
-# ############################  End  ################################## #
+########################## Start Program Here ######################### #
 
 create_dist_compare <- function(ticker, period, title, from_year, to_year, max, unit){
   lowcase_period <- tolower(period)
@@ -94,3 +91,5 @@ create_dist_compare("VTV", "Monthly", "VTV", 2006, 2017, 0.25, 0.05)
 
 # This was for Twitter for fun 
 #create_dist_compare("BTC", "Monthly", "Bitcoin Monthly Return Distribution by Year", 2010, 2017, 1, 0.25)
+
+# ############################  End  ################################## #
