@@ -35,7 +35,7 @@ file_path <- paste0(exportdir, "51-when-do-you-sell/jpy-hist-price.jpeg")
 plot <- ggplot(to_plot, aes(x=date, y=price)) +
           geom_line() +
           scale_y_continuous(label = comma) +
-          ggtitle(paste0("Japan's Melt Up"))  +
+          ggtitle(paste0("Japan's Melt Up and Drawdown"))  +
           of_dollars_and_data_theme +
           labs(x = "Date" , y = "Price (¥)")
 
@@ -43,7 +43,7 @@ plot <- ggplot(to_plot, aes(x=date, y=price)) +
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
 
 source_string <- "Source:  Quandl (OfDollarsAndData.com)"
-note_string   <- paste0("Note:  ")
+note_string   <- paste0("Note:  Does not adjust for USD currency changes or dividends.")
 
 # Make the source and note text grobs
 source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
