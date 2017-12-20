@@ -37,7 +37,7 @@ plot <- ggplot(to_plot, aes(x=date, y=price)) +
           scale_y_continuous(label = comma) +
           ggtitle(paste0("Japan's Melt Up and Drawdown"))  +
           of_dollars_and_data_theme +
-          labs(x = "Date" , y = "Price (¥)")
+          labs(x = "Year" , y = "Price (¥)")
 
 # Turn plot into a gtable for adding text grobs
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
