@@ -11,6 +11,7 @@ library(ggplot2)
 library(scales)
 library(grid)
 library(readxl)
+library(stats)
 library(gridExtra)
 library(gtable)
 library(RColorBrewer)
@@ -23,29 +24,40 @@ library(dplyr)
 
 ########################## Start Program Here ######################### #
 
+# Set seed
+set.seed(12345)
+
+# Choose a level of n for the nxn grid
+n <- 20
+  
 # Create fake data
-to_plot <- data.frame(flip=c(seq(1, 10), seq(1, 10)),
-                sum = c(seq(1, 10), c(0, 1, 1, 1, 2, 2, 3, 4, 4, 5)),
-                sim = c(rep(1, 10), rep(2, 10))
-                )
+to_plot   <- expand.grid(x = 1:n, y = 1:n)
+to_plot$z <- sample(0:1, n^2, replace = TRUE)
 
 # Set output path
-file_path <- paste0(exportdir, "54-coin-flip-simulation/coin-flip-simulation.jpeg")
+file_path <- paste0(exportdir, "54-coin-flip-simulation/coin-flip-grid-", n, ".jpeg")
 
-plot <- ggplot(to_plot, aes(x = flip, y = sum, col = as.factor(sim))) +
-          geom_line() +
-          scale_color_discrete(guide = FALSE) +
-          scale_x_continuous(breaks = seq(1, 10)) +
-          scale_y_continuous(breaks = seq(0, 10), limits = c(0, 10)) +
-          ggtitle(paste0("Equally Random Coin Flip Sequences"))  +
+plot <- ggplot(to_plot, aes(x = x, y = y, fill = z)) +
+          geom_raster() +
+          scale_fill_continuous(low = "red", high = "black", guide = FALSE) +
+          scale_x_continuous(limits = c(0, n)) +
+          scale_y_continuous(limits = c(0, n)) +
+          ggtitle(paste0("Do You See Patterns in the Noise?"))  +
           of_dollars_and_data_theme +
-          labs(x = "Flip" , y = "Cumulative Heads")
+          theme(axis.title.x=element_blank(),
+            axis.text.x=element_blank(),
+            axis.ticks.x=element_blank(),
+            axis.title.y=element_blank(),
+            axis.text.y=element_blank(),
+            axis.ticks.y=element_blank()
+            ) + 
+          labs(x = "x" , y = "y")
 
 # Turn plot into a gtable for adding text grobs
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
 
 source_string <- "Source:  Simulated data (OfDollarsAndData.com)"
-note_string   <- paste0("Note:  Shows two simulations of flipping a fair coin 10 times.")
+note_string   <- paste0("Note:  Simulates ", formatC(as.numeric(n^2), format="f", digits=0, big.mark=","), " coin flips plotted on a ", n ,"x", n, " grid. Red = tails, Black = heads.")
 
 # Make the source and note text grobs
 source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
@@ -59,5 +71,6 @@ my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
 
 # Save the plot  
 ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
+
 
 # ############################  End  ################################## #
