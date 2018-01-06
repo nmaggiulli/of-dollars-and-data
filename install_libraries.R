@@ -11,7 +11,7 @@ pkgs <- c("dplyr", "ggplot2", "tidyr", "stringr", "lubridate",
           "ggjoy", "ggrepel", "scales", "grid", "gridExtra",
           "RColorBrewer", "quadprog", "fTrading", "quantmod",
           "gtable", "reshape2", "MASS", "gdata", "readxl",
-          "Quandl")
+          "Quandl", "stats", "viridis")
 
 install.packages(pkgs)
 
