@@ -39,7 +39,7 @@ plot_sma <- function(start_year, end_year, sma_months){
 
   sp500_ret_pe <- filter(sp500_full, 
                          year(date) >= start_year,
-                         year(date) <= end_year)
+                         year(date) < end_year)
   
   # Calculate returns for the S&P data
   for (i in 1:nrow(sp500_ret_pe)){
@@ -125,7 +125,7 @@ plot_sma <- function(start_year, end_year, sma_months){
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
   source_string <- "Source: http://www.econ.yale.edu/~shiller/data.htm  (OfDollarsAndData.com)"
-  note_string   <- paste0("Note:  Moves to cash when ", sma_months, "-month SMA < current price.  Adjusted for inflation and dividends.")
+  note_string   <- paste0("Note:  Moves to cash when ", sma_months, "-month SMA > current price.  Adjusted for inflation and dividends.")
   
   # Make the source and note text grobs
   source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
@@ -141,11 +141,12 @@ plot_sma <- function(start_year, end_year, sma_months){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
 }
 
-years_list <- seq(1900, 1980, 10)
+years_list <- c(seq(1900, 1970, 10), 1978)
+x_list <- c(3, 12, 18)
 
 for (start in years_list){
-  for (x in 3:18){
-    plot_sma(start, 2017, x)
+  for (x in x_list){
+    plot_sma(start, (start + 40), x)
   }
 }
 
