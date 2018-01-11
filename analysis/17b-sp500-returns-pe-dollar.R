@@ -82,13 +82,13 @@ plot_ret_pe <- function(var){
     scale_color_manual(values = my_palette, guide = FALSE) +
     scale_y_continuous(label = dollar, limits = c(0, 25)) +
     scale_x_continuous(limits = c(0, 45)) +
-    ggtitle(paste0("U.S. Stocks Annualized Real Return\n(Over ", var, " Years) vs. P/E Ratio")) +
+    ggtitle(paste0("U.S. Stocks Growth of $1\n(Over ", var, " Years) vs. P/E Ratio")) +
     of_dollars_and_data_theme +
     labs(x = "U.S. Stocks P/E Ratio" , y = "Growth of $1")
 
   # Add a source and note string for the plots
   source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
-  note_string   <- paste0("Note:  Annualized real returns include reinvested dividends.") 
+  note_string   <- paste0("Note:  Growth of $1 includes reinvested dividends and adjusted for inflation.") 
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
