@@ -84,8 +84,20 @@ plot_sma <- function(start_year, end_year, sma_months){
                 mutate(`Buy and Hold` = (price_plus_div/first_bh) * 100,
                        `Trend` = (trend/first_trend) * 100) %>%
                 select(date, `Buy and Hold`, `Trend`) %>%
-                gather(key=key, value=value, -date) 
+                gather(key=key, value=value, -date) %>%
+                mutate(key = as.factor(key))
   
+  # Create dates for when in cash
+  dates <- filter(sp500_ret_pe) %>%
+            select(date, cash) %>%
+            mutate(end_date = lead(date) - 1) %>%
+            left_join(to_plot) %>%
+            filter(key == "Trend") %>%
+            select(date, end_date, key, value, cash)
+  
+  # Find ymax
+  ymax <- max(to_plot$value)
+
   # Set adjust_x for the "Trend" label
   if (end_year - start_year > 50){
     adjust_x <- 10
@@ -93,49 +105,47 @@ plot_sma <- function(start_year, end_year, sma_months){
     adjust_x <- 5
   }
   
+  # Set note and source string
+  source_string <- str_wrap("Source: http://www.econ.yale.edu/~shiller/data.htm  (OfDollarsAndData.com)", 
+                            width = 80)
+  note_string   <- str_wrap(paste0("Note:  Moves to cash when ", 
+                                   sma_months, 
+                                   "-month SMA > current price.  Green bars represent when trend model is in cash.  Adjusted for inflation and dividends."), 
+                            width = 80)
+  
   # Set output path
   file_path <- paste0(exportdir, "55-trend-testing/trend-v-buy-hold-",start_year, "-", end_year, "-", sma_months, "-month-sma.jpeg")
   
-  plot <- ggplot(to_plot, aes(x = date, y = value, col = as.factor(key))) +
-            geom_line() +
-            scale_color_discrete(guide = FALSE) +
+  plot <- ggplot(to_plot, aes(x = date, y = value)) +
+            geom_line(aes(col = key)) +
+            geom_rect(data=filter(dates, cash == 1), aes(xmin = date, ymin = 0, 
+                xmax = end_date, ymax = ymax), fill = "green", alpha = 0.3) +
             scale_y_continuous(label = dollar, trans = log_trans(), breaks = c(100, 1000, 10000, 100000, 1000000)) +
             geom_text_repel(data = filter(to_plot, date ==  min(to_plot$date), key == "Buy and Hold"),
                             aes(x = date, 
                                 y = value * 0.8,
-                                col = as.factor(key),
                                 label = key,
+                                col = key,
                                 family = "my_font"),
                             segment.color = 'transparent'
             ) +
             geom_text_repel(data = filter(to_plot, date ==  max(to_plot$date), key == "Trend"),
                             aes(x = date, 
                                 y = value,
-                                col = as.factor(key),
                                 label = key,
+                                col = key,
                                 family = "my_font"),
                             nudge_x = -(365*adjust_x),
                             segment.color = 'transparent'
             ) +
+            scale_color_discrete(guide = FALSE) +
             ggtitle(paste0("Trend vs. Buy and Hold\n", sma_months, "-Month Simple Moving Average"))  +
             of_dollars_and_data_theme +
-            labs(x = "Year" , y = "Index (Start = 100)")
+            labs(x = "Year" , y = "Index (Start = 100)",
+                 caption = paste0("\n", source_string, "\n", note_string))
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
-  
-  source_string <- "Source: http://www.econ.yale.edu/~shiller/data.htm  (OfDollarsAndData.com)"
-  note_string   <- paste0("Note:  Moves to cash when ", sma_months, "-month SMA > current price.  Adjusted for inflation and dividends.")
-  
-  # Make the source and note text grobs
-  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  
-  # Add the text grobs to the bototm of the gtable
-  my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
-  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
   
   # Save the plot  
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
