@@ -108,9 +108,9 @@ plot_sma <- function(start_year, end_year, sma_months){
   # Set note and source string
   source_string <- str_wrap("Source: http://www.econ.yale.edu/~shiller/data.htm  (OfDollarsAndData.com)", 
                             width = 80)
-  note_string   <- str_wrap(paste0("Note:  Moves to cash when current month price falls below ", 
+  note_string   <- str_wrap(paste0("Note:  'Trend' model moves to cash when current month price falls below ", 
                                    sma_months, 
-                                   "-month simple moving average.  Green bars represent when trend model is in cash.  Adjusted for inflation and dividends."), 
+                                   "-month simple moving average.  Green bars represent when 'Trend' model is in cash.  Adjusted for inflation and dividends."), 
                             width = 80)
   
   # Set output path
