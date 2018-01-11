@@ -150,9 +150,9 @@ plot_ret_pe <- function(var){
   
 }
 
-# for (x in returns_to_calc){
-#   plot_ret_pe(x)
-# }
+for (x in returns_to_calc){
+  plot_ret_pe(x)
+}
 
 plot_ret_pe(5)
 plot_ret_pe(30)
