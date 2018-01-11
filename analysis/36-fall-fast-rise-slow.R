@@ -23,7 +23,7 @@ library(dplyr)
 
 # Read in data for individual stocks and sp500 Shiller data
 sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
-                    filter(Date >= "1920-01-01")
+                    filter(date >= "1920-01-01")
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){
@@ -39,17 +39,17 @@ for (i in 1:nrow(sp500_ret_pe)){
 }
 
 # Change the Date to a Date type for plotting the S&P data
-sp500_ret_pe <- select(sp500_ret_pe, Date, price_plus_div) %>%
-                  mutate(Date = as.Date(paste0(
-                    substring(as.character(Date), 1, 4),
+sp500_ret_pe <- select(sp500_ret_pe, date, price_plus_div) %>%
+                  mutate(date = as.Date(paste0(
+                    substring(as.character(date), 1, 4),
                     "-", 
-                    ifelse(substring(as.character(Date), 6, 7) == "1", "10", substring(as.character(Date), 6, 7)),
+                    ifelse(substring(as.character(date), 6, 7) == "1", "10", substring(as.character(date), 6, 7)),
                     "-01", 
                     "%Y-%m-%d")))
   
 # Create function to calculate the drawdowns over time
 drawdown_path <- function(vp){
-  dd      <- data.frame(Date = as.Date(1:nrow(vp), origin=Sys.Date()), drawdown = numeric(nrow(vp)))
+  dd      <- data.frame(date = as.Date(1:nrow(vp), origin=Sys.Date()), drawdown = numeric(nrow(vp)))
   loc_max <- 0
   for (i in 1:(nrow(vp))){
     if (vp[i, 2] < loc_max & i != 1){
@@ -171,13 +171,13 @@ for (j in 1:length(drops)){
   peak_to_bottom(drops[j], j, name)
   
   # First tag the recoveries
-  sp500_ret_pe_dd <- arrange(sp500_ret_pe_dd, Date)
+  sp500_ret_pe_dd <- arrange(sp500_ret_pe_dd, date)
   limit <- 0
   for (i in 1:nrow(sp500_ret_pe_dd)){
    if(sp500_ret_pe_dd[i, "drawdown"] < drops[j] & limit == 0){
      sp500_ret_pe_dd[i, "drop"] <- 1
      sp500_ret_pe_dd[i, "peak"] <- 0
-     sp500_ret_pe_dd[i, "recovery_date"] <- sp500_ret_pe_dd[(i+1), "Date"]
+     sp500_ret_pe_dd[i, "recovery_date"] <- sp500_ret_pe_dd[(i+1), "date"]
      limit <- 1
    } else if (sp500_ret_pe_dd[i, "drawdown"] != 0 & limit == 1){
      sp500_ret_pe_dd[i, "recovery"] <- 1
@@ -192,12 +192,12 @@ for (j in 1:length(drops)){
   }
   
   # Sort the data backwards and then go through it again to flag the drops
-  sp500_ret_pe_dd <- arrange(sp500_ret_pe_dd, desc(Date))
+  sp500_ret_pe_dd <- arrange(sp500_ret_pe_dd, desc(date))
   limit <- 0
   for (i in 1:nrow(sp500_ret_pe_dd)){
     if(sp500_ret_pe_dd[i, "peak"] == 0 & limit == 0){
       sp500_ret_pe_dd[i, "drop"]   <- 1
-      sp500_ret_pe_dd[i, "drop_date"] <- sp500_ret_pe_dd[i, "Date"]
+      sp500_ret_pe_dd[i, "drop_date"] <- sp500_ret_pe_dd[i, "date"]
       limit <- 1
     } else if (sp500_ret_pe_dd[i, "drawdown"] != 0 & limit == 1){
       sp500_ret_pe_dd[i, "drop"]   <- 1
@@ -207,20 +207,20 @@ for (j in 1:length(drops)){
     }
   }
   
-  to_plot <- arrange(sp500_ret_pe_dd, Date)
+  to_plot <- arrange(sp500_ret_pe_dd, date)
   
-  drops_df      <- filter(to_plot, drop == 1, drop_date != Date, lag(peak) == 1)
-  recoveries_df <- filter(to_plot, recovery == 1, recovery_date != Date, lead(peak) == 1)
+  drops_df      <- filter(to_plot, drop == 1, drop_date != date, lag(peak) == 1)
+  recoveries_df <- filter(to_plot, recovery == 1, recovery_date != date, lead(peak) == 1)
   
   # Set the file_path based on the function input 
   file_path = paste0(exportdir, "36-fall-fast-rise-slow/sp500-bottom-peaks-", name, ".jpeg")
   
   # Create the plot object
-  plot <- ggplot(to_plot, aes(x = Date, y = price_plus_div)) +
-    geom_rect(data=drops_df, aes(xmin = Date, ymin = 0, 
+  plot <- ggplot(to_plot, aes(x = date, y = price_plus_div)) +
+    geom_rect(data=drops_df, aes(xmin = date, ymin = 0, 
                   xmax = as.Date(drop_date), ymax = price_plus_div),
               fill = "red") +
-    geom_rect(data=recoveries_df, aes(xmin = Date, ymin = 0, 
+    geom_rect(data=recoveries_df, aes(xmin = date, ymin = 0, 
                               xmax = as.Date(recovery_date), ymax = price_plus_div),
               fill = "green") +
     geom_line() +
