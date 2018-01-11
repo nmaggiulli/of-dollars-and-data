@@ -108,18 +108,18 @@ plot_sma <- function(start_year, end_year, sma_months){
   # Set note and source string
   source_string <- str_wrap("Source: http://www.econ.yale.edu/~shiller/data.htm  (OfDollarsAndData.com)", 
                             width = 80)
-  note_string   <- str_wrap(paste0("Note:  Moves to cash when ", 
+  note_string   <- str_wrap(paste0("Note:  Moves to cash when current month price falls below ", 
                                    sma_months, 
-                                   "-month SMA > current price.  Green bars represent when trend model is in cash.  Adjusted for inflation and dividends."), 
+                                   "-month simple moving average.  Green bars represent when trend model is in cash.  Adjusted for inflation and dividends."), 
                             width = 80)
   
   # Set output path
   file_path <- paste0(exportdir, "55-trend-testing/trend-v-buy-hold-",start_year, "-", end_year, "-", sma_months, "-month-sma.jpeg")
   
   plot <- ggplot(to_plot, aes(x = date, y = value)) +
-            geom_line(aes(col = key)) +
             geom_rect(data=filter(dates, cash == 1), aes(xmin = date, ymin = 0, 
-                xmax = end_date, ymax = ymax), fill = "green", alpha = 0.3) +
+                xmax = end_date, ymax = ymax), fill = "green", alpha = 0.2) +
+            geom_line(aes(col = key)) +
             scale_y_continuous(label = dollar, trans = log_trans(), breaks = c(100, 1000, 10000, 100000, 1000000)) +
             geom_text_repel(data = filter(to_plot, date ==  min(to_plot$date), key == "Buy and Hold"),
                             aes(x = date, 
@@ -138,10 +138,10 @@ plot_sma <- function(start_year, end_year, sma_months){
                             nudge_x = -(365*adjust_x),
                             segment.color = 'transparent'
             ) +
-            scale_color_discrete(guide = FALSE) +
+            scale_color_manual(guide = FALSE, values = c("black", "red")) +
             ggtitle(paste0("Trend vs. Buy and Hold\n", sma_months, "-Month Simple Moving Average"))  +
             of_dollars_and_data_theme +
-            labs(x = "Year" , y = "Index (Start = 100)",
+            labs(x = "Year" , y = "Index (Start = $100)",
                  caption = paste0("\n", source_string, "\n", note_string))
   
   # Turn plot into a gtable for adding text grobs
