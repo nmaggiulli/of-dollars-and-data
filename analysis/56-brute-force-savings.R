@@ -72,6 +72,7 @@ plot <- ggplot(to_plot, aes(x = savings_rate, y = n_periods_to_retire, col = ann
   scale_color_discrete(guide = FALSE) +
   ggtitle(paste0("As You Increase Your Savings Rate,\nYour Returns Become Less Important"))  +
   scale_x_continuous(label = percent, breaks = seq(0.1, 1, 0.1)) +
+  scale_y_continuous(breaks = seq(0, 80, 10)) +
   of_dollars_and_data_theme +
   geom_text_repel(data = filter(to_plot, savings_rate ==  min(to_plot$savings_rate), annual_return != "10%"),
                   aes(x = savings_rate, 
