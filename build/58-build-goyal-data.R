@@ -20,10 +20,11 @@ df <- readRDS(paste0(importdir, "58-goyal-data/58-goyal-stock-bond-data.Rds")) %
                              format = "%Y-%m-%d"),
               cpi = as.numeric(infl),
               stock = (Index/lag(Index) - 1) - cpi,
-              corp_bond_aaa = as.numeric(AAA) - cpi,
-              lt_bond = as.numeric(lty) - cpi) %>%
+              corp_bond = as.numeric(corpr) - cpi,
+              rf = (1 + as.numeric(Rfree))^(1/12) - 1 - cpi,
+              lt_bond = as.numeric(ltr) - cpi) %>%
         filter(!is.nan(cpi)) %>%
-        select(date, stock, lt_bond, corp_bond_aaa, cpi)
+        select(date, stock, lt_bond, corp_bond, rf, cpi)
 
 saveRDS(df, paste0(localdir, "58-goyal-stock-bond-data.Rds"))
 
