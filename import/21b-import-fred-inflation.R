@@ -8,6 +8,7 @@ source(file.path(paste0(getwd(),"/header.R")))
 ########################## Load in Libraries ########################## #
 
 library(quantmod)
+library(lubridate)
 library(dplyr)
 
 ########################## Start Program Here ######################### #
@@ -19,10 +20,10 @@ cpi <- data.frame(date = index(CPIAUCNS),
                   CPIAUCNS, row.names=NULL)
 
 cpi <- cpi %>%
-          mutate(year = as.numeric(substr(date, 1, 4))) %>%
-          group_by(year) %>%
-          summarize(index = mean(CPIAUCNS)) %>%
-          mutate(rate_cpi = index/lag(index) - 1) %>%
+          mutate(year = year(date),
+                 month = month(date)) %>%
+          filter(month == 12) %>%
+          mutate(rate_cpi = CPIAUCNS/lag(CPIAUCNS) - 1) %>%
           select(year, rate_cpi)
 
 saveRDS(cpi, paste0(localdir, "21-FRED-cpi.Rds"))
