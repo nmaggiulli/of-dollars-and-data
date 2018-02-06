@@ -41,7 +41,7 @@ plot_aligned_crash <- function(n_years_after_peak){
         df[i, "bond_index"]  <- 100
       } else {
         df[i, "stock_index"] <- df[(i-1), "stock_index"] * (1 + (df[(i-1), "stock"]))
-        df[i, "bond_index"] <- df[(i-1), "bond_index"] * (1 + (df[(i-1), "rf"]))
+        df[i, "bond_index"] <- df[(i-1), "bond_index"] * (1 + (df[(i-1), "lt_bond"]))
       }
     }
     
@@ -49,7 +49,8 @@ plot_aligned_crash <- function(n_years_after_peak){
     df <- df %>% 
       mutate(peak = year(peak_date)) %>%
       select(year, peak, stock_index, bond_index) %>%
-      gather(key = key, value = value, -year, -peak) 
+      gather(key = key, value = value, -year, -peak) %>%
+      mutate(key = ifelse(key=="bond_index", "U.S. Bonds", "U.S. Stocks"))
     
     # Append the rows as we loop through each subset
     if (counter == 1){
@@ -61,7 +62,7 @@ plot_aligned_crash <- function(n_years_after_peak){
   }
   
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "58-goyal-aligned-peaks/stock-aligned-peaks-", n_years_after_peak, ".jpeg")
+  file_path <- paste0(exportdir, "59-goyal-aligned-peaks/stock-aligned-peaks-", n_years_after_peak, ".jpeg")
   
   # Set note and source string
   source_string <- str_wrap("Source: Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)",
@@ -74,8 +75,10 @@ plot_aligned_crash <- function(n_years_after_peak){
   plot <- ggplot(to_plot, aes(x = year, y = value, linetype = key, col = key)) +
             facet_wrap(~peak) +
             geom_line() +
-            scale_color_discrete(guide = FALSE) +
-            scale_linetype(guide = FALSE) +
+            scale_color_discrete() +
+            theme(legend.title=element_blank(),
+                  legend.position = "top") +
+            scale_linetype() +
             of_dollars_and_data_theme +
             ggtitle("Bonds Usually Provide Stability\nWhen Stocks Tumble") +
             labs(x = "Number of Years Since Peak" , y = "Index (Start = 100)",
@@ -89,7 +92,6 @@ plot_aligned_crash <- function(n_years_after_peak){
 }
 
 plot_aligned_crash(5)
-plot_aligned_crash(10)
 
 
 # ############################  End  ################################## #
