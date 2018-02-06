@@ -67,7 +67,7 @@ plot_aligned_crash <- function(n_years_after_peak){
   # Set note and source string
   source_string <- str_wrap("Source: Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)",
                             width = 85)
-  note_string   <- str_wrap(paste0("Note:  Shows inflation-adjusted U.S. stock and bond returns from a market peak.",
+  note_string   <- str_wrap(paste0("Note:  Shows inflation-adjusted U.S. stock and bond returns from market peak.",
                                    ""),
                             width = 85)
   
