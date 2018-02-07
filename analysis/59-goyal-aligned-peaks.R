@@ -146,5 +146,46 @@ plot_aligned_crash <- function(n_years_after_peak){
 
 plot_aligned_crash(5)
 
+# Instead of creating these images as a GIF in R, do it in Bash
+# I use Git Bash + magick because this is way faster than creating the GIF in R
+# After navigating to the correct folder, use this command:
+#
+# convert -delay 110 loop -0 all-*.jpeg all_plots.gif
+
+# Create plot of stocks by decade
+decade <- df_full %>%
+            filter(date > "1929-12-31") %>%
+            mutate(decade = paste0(as.character(year(floor_date(date, years(10))))),
+                   stock = 1 + stock) %>%
+            group_by(decade) %>%
+            summarize(stock = (prod(stock)^(1/10) - 1)) %>%
+            select(decade, stock)
+
+# Set the file_path based on the function input 
+file_path <- paste0(exportdir, "59-goyal-aligned-peaks/stock-returns-by-decade.jpeg")
+
+# Set note and source string
+source_string <- str_wrap("Source: Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)",
+                          width = 85)
+note_string   <- str_wrap(paste0("Note:  Returns are adjusted for inflation using FRED CPI.",
+                                 ""),
+                          width = 85)
+
+# Plot the results
+plot <- ggplot(decade, aes(x = decade, y = stock)) +
+  geom_bar(stat="identity", fill = "blue") +
+  scale_fill_discrete(guide = FALSE) +
+  scale_y_continuous(label = percent) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Stock Returns Vary Widely by Decade")) +
+  labs(x = "Decade" , y = "Annualized Real Return",
+       caption = paste0("\n", source_string, "\n", note_string))
+
+# Turn plot into a gtable for adding text grobs
+my_gtable   <- ggplot_gtable(ggplot_build(plot))
+
+# Save the plot
+ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+
 
 # ############################  End  ################################## #
