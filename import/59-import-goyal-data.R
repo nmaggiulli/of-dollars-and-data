@@ -15,6 +15,6 @@ library(httr)
 GET('http://www.hec.unil.ch/agoyal/docs/PredictorData2016.xlsx', write_disk(tf <- tempfile(fileext = ".xlsx")))
 df <- read_excel(tf, sheet="Monthly")
 
-saveRDS(df, paste0(importdir, "58-goyal-data/58-goyal-stock-bond-data.Rds"))
+saveRDS(df, paste0(importdir, "59-goyal-data/58-goyal-stock-bond-data.Rds"))
 
 # ############################  End  ################################## #

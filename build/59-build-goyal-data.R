@@ -11,7 +11,7 @@ library(dplyr)
 
 ########################## Start Program Here ######################### #
 
-df <- readRDS(paste0(importdir, "58-goyal-data/58-goyal-stock-bond-data.Rds")) %>%
+df <- readRDS(paste0(importdir, "59-goyal-data/58-goyal-stock-bond-data.Rds")) %>%
         mutate(char_date = as.character(yyyymm),
               date = as.Date(paste0(substring(char_date, 1, 4),
                                     "-",
@@ -26,6 +26,6 @@ df <- readRDS(paste0(importdir, "58-goyal-data/58-goyal-stock-bond-data.Rds")) %
         filter(!is.nan(cpi)) %>%
         select(date, stock, lt_bond, corp_bond, rf, cpi)
 
-saveRDS(df, paste0(localdir, "58-goyal-stock-bond-data.Rds"))
+saveRDS(df, paste0(localdir, "59-goyal-stock-bond-data.Rds"))
 
 # ############################  End  ################################## #
