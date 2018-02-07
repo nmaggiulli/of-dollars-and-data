@@ -22,7 +22,7 @@ library(dplyr)
 
 ########################## Start Program Here ######################### #
 
-df_full <- readRDS(paste0(localdir, "58-goyal-stock-bond-data.Rds"))
+df_full <- readRDS(paste0(localdir, "59-goyal-stock-bond-data.Rds"))
 
 plot_aligned_crash <- function(n_years_after_peak){
   
@@ -50,7 +50,7 @@ plot_aligned_crash <- function(n_years_after_peak){
       mutate(peak = year(peak_date)) %>%
       select(year, peak, stock_index, bond_index) %>%
       gather(key = key, value = value, -year, -peak) %>%
-      mutate(key = ifelse(key=="bond_index", "U.S. Bonds", "U.S. Stocks"))
+      mutate(key = ifelse(key=="bond_index", "Bonds", "Stocks"))
     
     # Append the rows as we loop through each subset
     if (counter == 1){
@@ -89,6 +89,59 @@ plot_aligned_crash <- function(n_years_after_peak){
 
   # Save the plot
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+  
+  for (d in 1:length(date_list)){
+    date <- date_list[d]
+    peak_year <- year(date)
+    
+    color_vector <- c()
+    size_vector <- c()
+    
+    for (n in 1:length(date_list)){
+      if(d == n){
+        color_vector[n] <- "red"
+        size_vector[n] <- 1
+      } else {
+        color_vector[n] <- "gray"
+        size_vector[n] <- 0.5
+      }
+    }
+  
+    # Set the file_path based on the function input 
+    file_path <- paste0(exportdir, "59-goyal-aligned-peaks/all-", peak_year ,"-", n_years_after_peak, ".jpeg")
+    
+    # Set note and source string
+    source_string <- str_wrap("Source: Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)",
+                              width = 85)
+    note_string   <- str_wrap(paste0("Note:  Shows inflation-adjusted U.S. stock and bond returns from market peak.",
+                                     ""),
+                              width = 85)
+    
+    # Plot the results
+    plot <- ggplot(to_plot, aes(x = year, y = value, col = as.factor(peak), linetype = key, size = as.factor(peak))) +
+      geom_line() +
+      scale_color_manual(values = color_vector, guide = FALSE) +
+      scale_size_manual(values = size_vector, guide = FALSE) +
+      geom_text_repel(data = filter(to_plot, peak == peak_year, year == n_years_after_peak), 
+                      aes(x = year, 
+                          y = value, 
+                          col = as.factor(peak), 
+                          label = as.character(key),
+                          family = "my_font"
+                      ), size = 4,
+                      max.iter = 3000) +
+      scale_linetype(guide = FALSE) +
+      of_dollars_and_data_theme +
+      ggtitle(paste0("U.S. Bond vs. U.S. Stock Performance From Peak\n", peak_year)) +
+      labs(x = "Number of Years Since Peak" , y = "Index (Start = 100)",
+           caption = paste0("\n", source_string, "\n", note_string))
+    
+    # Turn plot into a gtable for adding text grobs
+    my_gtable   <- ggplot_gtable(ggplot_build(plot))
+    
+    # Save the plot
+    ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+  }
 }
 
 plot_aligned_crash(5)
