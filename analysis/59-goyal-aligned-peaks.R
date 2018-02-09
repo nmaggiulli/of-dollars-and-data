@@ -81,7 +81,7 @@ plot_aligned_crash <- function(n_years_after_peak){
                   legend.position = "top") +
             scale_linetype() +
             of_dollars_and_data_theme +
-            ggtitle("Bonds Usually Provide Stability\nWhen Stocks Tumble") +
+            ggtitle("Each Market Crisis Provides\nA Different Experience") +
             labs(x = "Number of Years Since Peak" , y = "Index (Start = 100)",
               caption = paste0("\n", source_string, "\n", note_string))
   
