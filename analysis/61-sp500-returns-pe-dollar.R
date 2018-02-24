@@ -74,7 +74,7 @@ plot_ret_pe <- function(var){
   to_plot     <- filter_(sp500_ret_pe_long, filter_line)
   
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "17-sp500-returns-pe/dollar-returns-", var,"-year.jpeg")
+  file_path = paste0(exportdir, "61-sp500-returns-pe/dollar-returns-", var,"-year.jpeg")
   
   plot <- ggplot(data = to_plot, aes(x = cape, y = value, col = as.factor(below_zero))) +
     geom_point(alpha = 0.5) +
@@ -88,7 +88,7 @@ plot_ret_pe <- function(var){
 
   # Add a source and note string for the plots
   source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
-  note_string   <- paste0("Note:  Growth of $1 includes reinvested dividends and adjusted for inflation.") 
+  note_string   <- paste0("Note:  Dollar growth includes reinvested dividends and adjusted for inflation.") 
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
@@ -105,6 +105,42 @@ plot_ret_pe <- function(var){
   
   # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+  
+  
+  ## Plot with fit line for the 30 year plot
+  if (var == 30) {
+  title <- paste0("Over 30 Years, Lower Starting Valuations\nImply Higher Future Growth")
+    
+    # Set the file_path for the next output
+    file_path = paste0(exportdir, "61-sp500-returns-pe/fit-returns-", var,"-year.jpeg")
+    
+    plot <- ggplot(data = to_plot, aes(x = cape, y = value)) +
+      geom_point() +
+      geom_smooth(method = "lm") +
+      geom_hline(yintercept = 0, col = "black") +
+      scale_color_manual(guide = FALSE) +
+      scale_y_continuous(label = dollar, limits = c(0, 25)) +
+      scale_x_continuous(limits = c(0, 45)) +
+      ggtitle(title) +
+      of_dollars_and_data_theme +
+      labs(x = "U.S. Stocks P/E Ratio" , y = "Growth of $1")
+    
+    # Turn plot into a gtable for adding text grobs
+    my_gtable   <- ggplot_gtable(ggplot_build(plot))
+    
+    # Make the source and note text grobs
+    source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
+                            gp =gpar(fontfamily = "my_font", fontsize = 8))
+    note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+                            gp =gpar(fontfamily = "my_font", fontsize = 8))
+    
+    # Add the text grobs to the bototm of the gtable
+    my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
+    my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
+    
+    # Save the gtable
+    ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+  }
 }
 
 for (x in returns_to_calc){
