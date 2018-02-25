@@ -88,7 +88,7 @@ plot_ret_pe <- function(var){
 
   # Add a source and note string for the plots
   source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
-  note_string   <- paste0("Note:  Dollar growth includes reinvested dividends and adjusted for inflation.") 
+  note_string   <- paste0("Note:  Dollar growth includes reinvested dividends and adjusts for inflation.") 
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
