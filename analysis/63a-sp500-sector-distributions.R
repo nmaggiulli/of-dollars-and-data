@@ -25,7 +25,7 @@ library(dplyr)
 
 cpi <- readRDS(paste0(localdir, "21-FRED-cpi.Rds"))
 
-df <- readRDS(paste0(localdir, "xx_sp500_sector_returns.Rds")) %>%
+df <- readRDS(paste0(localdir, "63_sp500_sector_returns.Rds")) %>%
         filter(year(date) > 1989, year(date) < 2018) %>%
         mutate(year = year(date),
                ret = ret + 1,
@@ -57,7 +57,7 @@ plot_dist_years <- function(n_years){
   }
   
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "xx-sp500-sector-returns/return-dist-", n_years, "-years.jpeg")
+  file_path <- paste0(exportdir, "63-sp500-sector-returns/return-dist-", n_years, "-years.jpeg")
   
   # Set note and source string
   source_string <- str_wrap("Source: Morningstar, FRED (OfDollarsAndData.com)",

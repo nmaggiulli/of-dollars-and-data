@@ -12,7 +12,7 @@ library(dplyr)
 
 ########################## Start Program Here ######################### #
 
-df <- read_excel(paste0(importdir, "xx-sector-returns/sp500_sector_data.xlsx"), skip = 1) %>%
+df <- read_excel(paste0(importdir, "63-sector-returns/sp500_sector_data.xlsx"), skip = 1) %>%
         filter(!(is.na(`Start Date`) | `Start Date` == 'Totals')) %>%
         mutate(sector = trimws(gsub("TR\\s?USD \\(USD\\)", 
                                "", 
@@ -25,6 +25,6 @@ df <- read_excel(paste0(importdir, "xx-sector-returns/sp500_sector_data.xlsx"), 
                ret = `Total Return %`/100) %>%
         select(sector, date, ret)
 
-saveRDS(df, paste0(localdir, "xx_sp500_sector_returns.Rds"))
+saveRDS(df, paste0(localdir, "63_sp500_sector_returns.Rds"))
 
 # ############################  End  ################################## #
