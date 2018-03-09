@@ -57,7 +57,7 @@ plot_dist_years <- function(n_years){
   }
   
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "63-sp500-sector-returns/return-dist-", n_years, "-years.jpeg")
+  file_path <- paste0(exportdir, "xx-sp500-sector-returns/return-dist-", n_years, "-years.jpeg")
   
   # Set note and source string
   source_string <- str_wrap("Source: Morningstar, FRED (OfDollarsAndData.com)",
