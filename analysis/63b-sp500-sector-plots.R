@@ -40,11 +40,25 @@ df <- readRDS(paste0(localdir, "63_sp500_sector_returns.Rds")) %>%
   ungroup() %>%
   select(year, value, sector, overall)
 
+# Create a tactical sector strategy that changes each year
+switch_strategy <- df %>%
+                    group_by(year) %>%
+                    arrange(year, -value) %>%
+                    filter(row_number()==1) %>%
+                    ungroup() %>%
+                    mutate(year = year + 1) %>%
+                    filter(year < 2018) %>%
+                    select(year, sector) %>%
+                    inner_join(df) %>%
+                    mutate(overall = 1,
+                           sector = "*Switch Strategy*")
+
 first_year <- min(df$year)
 last_year  <- max(df$year)
 
   # Create data and plot line charts
   to_plot <- df %>%
+              bind_rows(switch_strategy) %>%
               arrange(sector, year)
   
   for (i in 1:nrow(to_plot)){
@@ -92,16 +106,9 @@ last_year  <- max(df$year)
     summarize(avg_ret = mean(value),
               stdev = sd(value))
   
-  # Create a tactical sector strategy that changes each year
-  df %>%
-    group_by(year) %>%
-    arrange(year, -value) %>%
-    filter(row_number()==1) %>%
-    ungroup() %>%
-    mutate(year = year + 1) %>%
-    filter(year < 2018) %>%
-    select(year, sector) %>%
-    inner_join(df) %>%
+  switch_strategy %>%
+    filter(year > 1990) %>%
+    group_by(sector) %>%
     summarize(avg_ret = mean(value),
               stdev = sd(value))
 
