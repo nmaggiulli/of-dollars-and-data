@@ -41,7 +41,7 @@ df <- readRDS(paste0(localdir, "63_sp500_sector_returns.Rds")) %>%
   select(year, value, sector, overall)
 
 # Create a tactical sector strategy that changes each year
-switch_strategy <- df %>%
+perf_chase <- df %>%
                     group_by(year) %>%
                     arrange(year, -value) %>%
                     filter(row_number()==1) %>%
@@ -51,15 +51,18 @@ switch_strategy <- df %>%
                     select(year, sector) %>%
                     inner_join(df) %>%
                     mutate(overall = 1,
-                           sector = "*Switch Strategy*")
+                           sector = "*Performance Chasing*")
 
-first_year <- min(df$year)
-last_year  <- max(df$year)
+perf_chase_min_year <- min(perf_chase$year)
 
   # Create data and plot line charts
   to_plot <- df %>%
-              bind_rows(switch_strategy) %>%
+              bind_rows(perf_chase) %>%
+              filter(year >= perf_chase_min_year) %>%
               arrange(sector, year)
+  
+  first_year <- min(to_plot$year)
+  last_year  <- max(to_plot$year)
   
   for (i in 1:nrow(to_plot)){
     if (i == 1){
@@ -87,7 +90,7 @@ last_year  <- max(df$year)
             scale_linetype_manual(guide = FALSE, values = c("dashed", "solid")) + 
             scale_size_discrete(guide = FALSE, range = c(0.5, 1.5)) +
             of_dollars_and_data_theme +
-            ggtitle(paste0("Total Growth By Sector\n", first_year, "-", last_year)) +
+            ggtitle(paste0("Performance Chasing\nUnderperforms the S&P 500\n", first_year, "-", last_year)) +
             labs(x = "Year", y = "Index (Start = 100)",
                  caption = paste0("\n", source_string, "\n", note_string))
   
@@ -101,13 +104,13 @@ last_year  <- max(df$year)
 
   # Summarize all sectors 1991-2017
   df %>%
-    filter(year > 1990) %>%
+    filter(year >= perf_chase_min_year) %>%
     group_by(sector) %>%
     summarize(avg_ret = mean(value),
               stdev = sd(value))
   
-  switch_strategy %>%
-    filter(year > 1990) %>%
+  perf_chase %>%
+    filter(year >= perf_chase_min_year) %>%
     group_by(sector) %>%
     summarize(avg_ret = mean(value),
               stdev = sd(value))
