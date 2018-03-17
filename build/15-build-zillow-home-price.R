@@ -23,8 +23,6 @@ build_data <- function(file_name){
 
 type <- "metro"
 
-build_data(paste0(type,"_mediansold_sqft_all"))
-build_data(paste0(type,"_mediansold_all"))
 build_data(paste0(type,"_zhvi_toptier"))
 build_data(paste0(type,"_zhvi_bottomtier"))
 build_data(paste0(type,"_zhvi_middletier"))

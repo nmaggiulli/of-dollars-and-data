@@ -23,8 +23,6 @@ import_file <- function(path, name){
 }
 
 # Keep median sold price per square foot and median rental price per square foot
-import_file("MedianSoldPricePerSqft_AllHomes.csv", "mediansold_sqft_all")
-import_file("MedianSoldPrice_AllHomes.csv", "mediansold_all")
 import_file("Zhvi_TopTier.csv", "zhvi_toptier")
 import_file("Zhvi_BottomTier.csv", "zhvi_bottomtier")
 import_file("Zhvi_MiddleTier.csv", "zhvi_middletier")
