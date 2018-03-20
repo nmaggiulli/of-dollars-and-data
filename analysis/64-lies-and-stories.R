@@ -35,12 +35,13 @@ to_plot    <-  filter(jpy, Date >= '1980-01-01', Date <= '1989-12-31') %>%
 file_path <- paste0(exportdir, "64-lies-and-stories/jpy-hist-price.jpeg")
 
 source_string <- "Source:  Quandl (OfDollarsAndData.com)"
-note_string   <- paste0("Note:  Does not adjust for USD currency changes or dividends.")
+note_string   <- str_wrap(paste0("Note:  The Nikkei Index is shown.  Does not adjust for USD currency changes or dividends."),
+                          width = 85)
 
 plot <- ggplot(to_plot, aes(x=date, y=price)) +
           geom_line() +
           scale_y_continuous(label = comma) +
-          ggtitle(paste0("In the late 1980s,\nJapan Was Taking Over the World"))  +
+          ggtitle(paste0("In the late 1980s,\nJapan's Stock Market Boomed"))  +
           of_dollars_and_data_theme +
           labs(x = "Year" , y = "Price (¥)",
                caption = paste0("\n", source_string, "\n", note_string))
@@ -101,12 +102,6 @@ to_plot <- arrange(metro_zhvi_middle, RegionID, type, year)
 first_year  <- min(to_plot$year)
 last_year   <- max(to_plot$year)
 
-# Get start starting and ending home values of the middle tier
-middle_start <- filter(to_plot, type == "Middle", year == first_year) %>%
-  select(price)
-middle_end   <- filter(to_plot, type == "Middle", year == last_year) %>%
-  select(price)
-
 # Set the file_path based on the function input 
 file_path <- paste0(exportdir, "64-lies-and-stories/zhvi-us-housing.jpeg")
 
@@ -116,7 +111,7 @@ source_string <- paste0("Source:  Zillow Group, ", year(start_year),"-", year(en
 note_string <- paste0("Note:  Does not adjust for inflation.")
 
 # Create the plot
-plot <- ggplot(to_plot, aes(x = year, y = price)) +
+plot <- ggplot(to_plot, aes(x = date, y = price)) +
   geom_line() +
   of_dollars_and_data_theme +
   scale_y_continuous(label = dollar) +
