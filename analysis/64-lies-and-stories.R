@@ -18,6 +18,7 @@ library(ggrepel)
 library(lubridate)
 library(tidyr)
 library(Quandl)
+library(tools)
 library(quantmod)
 library(dplyr)
 
@@ -30,7 +31,7 @@ to_plot    <-  filter(jpy, Date >= '1980-01-01', Date <= '1989-12-31') %>%
             select(Date, `Close Price`) %>%
             mutate(date = Date,
             price = `Close Price`) %>%
-            select(price, date) 
+            select(price, date)
 
 file_path <- paste0(exportdir, "64-lies-and-stories/jpy-hist-price.jpeg")
 
@@ -49,8 +50,8 @@ plot <- ggplot(to_plot, aes(x=date, y=price)) +
 # Turn plot into a gtable for adding text grobs
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
 
-# Save the plot  
-ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
+# Save the plot
+ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
 # Get NASDAQ data
 getSymbols("^IXIC", src="yahoo", from = paste0('1990-01-01'), to = paste0('1999-12-31')) 
@@ -111,7 +112,7 @@ source_string <- paste0("Source:  Zillow Group, ", year(start_year),"-", year(en
 note_string <- paste0("Note:  Does not adjust for inflation.")
 
 # Create the plot
-plot <- ggplot(to_plot, aes(x = date, y = price)) +
+plot <- ggplot(to_plot, aes(x = year, y = price)) +
   geom_line() +
   of_dollars_and_data_theme +
   scale_y_continuous(label = dollar) +
