@@ -85,9 +85,9 @@ create_dist_compare <- function(ticker, period, title, from_year, to_year, max, 
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-#create_dist_compare("SPY", "Daily", "The Narrowing of Daily Volatility\nS&P 500", 1997, 2003, 0.05, 0.01)
-create_dist_compare("SPY", "Monthly", "SPY", 2006, 2017, 0.25, 0.05)
-create_dist_compare("VTV", "Monthly", "VTV", 2006, 2017, 0.25, 0.05)
+create_dist_compare("SPY", "Daily", "The Narrowing of Daily Volatility\nS&P 500", 2009, 2017, 0.05, 0.01)
+#create_dist_compare("SPY", "Monthly", "SPY", 2006, 2017, 0.25, 0.05)
+#create_dist_compare("VTV", "Monthly", "VTV", 2006, 2017, 0.25, 0.05)
 
 # This was for Twitter for fun 
 #create_dist_compare("BTC", "Monthly", "Bitcoin Monthly Return Distribution by Year", 2010, 2017, 1, 0.25)
