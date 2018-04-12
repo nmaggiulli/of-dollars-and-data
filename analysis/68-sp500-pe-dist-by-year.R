@@ -53,24 +53,39 @@ sp500_ret_pe <- select(sp500_ret_pe, date, cape, price_plus_div) %>%
     year = year(date))
 
 #Create function for S&P data
-plot_sp <- function(from_year, to_year, title){
+plot_sp <- function(from_year, to_year, title, counter){
+  
+  if (counter < 10){
+    counter_string <- paste0("0", counter)
+  } else {
+    counter_string <- as.character(counter)
+  }
+  
+  cape_by_year <- sp500_ret_pe %>%
+                    filter(year >= from_year, year <= to_year) %>%
+                    select(year, cape) %>%
+                    group_by(year) %>%
+                    summarize(cape_by_year = mean(cape)) %>%
+                    ungroup()
   
   to_plot <- sp500_ret_pe %>%
                 mutate(ret = (price_plus_div/lag(price_plus_div) - 1)) %>%
                 filter(year >= from_year, year <= to_year) %>%
-                mutate(decade = floor(year/10) * 10)
+                mutate(decade = floor(year/10) * 10) %>%
+                select(-cape) %>%
+                left_join(cape_by_year)
   
   print(tail(to_plot))
                 
-  file_path <- paste0(exportdir, "xx-sp-pe-dist-by-year/sp-price-",from_year, "-", to_year,".jpeg")
+  file_path <- paste0(exportdir, "68-sp-pe-dist-by-year/sp-price-", counter_string, ".jpeg")
   
-  plot <- ggplot(data = to_plot, aes(x=ret, y=factor(year), fill = factor(year))) +
+  plot <- ggplot(data = to_plot, aes(x=ret, y=factor(year), fill = cape_by_year)) +
     geom_joy_gradient(rel_min_height = 0.01, scale = 3) +
-    scale_fill_discrete(guide = FALSE) +
     scale_x_continuous(limits = c(-0.25, 0.25), label = percent) +
+    scale_fill_gradient(limits = c(4, 44), low="blue", high="red", name = "CAPE\nRange") +
     of_dollars_and_data_theme +
-    ggtitle(paste0(title)) +
-    labs(x = "Monthly Return", y = "Year")
+    ggtitle(paste0(title, "\n", from_year, "-", to_year)) +
+    labs(x = "U.S. Monthly Stock Return", y = "Year")
 
   source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)")
   note_string   <- paste0("Note:  Real returns includes reinvested dividends.")
@@ -92,6 +107,19 @@ plot_sp <- function(from_year, to_year, title){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-plot_sp(1990, 2017, "CAPE May Only Be Useful Near Its Extremes")
+years_list <- c(seq(1980, 2007), 2007, 2007)
+
+counter <- 1
+for (year in years_list){
+  plot_sp(year, year + 10, "The Ever-Changing Landscape of U.S. Stocks", counter)
+  counter <- counter + 1
+}
+
+# Instead of creating these images as a GIF in R, do it in Bash
+# I use Git Bash + magick because this is way faster than creating the GIF in R
+# After navigating to the correct folder, use this command:
+#
+# convert -delay 50 loop -0 saving-plot-*.jpeg all_plots.gif
+
 
 # ############################  End  ################################## #
