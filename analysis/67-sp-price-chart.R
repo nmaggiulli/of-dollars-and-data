@@ -7,9 +7,6 @@ source(file.path(paste0(getwd(),"/header.R")))
 
 ########################## Load in Libraries ########################## #
 
-
-########################## Start Program Here ######################### #
-
 library(ggplot2)
 library(scales)
 library(grid)
@@ -26,7 +23,7 @@ library(tidyr)
 library(ggjoy)
 library(dplyr)
 
-# ############################  End  ################################## #
+########################## Start Program Here ######################### #
 
 # Read in data for sp500 Shiller data
 sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
@@ -107,3 +104,5 @@ plot_sp <- function(from_year, to_year, lag_cape, title){
 }
 
 plot_sp(1900, 2017, 0, "U.S. Stocks Since 1900")
+
+# ############################  End  ################################## #
