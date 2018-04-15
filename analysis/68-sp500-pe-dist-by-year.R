@@ -119,7 +119,7 @@ for (year in years_list){
 # I use Git Bash + magick because this is way faster than creating the GIF in R
 # After navigating to the correct folder, use this command:
 #
-# convert -delay 50 loop -0 saving-plot-*.jpeg all_plots.gif
+# convert -delay 60 loop -0 saving-plot-*.jpeg all_plots.gif
 
 
 # ############################  End  ################################## #
