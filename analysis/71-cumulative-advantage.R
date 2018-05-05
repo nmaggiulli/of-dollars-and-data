@@ -151,7 +151,7 @@ run_share_simulation <- function(starting_advantage, n_players){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-share_seq <- seq(0.05, 0.5, 0.05)
+share_seq <- seq(0, 0.5, 0.05)
 
 for (s in share_seq){
   run_share_simulation(s, 4)
