@@ -30,7 +30,7 @@ my_palette <- c("#000000", "#E41A1C", "#377EB8", "#4DAF4A")
 
 # Set starting values for simulation
 n_simulations    <- 1000
-n_periods        <- 40
+n_rounds        <- 40
 results_df       <- matrix(NA, nrow = n_simulations, ncol = 1)
 
 run_share_simulation <- function(starting_advantage, n_players){
@@ -45,13 +45,13 @@ run_share_simulation <- function(starting_advantage, n_players){
   for (s in 1:n_simulations){
     
     # Initialize shares dataframe
-    shares_df        <- matrix(NA, nrow = n_periods, ncol = n_players)
+    shares_df        <- matrix(NA, nrow = n_rounds, ncol = n_players)
     marbles_vector   <- c()
     marbles_shares   <- c()
     total_marbles    <- starting_marbles * n_players
     
     # Loop through the rounds
-    for (i in 1:n_periods){
+    for (i in 1:n_rounds){
       
       # Loop through each player to create a market share
       for (n in 1:n_players){
@@ -82,13 +82,13 @@ run_share_simulation <- function(starting_advantage, n_players){
       # Increment the total_marbles
       total_marbles <- total_marbles + win_marbles
       shares_df[i, ] <- marbles_shares
-      if (i == n_periods){
+      if (i == n_rounds){
         shares_df        <- as.data.frame(shares_df)
-        shares_df$period <- seq(1, n_periods)
+        shares_df$round <- seq(1, n_rounds)
     
       }
     }
-    results_df[s, 1] <- shares_df[n_periods, 1]
+    results_df[s, 1] <- shares_df[n_rounds, 1]
   }
   
   # Plot the distribution of final market share across all simulations
@@ -110,9 +110,10 @@ run_share_simulation <- function(starting_advantage, n_players){
   main_note <- paste0("Note:  Assumes ", n_players, " players start with equal shares with 1 player 
                         given an advantage of ", 
                       100*round(starting_advantage, 2),
-                      "% in the first period only.")
+                      "% in the first round only.")
   
-  note_string1 <- str_wrap(paste0(main_note, " Results shown are for ", n_simulations, " simulations."),
+  note_string1 <- str_wrap(paste0(main_note, " Results shown are for ", n_simulations, " simulations of ",
+                                  n_rounds, " rounds."),
                         width = 85)
   
   plot <- ggplot(results_df, aes(x=V1)) +
@@ -136,7 +137,7 @@ run_share_simulation <- function(starting_advantage, n_players){
   
   # Plot the market shares over time (only for final simulation)
   to_plot <- shares_df %>%
-              gather(key=key, value=value, -period)
+              gather(key=key, value=value, -round)
   
   to_plot$key <- reorder(to_plot$key, to_plot$value, function(x) -max(x) )
   
@@ -146,7 +147,7 @@ run_share_simulation <- function(starting_advantage, n_players){
   note_string2 <- str_wrap(main_note,
                            width = 85)
   
-  plot <- ggplot(to_plot, aes(x=period, y=value, fill = key)) +
+  plot <- ggplot(to_plot, aes(x=round, y=value, fill = key)) +
             geom_area(position="identity") +
             scale_fill_manual(guide = FALSE, values=my_palette) +
             geom_hline(yintercept = (1/n_players), linetype = "dashed") + 
@@ -156,7 +157,7 @@ run_share_simulation <- function(starting_advantage, n_players){
             ggtitle(paste0("Market Shares for 1 Simulation With\na Starting Advantage of ", 
                            100*round(starting_advantage, 2),
                            "% ")) +
-            labs(x = "Period", y = "Market Share",
+            labs(x = "Round", y = "Market Share",
                  caption = paste0("\n", source_string, "\n", note_string2))
   
   # Turn plot into a gtable for adding text grobs
