@@ -25,11 +25,16 @@ library(dplyr)
 set.seed(12345)         
 
 # Set starting values for simulation
-n_simulations    <- 100
+n_simulations    <- 1000
 n_periods        <- 40
 results_df       <- matrix(NA, nrow = n_simulations, ncol = 1)
 
-run_share_simulation <- function(starting_marbles, n_players, win_marbles){
+run_share_simulation <- function(starting_advantage, n_players){
+  starting_marbles <- 100
+  
+  #This was solved using Wolfram Alpha
+  win_marbles <- -(starting_advantage*(n_players^2)*starting_marbles)/(starting_advantage*n_players-n_players+1)
+  
   #Loop through each simulation
   for (s in 1:n_simulations){
     
@@ -83,33 +88,31 @@ run_share_simulation <- function(starting_marbles, n_players, win_marbles){
   # Plot the distribution of final market share across all simulations
   results_df <- as.data.frame(results_df)
   
-  # Calculate the initial advantage for the titles
-  starting_advantage <-  (win_marbles+starting_marbles) / 
-    ((n_players*starting_marbles) + win_marbles) - (1/n_players)
-  
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "71-cumulative-advantage/dist_", win_marbles,".jpeg")
+  file_path <- paste0(exportdir, "71-cumulative-advantage/dist_", starting_advantage,".jpeg")
   
   # Add a source and note string for the plots
   source_string <- str_wrap(paste0("Source:  Simulated data (OfDollarsAndData.com)"),
                             width = 85)
   
-  note_string <- str_wrap(paste0("Note:  Assumes ", n_players, " players start with equal shares with 1 player 
+  main_note <- paste0("Note:  Assumes ", n_players, " players start with equal shares with 1 player 
                         given an advantage of ", 
-                        100*round(starting_advantage, 2),
-                        "% in the first period only."),
+                      100*round(starting_advantage, 2),
+                      "% in the first period only.")
+  
+  note_string1 <- str_wrap(paste0(main_note, " Results shown are for ", n_simulations, " simulations."),
                         width = 85)
   
   plot <- ggplot(results_df, aes(x=V1)) +
             geom_density(fill = "black") +
             of_dollars_and_data_theme +
             scale_x_continuous(limits = c(0,1), label = percent) +
-            ggtitle(paste0("Distribution of Final Market Share\nAcross ", n_simulations, 
-                           " Simulations With\nA Starting Advantage of ", 
+            ggtitle(paste0("Distribution of Final Market Share\n",
+                           "With A Starting Advantage of ", 
                            100*round(starting_advantage, 2),
                            "%")) +
             labs(x = "Final Market Share", y = "Density",
-                 caption = paste0("\n", source_string, "\n", note_string))
+                 caption = paste0("\n", source_string, "\n", note_string1))
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
@@ -124,11 +127,15 @@ run_share_simulation <- function(starting_marbles, n_players, win_marbles){
   to_plot$key <- reorder(to_plot$key, to_plot$value, function(x) -max(x) )
   
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "71-cumulative-advantage/shares_", win_marbles,".jpeg")
+  file_path <- paste0(exportdir, "71-cumulative-advantage/shares_", starting_advantage,".jpeg")
+  
+  note_string2 <- str_wrap(main_note,
+                           width = 85)
   
   plot <- ggplot(to_plot, aes(x=period, y=value, fill = key)) +
             geom_area(position="identity") +
             scale_fill_discrete(guide = FALSE) +
+            geom_hline(yintercept = (1/n_players), linetype = "dashed") + 
             of_dollars_and_data_theme +
             scale_y_continuous(label = percent) +
             scale_x_continuous() +
@@ -136,7 +143,7 @@ run_share_simulation <- function(starting_marbles, n_players, win_marbles){
                            100*round(starting_advantage, 2),
                            "% ")) +
             labs(x = "Period", y = "Market Share",
-                 caption = paste0("\n", source_string, "\n", note_string))
+                 caption = paste0("\n", source_string, "\n", note_string2))
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
@@ -144,8 +151,16 @@ run_share_simulation <- function(starting_marbles, n_players, win_marbles){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-run_share_simulation(100, 4, 5)
-run_share_simulation(100, 4, 100)
-run_share_simulation(100, 4, 600)
+share_seq <- seq(0.05, 0.5, 0.05)
+
+for (s in share_seq){
+  run_share_simulation(s, 4)
+}
+
+# Instead of creating these images as a GIF in R, do it in Bash
+# I use Git Bash + magick because this is way faster than creating the GIF in R
+# After navigating to the correct folder, use this command:
+#
+# convert -delay 60 loop -0 dist-*.jpeg dist_plots.gif
 
 # ############################  End  ################################## #
