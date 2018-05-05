@@ -24,6 +24,10 @@ library(dplyr)
 # This seed allows us to have reproducible random sampling
 set.seed(12345)         
 
+# Create a custom palette with black using COlorBrewer
+# From here:  http://colorbrewer2.org/#type=qualitative&scheme=Set1&n=7
+my_palette <- c("#000000", "#E41A1C", "#377EB8", "#4DAF4A")
+
 # Set starting values for simulation
 n_simulations    <- 1000
 n_periods        <- 40
@@ -34,6 +38,8 @@ run_share_simulation <- function(starting_advantage, n_players){
   
   #This was solved using Wolfram Alpha
   win_marbles <- -(starting_advantage*(n_players^2)*starting_marbles)/(starting_advantage*n_players-n_players+1)
+  
+  win_marbles <- max(win_marbles, 1)
   
   #Loop through each simulation
   for (s in 1:n_simulations){
@@ -88,8 +94,14 @@ run_share_simulation <- function(starting_advantage, n_players){
   # Plot the distribution of final market share across all simulations
   results_df <- as.data.frame(results_df)
   
+  if (starting_advantage == 0){
+    starting_advantage_string <- paste0(starting_advantage, ".0")
+  } else{
+    starting_advantage_string <- paste0(starting_advantage)
+  }
+  
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "71-cumulative-advantage/dist_", starting_advantage,".jpeg")
+  file_path <- paste0(exportdir, "71-cumulative-advantage/dist_", starting_advantage_string,".jpeg")
   
   # Add a source and note string for the plots
   source_string <- str_wrap(paste0("Source:  Simulated data (OfDollarsAndData.com)"),
@@ -106,6 +118,8 @@ run_share_simulation <- function(starting_advantage, n_players){
   plot <- ggplot(results_df, aes(x=V1)) +
             geom_density(fill = "black") +
             of_dollars_and_data_theme +
+            theme(axis.ticks.y     = element_blank(),
+                  axis.text.y     = element_blank()) +
             scale_x_continuous(limits = c(0,1), label = percent) +
             ggtitle(paste0("Distribution of Final Market Share\n",
                            "With A Starting Advantage of ", 
@@ -127,14 +141,14 @@ run_share_simulation <- function(starting_advantage, n_players){
   to_plot$key <- reorder(to_plot$key, to_plot$value, function(x) -max(x) )
   
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "71-cumulative-advantage/shares_", starting_advantage,".jpeg")
+  file_path <- paste0(exportdir, "71-cumulative-advantage/shares_", starting_advantage_string,".jpeg")
   
   note_string2 <- str_wrap(main_note,
                            width = 85)
   
   plot <- ggplot(to_plot, aes(x=period, y=value, fill = key)) +
             geom_area(position="identity") +
-            scale_fill_discrete(guide = FALSE) +
+            scale_fill_manual(guide = FALSE, values=my_palette) +
             geom_hline(yintercept = (1/n_players), linetype = "dashed") + 
             of_dollars_and_data_theme +
             scale_y_continuous(label = percent) +
@@ -151,7 +165,7 @@ run_share_simulation <- function(starting_advantage, n_players){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-share_seq <- seq(0, 0.5, 0.05)
+share_seq <- seq(0.0, 0.5, 0.05)
 
 for (s in share_seq){
   run_share_simulation(s, 4)
