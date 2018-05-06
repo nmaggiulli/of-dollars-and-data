@@ -33,11 +33,12 @@ n_simulations    <- 1000
 n_rounds        <- 40
 results_df       <- matrix(NA, nrow = n_simulations, ncol = 1)
 
+# Function to run simulations of cumulative advantage
 run_share_simulation <- function(starting_advantage, n_players){
   starting_marbles <- 100
   
   #This was solved using Wolfram Alpha
-  win_marbles <- -(starting_advantage*(n_players^2)*starting_marbles)/(starting_advantage*n_players-n_players+1)
+  win_marbles <- -(starting_advantage * n_players * starting_marbles)/(starting_advantage - 1)
   
   win_marbles <- max(win_marbles, 1)
   
