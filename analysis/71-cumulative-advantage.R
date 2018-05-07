@@ -34,11 +34,11 @@ n_rounds        <- 40
 results_df       <- matrix(NA, nrow = n_simulations, ncol = 1)
 
 # Function to run simulations of cumulative advantage
-run_share_simulation <- function(starting_advantage, n_players){
+run_share_simulation <- function(starting_advantage, n_colors){
   starting_marbles <- 100
   
   #This was solved using Wolfram Alpha
-  win_marbles <- -(starting_advantage * n_players * starting_marbles)/(starting_advantage - 1)
+  win_marbles <- -(starting_advantage * n_colors * starting_marbles)/(starting_advantage - 1)
   
   win_marbles <- max(win_marbles, 1)
   
@@ -46,16 +46,16 @@ run_share_simulation <- function(starting_advantage, n_players){
   for (s in 1:n_simulations){
     
     # Initialize shares dataframe
-    shares_df        <- matrix(NA, nrow = n_rounds, ncol = n_players)
+    shares_df        <- matrix(NA, nrow = n_rounds, ncol = n_colors)
     marbles_vector   <- c()
     marbles_shares   <- c()
-    total_marbles    <- starting_marbles * n_players
+    total_marbles    <- starting_marbles * n_colors
     
     # Loop through the rounds
     for (i in 1:n_rounds){
       
       # Loop through each player to create a market share
-      for (n in 1:n_players){
+      for (n in 1:n_colors){
         # Initialize number of marbles in the first round per player
         if (i == 1){
           marbles_vector[n] <- starting_marbles
@@ -74,7 +74,7 @@ run_share_simulation <- function(starting_advantage, n_players){
       }
       
       # Loop through each player to add winning marbles to the right player
-      for (n in 1:n_players){
+      for (n in 1:n_colors){
         if (val < marbles_shares[n]){
           marbles_vector[n] <- marbles_vector[n] + win_marbles
           break
@@ -108,7 +108,7 @@ run_share_simulation <- function(starting_advantage, n_players){
   source_string <- str_wrap(paste0("Source:  Simulated data (OfDollarsAndData.com)"),
                             width = 85)
   
-  main_note <- paste0("Note:  Assumes ", n_players, " players start with equal shares with 1 player 
+  main_note <- paste0("Note:  Assumes ", n_colors, " colors start with equal shares with 1 color 
                         given an advantage of ", 
                       100*round(starting_advantage, 2),
                       "% in the first round only.")
@@ -151,7 +151,7 @@ run_share_simulation <- function(starting_advantage, n_players){
   plot <- ggplot(to_plot, aes(x=round, y=value, fill = key)) +
             geom_area(position="identity") +
             scale_fill_manual(guide = FALSE, values=my_palette) +
-            geom_hline(yintercept = (1/n_players), linetype = "dashed") + 
+            geom_hline(yintercept = (1/n_colors), linetype = "dashed") + 
             of_dollars_and_data_theme +
             scale_y_continuous(label = percent) +
             scale_x_continuous() +
