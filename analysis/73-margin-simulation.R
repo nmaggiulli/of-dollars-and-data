@@ -115,7 +115,7 @@ final_df <- read.csv(paste0(exportdir, "73-margin-simulation/daily_ret_top_stock
 ret_matrix <- as.matrix(final_df$ret)
 
 # Create a function to simulate the leveraged returns (resampling)
-simulate_with_leverage <- function(n_simulations, leverage, sample_length, maintenance_margin){
+simulate_with_leverage <- function(n_simulations, leverage, sample_length){
 
   # Pick days randomly to use in the simulation
   days_sample <- sample(1:nrow(ret_matrix), n_trading_days*n_simulations/sample_length, replace = TRUE)
@@ -151,14 +151,14 @@ simulate_with_leverage <- function(n_simulations, leverage, sample_length, maint
       }
       
       # If your capital ever drops below your starting capital, game over
-      if (results_matrix[i, j] - (starting_capital*(leverage-(1-maintenance_margin))) <= 0){
+      if (results_matrix[i, j] - (starting_capital*(leverage-1)) <= 0){
         results_matrix[i, j] <- 0
       }
     }
   }
   broke_pct <- rowSums(results_matrix[, 1:n_simulations] == 0)[n_trading_days]/n_simulations
   
-  print(paste0("With ", leverage, "x leverage and ", round(100*maintenance_margin),"% maintenance margin, you go broke in ",
+  print(paste0("With ", leverage, "x leverage and 0% maintenance margin, you go broke in ",
         100*(broke_pct),
         "% of all simulations.")
       )
@@ -169,7 +169,7 @@ simulate_with_leverage <- function(n_simulations, leverage, sample_length, maint
   to_plot <- as.data.frame(results_matrix) %>%
                   gather(key=key, value = value, -trading_day)
   
-  file_path <- paste0(exportdir, "73-margin-simulation/", leverage, "x_leverage_with_", sample_length, "_sample_", maintenance_margin, "_mm.jpeg")
+  file_path <- paste0(exportdir, "73-margin-simulation/", leverage, "x_leverage_with_", sample_length, "_sample.jpeg")
   
   # Add a source and note string for the plots
   source_string <- str_wrap(paste0("Source:  Yahoo Finance (OfDollarsAndData.com)"),
@@ -177,17 +177,17 @@ simulate_with_leverage <- function(n_simulations, leverage, sample_length, maint
   
   note_string <- str_wrap(paste0("Note:  Re-samples the equal weighted return of the top performing stocks over a " 
                       , sample_length,  
-                      " day period.  Over ", format(n_simulations, big.mark = ",", scientific = FALSE), " simulations, you go broke ", 100*broke_pct, "% of the time."),
+                      " day period with no maintenance margin.  Over ", format(n_simulations, big.mark = ",", scientific = FALSE), " simulations, you go broke ", 100*broke_pct, "% of the time."),
                       width = 85)       
   
   plot <- ggplot(to_plot, aes(x=trading_day, y=value, col = key)) +
             geom_line() +
-            geom_hline(linetype = "dashed", col = "red", yintercept = starting_capital*(leverage-(1-maintenance_margin))) +
+            geom_hline(linetype = "dashed", col = "red", yintercept = starting_capital*(leverage-1)) +
             scale_color_discrete(guide = FALSE) +
             scale_y_continuous(label = dollar, limits = c(0, starting_capital*(leverage+1))) +
             of_dollars_and_data_theme +
             ggtitle(paste0("Account Value of Top Stock Portfolio\n",
-                   "Using ", leverage, "x Leverage and\n", round(100*maintenance_margin), "% Maintenance Margin")) +
+                   "Using ", leverage, "x Leverage")) +
             labs(x = "Trading Day", y = "Account Value",
                  caption = paste0("\n", source_string, "\n", note_string))
   
@@ -200,38 +200,33 @@ simulate_with_leverage <- function(n_simulations, leverage, sample_length, maint
 }
 
 # Set sample lengths and maintenance margins to test
-sample_lengths <-c(1) 
+sample_lengths <-c(1)
 leverage_ratios <- c(2, 4, 5, 10, 20, 50, 100, 200)
-maintenance_margins <- c(0, 0.25)
 n_simulations <- 1000
 
 # Loop through different sample lengths and leverage ratios
 # Note that sample_length must be 1 or an even number
 final_results_df <- data.frame(matrix(NA, 
-                    nrow = length(leverage_ratios)*length(maintenance_margins)*length(sample_lengths), 
-                    ncol = 5)
+                    nrow = length(leverage_ratios)*length(sample_lengths), 
+                    ncol = 4)
                     )
 counter <- 1
 for (s in sample_lengths){
   print(paste0("The day sample length is ", s))
   for (l in leverage_ratios){
-    for (m in maintenance_margins){
-      broke_pct <- simulate_with_leverage(n_simulations, l, s, m)
-      final_results_df[counter, 1] <- l
-      final_results_df[counter, 2] <- s
-      final_results_df[counter, 3] <- m
-      final_results_df[counter, 4] <- n_simulations
-      final_results_df[counter, 5] <- broke_pct
-      
-      counter <- counter + 1
-    }
+    broke_pct <- simulate_with_leverage(n_simulations, l, s)
+    final_results_df[counter, 1] <- l
+    final_results_df[counter, 2] <- s
+    final_results_df[counter, 3] <- n_simulations
+    final_results_df[counter, 4] <- broke_pct
+    
+    counter <- counter + 1
   }
 }
 
-colnames(final_results_df) <- c("leverage", "sample_length", "maintenance_margin", "n_simulations", "broke_pct")
+colnames(final_results_df) <- c("leverage", "sample_length", "n_simulations", "broke_pct")
 
-to_plot <- final_results_df %>%
-            filter(maintenance_margin == 0)
+to_plot <- final_results_df 
 
 file_path <- paste0(exportdir, "73-margin-simulation/all_simulation_results.jpeg")
 
@@ -242,8 +237,9 @@ source_string <- str_wrap(paste0("Source:  Yahoo Finance (OfDollarsAndData.com)"
 note_string <- str_wrap(paste0("Note:  Re-samples the equal weighted return of the top performing stocks and assumes 0% maintenance margin."),
                         width = 85)
 
-plot <- ggplot(to_plot, aes(x=leverage, y=broke_pct)) +
+plot <- ggplot(to_plot, aes(x=leverage, y=broke_pct, col = as.factor(sample_length))) +
   geom_line() +
+  scale_color_discrete(guide = FALSE) +
   scale_y_continuous(label = percent, limits = c(0, 1)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("The Dangers of More Leverage")) +
