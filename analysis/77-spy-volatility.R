@@ -90,6 +90,7 @@ file_path <- paste0(exportdir, "77-spy-volatility/ret-and-vol.jpeg")
 plot <- ggplot(spy, aes(x=vol_spy, y=ret_spy)) +
   geom_point() +
   geom_hline(yintercept = 0, linetype='dashed') +
+  scale_y_continuous(label = percent) +
   of_dollars_and_data_theme +
   ggtitle(paste0("S&P 500 Daily Return and 30-Day Volatility")) +
   labs(x = "Volatility", y = "Daily Return",
