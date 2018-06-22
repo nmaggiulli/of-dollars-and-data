@@ -22,10 +22,10 @@ library(ggrepel)
 
 # Load in S&P data from Shiller
 sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
-                    filter(cape != "NA", Date < 2017.01)
+                    filter(cape != "NA", date < 2017.01)
 
-first_year <- floor(min(sp500_ret_pe$Date))
-last_year <- floor(max(sp500_ret_pe$Date))
+first_year <- floor(min(sp500_ret_pe$date))
+last_year <- floor(max(sp500_ret_pe$date))
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){
@@ -61,7 +61,7 @@ test_market <- function(cape_min, cape_max, start_date){
   )
   
   # Filter the data to a 40 year period
-  sp500 <- filter(sp500_ret_pe, Date >= start_date, Date <= start_date + 40)
+  sp500 <- filter(sp500_ret_pe, date >= start_date, date <= start_date + 40)
   
   # Create an empty value vector
   value_vec <- rep(0, nrow(sp500))

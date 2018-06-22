@@ -23,10 +23,10 @@ library(magrittr)
 
 # Load in S&P data from Shiller
 sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
-                    filter(Date >= 1880.01, Date < 2017.01)
+                    filter(date >= 1880.01, date < 2017.01)
 
-first_year <- floor(min(sp500_ret_pe$Date))
-last_year <- floor(max(sp500_ret_pe$Date))
+first_year <- floor(min(sp500_ret_pe$date))
+last_year <- floor(max(sp500_ret_pe$date))
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){
@@ -75,7 +75,7 @@ years <- c(years, rep(last_year, 12))
 
 for (i in 2:length(years)){
   to_plot <- sp500_ret_pe %>%
-                filter(Date <= years[i])
+                filter(date <= years[i])
 
   if(i < 10){
     i_string <- paste0("00", i)
@@ -89,7 +89,7 @@ for (i in 2:length(years)){
   file_path = paste0(exportdir, "26b-sp500-global-max/sp500-global-maxima-", i_string, ".jpeg")
 
   # Plot the entire price series with local maxima
-  plot <- ggplot(to_plot, aes(x = Date, y = price_final)) +
+  plot <- ggplot(to_plot, aes(x = date, y = price_final)) +
     geom_line() +
     geom_point(data=filter(to_plot, global_max == 1), col="red") +
     scale_y_continuous(label = dollar, limits = c(0.5, 5000), trans = log_trans(), breaks = c(0, 1, 10, 100, 1000, 5000)) +
@@ -163,7 +163,7 @@ for (j in 1:length(global_max_vec)){
 }
 
 # Create a data frame for the max_dist_vec
-df_months <- data.frame(x = sp500_ret_pe$Date, y = max_dist_vec) 
+df_months <- data.frame(x = sp500_ret_pe$date, y = max_dist_vec) 
 
 # File path to save plot
 file_path = paste0(exportdir, "26a-market-timing-tests/sp500-peaks-global-maxima.jpeg")

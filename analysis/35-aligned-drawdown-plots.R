@@ -26,7 +26,7 @@ my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00"
 
 # Read in data for individual stocks and sp500 Shiller data
 sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
-                      filter(Date > "1928-01-01")
+                      filter(date > "1928-01-01")
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){
@@ -42,11 +42,11 @@ for (i in 1:nrow(sp500_ret_pe)){
 }
 
 # Change the Date to a Date type for plotting the S&P data
-sp500_ret_pe <- select(sp500_ret_pe, Date, price_plus_div) %>%
-                  mutate(Date = as.Date(paste0(
-                    substring(as.character(Date), 1, 4),
+sp500_ret_pe <- select(sp500_ret_pe, date, price_plus_div) %>%
+                  mutate(date = as.Date(paste0(
+                    substring(as.character(date), 1, 4),
                     "-", 
-                    ifelse(substring(as.character(Date), 6, 7) == "1", "10", substring(as.character(Date), 6, 7)),
+                    ifelse(substring(as.character(date), 6, 7) == "1", "10", substring(as.character(date), 6, 7)),
                     "-01", 
                     "%Y-%m-%d")))
   
