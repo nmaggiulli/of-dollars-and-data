@@ -92,7 +92,7 @@ for (i in 1:nrow(loop_list)){
   file_path = paste0(exportdir, "08-bls-consumer-expenditures/", loop_list[i, 1], ".jpeg")
   
   if(loop_list[i,1] == "Lowest 20 percent income quintile"){
-    top_title <- "The Lowest 20 Percent of Income\nSpend More Than They Earn\non Basic Necessities"
+    top_title <- "The Lowest 20 Percent of Earners\nSpend More Than They Earn\non Basic Necessities"
   } else if (loop_list[i,1] == "Second 20 percent income quintile"){
     top_title <- "The Next 20 Percent is Doing Better,\n But Not Much"
   } else if (loop_list[i,1] == "Highest 20 percent income quintile"){
@@ -196,7 +196,7 @@ for (i in 1:nrow(loop_list)){
                     size = 3) +
     scale_color_discrete(guide = FALSE) +
     scale_y_continuous(label = dollar, breaks = seq(-20000, 60000, 10000), limits=c(-20000, 60000)) +
-    ggtitle("40% of U.S. Households Spent\nMore Than They Earned in 2015")  +
+    ggtitle(paste0("40% of U.S. Households Spent\nMore Than They Earned in ", last_year))  +
     of_dollars_and_data_theme +
     labs(x = "Year" , y = "After-Tax Income Minus Expenses")
   
