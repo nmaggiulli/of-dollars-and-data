@@ -39,3 +39,6 @@ of_dollars_and_data_theme <- theme(
                   panel.border     = element_blank(),
                   panel.background = element_blank(),
                   plot.caption     = element_text(hjust = 0, family = "my_font", size = 8))
+
+# Read in custom functions
+source("custom_functions.R")
