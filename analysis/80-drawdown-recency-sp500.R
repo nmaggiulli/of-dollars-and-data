@@ -76,11 +76,18 @@ if (num < 10){
   
   source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"
   
+  note_string <- str_wrap(paste0("Note:  Adjusted for dividends and inflation.  
+                                 Shading is based on recency and the peak drawdown over the time period listed."),
+                          width = 85)
+  
   temp <- filter(sp500_ret_pe, date >= date_start, date <= date_end)
   # Run function on specific data for drawdowns
   to_plot        <- drawdown_path(temp)
     
   to_plot$shade <- head(seq(0, 1, 1/nrow(to_plot)), nrow(to_plot))
+  
+  to_plot <- to_plot %>%
+              mutate(shade = ifelse(pct == min(to_plot$pct), 1, shade))
   
   assign("tp", to_plot, envir = .GlobalEnv)
   
@@ -100,22 +107,11 @@ if (num < 10){
     of_dollars_and_data_theme +
     scale_y_continuous(label = percent, limits = c(-1, 0)) +
     scale_x_date(date_labels = "%Y") +
-    labs(x = "Year", y = "Percentage of Value Lost")
+    labs(x = "Year", y = "Percentage of Value Lost",
+         caption = paste0("\n", source_string, "\n", note_string))
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
-  
-  note_string <- paste0("Note:  Adjusted for dividends and inflation.") 
-  
-  # Make the source and note text grobs
-  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  
-  # Add the text grobs to the bototm of the gtable
-  my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
-  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
   
   # Save the plot  
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
