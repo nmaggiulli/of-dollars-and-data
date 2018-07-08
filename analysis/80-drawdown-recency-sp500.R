@@ -125,7 +125,7 @@ for (d in 1:length(all_dates)){
   plot_dd(start_date, end_date, d)
 }
 
-create_gif(out_path, "drawdowns_*.jpeg", 30)
+create_gif(out_path, "drawdowns_*.jpeg", 30, out_name = "dd_time.gif")
 
 
 # ############################  End  ################################## #
