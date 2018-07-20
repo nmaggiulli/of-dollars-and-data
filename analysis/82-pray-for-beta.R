@@ -74,7 +74,7 @@ plot_years <- function(n_years, start_date, title_string){
   start_date_string <- as.character(start_date)
   
   # Set the file_path based on the function input 
-  file_path = paste0(out_path, "/returns_", n_years, "yr_", start_date_string, ".jpeg")
+  file_path = paste0(out_path, "/period_returns_", n_years, "yr_", start_date_string, ".jpeg")
   
   # Strings for source and note
   source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"
@@ -86,9 +86,9 @@ plot_years <- function(n_years, start_date, title_string){
   plot <- ggplot(data = to_plot, aes(x = as.factor(year), y = ret)) +
     geom_bar(stat = "identity", position = "dodge", fill = "blue") +
     geom_text(data = to_plot, 
-              aes(as.factor(year), ret, label = paste0(round(100*ret, 1), "%")),
+              aes(as.factor(year), ret + (0.005 * sign(ret)), label = paste0(round(100*ret, 1), "%")),
               col = "black", 
-              vjust = 1, size = 4) +
+              size = 4) +
     ggtitle(title_string) +
     scale_fill_discrete(guide = FALSE) +
     scale_color_discrete(guide = FALSE) +
@@ -106,7 +106,6 @@ plot_years <- function(n_years, start_date, title_string){
 }
 
 plot_years(20, as.Date("1960-01-01"), "From 1960-1980, Beating the Market by 5%\nWould Have Made You LESS Money Than\nUnderperforming By 5% From 1980-2000")
-plot_years(30, as.Date("1900-01-01"), "30-Year Periods Show Less Dispersion")
 plot_years(10, as.Date("1900-01-01"), "Lucky and Unlucky Decades for the S&P 500")
 
 
