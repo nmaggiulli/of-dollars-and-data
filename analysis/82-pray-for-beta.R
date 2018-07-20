@@ -105,7 +105,7 @@ plot_years <- function(n_years, start_date, title_string){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-plot_years(20, as.Date("1960-01-01"), "From 1960-1980, Beating the Market by 5%\nWould Have Made You LESS Money Than\nUnderperforming the Market 5% From 1980-2000")
+plot_years(20, as.Date("1960-01-01"), "From 1960-1980, Beating the Market by 5%\nWould Have Made You LESS Money Than\nUnderperforming By 5% From 1980-2000")
 plot_years(30, as.Date("1900-01-01"), "30-Year Periods Show Less Dispersion")
 plot_years(10, as.Date("1900-01-01"), "Lucky and Unlucky Decades for the S&P 500")
 
