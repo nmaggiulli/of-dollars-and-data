@@ -9,7 +9,7 @@ importdir <- paste0(dataroot, "import/")
 exportdir <- paste0(dataroot, "export/")
 
 # Set the programroot location
-programroot <- "~/git/of-dollars-and-data/"
+programroot <- "~/git/of_dollars_and_data/"
 
 # Set options  
 # This option is used to prevent strings from being imported as factors
