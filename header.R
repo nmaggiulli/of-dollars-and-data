@@ -1,5 +1,5 @@
 # Set dataroot location
-dataroot <- "/Volumes/GoogleDrive/My Drive/of-dollars-and-data/"
+dataroot <- "/Volumes/GoogleDrive/My Drive/of_dollars_and_data/"
 
 # Set dataset libraries
 localdir <- paste0(dataroot, "datasets/")
