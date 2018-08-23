@@ -22,7 +22,7 @@ df <- readRDS(paste0(localdir, "87-employee-rev-ycharts.Rds"))
 
 vars <- c("assets", "netinc", "revenue")
 
-plot_log_log <- function(var, proper_name){
+plot_log_log <- function(var, proper_name, company, company_full){
   
   to_plot <- df %>%
                 select_("employees", "company", "year", var) %>%
@@ -41,15 +41,21 @@ plot_log_log <- function(var, proper_name){
       scale_y_log10() +
       scale_x_log10() +
       of_dollars_and_data_theme + 
-      ggtitle("Time To Send A Message\nFrom London to New York") +
+      ggtitle(paste0("Total Number of Employees\nvs. ", proper_name)) +
       labs(x = "Number of Employees" , y = proper_name,
          caption = paste0("\n", source_string))
   
+  # Turn plot into a gtable for adding text grobs
+  my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
+  # Save the plot  
+  ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
 }
-
+  
 plot_log_log("assets", "Total Assets")
+plot_log_log("rev", "Total Revenue")
+plot_log_log("netinc", "Net Income")
 
 
 
