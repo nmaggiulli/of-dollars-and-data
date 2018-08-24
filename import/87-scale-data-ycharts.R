@@ -35,7 +35,11 @@ df <- read.csv(paste0(importdir, folder_name, "/", filename)) %>%
 er <- read_in_ycharts("employees_rev.csv")
 ai <- read_in_ycharts("assets_netinc.csv")
 
-df <- er %>% full_join(ai)
+df <- er %>% full_join(ai) %>%
+        rename(rev = Revenue,
+               assets = Total.Assets,
+               employees = Total.Employees,
+               netinc = Net.Income)
 
 saveRDS(df, paste0(localdir, "87-employee-rev-ycharts.Rds"))
 
