@@ -23,7 +23,7 @@ to_plot <- data.frame(price = seq(0, 1, 0.1),
                  life_expectancy = c(20, 15, 12, 8, 6, 4.5, 3, 2, 1, 0.5, 0))
 
 # Plot 
-file_path <- paste0(out_path, "/price_life_expectancy.jpeg")
+file_path <- paste0(out_path, "/price_life_expectancy_years.jpeg")
 
 source_string <- str_wrap(paste0("Source:  'Price Regulation in Secondary Insurance Markets', Bhattacharya, J. et al. (OfDollarsAndData.com)"),
                           width = 85)
@@ -36,7 +36,7 @@ plot <- ggplot(to_plot, aes(x=life_expectancy, y=price)) +
   scale_y_continuous(label = percent, breaks = seq(0, 1, 0.1)) +
   of_dollars_and_data_theme + 
   ggtitle(paste0("As Life Expectancy Increases\nViatical Prices Will Decrease")) +
-  labs(x = "Life Expectancy " , y = "Price (% of Face Value)",
+  labs(x = "Life Expectancy in Years" , y = "Price\n(% of Face Value)",
        caption = paste0("\n", source_string, "\n", note_string))
 
 # Turn plot into a gtable for adding text grobs
