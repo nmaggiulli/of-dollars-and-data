@@ -29,7 +29,7 @@ to_plot <- raw %>%
 
 specific_points <- filter(to_plot, year %in% c(1800, 1865, 1926, 2017))
 
-file_path <- paste0(out_path, "/real_gdp_log.jpeg")
+file_path <- paste0(out_path, "/us_real_gdp_log.jpeg")
 
 source_string <- str_wrap(paste0("Source:  Louis Johnston and Samuel H. Williamson, 'What Was the U.S. GDP Then?' MeasuringWorth, 2018 (OfDollarsAndData.com)"),
                           width = 85)
@@ -38,6 +38,7 @@ note_string <- str_wrap(paste0("Note:  All amounts are in 2012 dollars."))
 
 plot <- ggplot(to_plot, aes(x=year, y=real_gdp)) +
   geom_line() +
+  scale_x_continuous(breaks = seq(1800, 2000, 25)) +
   geom_point(data=specific_points, aes(x=year, y=real_gdp), col = "red") +
   geom_text_repel(data=specific_points, aes(x=year, y=real_gdp), 
                   label = paste0("$", formatC(round(specific_points$real_gdp/10^9, 2), 
@@ -58,10 +59,11 @@ my_gtable   <- ggplot_gtable(ggplot_build(plot))
 ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
 # Plot per capita
-file_path <- paste0(out_path, "/real_gdp_per_capita_log.jpeg")
+file_path <- paste0(out_path, "/us_real_gdp_per_capita_log.jpeg")
 
 plot <- ggplot(to_plot, aes(x=year, y=real_gdp_per_capita)) +
   geom_line() +
+  scale_x_continuous(breaks = seq(1800, 2000, 25)) +
   geom_point(data=specific_points, aes(x=year, y=real_gdp_per_capita), col = "red") +
   geom_text_repel(data=specific_points, aes(x=year, y=real_gdp_per_capita), 
                   label = paste0("$", formatC(round(specific_points$real_gdp_per_capita, 1), 
@@ -71,7 +73,7 @@ plot <- ggplot(to_plot, aes(x=year, y=real_gdp_per_capita)) +
                   size = 3.5, nudge_y = 0.05) +
   scale_y_log10(labels = trans_format("log10", math_format(10^.x))) +
   of_dollars_and_data_theme + 
-  ggtitle(paste0("Real GDP Per Capita Has Grown\nConsiderably As Well")) +
+  ggtitle(paste0("U.S. Real GDP Per Capita Has Grown\nConsiderably As Well")) +
   labs(x = "Year" , y = "Real GDP Per Capita (Log Scale)",
        caption = paste0("\n", source_string, "\n", note_string))
 
