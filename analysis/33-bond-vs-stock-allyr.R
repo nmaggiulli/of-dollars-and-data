@@ -18,6 +18,8 @@ library(RColorBrewer)
 library(stringr)
 library(ggrepel)
 
+out_path <- paste0(exportdir, "33-by-year-stock-bond")
+
 ########################## Start Program Here ######################### #
 
 # Create a custom palette with black using COlorBrewer
@@ -140,11 +142,7 @@ for (n_years in n_years_seq){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-# Instead of creating these images as a GIF in R, do it in Bash
-# I use Git Bash + magick because this is way faster than creating the GIF in R
-# After navigating to the correct folder, use this command:
-#
-# magick convert -delay 25 loop -0 *.jpeg all_plots.gif
+create_gif(out_path, "sp500*.jpeg", 30, out_name = "bonds_vs_stocks_allyr.gif")
 
 
 # ############################  End  ################################## #
