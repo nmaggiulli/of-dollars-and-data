@@ -8,6 +8,7 @@ source(file.path(paste0(getwd(),"/header.R")))
 ########################## Load in Libraries ########################## #
 
 library(readxl)
+library(lubridate)
 library(dplyr)
 
 ########################## Start Program Here ######################### #
@@ -31,9 +32,13 @@ sp500_ret_pe$date <- as.numeric(sp500_ret_pe$date)
 sp500_ret_pe$cpi <- as.numeric(sp500_ret_pe$cpi)
 sp500_ret_pe$cape <- as.numeric(sp500_ret_pe$cape)
 
+# Create a numeric end date based on the closest start of month to today's date
+end_date <- year(Sys.Date()) + month(Sys.Date())/100
+
 # Filter out missing dividends
 sp500_ret_pe <- sp500_ret_pe %>%
-                  filter(!is.na(real_div)) %>%
+                  filter(!is.na(date), date < end_date) %>%
+                  mutate(real_div = ifelse(is.na(real_div), 0, real_div)) %>%
                   select(date, real_price, real_div, cape, cpi)
 
 # Save down the data
