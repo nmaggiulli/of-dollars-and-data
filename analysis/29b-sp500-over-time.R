@@ -28,10 +28,10 @@ my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00"
 sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
 
 # Subset S&P 500 returns
-sp500_ret_pe <- filter(sp500_ret_pe, cape != "NA", Date < 2017.01)
+sp500_ret_pe <- filter(sp500_ret_pe, cape != "NA")
 
-first_year <- floor(min(sp500_ret_pe$Date))
-last_year <- floor(max(sp500_ret_pe$Date))
+first_year <- floor(min(sp500_ret_pe$date))
+last_year <- floor(max(sp500_ret_pe$date))
 
 for (i in 1:nrow(sp500_ret_pe)){
   if (i == 1){
@@ -50,8 +50,8 @@ sp500_ret_pe$cape <- as.numeric(sp500_ret_pe$cape)
 
 create_period_return <- function(start_year, end_year){
 
-  ret_yr            <- filter(sp500_ret_pe, Date >= start_year, Date < end_year)
-  initial_value     <- filter(sp500_ret_pe, Date == start_year) %>%
+  ret_yr            <- filter(sp500_ret_pe, date >= start_year, date < end_year)
+  initial_value     <- filter(sp500_ret_pe, date == start_year) %>%
     select(price_plus_div)
   ret_yr$price      <- (ret_yr$price_plus_div / rep(as.numeric(initial_value), 12*(end_year-start_year))) * 1
   ret_yr$start_date <- start_year
@@ -78,7 +78,7 @@ plot <- ggplot(data = to_plot, aes(x = period, y = price, col = as.factor(start_
                   aes(x = period, 
                       y = price,
                       col = as.factor(start_date),
-                      label = "2000-2016",
+                      label = "2000-2017",
                       family = "my_font"),
                   nudge_y = -.3,
                   nudge_x = 7
