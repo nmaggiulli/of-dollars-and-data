@@ -268,21 +268,21 @@ wide_returns <- all_prices %>%
   ealdark  <- "#423C30"
   plot <- ggplot(eff, aes(x = sd, y = exp_return)) + geom_point(alpha = .1, color = ealdark) +
     # Add optimal point
-    geom_point(data = optimal, aes(x = sd, y = exp_return), color = ealred, size = 5) +
-    geom_text_repel(data = optimal, label = "Optimal Portfolio", family = "my_font", size = 3.5, nudge_x = -0.02, nudge_y = 0.009, max.iter = 5000) +
+    #geom_point(data = optimal, aes(x = sd, y = exp_return), color = ealred, size = 5) +
+    #geom_text_repel(data = optimal, label = "Optimal Portfolio", family = "my_font", size = 3.5, nudge_x = -0.02, nudge_y = 0.009, max.iter = 5000) +
     # Add S&P 500 only
-    #geom_point(data = all_stock, aes(x = sd, y = exp_return), color = "green", size = 2) +
-    #geom_text_repel(data = all_stock, label = "S&P 500 Only", family = "my_font", size = 3, nudge_y = -0.004, max.iter = 5000) +
+    geom_point(data = all_stock, aes(x = sd, y = exp_return), color = "green", size = 2) +
+    geom_text_repel(data = all_stock, label = "S&P 500 Only", family = "my_font", size = 3, nudge_y = -0.004, max.iter = 5000) +
     # Add All Gold portfolio
-    geom_point(data = all_gold, aes(x = sd, y = exp_return), color = "gold", size = 2) +
-    geom_text_repel(data = all_gold, label = "Gold Only", family = "my_font", size = 3, nudge_x = 0.03, max.iter = 5000) +
+    #geom_point(data = all_gold, aes(x = sd, y = exp_return), color = "gold", size = 2) +
+    #geom_text_repel(data = all_gold, label = "Gold Only", family = "my_font", size = 3, nudge_x = 0.03, max.iter = 5000) +
     # Add all Bitcoin
     geom_point(data = all_btc, aes(x = sd, y = exp_return), color = "red", size = 2) +
     geom_text_repel(data = all_btc, label = "Bitcoin Only", family = "my_font", size = 3, nudge_x = -0.015, max.iter = 5000) +
     # Add Equal weighted portfolio
     #geom_point(data = equal_weighted, aes(x = sd, y = exp_return), color = "purple", size = 2) +
     #geom_text_repel(data = equal_weighted, label = "Equal Weighted", family = "my_font", size = 3, nudge_y = -0.004, nudge_x = 0.002, max.iter = 5000) +
-    ggtitle(paste0("Did I Mention Bitcoin is Off the Charts?")) + labs(x = "Risk (standard deviation of portfolio variance)", y ="Average Monthly Return") +
+    ggtitle(paste0("Bitcoin Has Lower Risk-Adjusted Returns Than\nThe S&P 500 Only Portfolio")) + labs(x = "Risk (standard deviation of portfolio variance)", y ="Average Monthly Return") +
     of_dollars_and_data_theme +
     scale_x_continuous(label = percent) +
     scale_y_continuous(label = percent)
