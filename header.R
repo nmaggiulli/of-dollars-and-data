@@ -15,6 +15,10 @@ programroot <- "~/git/of_dollars_and_data/"
 # This option is used to prevent strings from being imported as factors
 options(stringsAsFactors=FALSE)
 
+# Light blue fill for standard tables and charts
+highlight_standard_color <- "#D6E6F1"
+chart_standard_color     <- "#003C68" 
+
 # Set my font for MAC (just download and install OTF fonts then use quartzFonts)
 quartzFonts(my_font = quartzFont(c("Libre Baskerville", 
                                  "Libre Baskerville Bold", 
