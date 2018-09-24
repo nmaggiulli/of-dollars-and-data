@@ -36,7 +36,6 @@ if (file.exists(paste0(out_path, "/all_model_summaries_", type, ".xlsx"))){
 
 starting_value <- 1
 
-
 aaii_raw <- read_excel(paste0(importdir, "93-best-stock-predictor/aaii_allocation_survey.xls"))
 
 # Create a date list to use for subsetting
@@ -59,6 +58,39 @@ aaii <- aaii %>%
 raw <- read_excel(paste0(importdir, "93-best-stock-predictor/sp500_5yr_treasury_data.xlsx"), sheet = "DFA_PeriodicReturns_20180913112") %>%
           inner_join(aaii)
 
+n_years_lookahead <- 10
+lookahead_ret_string <- paste0("ret_forward_", n_years_lookahead, "yr")
+
+
+for (i in 1:(nrow(raw) - n_years_lookahead*12)){
+  raw[i, lookahead_ret_string] <- prod(1 + raw[i:(i + n_years_lookahead*12-1), "sp500"])^(1/n_years_lookahead) - 1
+}
+
+# Set the file_path based on the function input 
+file_path <- paste0(out_path, "/equity_allocation_and_forward_returns.jpeg")
+
+# Set note and source string
+source_string <- str_wrap("Source: AAII, DFA (OfDollarsAndData.com)",
+                          width = 85)
+
+# Plot the allocation vs. future returns
+plot <- ggplot(raw, aes(x = stock_allocation, y = ret_forward_10yr)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  scale_y_continuous(label = percent) +
+  scale_x_continuous(label = percent) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Higher Investor Allocation to Equities\nCorresponds to Lower Future Returns")) +
+  labs(x = "Average Investor Allocation to Equities" , y = "Future 10-Year Returns (Annualized)",
+       caption = paste0("\n", source_string))
+
+# Turn plot into a gtable for adding text grobs
+my_gtable   <- ggplot_gtable(ggplot_build(plot))
+
+# Save the plot
+ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+
+# Model to test trend in AAII
 trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_date){
   
   df <- filter(raw, date >= start_date, date <= end_date)
@@ -155,7 +187,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
   worst_10_trend <- final_df %>%
     select(date, ret_trend) %>%
     arrange(ret_trend) %>%
-    mutate(model = "AggEquityShare") %>%
+    mutate(model = "AvgEquityShare") %>%
     rename(monthly_return_pct = ret_trend) %>%
     head(10)
   
@@ -166,7 +198,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
     rename(monthly_return_pct = ret_bh) %>%
     head(10)
   
-  models <- c("AggEquityShare", "Buy and Hold")
+  models <- c("AvgEquityShare", "Buy and Hold")
   
   for (m in models){
     to_plot <- bind_rows(worst_10_trend, worst_10_bh) %>%
@@ -215,17 +247,17 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
       select(date, month, year, ret_trend_annual, ret_bh_annual) %>%
       filter(!is.na(ret_trend_annual), !is.na(ret_bh_annual)) %>%
       rename(`Buy and Hold` = ret_bh_annual,
-             `AggEquityShare` = ret_trend_annual) %>%
+             `AvgEquityShare` = ret_trend_annual) %>%
       gather(key=key, value=value, -date, -month, -year)
     
-    pct_neg_trend <- nrow(filter(to_plot, key=="AggEquityShare", value < 0))/nrow(filter(to_plot, key=="AggEquityShare"))
+    pct_neg_trend <- nrow(filter(to_plot, key=="AvgEquityShare", value < 0))/nrow(filter(to_plot, key=="AvgEquityShare"))
     pct_neg_bh <- nrow(filter(to_plot, key=="Buy and Hold", value < 0))/nrow(filter(to_plot, key=="Buy and Hold"))
     
     # Set the file_path based on the function input 
     file_path <- paste0(out_path, "/", model_name, "/dists_", i, "y_", model_name, ".jpeg")
     
     # Set note
-    note_string   <- str_wrap(paste0("Note:  ", 100*round(pct_neg_trend, 3), "% of AggEquityShare's ", i, "-year returns are negative compared to ", 
+    note_string   <- str_wrap(paste0("Note:  ", 100*round(pct_neg_trend, 3), "% of AvgEquityShare's ", i, "-year returns are negative compared to ", 
                                      100*round(pct_neg_bh, 3), "% for Buy and Hold."),
                               width = 85)
     
@@ -251,7 +283,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
     # Set the file_path based on the function input 
     file_path <- paste0(out_path, "/", model_name, "/heatmap_", i, "y_", model_name, ".jpeg")
     
-    to_heatmap <- filter(to_plot, key == "AggEquityShare") %>%
+    to_heatmap <- filter(to_plot, key == "AvgEquityShare") %>%
       select(month, year, value) %>%
       rename(`Annualized Return` = value)
     
@@ -262,7 +294,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
       scale_fill_gradient(low = "red", high = "green", guide = FALSE) +
       scale_x_continuous(breaks = seq(1, 12)) +
       of_dollars_and_data_theme +
-      ggtitle(paste0("Heatmap of AggEquityShare ", i, "-Year\nAnnualized Returns")) +
+      ggtitle(paste0("Heatmap of AvgEquityShare ", i, "-Year\nAnnualized Returns")) +
       labs(x = "Month" , y = "Year",
            caption = paste0("\n", source_string, "\n", note_string))
     
@@ -279,7 +311,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
       # Plot the rolling 1-yr return as well
       file_path <- paste0(out_path, "/", model_name, "/rolling_1yr_", model_name, ".jpeg")
       
-      to_plot2 <- filter(to_plot, key == "AggEquityShare") %>%
+      to_plot2 <- filter(to_plot, key == "AvgEquityShare") %>%
         select(date, value) %>%
         rename(`Annualized Return` = value)
       
@@ -287,7 +319,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
         geom_line() +
         of_dollars_and_data_theme +
         scale_y_continuous(label = percent, limits = c(-0.5, 0.5)) +
-        ggtitle(paste0("AggEquityShare Rolling ", i, "-Year\nAnnualized Returns")) +
+        ggtitle(paste0("AvgEquityShare Rolling ", i, "-Year\nAnnualized Returns")) +
         labs(x = "Date" , y = "1-Year Annualized Return",
              caption = paste0("\n", source_string, "\n", note_string))
       
@@ -311,7 +343,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
       
       pct_neg_trend <- nrow(filter(to_heatmap, `Monthly Return` < 0))/nrow(to_heatmap)
       
-      note_string   <- str_wrap(paste0("Note:  ", 100*round(pct_neg_trend, 3), "% of AggEquityShare's monthly returns are negative."),
+      note_string   <- str_wrap(paste0("Note:  ", 100*round(pct_neg_trend, 3), "% of AvgEquityShare's monthly returns are negative."),
                                 width = 85)
       
       # Create heatmap
@@ -321,7 +353,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
         scale_fill_gradient(low = "red", high = "green", guide = FALSE) +
         scale_x_continuous(breaks = seq(1, 12)) +
         of_dollars_and_data_theme +
-        ggtitle(paste0("Heatmap of AggEquityShare Monthly Returns")) +
+        ggtitle(paste0("Heatmap of AvgEquityShare Monthly Returns")) +
         labs(x = "Month" , y = "Year",
              caption = paste0("\n", source_string, "\n", note_string))
       
@@ -349,7 +381,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
         geom_line() +
         scale_y_continuous(label = percent) +
         of_dollars_and_data_theme +
-        ggtitle(paste0("3-Year Rolling Standard Deviation\nOf Monthly AggEquityShare Returns")) +
+        ggtitle(paste0("3-Year Rolling Standard Deviation\nOf Monthly AvgEquityShare Returns")) +
         labs(x = "Date" , y = "Standard Deviation Over Prior 3 Years",
              caption = paste0("\n", source_string))
       
@@ -365,7 +397,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
   
   # Get drawdown datasets
   vp_trend <- drawdown_path(select(final_df, date, value_trend)) %>%
-    mutate(key="AggEquityShare")
+    mutate(key="AvgEquityShare")
   vp_bh <- drawdown_path(select(final_df, date, value_bh)) %>%
     mutate(key="Buy and Hold")
   
@@ -391,7 +423,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
   }
   
   trend_low_dd <- dd %>%
-    filter(key == "AggEquityShare") %>%
+    filter(key == "AvgEquityShare") %>%
     group_by(key, group) %>%
     summarize(min_dd = min(pct)) %>%
     ungroup() %>%
@@ -417,7 +449,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
                             width = 85)
   
   # Set note
-  note_string   <- str_wrap(paste0("Note:  The largest drawdown for AggEquityShare is ", 100*round(max_dd_trend, 3), "% compared to 
+  note_string   <- str_wrap(paste0("Note:  The largest drawdown for AvgEquityShare is ", 100*round(max_dd_trend, 3), "% compared to 
                                    ", 100*round(max_dd_bh, 3), "% for Buy and Hold."),
                             width = 85)
   
@@ -425,7 +457,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
     geom_area(position = "identity", alpha = 0.4) +
     scale_y_continuous(label = percent, limits = c(-0.75, 0)) +
     of_dollars_and_data_theme +
-    ggtitle("Drawdowns for AggEquityShare vs.\nBuy and Hold") +
+    ggtitle("Drawdowns for AvgEquityShare vs.\nBuy and Hold") +
     labs(x = "Date" , y = "Percentage of Value Lost",
          caption = paste0("\n", source_string, "\n", note_string))
   
@@ -441,7 +473,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
   to_plot <- final_df %>%
     select(date, value_trend, value_bh)
   
-  to_plot[, "AggEquityShare"]     <- to_plot[, "value_trend"]
+  to_plot[, "AvgEquityShare"]     <- to_plot[, "value_trend"]
   to_plot[, "Buy and Hold"] <- to_plot[, "value_bh"]
   
   to_plot <- to_plot %>%
@@ -451,7 +483,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
   # Set the file_path based on the function input 
   file_path <- paste0(out_path, "/", model_name, "/trend_v_bh_", model_name, ".jpeg")
   
-  note_string <- str_wrap(paste0("Note:  AggEquityShare had ",  n_buys_sells, " transactions across ", total_months, " months."))
+  note_string <- str_wrap(paste0("Note:  AvgEquityShare had ",  n_buys_sells, " transactions across ", total_months, " months."))
   
   # Create plot of GT vs. Buy and Hold
   plot <- ggplot(to_plot, aes(x=date, y = value, col = key)) +
@@ -468,7 +500,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
                     max.iter = 4000) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
-    ggtitle("AggEquityShare vs. Buy and Hold") +
+    ggtitle("AvgEquityShare vs. Buy and Hold") +
     labs(x = "Date" , y = "Growth of $1",
          caption = paste0("\n", source_string, "\n", note_string))
   
@@ -500,7 +532,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
                   "Worst 6-Month Return",
                   "Number of Buys and Sells",
                   "Total Buys and Sells / Total Months"),
-    AggEquityShare = c(paste0("$", round(as.numeric(final_df[nrow(final_df), "value_trend"]), 2)),
+    AvgEquityShare = c(paste0("$", round(as.numeric(final_df[nrow(final_df), "value_trend"]), 2)),
                    round(as.numeric(perf_trend/vol_trend), 1),
                    paste0(100*round(trend_low_dd[1, "min_dd"], 3), "%"),
                    paste0(100*round(trend_low_dd[2, "min_dd"], 3), "%"),
