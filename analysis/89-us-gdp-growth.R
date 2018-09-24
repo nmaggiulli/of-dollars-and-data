@@ -29,9 +29,10 @@ to_plot <- raw %>%
 
 specific_points <- filter(to_plot, year %in% c(1800, 1865, 1926, 2017))
 
-file_path <- paste0(out_path, "/us_real_gdp_log.jpeg")
+file_path <- paste0(out_path, "/us_real_gdp_log_cite.jpeg")
 
-source_string <- str_wrap(paste0("Source:  Louis Johnston and Samuel H. Williamson, 'What Was the U.S. GDP Then?' MeasuringWorth, 2018 (OfDollarsAndData.com)"),
+source_string <- str_wrap(paste0("Source:  Louis Johnston and Samuel H. Williamson, 'What Was the U.S. GDP Then?' MeasuringWorth, 2018,
+                                 http://www.measuringworth.org/usgdp/ (OfDollarsAndData.com)"),
                           width = 85)
 
 note_string <- str_wrap(paste0("Note:  All amounts are in 2012 dollars."))
@@ -59,7 +60,7 @@ my_gtable   <- ggplot_gtable(ggplot_build(plot))
 ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
 # Plot per capita
-file_path <- paste0(out_path, "/us_real_gdp_per_capita_log.jpeg")
+file_path <- paste0(out_path, "/us_real_gdp_per_capita_log_cite.jpeg")
 
 plot <- ggplot(to_plot, aes(x=year, y=real_gdp_per_capita)) +
   geom_line() +
