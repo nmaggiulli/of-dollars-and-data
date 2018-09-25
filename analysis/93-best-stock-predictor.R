@@ -66,6 +66,9 @@ for (i in 1:(nrow(raw) - n_years_lookahead*12)){
   raw[i, lookahead_ret_string] <- prod(1 + raw[i:(i + n_years_lookahead*12-1), "sp500"])^(1/n_years_lookahead) - 1
 }
 
+l_reg <- lm(ret_forward_10yr ~ stock_allocation, data = raw)
+summary(l_reg)
+
 # Set the file_path based on the function input 
 file_path <- paste0(out_path, "/equity_allocation_and_forward_returns.jpeg")
 
