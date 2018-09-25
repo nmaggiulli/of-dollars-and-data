@@ -70,7 +70,7 @@ for (i in 1:(nrow(raw) - n_years_lookahead*12)){
 file_path <- paste0(out_path, "/equity_allocation_and_forward_returns.jpeg")
 
 # Set note and source string
-source_string <- str_wrap("Source: AAII, DFA (OfDollarsAndData.com)",
+source_string <- str_wrap("Source: AAII, DFA, 1987-2018 (OfDollarsAndData.com)",
                           width = 85)
 
 # Plot the allocation vs. future returns
