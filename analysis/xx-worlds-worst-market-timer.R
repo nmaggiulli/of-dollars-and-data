@@ -67,6 +67,29 @@ for(i in 1:nrow(df)){
   }
 }
 
+# Calculate the money weighted return by determing each individual return and weighting it.  
+for (i in 1:nrow(purchases)){
+  dt <- purchases[i, "date"]
+  at <- purchases[i, "amount"]
+  
+  temp <- df %>%
+            filter(date >= dt) %>%
+            mutate(ret = 1 + ret_sp500) %>%
+            pull(ret)
+  
+  print(prod(temp) - 1)
+  
+  purchases[i, "final_value"]  <- prod(temp) * at
+  purchases[i, "total_return"] <- (purchases[i, "final_value"]/at)^(12/length(temp)) - 1
+
+}
+
+# Weight each purchases and then find the total attribution for each and sum
+money_wt_ret <- purchases %>%
+              mutate(weight = final_value/sum(purchases$final_value) * total_return) %>%
+              pull(weight) %>%
+              sum()
+
 # Set the file_path based on the function input 
 file_path <- paste0(out_path, "/portfolio_value_over_time.jpeg")
 
