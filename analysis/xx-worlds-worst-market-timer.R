@@ -86,9 +86,11 @@ for (i in 1:nrow(purchases)){
 
 # Weight each purchases and then find the total attribution for each and sum
 money_wt_ret <- purchases %>%
-              mutate(weight = final_value/sum(purchases$final_value) * total_return) %>%
+              mutate(weight = amount/sum(purchases$amount) * total_return) %>%
               pull(weight) %>%
               sum()
+
+time_wt_ret <- purchases[1, "total_return"]
 
 # Set the file_path based on the function input 
 file_path <- paste0(out_path, "/portfolio_value_over_time.jpeg")
