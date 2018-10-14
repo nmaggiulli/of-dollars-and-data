@@ -45,7 +45,7 @@ airtime_df$pct_airtime <- as.numeric(rep(0, nrow(airtime_df)))
 
   
 # Plot the victim, time trends
-file_path = paste0(exportdir, "07-bowling-green-massacre-charts/victims.jpeg")
+file_path = paste0(exportdir, "0007_bowling_green_massacre_charts/victims.jpeg")
 
   plot <- ggplot(victim_df, aes(x = years, y = victims, col = "red"))  +
     geom_line() +
@@ -78,7 +78,7 @@ ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
 
 # Plot the victim + injured, time trends
-file_path = paste0(exportdir, "07-bowling-green-massacre-charts/victims_and_injured.jpeg")
+file_path = paste0(exportdir, "0007_bowling_green_massacre_charts/victims_and_injured.jpeg")
 
 plot <- ggplot(victim_df, aes(x = years, y = victims_plus_injured, col = "red"))  +
   geom_line() +
@@ -111,7 +111,7 @@ ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
 
 # Plot the breakout by religious status
-file_path = paste0(exportdir, "07-bowling-green-massacre-charts/religious_status.jpeg")
+file_path = paste0(exportdir, "0007_bowling_green_massacre-charts/religious_status.jpeg")
 
 plot <- ggplot(religion_df, aes(x =  religious_status, y = victims_by_religion, fill = religious_status, col = religious_status))  +
   geom_bar(stat = "identity", position = "dodge") +
@@ -144,7 +144,7 @@ ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
 
 # Plot the breakout by media coverage
-file_path = paste0(exportdir, "07-bowling-green-massacre-charts/media.jpeg")
+file_path = paste0(exportdir, "0007_bowling_green_massacre_charts/media.jpeg")
 
 plot <- ggplot(airtime_df, aes(x =  media, y = pct_airtime, fill = media, col = media))  +
   geom_bar(stat = "identity", position = "dodge") +

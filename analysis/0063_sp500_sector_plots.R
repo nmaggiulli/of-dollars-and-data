@@ -23,9 +23,9 @@ library(dplyr)
 
 ########################## Start Program Here ######################### #
 
-cpi <- readRDS(paste0(localdir, "21-FRED-cpi.Rds"))
+cpi <- readRDS(paste0(localdir, "0021_FRED_cpi.Rds"))
 
-df <- readRDS(paste0(localdir, "63_sp500_sector_returns.Rds")) %>%
+df <- readRDS(paste0(localdir, "0063_sp500_sector_returns.Rds")) %>%
   filter(year(date) > 1989, year(date) < 2018) %>%
   mutate(year = year(date),
          ret = ret + 1,
@@ -75,7 +75,7 @@ perf_chase_min_year <- min(perf_chase$year)
   }
  
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "63-sp500-sector-returns/sector_line_charts.jpeg")
+  file_path <- paste0(exportdir, "0063_sp500_sector_returns/sector_line_charts.jpeg")
 
   # Set note and source string
   source_string <- str_wrap("Source: Morningstar, FRED (OfDollarsAndData.com)",

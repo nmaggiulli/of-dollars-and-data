@@ -21,7 +21,7 @@ library(ggrepel)
 ########################## Start Program Here ######################### #
 
 # Load in S&P data from Shiller
-sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                     filter(cape != "NA", date < 2017.01)
 
 first_year <- floor(min(sp500_ret_pe$date))
@@ -114,7 +114,7 @@ for (s_date in s_dates){
   test_market(cape_min = 999, cape_max = 999, start_date = s_date)
 }
 
-write.csv(results_df, paste0(exportdir, "26a-market-timing-tests/timing-results.csv"))
+write.csv(results_df, paste0(exportdir, "0026a_market_timing_tests/timing-results.csv"))
 
             
 

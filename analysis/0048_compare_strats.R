@@ -24,7 +24,7 @@ library(dplyr)
 ########################## Start Program Here ######################### #
 
 # Load in BV returns and remove the commodities from the returns
-full_bv_returns <- readRDS(paste0(localdir, "06-bv-returns.Rds")) %>%
+full_bv_returns <- readRDS(paste0(localdir, "0006_bv_returns.Rds")) %>%
                     select(-Commodities, -Gold, -`U.S. Home Price`)
 
 # Convert year to a date object
@@ -60,7 +60,7 @@ order_vec <- to_plot[order(to_plot$value), "key"] %>% collect %>% .[["key"]]
 to_plot$key <- factor(to_plot$key, levels = order_vec)
 
 # Set the file_path for the next output
-file_path = paste0(exportdir, "48-compare-strats/compare-return-strats.jpeg")
+file_path = paste0(exportdir, "0048_compare_strats/compare-return-strats.jpeg")
 
 plot <- ggplot(data = to_plot, aes(x = key, y = value, fill = key)) +
   geom_bar(stat="identity") +

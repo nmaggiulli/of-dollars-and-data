@@ -52,9 +52,9 @@ for (i in 1:n_years){
   
   # Set the file_path based on the function input 
   if (i < 10){
-    file_path = paste0(exportdir, "24-sequence-of-return-plots/plot-0",i ,".jpeg")
+    file_path = paste0(exportdir, "0024_sequence_of_return_plots/plot-0",i ,".jpeg")
   } else{
-    file_path = paste0(exportdir, "24-sequence-of-return-plots/plot-",i ,".jpeg")
+    file_path = paste0(exportdir, "0024_sequence_of_return_plots/plot-",i ,".jpeg")
   }
   
   # Create title with ticker in subtitle

@@ -12,13 +12,13 @@ library(scales)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "87-scale-analysis"
+folder_name <- "0087_scale_analysis"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-df <- readRDS(paste0(localdir, "87-employee-rev-ycharts.Rds"))
+df <- readRDS(paste0(localdir, "0087_employee_rev_ycharts.Rds"))
 
 vars <- c("assets", "netinc", "revenue")
 

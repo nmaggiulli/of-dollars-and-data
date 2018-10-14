@@ -15,7 +15,7 @@ library(igraph)
 ########################## Start Program Here ######################### #
 
 # Read in BV data
-bv <- readRDS(paste0(localdir, "06-bv-returns.Rds"))
+bv <- readRDS(paste0(localdir, "0006_bv_returns.Rds"))
 
 ## Reproduce colors from ggplot
 gg_color_hue <- function(n) {
@@ -29,7 +29,7 @@ years_list <- seq(as.numeric(substr(min(unique(bv$year)), 1, 4)) + 4,
                   1)
 
 # Create PDF
-pdf(paste0(exportdir, "22-bv-network-and-rank-plots/5-yr-correlations-1980-2015.pdf"))
+pdf(paste0(exportdir, "0022_bv_network_and_rank_plots/5-yr-correlations-1980-2015.pdf"))
 
 # Loop through years
 for (y in years_list){

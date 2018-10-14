@@ -26,7 +26,7 @@ library(BenfordTests)
 my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00", "#A65628")
 
 # Read in data
-nyse_fundamentals <- readRDS(paste0(localdir, "18-nyse-fundamentals.Rds"))
+nyse_fundamentals <- readRDS(paste0(localdir, "0018_nyse_fundamentals.Rds"))
 
 # Add vars to test
 vars_to_test <- c("Accounts.Payable", "Accounts.Receivable", "Capital.Expenditures",
@@ -92,7 +92,7 @@ for (i in 1:nrow(vars_df)){
                        benford_pct = benford_count/n_obs)
   
   # Set the file path
-  file_path = paste0(exportdir, "18-nyse-benford-plots/benford-", sname,".jpeg")
+  file_path = paste0(exportdir, "0018_nyse_benford_plots/benford-", sname,".jpeg")
   
   # Get the p-value from the statisical test
   p_value <- round(min(to_plot$p_value)*100, 2)

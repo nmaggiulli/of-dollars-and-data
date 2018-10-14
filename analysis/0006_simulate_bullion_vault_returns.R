@@ -27,7 +27,7 @@ library(fTrading)
 # ############################  End  ################################## #
 
 # Load in BV returns
-full_bv_returns <- readRDS(paste0(localdir, "06-bv-returns.Rds"))
+full_bv_returns <- readRDS(paste0(localdir, "0006_bv_returns.Rds"))
 
 # Convert year to a date object
 full_bv_returns$year <- as.Date(full_bv_returns$year, "%d/%m/%y")
@@ -50,7 +50,7 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
 
 ############################### First Returns Plot ###############################  
   # Set the file_path for the output
-  file_path = paste0(exportdir, "06-simulate-bv-returns/bv-asset-returns.jpeg")
+  file_path = paste0(exportdir, "0006_simulate_bv_returns/bv-asset-returns.jpeg")
   
   # Plot the returns to show how much they change over time
   plot <- ggplot(data = melted_returns, aes(x = year, y = value, col = asset, fill = asset)) +
@@ -88,7 +88,7 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
   
 ############################### Second Returns Plot ###############################  
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "06-simulate-bv-returns/bv-asset-returns-all.jpeg")
+  file_path = paste0(exportdir, "0006_simulate_bv_returns/bv-asset-returns-all.jpeg")
   
   plot <- ggplot(data = melted_returns, aes(x = year, y = value, col = asset)) +
       #geom_bar(stat = "identity", position = "dodge") +
@@ -290,7 +290,7 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
     scale_y_continuous(label = percent, limits = c(0.02, .10), breaks = seq(0.02, 0.10, 0.02))
   
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "06-simulate-bv-returns/bv-efficient-frontier.jpeg")
+  file_path = paste0(exportdir, "0006_simulate_bv_returns/bv-efficient-frontier.jpeg")
   
   # Add a source and note string for the plots
   source_string <- paste0("Source:  BullionVault U.S. Asset Class Performance Data, ", min_year, "-", max_year," (OfDollarsAndData.com)")
@@ -445,7 +445,7 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
                     dd_all_gold)
     
     # Set the file_path based on the function input 
-    file_path = paste0(exportdir, "06-simulate-bv-returns/bv-drawdowns-less-risky.jpeg")
+    file_path = paste0(exportdir, "0006_simulate_bv_returns/bv-drawdowns-less-risky.jpeg")
     
     top_title <- "Maximum Portfolio Losses\n Across All Simulations"
       
@@ -571,4 +571,4 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
     i <- i + 1
   }
   
-  write.csv(results_df, paste0(exportdir, "06-simulate-bv-returns/portfolio-stats.csv"))
+  write.csv(results_df, paste0(exportdir, "0006_simulate_bv_returns/portfolio-stats.csv"))

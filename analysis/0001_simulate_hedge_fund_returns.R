@@ -90,7 +90,7 @@ plot_sim <- function(
   to_plot <- melt(to_plot, id.vars = "periods")
   
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "01-simulate-hedge-fund-returns/", file_name)
+  file_path = paste0(exportdir, "0001_simulate_hedge_fund_returns/", file_name)
   
   # Plot the fund capital over client capital
   # Each colored line is its own simulation

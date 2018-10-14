@@ -69,7 +69,7 @@ for (i in 1:length(plot_sequence)){
   to_plot <- filter(all_data, year <= plot_sequence[i])
 
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "30-fractal-compounding/compounding-year-", i, ".jpeg")
+  file_path = paste0(exportdir, "0030_fractal_compounding/compounding-year-", i, ".jpeg")
   
 if (i == 1){
   plot <- ggplot(to_plot, aes(x = marker, lower=lower, middle=middle, upper=upper, ymin=ymin, ymax=ymax, 

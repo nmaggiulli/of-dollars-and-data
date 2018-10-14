@@ -27,7 +27,7 @@ library(dplyr)
 my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00", "#A65628")
 
 # Read in data for individual stocks and sp500 Shiller data
-sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
   filter(Date > "1928-01-01")
 
 # Calculate returns for the S&P data
@@ -89,7 +89,7 @@ plot_aligned_drawdowns <- function(n_years_after_bottom){
   }
   
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "47-aligned-bottom-plots/sp500-aligned-bottoms-", n_years_after_bottom, ".jpeg")
+  file_path = paste0(exportdir, "0047_aligned_bottom_plots/sp500-aligned-bottoms-", n_years_after_bottom, ".jpeg")
   
   # Create title based on the number of years
   top_title <- paste0("Larger Declines Usually Lead to\nStronger Recoveries") 

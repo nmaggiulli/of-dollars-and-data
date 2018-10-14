@@ -30,7 +30,7 @@ to_plot    <-  filter(jpy, Date > '1980-01-01') %>%
             price = `Close Price`) %>%
             select(price, date) 
 
-file_path <- paste0(exportdir, "51-when-do-you-sell/jpy-hist-price.jpeg")
+file_path <- paste0(exportdir, "0051_when_do_you_sell/jpy-hist-price.jpeg")
 
 plot <- ggplot(to_plot, aes(x=date, y=price)) +
           geom_line() +

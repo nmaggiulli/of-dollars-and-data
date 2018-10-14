@@ -24,7 +24,7 @@ library(dplyr)
 ########################## Start Program Here ######################### #
 
 # Bring in Blog views data
-views <- read_excel(paste0(importdir, "53-blog-views/blog-views-2017-12-30.xlsx")) %>%
+views <- read_excel(paste0(importdir, "0053_blog_views/blog-views-2017-12-30.xlsx")) %>%
             mutate(views = ifelse(str_detect(Views, "\\."), 
                                         str_replace(trimws(Views), "K", "00"),
                                         str_replace(trimws(Views), "K", "000")),
@@ -42,7 +42,7 @@ for (i in 1:nrow(views)){
 to_plot <- views %>%
               mutate(views = as.numeric(str_replace(views, "\\.", "")))
 
-file_path <- paste0(exportdir, "53-blog-views-histogram/blog-views-hist.jpeg")
+file_path <- paste0(exportdir, "0053_blog_views_histogram/blog-views-hist.jpeg")
 
 plot <- ggplot(to_plot, aes(x = views, y = ..density..)) +
           geom_histogram(fill = "red") +

@@ -23,10 +23,10 @@ library(dplyr)
 ########################## Start Program Here ######################### #
 
 # Load in Damodaran SP500 and Bond data
-hist_bond_stock <- readRDS(paste0(localdir, "21-historical-returns-sp500-bond-damodaran.Rds"))
+hist_bond_stock <- readRDS(paste0(localdir, "0021_historical_returns_sp500_bond_damodaran.Rds"))
 
 # Load in the FRED CPI data
-cpi <- readRDS(paste0(localdir, "21-FRED-cpi.Rds"))
+cpi <- readRDS(paste0(localdir, "0021_FRED_cpi.Rds"))
 
 # Subset historical bond and stock returns and adjust for CPI using FRED data
 hist_bond_stock <-hist_bond_stock %>%
@@ -45,7 +45,7 @@ avg_ret <- mean(hist_bond_stock$ret_10yr_bond)
 
 ############################### First Returns Plot ###############################  
 # Set the file_path for the output
-file_path = paste0(exportdir, "37-bond-returns/bond-returns.jpeg")
+file_path = paste0(exportdir, "0037_bond_returns/bond-returns.jpeg")
 
 to_plot <- hist_bond_stock
 
@@ -79,7 +79,7 @@ ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
 ############################### Second Returns Plot, by Decade ###############################  
 # Set the file_path for the output
-file_path = paste0(exportdir, "37-bond-returns/bond-stock-by-decade.jpeg")
+file_path = paste0(exportdir, "0037_bond_returns/bond-stock-by-decade.jpeg")
 
 to_plot <- hist_bond_stock %>%
             select(decade, ret_10yr_bond) %>%

@@ -74,7 +74,7 @@ y_max <- create_max_min(max(assets_long$value), 100000, ceiling)
 fin_max <- max(filter(assets_long, asset_type == "financial_assets")$value)
 
 # Set the file path
-file_path = paste0(exportdir, "14-human-capital-plots/human-capital-lifetime-plot.jpeg")
+file_path = paste0(exportdir, "0014_human_capital_plots/human-capital-lifetime-plot.jpeg")
 
 # Create plot
 plot <- ggplot(data = assets_long, aes(x = year, y = value, fill = asset_type, alpha = alpha)) +

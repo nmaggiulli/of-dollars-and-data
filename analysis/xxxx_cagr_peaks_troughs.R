@@ -25,7 +25,7 @@ library(dplyr)
 my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00", "#A65628")
 
 # Read in data for individual stocks and sp500 Shiller data
-sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                       filter(date > "1928-01-01")
 
 # Calculate returns for the S&P data
@@ -100,7 +100,7 @@ for (year_filtered in year_seq){
   counter <- counter + 1
   
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "xx-cagr-peaks-troughs/sp500-aligned-drawdowns-",counter,".jpeg")
+  file_path <- paste0(exportdir, "xxxx_cagr_peaks_troughs/sp500-aligned-drawdowns-",counter,".jpeg")
   
   to_plot <- filter(sp500_filtered_all, year <= year_filtered)
   
@@ -147,7 +147,7 @@ for (year_filtered in year_seq){
     ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
     for (j in 1:3){
     counter <- counter + 1
-    file_path <- paste0(exportdir, "xx-cagr-peaks-troughs/sp500-aligned-drawdowns-",counter,".jpeg")
+    file_path <- paste0(exportdir, "xxxx_cagr_peaks_troughs/sp500-aligned-drawdowns-",counter,".jpeg")
     ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
     }
   }

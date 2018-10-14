@@ -104,11 +104,11 @@ if (grab_data == 1){
                 ungroup() %>%
                 mutate(trading_day = row_number())
   
-  write.csv(final_df, paste0(exportdir, "73-margin-simulation/daily_ret_top_stocks.csv"), row.names = FALSE)
+  write.csv(final_df, paste0(exportdir, "0073_margin_simulation/daily_ret_top_stocks.csv"), row.names = FALSE)
 }
 
 # Read in data saved on disk to save time
-final_df <- read.csv(paste0(exportdir, "73-margin-simulation/daily_ret_top_stocks.csv")) %>%
+final_df <- read.csv(paste0(exportdir, "0073_margin_simulation/daily_ret_top_stocks.csv")) %>%
               mutate(year = year(date)) %>%
               filter(year > 2013)
 
@@ -169,7 +169,7 @@ simulate_with_leverage <- function(n_simulations, leverage, sample_length){
   to_plot <- as.data.frame(results_matrix) %>%
                   gather(key=key, value = value, -trading_day)
   
-  file_path <- paste0(exportdir, "73-margin-simulation/", leverage, "x_leverage_with_", sample_length, "_sample.jpeg")
+  file_path <- paste0(exportdir, "0073_margin_simulation/", leverage, "x_leverage_with_", sample_length, "_sample.jpeg")
   
   # Add a source and note string for the plots
   source_string <- str_wrap(paste0("Source:  Yahoo Finance (OfDollarsAndData.com)"),
@@ -228,7 +228,7 @@ colnames(final_results_df) <- c("leverage", "sample_length", "n_simulations", "b
 
 to_plot <- final_results_df 
 
-file_path <- paste0(exportdir, "73-margin-simulation/all_simulation_results.jpeg")
+file_path <- paste0(exportdir, "0073_margin_simulation/all_simulation_results.jpeg")
 
 # Add a source and note string for the plots
 source_string <- str_wrap(paste0("Source:  Yahoo Finance (OfDollarsAndData.com)"),

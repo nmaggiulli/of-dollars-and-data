@@ -26,7 +26,7 @@ library(dplyr)
 ########################## Start Program Here ######################### #
 
 # Read in data for sp500 Shiller data
-sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                      filter(!is.na(cape))
 
 # Calculate returns for the S&P data
@@ -77,7 +77,7 @@ plot_sp <- function(from_year, to_year, title, counter){
   
   print(tail(to_plot))
                 
-  file_path <- paste0(exportdir, "68-sp-pe-dist-by-year/sp-price-", counter_string, ".jpeg")
+  file_path <- paste0(exportdir, "0068_sp_pe_dist_by_year/sp-price-", counter_string, ".jpeg")
   
   plot <- ggplot(data = to_plot, aes(x=ret, y=factor(year), fill = cape_by_year)) +
     geom_joy_gradient(rel_min_height = 0.01, scale = 3) +

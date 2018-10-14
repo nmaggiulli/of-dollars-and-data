@@ -20,7 +20,7 @@ library(ggrepel)
 
 ########################## Start Program Here ######################### #
 
-bcoin <- readRDS(paste0(localdir, "27-quandl-bitcoin.Rds"))
+bcoin <- readRDS(paste0(localdir, "0027_quandl_bitcoin.Rds"))
 
 start_date <- min(bcoin$date)
 end_date   <- max(bcoin$date)
@@ -58,7 +58,7 @@ for (i in 1:length(date_sequence)){
   }
 
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "27b-quandl-bitcoin-drawdowns/drawdowns-bitcoin-", i_string,".jpeg")
+  file_path = paste0(exportdir, "0027b_quandl_bitcoin_drawdowns/drawdowns-bitcoin-", i_string,".jpeg")
 
   # Create title with ticker in subtitle
   top_title <- paste0("Bitcoin Has Experienced Multiple\nDrawdowns of Over 50%")

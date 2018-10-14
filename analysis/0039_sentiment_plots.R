@@ -23,7 +23,7 @@ library(dplyr)
 ########################## Start Program Here ######################### #
 
 # Read in sentiment data
-sentiment <- readRDS(paste0(localdir, "39-quandl-aaii-sentiment.Rds")) %>%
+sentiment <- readRDS(paste0(localdir, "0039_quandl_aaii_sentiment.Rds")) %>%
               gather(key=key, value=value, -date) %>%
               filter(!is.na(value))
 
@@ -67,7 +67,7 @@ plot_sentiment <- function(start_date, end_date, highlight_start, highlight_end,
     top_title <- "Bearish Sentiment Was Highest\nDuring the Great Recession"
   }
   
-  file_path <- paste0(exportdir, "39-crowd/", type, "-",  start_date, "-", end_date,".jpeg")
+  file_path <- paste0(exportdir, "0039_crowd/", type, "-",  start_date, "-", end_date,".jpeg")
   
   plot <- ggplot(to_plot, aes(x = date, y = index, col = key)) +
             geom_line() +

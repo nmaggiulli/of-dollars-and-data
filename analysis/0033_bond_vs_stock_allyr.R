@@ -18,7 +18,7 @@ library(RColorBrewer)
 library(stringr)
 library(ggrepel)
 
-out_path <- paste0(exportdir, "33-by-year-stock-bond")
+out_path <- paste0(exportdir, "0033_by_year_stock_bond")
 
 ########################## Start Program Here ######################### #
 
@@ -27,13 +27,13 @@ out_path <- paste0(exportdir, "33-by-year-stock-bond")
 my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00", "#A65628")
 
 # Load in Damodaran SP500 and Bond data
-hist_bond_stock <- readRDS(paste0(localdir, "21-historical-returns-sp500-bond-damodaran.Rds"))
+hist_bond_stock <- readRDS(paste0(localdir, "0021_historical_returns_sp500_bond_damodaran.Rds"))
 
 # Get start year
 start_year <- min(hist_bond_stock$Date)
 
 # Load in the FRED CPI data
-cpi <- readRDS(paste0(localdir, "21-FRED-cpi.Rds"))
+cpi <- readRDS(paste0(localdir, "0021_FRED_cpi.Rds"))
 
 # Adjust historical bond and stock returns for CPI using FRED data
 hist_bond_stock <- hist_bond_stock %>%
@@ -88,7 +88,7 @@ for (n_years in n_years_seq){
   to_plot <- gather(to_plot, key= "asset", value="ret_yr", -Date)
     
     # Set the file_path for the next output
-    file_path = paste0(exportdir, "33-by-year-stock-bond/sp500-vs-us-bond-", n_years_string, "-yr.jpeg")
+    file_path = paste0(exportdir, "0033_by_year_stock_bond/sp500-vs-us-bond-", n_years_string, "-yr.jpeg")
     
     # Create our plot of rolling 30 year returns
     plot <- ggplot(data = to_plot, aes(x = Date, y = ret_yr, col = as.factor(asset))) +

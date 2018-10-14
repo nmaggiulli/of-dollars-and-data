@@ -23,7 +23,7 @@ library(dplyr)
 ########################## Start Program Here ######################### #
 
 # Load in BV returns
-full_bv_returns <- readRDS(paste0(localdir, "06-bv-returns.Rds")) %>%
+full_bv_returns <- readRDS(paste0(localdir, "0006_bv_returns.Rds")) %>%
                     select(year, Gold)
 
 # Convert year to a date object
@@ -43,7 +43,7 @@ for (i in 1:nrow(full_bv_returns)){
 
 ############################### First Returns Plot ###############################  
 # Set the file_path for the output
-file_path = paste0(exportdir, "38-gold-returns/gold-returns.jpeg")
+file_path = paste0(exportdir, "0038_gold_returns/gold-returns.jpeg")
 
 to_plot <- full_bv_returns
 
@@ -117,7 +117,7 @@ start_date <- min(to_plot$date)
 end_date   <- max(to_plot$date)
 
 # File path to save
-file_path <- paste0(exportdir, "38-gold-returns/gold-drawdowns.jpeg")
+file_path <- paste0(exportdir, "0038_gold_returns/gold-drawdowns.jpeg")
 
 # Create the plot object
 plot <- ggplot(to_plot, aes(x = date, y = pct)) +

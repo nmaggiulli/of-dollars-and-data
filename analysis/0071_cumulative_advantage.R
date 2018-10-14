@@ -102,7 +102,7 @@ run_share_simulation <- function(starting_advantage, n_colors){
   }
   
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "71-cumulative-advantage/dist_", starting_advantage_string,".jpeg")
+  file_path <- paste0(exportdir, "0071_cumulative_advantage/dist_", starting_advantage_string,".jpeg")
   
   # Add a source and note string for the plots
   source_string <- str_wrap(paste0("Source:  Simulated data (OfDollarsAndData.com)"),
@@ -143,7 +143,7 @@ run_share_simulation <- function(starting_advantage, n_colors){
   to_plot$key <- reorder(to_plot$key, to_plot$value, function(x) -max(x) )
   
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "71-cumulative-advantage/shares_", starting_advantage_string,".jpeg")
+  file_path <- paste0(exportdir, "0071_cumulative_advantage/shares_", starting_advantage_string,".jpeg")
   
   note_string2 <- str_wrap(main_note,
                            width = 85)

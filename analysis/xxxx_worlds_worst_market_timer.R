@@ -18,14 +18,14 @@ library(RColorBrewer)
 library(stringr)
 library(ggrepel)
 
-folder_name <- "xx-worlds-worst-market-timer"
+folder_name <- "xxxx_worlds_worst_market_timer"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
 # Read in data for individual stocks and sp500 Shiller data
-sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                     filter(date >= 1972.11)
 
 # Calculate returns for the S&P data

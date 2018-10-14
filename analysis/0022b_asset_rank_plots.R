@@ -19,7 +19,7 @@ library(lubridate)
 ########################## Start Program Here ######################### #
 
 # Read in BV data
-bv <- readRDS(paste0(localdir, "06-bv-returns.Rds")) %>%
+bv <- readRDS(paste0(localdir, "0006_bv_returns.Rds")) %>%
         mutate(`10 Year Treasury Bonds` = `Treasury 10yr`,
                `3 Month T-Bills` = `Tbill 3m`) %>%
           select(-`Treasury 10yr`, -`Tbill 3m`)
@@ -48,7 +48,7 @@ for (k in 1:length(varlist)){
             mutate(c = ifelse(key == varlist[k], "1", "0"))
   
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "22-bv-network-and-rank-plots/rank-", varlist[k] ,"-by-year.jpeg")
+  file_path = paste0(exportdir, "0022_bv_network_and_rank_plots/rank-", varlist[k] ,"-by-year.jpeg")
   
   plot <-ggplot(mapping = aes(year, y = rank, group = key, color = c)) +
           geom_line(size = 1.7, alpha = 0.25, data = df) +

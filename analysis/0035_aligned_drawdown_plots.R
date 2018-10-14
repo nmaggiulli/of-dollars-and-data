@@ -25,7 +25,7 @@ library(dplyr)
 my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00", "#A65628")
 
 # Read in data for individual stocks and sp500 Shiller data
-sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                       filter(date > "1928-01-01")
 
 # Calculate returns for the S&P data
@@ -95,7 +95,7 @@ drawdown_dummy(-0.5, "drawdown_50pct")
 
 # Create drawdown plots
 # Set the file_path based on the function input 
-file_path = paste0(exportdir, "35-aligned-drawdown-plots/drawdowns-with-markers.jpeg")
+file_path = paste0(exportdir, "0035_aligned_drawdown_plots/drawdowns-with-markers.jpeg")
 
 # Create title with ticker in subtitle
 top_title <- paste0("The S&P 500 Has Had ", drawdown_30pct, " Drawdowns of \nOver 30% Since the Late 1920s")
@@ -171,7 +171,7 @@ plot_aligned_drawdowns <- function(n_years_after_peak, ymax){
   }
   
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "35-aligned-drawdown-plots/sp500-aligned-drawdowns-", n_years_after_peak, ".jpeg")
+  file_path = paste0(exportdir, "0035_aligned_drawdown_plots/sp500-aligned-drawdowns-", n_years_after_peak, ".jpeg")
   
   # Create title based on the number of years
   if (n_years_after_peak == 5){

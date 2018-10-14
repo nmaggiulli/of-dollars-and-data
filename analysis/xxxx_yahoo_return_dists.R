@@ -40,7 +40,7 @@ create_dist_compare <- function(ticker, period, title, from_year, to_year, max, 
     
   } else {
     
-    df <- readRDS(paste0(localdir, "27-quandl-bitcoin.Rds")) %>%
+    df <- readRDS(paste0(localdir, "0027_quandl_bitcoin.Rds")) %>%
             filter(day(date) == 28)
     
     source_string <- paste0("Source:  Quandl (OfDollarsAndData.com)")
@@ -55,7 +55,7 @@ create_dist_compare <- function(ticker, period, title, from_year, to_year, max, 
   
   assign(ticker, to_plot, envir = .GlobalEnv)
   
-  file_path <- paste0(exportdir, "xx-yahoo-return-dists/", ticker, "-", lowcase_period, "-distributions-",from_year, "-", to_year, ".jpeg")
+  file_path <- paste0(exportdir, "xxxx_yahoo_return_dists/", ticker, "-", lowcase_period, "-distributions-",from_year, "-", to_year, ".jpeg")
 
   plot <- ggplot(data = to_plot, aes(x=ret, y=factor(year), fill = factor(year))) +
     geom_joy_gradient(rel_min_height = 0.01, scale = 3) +

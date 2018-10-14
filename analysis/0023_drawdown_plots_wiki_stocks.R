@@ -21,8 +21,8 @@ library(ggrepel)
 ########################## Start Program Here ######################### #
 
 # Read in data for individual stocks and sp500 Shiller data
-all_wiki_stocks <- readRDS(paste0(localdir, "23-wiki-single-stocks.Rds"))
-sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+all_wiki_stocks <- readRDS(paste0(localdir, "0023_wiki_single_stocks.Rds"))
+sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                     filter(Date > 1960)
 
 # Calculate returns for the S&P data
@@ -98,7 +98,7 @@ names(to_plot) <- c(names(to_plot[, 1:2]), "ticker")
   
       
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "23-drawdown-plots/drawdowns-facet.jpeg")
+  file_path = paste0(exportdir, "0023_drawdown_plots/drawdowns-facet.jpeg")
   
   # Create title with ticker in subtitle
   top_title <- paste0("Individual Stock Drawdowns Can Be\nMore Extreme Than the Market")

@@ -25,7 +25,7 @@ library(stringr)
 my_palette <- c("#E41A1C", "#4DAF4A", "#000000", "#377EB8", "#984EA3", "#FF7F00", "#A65628")
 
 # Load in S&P data from Shiller
-sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
+sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
 # Subset S&P 500 returns
 sp500_ret_pe <- filter(sp500_ret_pe, Date < 2017.01)
@@ -86,7 +86,7 @@ for (n in n_years_vec){
   }
   
   # Set the file path
-  file_path = paste0(exportdir, "32-dividend-share-plots/dividend-share-over-time-", n_years, ".jpeg")
+  file_path = paste0(exportdir, "0032_dividend_share_plots/dividend-share-over-time-", n_years, ".jpeg")
   
   # Create plot 
   plot <- ggplot(data = to_plot, aes(x = Date, y = div_share, fill = as.factor(1))) +

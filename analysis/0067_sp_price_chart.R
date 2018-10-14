@@ -26,7 +26,7 @@ library(dplyr)
 ########################## Start Program Here ######################### #
 
 # Read in data for sp500 Shiller data
-sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                      filter(!is.na(cape))
 
 # Calculate returns for the S&P data
@@ -68,7 +68,7 @@ plot_sp <- function(from_year, to_year, lag_cape, title){
     }
   }
   
-  file_path <- paste0(exportdir, "67-sp-price-chart/sp-price-",from_year, "-", to_year, "-lag-", lag_cape ,".jpeg")
+  file_path <- paste0(exportdir, "0067_sp_price_chart/sp-price-",from_year, "-", to_year, "-lag-", lag_cape ,".jpeg")
   
   y_max <- max(to_plot$index)
   

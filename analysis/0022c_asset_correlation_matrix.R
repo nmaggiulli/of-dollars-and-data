@@ -16,7 +16,7 @@ library(Hmisc)
 ########################## Start Program Here ######################### #
 
 # Read in BV data
-bv <- readRDS(paste0(localdir, "06-bv-returns.Rds"))
+bv <- readRDS(paste0(localdir, "0006_bv_returns.Rds"))
 
 # Create years_list for looping
 years_list <- seq(as.numeric(substr(min(unique(bv$year)), 1, 4)) + 4,
@@ -41,7 +41,7 @@ create_corr_matrix <- function(y){
 
 for (y in years_list){
   # Create Jpegs
-  jpeg(paste0(exportdir, "22c-corr-matrix/corr-",y, ".jpeg"))
+  jpeg(paste0(exportdir, "0022c_corr_matrix/corr-",y, ".jpeg"))
   create_corr_matrix(y)
   dev.off()
 }

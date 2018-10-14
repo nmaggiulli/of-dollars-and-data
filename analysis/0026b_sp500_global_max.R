@@ -22,7 +22,7 @@ library(magrittr)
 ########################## Start Program Here ######################### #
 
 # Load in S&P data from Shiller
-sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                     filter(date >= 1880.01, date < 2017.01)
 
 first_year <- floor(min(sp500_ret_pe$date))
@@ -86,7 +86,7 @@ for (i in 2:length(years)){
   }
 
   # File path to save plot
-  file_path = paste0(exportdir, "26b-sp500-global-max/sp500-global-maxima-", i_string, ".jpeg")
+  file_path = paste0(exportdir, "0026b_sp500_global_max/sp500-global-maxima-", i_string, ".jpeg")
 
   # Plot the entire price series with local maxima
   plot <- ggplot(to_plot, aes(x = date, y = price_final)) +
@@ -166,7 +166,7 @@ for (j in 1:length(global_max_vec)){
 df_months <- data.frame(x = sp500_ret_pe$date, y = max_dist_vec) 
 
 # File path to save plot
-file_path = paste0(exportdir, "26a-market-timing-tests/sp500-peaks-global-maxima.jpeg")
+file_path = paste0(exportdir, "0026a_market_timing_tests/sp500-peaks-global-maxima.jpeg")
 
 plot <- ggplot(df_months, aes(x = x)) +
   geom_area(data = df_months, aes(y = y), fill = "blue", stat = "identity") +

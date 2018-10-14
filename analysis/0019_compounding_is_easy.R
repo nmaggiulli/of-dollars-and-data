@@ -58,7 +58,7 @@ for (d in delay_vector){
               mutate(text_flag = ifelse(increase_pct > 3.57 & increase_pct < 3.98, 1 ,0))
   
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "19-compounding-is-easy/return_pcts.jpeg")
+  file_path = paste0(exportdir, "0019_compounding_is_easy/return_pcts.jpeg")
   
   plot <- ggplot(data = to_plot, aes(x = years_delayed, y = increase_pct, col = as.factor(return))) +
     geom_line() +

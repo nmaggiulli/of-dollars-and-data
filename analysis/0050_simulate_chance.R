@@ -77,7 +77,7 @@ for (p in period_list){
   
   # Plot the output
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "50-simulate-chance/simulated-chance-", p, ".jpeg")
+  file_path = paste0(exportdir, "0050_simulate_chance/simulated-chance-", p, ".jpeg")
   
   # Plot the fund capital over client capital
   # Each colored line is its own simulation

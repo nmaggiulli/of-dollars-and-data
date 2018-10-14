@@ -25,13 +25,13 @@ library(ggrepel)
 my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00", "#A65628")
 
 # Load in Damodaran SP500 and Bond data
-hist_bond_stock <- readRDS(paste0(localdir, "21-historical-returns-sp500-bond-damodaran.Rds"))
+hist_bond_stock <- readRDS(paste0(localdir, "0021_historical_returns_sp500_bond_damodaran.Rds"))
 
 # Get start year
 start_year <- min(hist_bond_stock$Date)
 
 # Load in the FRED CPI data
-cpi <- readRDS(paste0(localdir, "21-FRED-cpi.Rds"))
+cpi <- readRDS(paste0(localdir, "0021_FRED_cpi.Rds"))
 
 # Number of years to calculate returns over
 n_years <- 30
@@ -76,7 +76,7 @@ for (i in 1:length(date_seq)){
 to_plot <- gather(to_plot, key= "asset", value="ret_30yr", -Date)
   
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "31-against-the-gods/sp500-vs-us-bond-30-yr.jpeg")
+  file_path = paste0(exportdir, "0031_against_the_gods/sp500-vs-us-bond-30-yr.jpeg")
   
   # Create our plot of rolling 30 year returns
   plot <- ggplot(data = to_plot, aes(x = Date, y = ret_30yr, col = as.factor(asset))) +

@@ -20,7 +20,7 @@ library(ggrepel)
 
 ########################## Start Program Here ######################### #
 
-world_cap <- readRDS(paste0(localdir, "29-dimson-world-market-cap.Rds")) %>%
+world_cap <- readRDS(paste0(localdir, "0029_dimson_world_market_cap.Rds")) %>%
               arrange(year, desc(region)) %>%
               group_by(year) %>% 
               mutate(pos = cumsum(pct)- pct/2)
@@ -34,7 +34,7 @@ years <- unique(world_cap$year)
 for (yr in years){
   
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "29-e-pluribus-unum/dimson-world-market-cap-", yr, ".jpeg")
+  file_path = paste0(exportdir, "0029_e_pluribus_unum/dimson-world-market-cap-", yr, ".jpeg")
   
   # Create title with ticker in subtitle
   top_title <- paste0("Share of World Stock Market\n", yr)

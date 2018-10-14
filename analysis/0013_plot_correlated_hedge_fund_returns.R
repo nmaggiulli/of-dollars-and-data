@@ -21,7 +21,7 @@ library(stringr)
 ########################## Start Program Here ######################### #
 
 # Load data fom local library
-hf_results <- readRDS(paste0(localdir, "13-hf-correlation-results.Rds"))
+hf_results <- readRDS(paste0(localdir, "0013_hf_correlation_results.Rds"))
 
 mu_market <- mean(hf_results$mu_market)
 sd_market <- mean(hf_results$sd_market)
@@ -41,7 +41,7 @@ unique_outperformance <- unique(hf_results$hf_corr_to_market)
 for (j in unique_outperformance){
   to_plot <- filter(hf_results, hf_corr_to_market == j)
   
-  file_path = paste0(exportdir, "13-simulate-correlated-hedge-fund-returns/hf-outperform-", j ,".jpeg")
+  file_path = paste0(exportdir, "0013_simulate_correlated_hedge_fund_returns/hf-outperform-", j ,".jpeg")
   
   plot <- ggplot(to_plot, aes(x = hf_outperformance, y = hf_outperform_pct, col = scenario_name)) +
             geom_line() +

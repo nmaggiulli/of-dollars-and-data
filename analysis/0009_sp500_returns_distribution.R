@@ -22,7 +22,7 @@ library(stats)
 ########################## Start Program Here ######################### #
 
 # Load in S&P data from Shiller
-sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
+sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
 # Create a function to determine the percentage of the total return that is related to price (not dividends)
 # Also use it to find the percentage of months that represent the total return over the period being used
@@ -94,7 +94,7 @@ ymax <- ceiling(max(to_plot[, "ret_1_month"]) * 10)/ 10
 ymin <- floor(min(to_plot[, "ret_1_month"]) * 10) / 10
 
 # Set the file_path for the next output
-file_path = paste0(exportdir, "09-sp500-returns-pe/top-monthly-returns-",first_year,".jpeg")
+file_path = paste0(exportdir, "0009_sp500_returns_pe/top-monthly-returns-",first_year,".jpeg")
 
 # Create the plot with labels using geom_text_repel
 plot <- ggplot(data = to_plot, aes(x = reorder(date, -ret_1_month), y = ret_1_month, col = as.factor(before_total), fill =  as.factor(before_total))) +
@@ -154,7 +154,7 @@ ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 #Try a histogram plot as well
 
 # Set the file_path for the next output
-file_path = paste0(exportdir, "09-sp500-returns-pe/hist-returns-",first_year,".jpeg")
+file_path = paste0(exportdir, "0009_sp500_returns_pe/hist-returns-",first_year,".jpeg")
 
 # Create the plot with labels using geom_text_repel
 plot <- ggplot(data = to_plot, aes(x = ret_1_month)) +

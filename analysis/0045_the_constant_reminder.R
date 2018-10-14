@@ -67,7 +67,7 @@ for (i in 1:length(years_to_plot)){
   to_plot <- filter(results_df, year == years_to_plot[i])
   
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "45-the-constant-reminder/saving-plot-", i_string, ".jpeg")
+  file_path = paste0(exportdir, "0045_the_constant_reminder/saving-plot-", i_string, ".jpeg")
   
   plot <- ggplot(data = to_plot, aes(x = rate_label, y = value, fill = rate_label)) +
     geom_bar(stat="identity") +

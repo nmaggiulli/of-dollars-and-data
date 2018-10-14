@@ -56,7 +56,7 @@ create_dist_compare <- function(ticker1, ticker2, period, title, from_year, to_y
       to_plot <- df1
     }
     
-  file_path <- paste0(exportdir, "51-when-do-you-sell/", ticker1, "-", ticker2, "-price-chart.jpeg")
+  file_path <- paste0(exportdir, "0051_when_do_you_sell/", ticker1, "-", ticker2, "-price-chart.jpeg")
 
   plot <- ggplot(to_plot, aes(x=date, y=value, col=ticker)) +
             geom_line() +

@@ -52,7 +52,7 @@ drawdown_path <- function(vp){
 
 to_plot <- drawdown_path(df)
 
-file_path <- paste0(exportdir, "74-buy-and-hold-good-luck/drawdowns-since-2009.jpeg")
+file_path <- paste0(exportdir, "0074_buy_and_hold_good_luck/drawdowns-since-2009.jpeg")
 
 # Add a source and note string for the plots
 source_string <- str_wrap(paste0("Source:  Yahoo Finance (OfDollarsAndData.com)"),

@@ -24,7 +24,7 @@ library(dplyr)
 ########################## Start Program Here ######################### #
 
 # Read in data for sp500 Shiller data
-sp500_full    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+sp500_full    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
   filter(!is.na(cape)) %>%
   mutate(date = as.Date(paste0(
     substring(as.character(date), 1, 4),
@@ -114,7 +114,7 @@ plot_sma <- function(start_year, end_year, sma_months){
                             width = 80)
   
   # Set output path
-  file_path <- paste0(exportdir, "55-trend-testing/trend-v-buy-hold-",start_year, "-", end_year, "-", sma_months, "-month-sma.jpeg")
+  file_path <- paste0(exportdir, "0055_trend_testing/trend-v-buy-hold-",start_year, "-", end_year, "-", sma_months, "-month-sma.jpeg")
   
   plot <- ggplot(to_plot, aes(x = date, y = value)) +
             geom_rect(data=filter(dates, cash == 1), aes(xmin = date, ymin = 0, 

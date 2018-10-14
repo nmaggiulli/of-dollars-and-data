@@ -22,7 +22,7 @@ library(Hmisc)
 ########################## Start Program Here ######################### #
 
 # Load data fom local library
-scf_stack <- readRDS(paste0(localdir, "03-scf-stack.Rds"))
+scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds"))
 
 # Filter data to exclude those over 65
 scf_stack <- filter(scf_stack, agecl != "75+" & agecl != "65-74")
@@ -107,7 +107,7 @@ plot_networth <- function(type){
                 
     if (type == 1){
       # Set the file_path based on the function input 
-      file_path = paste0(exportdir, "03-scf-networth-charts/edc_", as.character(n), ".jpeg")
+      file_path = paste0(exportdir, "0003_scf_networth_charts/edc_", as.character(n), ".jpeg")
       
       # Create a dynamic title based upon the agecl and edcl
       top_title <- paste0("Education Level:  ", j, "\n", last_year)
@@ -126,9 +126,9 @@ plot_networth <- function(type){
         labs(x = "Age Group" , y = "Net Worth ($)")
     } else if (type == 2 || type == 3){
       if (type == 2){
-        file_path = paste0(exportdir, "03-scf-networth-charts/edc_", as.character(n), "by_age_year", ".jpeg")
+        file_path = paste0(exportdir, "0003_scf_networth_charts/edc_", as.character(n), "by_age_year", ".jpeg")
       } else if (type == 3){
-        file_path = paste0(exportdir, "03-scf-networth-charts/edc_", as.character(n), "by_age_year_90", ".jpeg")
+        file_path = paste0(exportdir, "0003_scf_networth_charts/edc_", as.character(n), "by_age_year_90", ".jpeg")
       }
       # Create a dynamic title based upon the agecl and edcl
       top_title <- paste0("Education Level:  ", j, "\nBy Age Group Over Time")

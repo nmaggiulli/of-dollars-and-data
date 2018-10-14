@@ -65,7 +65,7 @@ note_string   <- str_wrap(paste0("Note:  Assumes you save the same after-tax amo
                           width = 80)
 
 # Set output path
-file_path <- paste0(exportdir, "56-brute-force-savings/savings-rate-vs-time.jpeg")
+file_path <- paste0(exportdir, "0056_brute_force_savings/savings-rate-vs-time.jpeg")
 
 plot <- ggplot(to_plot, aes(x = savings_rate, y = n_periods_to_retire, col = annual_return)) +
   geom_line() +

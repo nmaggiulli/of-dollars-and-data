@@ -33,7 +33,7 @@ my_palette <- c("#E41A1C", "#4DAF4A", "#377EB8", "#000000", "#984EA3", "#FF7F00"
 # Write function to read in a particular tier
 read_in_tier <- function(name){
   string <- deparse(substitute(name))
-  temp <- readRDS(paste0(localdir, "15_metro_zhvi_", string,"tier.Rds"))
+  temp <- readRDS(paste0(localdir, "0015_metro_zhvi_", string,"tier.Rds"))
   temp <- filter(temp, year >= start_year)
   temp$type <- toTitleCase(string)
   assign(paste0("metro_zhvi_", string), temp, envir = .GlobalEnv)
@@ -130,7 +130,7 @@ for (i in 1:3){
   
   # Plot the result
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "15-zillow-home-price/", outname, ".jpeg")
+  file_path = paste0(exportdir, "0015_zillow_home_price/", outname, ".jpeg")
   
   # Create the plot
   plot <- ggplot(to_plot, aes(x = year, y = index, col = type)) +

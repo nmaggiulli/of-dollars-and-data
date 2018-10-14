@@ -22,7 +22,7 @@ library(magick)
 ########################## Start Program Here ######################### #
 
 # Load in UE data
-ue_stack <- readRDS(paste0(localdir, "12-bls-ue.Rds")) %>%
+ue_stack <- readRDS(paste0(localdir, "0012_bls_ue.Rds")) %>%
               select(year, period, area_text, measure_text, area_type_code, value)
 
 # Create 2016 data for the states only (take mean of the months)
@@ -180,7 +180,7 @@ plot_year_measure <- function(yr, measure, geo){
                 left_join(get(geo, envir = .GlobalEnv))
   
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "12-bls-maps/", geoname, "-map-", measure, "-", yr, ".jpg")
+  file_path = paste0(exportdir, "0012_bls_maps/", geoname, "-map-", measure, "-", yr, ".jpg")
   
   # Create a string to explain an increase or decrease in a measure
   # This will be used for titles and footnotes
@@ -277,12 +277,12 @@ for (m in measure_list){
     
   # Read in the the individual images
   frames <- lapply(yr_list, function(yr){
-    image_read(paste0(exportdir, "12-bls-maps/", geoname, "-map-", m, "-", yr, ".jpg"))
+    image_read(paste0(exportdir, "0012_bls_maps/", geoname, "-map-", m, "-", yr, ".jpg"))
   })
   
   # Make animation from the frames read in during the prior step
   image_write(image_animate(image_join(frames), fps = 1), 
-              paste0(exportdir, "12-bls-maps/all-", geoname, "-", m,"-maps.gif"))
+              paste0(exportdir, "0012_bls_maps/all-", geoname, "-", m,"-maps.gif"))
   
   }      
 }

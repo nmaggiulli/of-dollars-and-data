@@ -25,7 +25,7 @@ library(plotly)
 py <- plotly("ofdollarsanddata",as.character(plotly_api_key))
 
 # Load data fom local library
-bls_oe <- readRDS(paste0(localdir, "05-bls-oe.Rds"))
+bls_oe <- readRDS(paste0(localdir, "0005_bls_oe.Rds"))
 
 # Filter the data to the national level and for hourly pay percentiles
 bls_oe_filtered <- filter(bls_oe, areatype_name == "National",
@@ -92,7 +92,7 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
 n_occupations_removed <- nrow(bls_oe_wide) - nrow(to_plot)
 
 # Set the file_path based on the function input 
-file_path = paste0(exportdir, "05-bls-occupational-employment/bls-oe-inequality.jpeg")
+file_path = paste0(exportdir, "0005_bls_occupational_employment/bls-oe-inequality.jpeg")
 
 top_title <- "Jobs in the Entertainment Industry\nHave More Unequal Outcomes"
 
@@ -165,6 +165,6 @@ to_post_1 <- plot_ly(data = to_plot, x = ~`Hourly median wage`, y = ~pct75_10_di
   layout(title = top_title, xaxis = xaxis, yaxis = yaxis)
 
 # Post it publically on the ofdollarsanddata plotly profile
-plotly_POST(x = to_post_1, filename =  "05-bls-occupational-employment", sharing =  "public")
+plotly_POST(x = to_post_1, filename =  "0005_bls_occupational_employment", sharing =  "public")
 
 # ############################  End  ################################## #

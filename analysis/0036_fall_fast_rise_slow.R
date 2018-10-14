@@ -22,7 +22,7 @@ library(dplyr)
 ########################## Start Program Here ######################### #
 
 # Read in data for individual stocks and sp500 Shiller data
-sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                     filter(date >= "1920-01-01")
 
 # Calculate returns for the S&P data
@@ -213,7 +213,7 @@ for (j in 1:length(drops)){
   recoveries_df <- filter(to_plot, recovery == 1, recovery_date != date, lead(peak) == 1)
   
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "36-fall-fast-rise-slow/sp500-bottom-peaks-", name, ".jpeg")
+  file_path = paste0(exportdir, "0036_fall_fast_rise_slow/sp500-bottom-peaks-", name, ".jpeg")
   
   # Create the plot object
   plot <- ggplot(to_plot, aes(x = date, y = price_plus_div)) +
@@ -251,7 +251,7 @@ for (j in 1:length(drops)){
 
 # Export a CSV of the peak to bottom and bottom to peak results
 write.csv(results_df, 
-          paste0(exportdir, "36-fall-fast-rise-slow/result_df.csv"),
+          paste0(exportdir, "0036_fall_fast_rise_slow/result_df.csv"),
           row.names = FALSE)
 
 

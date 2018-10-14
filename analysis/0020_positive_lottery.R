@@ -46,7 +46,7 @@ for (i in 1:n_draws){
     i_string <- i
   }
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "20-positive-lottery/draw_", i_string,".jpeg")
+  file_path = paste0(exportdir, "0020_positive_lottery/draw_", i_string,".jpeg")
   
   # Grab data in increasing increments and only color the last observation
   to_plot <- data.frame(x = q[1:i,])

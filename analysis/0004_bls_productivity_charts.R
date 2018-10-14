@@ -21,7 +21,7 @@ library(ggrepel)
 ########################## Start Program Here ######################### #
 
 # Load data fom local library
-bls_productivity <- readRDS(paste0(localdir, "04-bls-productivity.Rds"))
+bls_productivity <- readRDS(paste0(localdir, "0004_bls_productivity.Rds"))
 
 # Filter out annual averages and to all employed individuals
 bls_productivity <- filter(bls_productivity, 
@@ -32,7 +32,7 @@ bls_productivity <- filter(bls_productivity,
                            sector_name == "Manufacturing" | sector_name == "Business")
 
 # Set the file_path based on the function input 
-file_path = paste0(exportdir, "04-bls-productivity/bls-manf-bus-employment-productivity.jpeg")
+file_path = paste0(exportdir, "0004_bls_productivity/bls-manf-bus-employment-productivity.jpeg")
 
 # Define the first and last year_quarter
 first_year_quarter <- max(min(bls_productivity[bls_productivity$sector_name == "Manufacturing", "year_quarter"]),

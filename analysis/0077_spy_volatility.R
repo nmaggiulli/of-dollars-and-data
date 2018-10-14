@@ -19,7 +19,7 @@ library(dplyr)
 
 ########################## Start Program Here ######################### #
 
-spy <- readRDS(paste0(localdir, "77_spy_volatility.Rds"))
+spy <- readRDS(paste0(localdir, "0077_spy_volatility.Rds"))
 
 plot_avg_return <- function(volatility_bucket, num){
   
@@ -41,7 +41,7 @@ plot_avg_return <- function(volatility_bucket, num){
     num_string <- paste0(num)
   }
   
-  file_path <- paste0(exportdir, "77-spy-volatility/vol-bucket-", num_string, "-", volatility_bucket ,".jpeg")
+  file_path <- paste0(exportdir, "0077_spy_volatility/vol-bucket-", num_string, "-", volatility_bucket ,".jpeg")
   
   # Add a source and note string for the plots
   source_string <- str_wrap(paste0("Source: YCharts.com (OfDollarsAndData.com)"),
@@ -85,7 +85,7 @@ source_string <- str_wrap(paste0("Source: YCharts.com (OfDollarsAndData.com)"),
 note_string <- str_wrap(paste0("Note: Shows daily returns sorted by 30-day volatility."),
                         width = 85)
 
-file_path <- paste0(exportdir, "77-spy-volatility/ret-and-vol.jpeg")
+file_path <- paste0(exportdir, "0077_spy_volatility/ret-and-vol.jpeg")
 
 plot <- ggplot(spy, aes(x=vol_spy, y=ret_spy)) +
   geom_point() +

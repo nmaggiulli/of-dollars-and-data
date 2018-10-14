@@ -25,13 +25,13 @@ library(ggrepel)
 my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00", "#A65628")
 
 # Load in S&P data from Shiller
-sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
+sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
 # Load in Damodaran SP500 and Bond data
-hist_bond_stock <- readRDS(paste0(localdir, "21-historical-returns-sp500-bond-damodaran.Rds"))
+hist_bond_stock <- readRDS(paste0(localdir, "0021_historical_returns_sp500_bond_damodaran.Rds"))
 
 # Load in the FRED CPI data
-cpi <- readRDS(paste0(localdir, "21-FRED-cpi.Rds"))
+cpi <- readRDS(paste0(localdir, "0021_FRED_cpi.Rds"))
 
 # Create a starting date for subsetting
 starting_date <- 2011.01
@@ -86,7 +86,7 @@ plot_returns <- function(n_years, ymin, ymax, yby){
   }
     
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "21-returns-by-decade/", n_years ,"yr-returns-by-decade.jpeg")
+  file_path = paste0(exportdir, "0021_returns_by_decade/", n_years ,"yr-returns-by-decade.jpeg")
   
   plot <- ggplot(data = to_plot, aes(x = period, y = price, col = as.factor(start_date))) +
     geom_line(alpha = 0.5) +
@@ -162,7 +162,7 @@ plot_diversified <- function(n_years, wt_sp500){
   }
   
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "21-returns-by-decade/", n_years ,"yr-wstock-", as.character(wt_sp500), "-pct.jpeg")
+  file_path = paste0(exportdir, "0021_returns_by_decade/", n_years ,"yr-wstock-", as.character(wt_sp500), "-pct.jpeg")
   
   plot <- ggplot(data = to_plot, aes(x = period, y = price, col = as.factor(start_date))) +
     geom_line(alpha = 0.5) +

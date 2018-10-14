@@ -12,7 +12,7 @@ library(scales)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "88-viatical-chart"
+folder_name <- "0088_viatical_chart"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 

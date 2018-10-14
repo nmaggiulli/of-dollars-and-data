@@ -31,7 +31,7 @@ x <- seq(0, length(y)-1)
 to_plot <- data.frame(x = x, y = y)
 
 # Set the file_path for the next output
-file_path = paste0(exportdir, "46-a-little-knowledge-is-dangerous/dunning-krueger.jpeg")
+file_path = paste0(exportdir, "0046_a_little_knowledge_is_dangerous/dunning-krueger.jpeg")
 
 plot <- ggplot(data = to_plot, aes(x = x, y = y)) +
   geom_line(col= "red") +

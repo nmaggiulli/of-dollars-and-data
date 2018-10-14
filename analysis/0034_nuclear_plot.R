@@ -27,7 +27,7 @@ n_events <- c(2, rep(0, length(years)-1))
 to_plot <- data.frame(year = years, value = n_events)
 
 # Set the file_path based on the function input 
-file_path = paste0(exportdir, "34-cooperation/nuclear-events.jpeg")
+file_path = paste0(exportdir, "0034_cooperation/nuclear-events.jpeg")
 
 # Create title with ticker in subtitle
 top_title <- paste0("Number of Nuclear Bombs Dropped\non Civilian Locations\n1945 - 2016")

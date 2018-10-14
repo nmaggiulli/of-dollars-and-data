@@ -35,7 +35,7 @@ plot_beg_end <- function(stub, end_date_jpy, end_date_nasdaq, end_date_housing){
               price = `Close Price`) %>%
               select(price, date)
   
-  file_path <- paste0(exportdir, "64-lies-and-stories/", stub, "jpy-hist-price.jpeg")
+  file_path <- paste0(exportdir, "0064-_lies_and_stories/", stub, "jpy-hist-price.jpeg")
   
   source_string <- "Source:  Quandl (OfDollarsAndData.com)"
   note_string   <- str_wrap(paste0("Note:  The Nikkei Index is shown.  Does not adjust for USD currency changes or dividends."),
@@ -58,7 +58,7 @@ plot_beg_end <- function(stub, end_date_jpy, end_date_nasdaq, end_date_housing){
   # Get NASDAQ data
   getSymbols("^IXIC", src="yahoo", from = paste0('1990-01-01'), to = paste0(end_date_nasdaq)) 
   
-  file_path <- paste0(exportdir, "64-lies-and-stories/", stub, "nasdaq-hist-price.jpeg")
+  file_path <- paste0(exportdir, "0064_lies_and_stories/", stub, "nasdaq-hist-price.jpeg")
   
   source_string <- "Source:  Quandl (OfDollarsAndData.com)"
   note_string   <- paste0("Note:  Does not adjust for inflation.")
@@ -106,7 +106,7 @@ plot_beg_end <- function(stub, end_date_jpy, end_date_nasdaq, end_date_housing){
   last_year   <- max(to_plot$year)
   
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "64-lies-and-stories/", stub, "zhvi-us-housing.jpeg")
+  file_path <- paste0(exportdir, "0064_lies_and_stories/", stub, "zhvi-us-housing.jpeg")
   
   # Add a source and note string for the plots
   source_string <- paste0("Source:  Zillow Group, ", year(start_year),"-", year(end_year), " (OfDollarsAndData.com)")

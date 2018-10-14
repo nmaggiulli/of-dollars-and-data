@@ -25,7 +25,7 @@ library(ggrepel)
 my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00", "#A65628")
 
 # Load in S&P data from Shiller
-sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
+sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
 # Subset S&P 500 returns
 sp500_ret_pe <- filter(sp500_ret_pe, cape != "NA")
@@ -67,7 +67,7 @@ n_years <- 100
 to_plot <- bind_rows(ret_1900, ret_2000)
 
 # Set the file_path for the next output
-file_path = paste0(exportdir, "29-e-pluribus-unum/returns_by_century.jpeg")
+file_path = paste0(exportdir, "0029_e_pluribus_unum/returns_by_century.jpeg")
 
 plot <- ggplot(data = to_plot, aes(x = period, y = price, col = as.factor(start_date))) +
   geom_line(alpha = 0.5) +

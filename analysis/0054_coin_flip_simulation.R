@@ -35,7 +35,7 @@ to_plot   <- expand.grid(x = 1:n, y = 1:n)
 to_plot$z <- sample(0:1, n^2, replace = TRUE)
 
 # Set output path
-file_path <- paste0(exportdir, "54-coin-flip-simulation/coin-flip-grid-", n, ".jpeg")
+file_path <- paste0(exportdir, "0054_coin_flip_simulation/coin-flip-grid-", n, ".jpeg")
 
 plot <- ggplot(to_plot, aes(x = x, y = y, fill = z)) +
           geom_raster() +

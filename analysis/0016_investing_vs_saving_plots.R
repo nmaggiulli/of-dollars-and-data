@@ -93,7 +93,7 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
 
 ## Create 1st plot
   # Set the file path
-  file_path = paste0(exportdir, "16-investing-vs-saving/saving-vs-investing.jpeg")
+  file_path = paste0(exportdir, "0016_investing_vs_saving/saving-vs-investing.jpeg")
   
   # Create plot 
   plot <- ggplot(data = to_plot, aes(x = year, fill = type, weight = value)) +
@@ -165,7 +165,7 @@ assets_df$type  <- "investment_pct"
   ymax <- max(assets_df$pct)
   
   # Set the file path
-  file_path = paste0(exportdir, "16-investing-vs-saving/pct-of-total-assets.jpeg")
+  file_path = paste0(exportdir, "0016_investing_vs_saving/pct-of-total-assets.jpeg")
   
   # Create plot 
   plot <- ggplot(data = assets_df, aes(x = year, y = pct, fill = type)) +

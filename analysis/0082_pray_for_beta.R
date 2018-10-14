@@ -11,14 +11,14 @@ library(lubridate)
 library(scales)
 library(tidyverse)
 
-folder_name <- "82-pray-for-beta"
+folder_name <- "0082_pray_for_beta"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
 # Read in data for individual stocks and sp500 Shiller data
-sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
+sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){

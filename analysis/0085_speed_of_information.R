@@ -12,7 +12,7 @@ library(scales)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "85-speed-of-information"
+folder_name <- "0085_speed_of_information"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 

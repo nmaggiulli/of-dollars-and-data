@@ -23,7 +23,7 @@ library(stringr)
 ########################## Start Program Here ######################### #
 
 # Load data fom local library
-scf_stack <- readRDS(paste0(localdir, "03-scf-stack.Rds"))
+scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds"))
 
 scf_stack[is.na(scf_stack$equitinc), "equitinc"] <- 0
 
@@ -47,7 +47,7 @@ i <- 1
   to_plot <- gather(to_plot, key, value, -year)
 
 # Set the file_path based on the loop function input 
-file_path = paste0(exportdir, "10-scf-inequality/inequality-by-type.jpeg")
+file_path = paste0(exportdir, "0010_scf_inequality/inequality-by-type.jpeg")
 
   plot <- ggplot(to_plot, aes(x = year, y = value, col = key)) +
     geom_line() +

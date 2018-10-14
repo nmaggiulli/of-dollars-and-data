@@ -19,12 +19,12 @@ library(ggrepel)
 library(dplyr)
 library(ggplot2)
 
-out_path <- paste0(exportdir, "80-drawdown-recency-sp500")
+out_path <- paste0(exportdir, "0080_drawdown_recency_sp500")
 
 ########################## Start Program Here ######################### #
 
 # Read in data for individual stocks and sp500 Shiller data
-sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
+sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){

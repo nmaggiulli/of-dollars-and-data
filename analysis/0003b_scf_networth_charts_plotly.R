@@ -24,7 +24,7 @@ library(Hmisc)
 py <- plotly("ofdollarsanddata",as.character(plotly_api_key))
 
 # Load data fom local library
-scf_stack <- readRDS(paste0(localdir, "03-scf-stack.Rds"))
+scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds"))
 
 # Filter data to exclude those over 65
 scf_stack <- filter(scf_stack, agecl != "75+" & agecl != "65-74")
@@ -85,8 +85,8 @@ to_post_2 <- plot_ly(data = to_plot_2, x = ~agecl, y = ~value, color = ~`Net Wor
   layout(title = "Education Level: College Degree", xaxis = xaxis, yaxis = yaxis)
                 
 # Post it publically on the ofdollarsanddata plotly profile
-plotly_POST(x = to_post_1, filename =  "03-networth-2013-edc-highschool", sharing =  "public")
-plotly_POST(x = to_post_2, filename =  "03-networth-2013-edc-college", sharing =  "public")
+plotly_POST(x = to_post_1, filename =  "0003_networth_2013_edc_highschool", sharing =  "public")
+plotly_POST(x = to_post_2, filename =  "0003_networth_2013_edc_college", sharing =  "public")
     
 
 

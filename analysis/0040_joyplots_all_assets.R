@@ -24,7 +24,7 @@ library(dplyr)
 ########################## Start Program Here ######################### #
 
 # Load in BV returns
-full_bv_returns <- readRDS(paste0(localdir, "06-bv-returns.Rds"))
+full_bv_returns <- readRDS(paste0(localdir, "0006_bv_returns.Rds"))
 
 # Convert year to a date object
 full_bv_returns$year <- as.Date(full_bv_returns$year, "%d/%m/%y")
@@ -38,11 +38,11 @@ for (yr in 1:21){
   to_plot <- gather(full_bv_returns, key=key, value=value, -year)
   
   if (yr < 10){
-    file_path <- paste0(exportdir, "40a-joyplot-all-assets/0", yr, "-joyplot.jpeg")
+    file_path <- paste0(exportdir, "0040a_joyplot_all_assets/0", yr, "-joyplot.jpeg")
   } else if (yr < 21){
-    file_path <- paste0(exportdir, "40a-joyplot-all-assets/", yr, "-joyplot.jpeg")
+    file_path <- paste0(exportdir, "0040a_joyplot_all_assets/", yr, "-joyplot.jpeg")
   } else {
-    file_path <- paste0(exportdir, "40b-joyplot-20yr-only/20-joyplot.jpeg")
+    file_path <- paste0(exportdir, "0040b_joyplot_20yr_only/20-joyplot.jpeg")
   }
   
   # Set the fixed_axis for most of the plots

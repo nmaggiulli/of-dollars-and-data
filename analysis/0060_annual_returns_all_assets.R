@@ -24,7 +24,7 @@ library(dplyr)
 ########################## Start Program Here ######################### #
 
 # Load in BV returns
-full_bv_returns <- readRDS(paste0(localdir, "06-bv-returns.Rds"))
+full_bv_returns <- readRDS(paste0(localdir, "0006_bv_returns.Rds"))
 
 # Convert year to a date object
 full_bv_returns$year <- as.Date(full_bv_returns$year, "%d/%m/%y")
@@ -35,7 +35,7 @@ plot_bars <- function(start_year, end_year){
                 gather(key=key, value=value, -year)
   
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "60-the-abnormal-environment/annual-bars-", start_year, "-", end_year,".jpeg")
+  file_path <- paste0(exportdir, "0060_the_abnormal_environment/annual-bars-", start_year, "-", end_year,".jpeg")
   
   # Set note and source string
   source_string <- str_wrap("Source: BullionVault U.S. Asset Class Performance Data (OfDollarsAndData.com)",

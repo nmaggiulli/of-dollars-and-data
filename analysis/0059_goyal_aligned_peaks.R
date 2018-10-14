@@ -22,7 +22,7 @@ library(dplyr)
 
 ########################## Start Program Here ######################### #
 
-df_full <- readRDS(paste0(localdir, "59-goyal-stock-bond-data.Rds"))
+df_full <- readRDS(paste0(localdir, "0059_goyal_stock_bond_data.Rds"))
 
 plot_aligned_crash <- function(n_years_after_peak){
   
@@ -62,7 +62,7 @@ plot_aligned_crash <- function(n_years_after_peak){
   }
   
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "59-goyal-aligned-peaks/stock-aligned-peaks-", n_years_after_peak, ".jpeg")
+  file_path <- paste0(exportdir, "0059_goyal_aligned_peaks/stock-aligned-peaks-", n_years_after_peak, ".jpeg")
   
   # Set note and source string
   source_string <- str_wrap("Source: Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)",
@@ -109,7 +109,7 @@ plot_aligned_crash <- function(n_years_after_peak){
     }
   
     # Set the file_path based on the function input 
-    file_path <- paste0(exportdir, "59-goyal-aligned-peaks/all-", peak_year ,"-", n_years_after_peak, ".jpeg")
+    file_path <- paste0(exportdir, "0059_goyal_aligned_peaks/all-", peak_year ,"-", n_years_after_peak, ".jpeg")
     
     # Set note and source string
     source_string <- str_wrap("Source: Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)",
@@ -164,7 +164,7 @@ decade <- df_full %>%
             select(decade, stock)
 
 # Set the file_path based on the function input 
-file_path <- paste0(exportdir, "59-goyal-aligned-peaks/stock-returns-by-decade.jpeg")
+file_path <- paste0(exportdir, "0059_goyal_aligned_peaks/stock-returns-by-decade.jpeg")
 
 # Set note and source string
 source_string <- str_wrap("Source: Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)",

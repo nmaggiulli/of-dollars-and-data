@@ -26,7 +26,7 @@ library(dplyr)
 my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00", "#A65628")
 
 # Load in S&P data from Shiller
-sp500_ret_pe   <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
+sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
 # Subset S&P 500 returns
 sp500_ret_pe <- filter(sp500_ret_pe, !is.na(cape), date < 2017.01)
@@ -74,7 +74,7 @@ plot_ret_pe <- function(var){
   to_plot     <- filter_(sp500_ret_pe_long, filter_line)
   
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "61-sp500-returns-pe/dollar-returns-", var,"-year.jpeg")
+  file_path = paste0(exportdir, "0061_sp500_returns_pe/dollar-returns-", var,"-year.jpeg")
   
   plot <- ggplot(data = to_plot, aes(x = cape, y = value, col = as.factor(below_zero))) +
     geom_point(alpha = 0.5) +
@@ -112,7 +112,7 @@ plot_ret_pe <- function(var){
   title <- paste0("Over 30 Years, Lower Starting Valuations\nImply Higher Future Growth")
     
     # Set the file_path for the next output
-    file_path = paste0(exportdir, "61-sp500-returns-pe/fit-returns-", var,"-year.jpeg")
+    file_path = paste0(exportdir, "0061_sp500_returns_pe/fit-returns-", var,"-year.jpeg")
     
     plot <- ggplot(data = to_plot, aes(x = cape, y = value)) +
       geom_point() +

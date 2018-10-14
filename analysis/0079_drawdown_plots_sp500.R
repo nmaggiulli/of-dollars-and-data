@@ -21,7 +21,7 @@ library(ggrepel)
 ########################## Start Program Here ######################### #
 
 # Read in data for individual stocks and sp500 Shiller data
-sp500_ret_pe    <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds"))
+sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){
@@ -71,7 +71,7 @@ plot_dd <- function(date_start, date_end){
   to_plot        <- drawdown_path(temp)
     
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "79-drawdown-plots-sp500/drawdowns_", date_start, "_", date_end, ".jpeg")
+  file_path = paste0(exportdir, "0079_drawdown_plots_sp500/drawdowns_", date_start, "_", date_end, ".jpeg")
   
   # Create title with ticker in subtitle
   top_title <- paste0("Investors in the 1940s Would Have\nRemembered These Drawdowns")

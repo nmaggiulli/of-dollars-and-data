@@ -21,7 +21,7 @@ library(lubridate)
 library(Quandl)
 library(tidyverse)
 
-folder_name <- "93-best-stock-predictor"
+folder_name <- "0093_best_stock_predictor"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -36,7 +36,7 @@ if (file.exists(paste0(out_path, "/all_model_summaries_", type, ".xlsx"))){
 
 starting_value <- 1
 
-aaii_raw <- read_excel(paste0(importdir, "93-best-stock-predictor/aaii_allocation_survey.xls"))
+aaii_raw <- read_excel(paste0(importdir, "0093_best_stock_predictor/aaii_allocation_survey.xls"))
 
 # Create a date list to use for subsetting
 end_month <- floor_date(Sys.Date(), "month")
@@ -55,7 +55,7 @@ aaii <- aaii %>%
   select(date, stock_allocation, bond_allocation, cash_allocation)
 
 # Merge and subset
-raw <- read_excel(paste0(importdir, "93-best-stock-predictor/sp500_5yr_treasury_data.xlsx"), sheet = "DFA_PeriodicReturns_20180913112") %>%
+raw <- read_excel(paste0(importdir, "0093_best_stock_predictor/sp500_5yr_treasury_data.xlsx"), sheet = "DFA_PeriodicReturns_20180913112") %>%
           inner_join(aaii)
 
 n_years_lookahead <- 10

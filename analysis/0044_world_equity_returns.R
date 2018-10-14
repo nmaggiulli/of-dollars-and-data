@@ -25,9 +25,9 @@ library(dplyr)
 
 # ############################  End  ################################## #
 
-non_us   <- readRDS(paste0(localdir, "44-ms-non-us-equity.Rds"))
+non_us   <- readRDS(paste0(localdir, "0044_ms_non_us_equity.Rds"))
 
-sp500_ret_pe <- readRDS(paste0(localdir, "09-sp500-ret-pe.Rds")) %>%
+sp500_ret_pe <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                   mutate(date = as.Date(paste0(
                     substring(as.character(Date), 1, 4),
                     "-", 
@@ -91,7 +91,7 @@ for (i in 1:nrow(all_ret)){
 to_plot <- all_ret
 
   #Create Joyplot
-  file_path <- paste0(exportdir, "44-world-equities/joyplot_equities.jpeg")
+  file_path <- paste0(exportdir, "0044_world_equities/joyplot_equities.jpeg")
   
   plot <- ggplot(data = to_plot, aes(x=value, y=factor(key), fill = factor(key))) +
     geom_joy_gradient(rel_min_height = 0.01, scale = 3) +
@@ -122,7 +122,7 @@ to_plot <- all_ret
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
   
 ## Create indexed line chart
-  file_path <- paste0(exportdir, "44-world-equities/equity_lines.jpeg")
+  file_path <- paste0(exportdir, "0044_world_equities/equity_lines.jpeg")
   
   to_plot <- filter(all_ret, key != "Russia")
   

@@ -62,7 +62,7 @@ plot_simulation <- function(df){
   
   to_plot <- df_results
   
-  file_path <- paste0(exportdir, "41-kelly-betting-simulation/sim_results_flips", n_flips, "_win", (p_win*100), ".jpeg")
+  file_path <- paste0(exportdir, "0041_kelly_betting_simulation/sim_results_flips", n_flips, "_win", (p_win*100), ".jpeg")
   
   plot<- ggplot(to_plot, aes(x = period, y = bankroll, col = as.factor(bet_pct))) +
           geom_line(alpha = 0.5) +
@@ -156,7 +156,7 @@ to_plot <- full_bv_returns %>%
             gather(key=key, value=value, -year)
 
 
-file_path <- paste0(exportdir, "41-kelly-betting-simulation/optimal_portfolio_vs_market.jpeg")
+file_path <- paste0(exportdir, "0041_kelly_betting_simulation/optimal_portfolio_vs_market.jpeg")
 
 ##Plot the bars
 plot <- ggplot(to_plot, aes(x=year, y=value, fill=key)) +

@@ -19,14 +19,14 @@ library(dplyr)
 
 ########################## Start Program Here ######################### #
 
-dj <- read.csv(paste0(importdir, "77b-dji-86-87/dji_daily_data_86_87.csv"))
+dj <- read.csv(paste0(importdir, "0077b_dji_86_87/dji_daily_data_86_87.csv"))
 
 colnames(dj) <- c("date", "index")
 
 to_plot <- dj %>%
             mutate(date = as.Date(date, format = "%Y-%m-%d"))
 
-file_path <- paste0(exportdir, "77b-dji-86-87/dji-86-87-crash.jpeg")
+file_path <- paste0(exportdir, "0077b_dji_86_87/dji-86-87-crash.jpeg")
 
 # Add a source and note string for the plots
 source_string <- str_wrap(paste0("Source: YCharts.com (OfDollarsAndData.com)"),

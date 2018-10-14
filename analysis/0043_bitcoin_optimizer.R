@@ -28,7 +28,7 @@ library(dplyr)
 # ############################  End  ################################## #
 
 # Load in Bitcoin data and then scrape the other data from Yahoo Finance
-bcoin <- readRDS(paste0(localdir, "27-quandl-bitcoin.Rds")) %>%
+bcoin <- readRDS(paste0(localdir, "0027_quandl_bitcoin.Rds")) %>%
           mutate(day = day(date),
                  asset = "Bitcoin") %>%
           filter(day == 1) %>%
@@ -71,7 +71,7 @@ all_prices %<>% mutate(value = ret) %>%
 
 ############################### First Returns Plot ###############################  
   # Set the file_path for the output
-  file_path = paste0(exportdir, "43-bitcoin-optimizer/asset-returns.jpeg")
+  file_path = paste0(exportdir, "0043_bitcoin_optimizer/asset-returns.jpeg")
   
   max_y <- 0.5
   
@@ -288,7 +288,7 @@ wide_returns <- all_prices %>%
     scale_y_continuous(label = percent)
   
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "43-bitcoin-optimizer/efficient-frontier.jpeg")
+  file_path = paste0(exportdir, "0043_bitcoin_optimizer/efficient-frontier.jpeg")
   
   # Add a source and note string for the plots
   note_string   <- paste0("Note:  Assumes no asset can be >", max_alloc*100 ,"% of the portfolio and shorting is not allowed.") 
