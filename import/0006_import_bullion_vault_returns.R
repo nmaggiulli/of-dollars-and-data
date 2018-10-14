@@ -15,7 +15,7 @@ library(readr)
 # http://banners.bullionvault.com/en/us-annual-asset-performance-comparison-1976-2015.pdf
 #
 
-bv_returns <- read_csv(paste0(importdir, "06-bullion-vault-asset-returns/asset-returns-bullion-vault-1976-2016.csv"))
+bv_returns <- read_csv(paste0(importdir, "0006_bullion_vault_asset_returns/asset-returns-bullion-vault-1976-2016.csv"))
 
 # Make all of the returns into real returns
 # Create a function
@@ -41,7 +41,7 @@ for (x in var_list){
 bv_returns[, "CPI"] <- NULL
 
 # Save down the data
-saveRDS(bv_returns, paste0(localdir, "06-bv-returns.Rds"))
+saveRDS(bv_returns, paste0(localdir, "0006_bv_returns.Rds"))
 
 
 

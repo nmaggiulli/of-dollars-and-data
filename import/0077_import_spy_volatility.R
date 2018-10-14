@@ -11,7 +11,7 @@ library(dplyr)
 
 ########################## Start Program Here ######################### #
 
-spy <- read.csv(paste0(importdir, "77-spy-volatility/spy_vol_tot_return.csv")) %>%
+spy <- read.csv(paste0(importdir, "0077_spy_volatility/spy_vol_tot_return.csv")) %>%
           arrange(Period) %>%
           mutate(date = as.Date(Period, format = "%Y-%m-%d"),
                  ret_spy = `SPDR.S.P.500.ETF.Total.Return.Price`/lag(`SPDR.S.P.500.ETF.Total.Return.Price`) - 1,
@@ -30,6 +30,6 @@ spy <- read.csv(paste0(importdir, "77-spy-volatility/spy_vol_tot_return.csv")) %
           ret_pos = ifelse(ret_spy > 0, "Positive Return", "Negative Return")) %>%
           mutate(vol_bucket = factor(vol_bucket, levels = c("<=8", "8-16", "16-24", "24-32", "32-40", "40-48", ">=48")))
 
-saveRDS(spy, paste0(localdir, "77_spy_volatility.Rds"))
+saveRDS(spy, paste0(localdir, "0077_spy_volatility.Rds"))
 
 # ############################  End  ################################## #

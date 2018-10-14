@@ -24,6 +24,6 @@ for (t in 1:length(tickers)){
 }
 
 all_wiki_stocks <- bind_rows(AAPL, AMZN, XOM, GE, GS)
-saveRDS(all_wiki_stocks, paste0(localdir, "23-wiki-single-stocks.Rds"))
+saveRDS(all_wiki_stocks, paste0(localdir, "0023_wiki_single_stocks.Rds"))
 
 # ############################  End  ################################## #

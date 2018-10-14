@@ -30,7 +30,7 @@ years.to.download <- c( 1989 , 1992 , 1995 , 1998 , 2001 , 2004 , 2007 , 2009 , 
 # use forward slashes instead of back slashes
 
 # uncomment this line by removing the `#` at the front..
-setwd(paste0(importdir, "03-scf-data"))
+setwd(paste0(importdir, "0003_scf_data"))
 # ..in order to set your current working directory
 
 # no need to edit anything below this line #

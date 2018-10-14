@@ -20,6 +20,6 @@ aaii       <- Quandl("AAII/AAII_SENTIMENT")  %>%
                   arrange(date) %>%
                   select(date, bullish, bearish) 
 
-saveRDS(aaii, paste0(localdir, "39-quandl-aaii-sentiment.Rds"))
+saveRDS(aaii, paste0(localdir, "0039_quandl_aaii_sentiment.Rds"))
 
 # ############################  End  ################################## #

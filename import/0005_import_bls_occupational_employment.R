@@ -19,7 +19,7 @@ read_in_bls <- function(string){
                              header = TRUE, 
                              sep = "\t")
   
-  saveRDS(temp_name, paste0(importdir, "05-bls-occupational-employment/bls_oe_", name, ".Rds"))
+  saveRDS(temp_name, paste0(importdir, "0005_bls-occupational_employment/bls_oe_", name, ".Rds"))
 }
 
 read_in_bls(areatype)
@@ -39,7 +39,7 @@ area <- area[ , !(names(area) %in% c("area_code","area_name"))]
 
 area <- rename(area, area_code = areatype_code, state_code = row.names)
 
-saveRDS(area, paste0(importdir, "05-bls-occupational-employment/bls_oe_area.Rds"))
+saveRDS(area, paste0(importdir, "0005_bls_occupational_employment/bls_oe_area.Rds"))
 
 
 

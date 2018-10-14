@@ -19,7 +19,7 @@ unzip(temp, list = TRUE)
 
 import_file <- function(path, name){
   test <- read.table(unz(temp, paste0("Metro/Metro_", path)), sep = ",", header = TRUE)
-  saveRDS(test, paste0(importdir, "15-zillow-home-price/metro_", name, ".Rds"))
+  saveRDS(test, paste0(importdir, "0015_zillow_home_price/metro_", name, ".Rds"))
 }
 
 # Keep median sold price per square foot and median rental price per square foot

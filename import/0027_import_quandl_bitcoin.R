@@ -20,6 +20,6 @@ bcoin       <- Quandl("BCHAIN/MKPRU")  %>%
                   arrange(date) %>%
                   select(date, value) 
 
-saveRDS(bcoin, paste0(localdir, "27-quandl-bitcoin.Rds"))
+saveRDS(bcoin, paste0(localdir, "0027_quandl_bitcoin.Rds"))
 
 # ############################  End  ################################## #

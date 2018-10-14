@@ -13,7 +13,7 @@ library(readxl)
 library(slackr)
 library(tidyverse)
 
-folder_name <- "87-scale-data-ycharts"
+folder_name <- "0087_scale_data_ycharts"
 
 ########################## Start Program Here ######################### #
 
@@ -41,7 +41,7 @@ df <- er %>% full_join(ai) %>%
                employees = Total.Employees,
                netinc = Net.Income)
 
-saveRDS(df, paste0(localdir, "87-employee-rev-ycharts.Rds"))
+saveRDS(df, paste0(localdir, "0087_employee_rev_ycharts.Rds"))
 
 
 # ############################  End  ################################## #

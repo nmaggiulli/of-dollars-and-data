@@ -26,7 +26,7 @@ cpi <- cpi %>%
           mutate(rate_cpi = CPIAUCNS/lag(CPIAUCNS) - 1) %>%
           select(year, rate_cpi)
 
-saveRDS(cpi, paste0(localdir, "21-FRED-cpi.Rds"))
+saveRDS(cpi, paste0(localdir, "0021_FRED_cpi.Rds"))
 
 
 
