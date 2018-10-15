@@ -29,7 +29,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 # Create fake data for 3 investment options
 
-df <- data.frame(period = seq(1, 20, 1),
+df <- data.frame(year = seq(1, 20, 1),
                  `A` = c(1, 3.5, 3.7, 4.2, 5.6,
                          7, 7.5, 9, 9.4, 10,
                          9.2, 6.5, 7.5, 7.7, 6.4,
@@ -45,38 +45,38 @@ df <- data.frame(period = seq(1, 20, 1),
 )
 
 to_plot <- df %>%
-              gather(key= key, value = value, - period)
+              gather(key= key, value = value, -year)
 
 ## Drawdown plot
-file_path <- paste0(out_path, "/three_options.jpeg")
+file_path <- paste0(out_path, "/three_paths_same_result.jpeg")
 
 source_string <- "Source:  Simulated Data (OfDollarsAndData.com)"
 
 # Create a filtered df for the text on the plot
-filtered_period <- filter(to_plot, period == 9)
+filtered_year <- filter(to_plot, year == 9)
 
-plot <- ggplot(to_plot, aes(x=period, y=value, col = key)) +
+plot <- ggplot(to_plot, aes(x=year, y=value, col = key)) +
   geom_line() +
   scale_color_discrete(guide = FALSE) +
   scale_y_continuous(label = dollar) +
-  geom_text_repel(data=filter(filtered_period, key == "A"), aes(x=period, y=value, col = key),
-                  label = filter(filtered_period, key == "A") %>% pull(key),
+  geom_text_repel(data=filter(filtered_year, key == "A"), aes(x=year, y=value, col = key),
+                  label = filter(filtered_year, key == "A") %>% pull(key),
                   max.iter = 3000,
                   nudge_y = 0.5,
                   size = 6) +
-  geom_text_repel(data=filter(filtered_period, key == "B"), aes(x=period, y=value, col = key),
-                  label = filter(filtered_period, key == "B") %>% pull(key),
+  geom_text_repel(data=filter(filtered_year, key == "B"), aes(x=year, y=value, col = key),
+                  label = filter(filtered_year, key == "B") %>% pull(key),
                   max.iter = 3000,
                   nudge_y = 0.5,
                   size = 6) +
-  geom_text_repel(data=filter(filtered_period, key == "C"), aes(x=period, y=value, col = key),
-                  label = filter(filtered_period, key == "C") %>% pull(key),
+  geom_text_repel(data=filter(filtered_year, key == "C"), aes(x=year, y=value, col = key),
+                  label = filter(filtered_year, key == "C") %>% pull(key),
                   max.iter = 3000,
                   nudge_y = 0.3,
                   size = 6) +
   of_dollars_and_data_theme +
   ggtitle("The Same Result,\nBut Different Perspectives") +
-  labs(x = "Period" , y = "Value",
+  labs(x = "Year" , y = "Value",
        caption = paste0("\n", source_string))
 
 # Turn plot into a gtable
