@@ -20,7 +20,7 @@ library(lubridate)
 library(readxl)
 library(tidyverse)
 
-folder_name <- "xxxx_spx_mcrib"
+folder_name <- "0097_spx_mcrib"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -68,9 +68,12 @@ for(i in 1:nrow(mcrib_dates)){
 spx_mcrib <- spx %>%
               left_join(all_dates) %>%
               mutate(mcrib = ifelse(is.na(mcrib), "Without McRib", "With McRib"),
+                     mcrib_dummy = ifelse(mcrib == "With McRib", 1, 0),
                      pos = ifelse(ret > 0, 1, 0))
 
 n_pct_days <- nrow(all_dates)/nrow(spx)
+
+t.test(spx_mcrib$ret~spx_mcrib$mcrib_dummy)
 
 # Set note and source string
 source_string <- str_wrap("Source: YCharts.com, http://www.jeffreysward.com/editorials/mcrib.htm (OfDollarsAndData.com)",
