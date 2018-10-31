@@ -37,13 +37,16 @@ spx <- read_excel(paste0(importdir, "xxxx_spx_daily/spx_daily.xlsx")) %>%
         filter(!is.na(ret))
 
 mcrib_dates <- data.frame(start = c("2010-11-02", "2011-10-24", "2012-12-17",
-                                    "2013-10-15", "2014-11-05", "2015-09-01",
+                                    "2013-10-15", "2014-11-05", "2015-09-15",
                                     "2016-11-09", "2017-11-09"
                                     ),
                           end = c("2010-12-05", "2011-11-14", "2013-01-15",
-                                  "2013-12-15", "2014-12-15", "2015-11-30", 
-                                  "2016-12-15", "2017-12-15"
-                                  ))
+                                  "2013-12-15", "2014-12-31", "2015-11-30", 
+                                  "2016-12-31", "2017-12-31"
+                                  )) %>%
+                          mutate(n_days = as.Date(end)-as.Date(start),
+                                 sim_start = as.Date(paste0(year(start), "-01-01")),
+                                 sim_end = as.Date(paste0(year(start), "-12-31")) - n_days)
 
 for(i in 1:nrow(mcrib_dates)){
   s <- mcrib_dates[i, "start"]
@@ -62,9 +65,10 @@ for(i in 1:nrow(mcrib_dates)){
   }
 }
 
-mcrib_spx <- spx %>%
+spx_mcrib <- spx %>%
               left_join(all_dates) %>%
-              mutate(mcrib = ifelse(is.na(mcrib), "Without McRib", "With McRib"))
+              mutate(mcrib = ifelse(is.na(mcrib), "Without McRib", "With McRib"),
+                     pos = ifelse(ret > 0, 1, 0))
 
 n_pct_days <- nrow(all_dates)/nrow(spx)
 
@@ -77,7 +81,7 @@ note_string   <- str_wrap(paste0("Note:  Only includes McRib release data from 2
 # Set the file_path based on the function input 
 file_path <- paste0(out_path, "/mcrib_days.jpeg")
 
-to_plot <- mcrib_spx %>%
+to_plot <- spx_mcrib %>%
             group_by(mcrib) %>%
             summarize(ret = mean(ret, na.rm = TRUE)) %>%
             ungroup()
@@ -96,5 +100,60 @@ my_gtable   <- ggplot_gtable(ggplot_build(plot))
 
 # Save the plot
 ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+
+# Find maximum difference for comparisons
+ret_diff <- max(to_plot$ret) - min(to_plot$ret)
+
+# This seed allows us to have reproducible random sampling
+set.seed(12345)     
+
+n_simulations <- 10000
+
+final_results <- matrix(NA, nrow = n_simulations, ncol = 1)
+
+for (i in 1:n_simulations){
+  for (j in 1:nrow(mcrib_dates)){
+    n_days       <- mcrib_dates[j, "n_days"]
+    sim_start    <- mcrib_dates[j, "sim_start"]
+    sim_year_end <- as.Date(paste0(year(sim_start), "-12-31"))
+    sim_end      <-mcrib_dates[j, "sim_end"]
+    
+    
+    start_date_num <- sample(1:yday(sim_end), 1)
+    all_possible_dates <- data.frame(date=seq.Date(sim_start, sim_year_end, "day"))
+    
+    sim_dates <- data.frame(date=all_possible_dates[start_date_num:(start_date_num+n_days), "date"])
+    
+    if(j == 1){
+      all_sim_dates <- sim_dates
+    } else{
+      all_sim_dates <- bind_rows(all_sim_dates, sim_dates)
+    }
+    
+    if (j == nrow(mcrib_dates)){
+      all_sim_dates <- all_sim_dates %>%
+        mutate(mcrib = 1)
+    }
+  }
+  sim_mcrib <- spx %>%
+    left_join(all_sim_dates) %>%
+    mutate(mcrib = ifelse(is.na(mcrib), "Without McRib", "With McRib")) %>%
+    group_by(mcrib) %>%
+      summarize(ret = mean(ret, na.rm = TRUE)) %>%
+      ungroup()
+  
+  final_results[i, 1] <- pull(sim_mcrib[1, 2]) - pull(sim_mcrib[2, 2])
+  
+  if (i == n_simulations){
+    final_results <- data.frame(diff=final_results)
+  }
+}
+
+final_results <- final_results %>%
+        mutate(mcrib_bigger_diff = ifelse(diff > ret_diff, 1, 0),
+               no_mcrib_bigger_diff = ifelse(diff < -ret_diff, 1, 0))
+
+print(mean(final_results$mcrib_bigger_diff))      
+print(mean(final_results$no_mcrib_bigger_diff))      
 
 # ############################  End  ################################## #
