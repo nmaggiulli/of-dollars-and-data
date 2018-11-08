@@ -26,7 +26,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-spx <- read_excel(paste0(importdir, "xxxx_spx_daily/spx_daily.xlsx")) %>%
+spx <- read_excel(paste0(importdir, "0097_spx_daily/spx_daily.xlsx")) %>%
         rename(date = Period,
                index = `S&P 500 Level`) %>%
         filter(date >= "2009-12-31", date < "2018-01-01") %>%
