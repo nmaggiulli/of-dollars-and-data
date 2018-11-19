@@ -1,12 +1,13 @@
 cat("\014") # Clear your console
 rm(list = ls()) #clear your environment
 
-########################## Load in header file ######################## #
+# Import the Bitcoin data
 setwd("~/git/of_dollars_and_data")
+source(file.path(paste0(getwd(),"/import/0027_import_quandl_bitcoin.R")))
+rm(list = ls()) #clear your environment
+
+########################## Load in header file ######################## #
 source(file.path(paste0(getwd(),"/header.R")))
-
-########################## Load in Libraries ########################## #
-
 
 ########################## Start Program Here ######################### #
 
