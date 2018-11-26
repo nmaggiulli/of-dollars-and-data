@@ -284,7 +284,7 @@ for (m in measure_list){
   # # Make GIFs
    create_gif(path = paste0(exportdir, "0012_bls_maps"), 
     file_stub = fs,
-    speed_milliseconds = 40,
+    speed_milliseconds = 80,
     n_loops = 0,
     out_name = paste0("all_", geoname, "_", measure_no_space, ".gif"))
   }      
