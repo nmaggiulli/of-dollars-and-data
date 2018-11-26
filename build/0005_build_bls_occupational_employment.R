@@ -13,13 +13,13 @@ library(stringr)
 ########################## Start Program Here ######################### #
 
 # Load in raw BLS productivity data
-bls_oe <-readRDS(paste0(importdir, "05-bls-occupational-employment/bls_oe_data.1.AllData.Rds"))
+bls_oe <-readRDS(paste0(importdir, "0005_bls_occupational_employment/bls_oe_data.1.AllData.Rds"))
 
 # Load in other datasets and create a code based on their row number
 # Will use these datasets to merge to the main productivity dataset
 create_index <- function(string){
   name            <- deparse(substitute(string))
-  temp            <- readRDS(paste0(importdir, "05-bls-occupational-employment/bls_oe_", name, ".Rds"))
+  temp            <- readRDS(paste0(importdir, "0005_bls_occupational_employment/bls_oe_", name, ".Rds"))
   new_col         <- paste0(name, "_name")
   old_col         <- paste0(name, "_code")
   temp[, new_col] <-  temp[, old_col]
@@ -56,7 +56,7 @@ bls_oe <- bls_oe                %>%
                   areatype_name, industry_name, occupation_name, datatype_name)
 
 # Save down final build before doing analysis
-saveRDS(bls_oe, paste0(localdir, "05-bls-oe.Rds"))
+saveRDS(bls_oe, paste0(localdir, "0005_bls_oe.Rds"))
 
 
 # ############################  End  ################################## #
