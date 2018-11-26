@@ -52,8 +52,7 @@ areas <- area %>%
 # Load in measure data as well
 measure <- readRDS(paste0(importdir, "0012_bls_unemployment/bls_unemployment_measure.Rds"))
 measure <- mutate(measure, 
-                  measure_text = measure_code,
-                  measure_code = rownames(measure))
+                  measure_code = paste0("0", measure_code))
 
 # Define the area on the ue stack
 ue_stack <- mutate(ue_stack, 

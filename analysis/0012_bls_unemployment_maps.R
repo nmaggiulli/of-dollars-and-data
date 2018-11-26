@@ -7,7 +7,6 @@ source(file.path(paste0(getwd(),"/header.R")))
 
 ########################## Load in Libraries ########################## #
 
-library(dplyr)
 library(ggplot2)
 library(tidyr)
 library(scales)
@@ -17,7 +16,7 @@ library(gtable)
 library(RColorBrewer)
 library(stringr)
 library(maps)
-library(magick)
+library(tidyverse)
 
 ########################## Start Program Here ######################### #
 
@@ -25,22 +24,24 @@ library(magick)
 ue_stack <- readRDS(paste0(localdir, "0012_bls_ue.Rds")) %>%
               select(year, period, area_text, measure_text, area_type_code, value)
 
-# Create 2016 data for the states only (take mean of the months)
-ue_2016 <- filter(ue_stack, area_type_code == "A", year == 2016) %>%
+last_year    <- max(ue_stack$year)
+
+# Create last_year data for the states only (take mean of the months)
+ue_last_yr <- filter(ue_stack, area_type_code == "A", year == last_year) %>%
               group_by(year, area_text, measure_text, area_type_code) %>%
                 summarise(value = mean(as.numeric(value)),
                           period = "M13") %>%
                   select(year, period, area_text, measure_text, area_type_code, value)
 
 # Filter the data to be only for annual unemployment rates and for states
+# Also drop Puerto Rico
 ue_stack <- filter(ue_stack, 
                    year >= 2007, 
                    period == "M13", 
-                   area_type_code == "A" | area_type_code == "F") %>%
-                    rbind(ue_2016)
-
-# Also remove PR
-ue_stack <- ue_stack[grepl(", PR", ue_stack$area_text) != 1,]
+                   area_type_code == "A" | area_type_code == "F",
+                   !grepl(", PR", area_text)) %>%
+                    mutate(value = as.numeric(value)) %>%
+                    bind_rows(ue_last_yr)
 
 # Get the years list
 years_list   <- unique(ue_stack$year)
@@ -179,8 +180,10 @@ plot_year_measure <- function(yr, measure, geo){
                 filter(year == yr) %>%
                 left_join(get(geo, envir = .GlobalEnv))
   
+  measure_no_space <- str_replace_all(measure, " ", "_")
+  
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "0012_bls_maps/", geoname, "-map-", measure, "-", yr, ".jpg")
+  file_path = paste0(exportdir, "0012_bls_maps/", geoname, "_map_", measure_no_space, "_", yr, ".jpg")
   
   # Create a string to explain an increase or decrease in a measure
   # This will be used for titles and footnotes
@@ -244,8 +247,8 @@ for (i in years_list){
   for (g in geo_list){
     for (m in measure_list){
       if ((i > first_year & g == "all_states") | 
-          (i >= first_year & m == "unemployment rate" & i < 2016) |
-          (i > first_year & g == "all_counties" & m == "labor force" & i < 2016)
+          (i >= first_year & m == "unemployment rate" & i < last_year) |
+          (i > first_year & g == "all_counties" & m == "labor force" & i < last_year)
       ){
         plot_year_measure(i, m, g)
       }
@@ -274,16 +277,16 @@ for (m in measure_list){
         yr_list <- years_list
       }
     }
+  
+  measure_no_space <- str_replace_all(m, " ", "_")
+  fs <- paste0(geoname, "_map_", measure_no_space, "_*.jpg")
     
-  # Read in the the individual images
-  frames <- lapply(yr_list, function(yr){
-    image_read(paste0(exportdir, "0012_bls_maps/", geoname, "-map-", m, "-", yr, ".jpg"))
-  })
-  
-  # Make animation from the frames read in during the prior step
-  image_write(image_animate(image_join(frames), fps = 1), 
-              paste0(exportdir, "0012_bls_maps/all-", geoname, "-", m,"-maps.gif"))
-  
+  # # Make GIFs
+   create_gif(path = paste0(exportdir, "0012_bls_maps"), 
+    file_stub = fs,
+    speed_milliseconds = 40,
+    n_loops = 0,
+    out_name = paste0("all_", geoname, "_", measure_no_space, ".gif"))
   }      
 }
 
