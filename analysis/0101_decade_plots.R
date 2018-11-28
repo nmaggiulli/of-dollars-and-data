@@ -21,7 +21,4 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
 
-
-
-
 # ############################  End  ################################## #

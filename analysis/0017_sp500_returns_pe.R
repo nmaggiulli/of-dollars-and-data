@@ -7,7 +7,6 @@ source(file.path(paste0(getwd(),"/header.R")))
 
 ########################## Load in Libraries ########################## #
 
-
 library(ggplot2)
 library(tidyr)
 library(scales)
@@ -29,10 +28,10 @@ my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00"
 sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
 # Subset S&P 500 returns
-sp500_ret_pe <- filter(sp500_ret_pe, !is.na(cape), date < 2017.01)
+sp500_ret_pe <- filter(sp500_ret_pe, !is.na(cape), date < "2017-01-01")
 
-first_year <- floor(min(sp500_ret_pe$date))
-last_year <- floor(max(sp500_ret_pe$date))
+first_year <- min(sp500_ret_pe$date)
+last_year <- max(sp500_ret_pe$date)
 
 
 
