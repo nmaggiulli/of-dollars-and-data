@@ -27,20 +27,8 @@ library(dplyr)
 
 # Read in data for sp500 Shiller data
 sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
+                     mutate(year = year(date)) %>%
                      filter(!is.na(cape))
-
-# Calculate returns for the S&P data
-
-
-# Change the date to a date type for plotting the S&P data
-sp500_ret_pe <- select(sp500_ret_pe, date, cape, price_plus_div) %>%
-  mutate(date = as.Date(paste0(
-    substring(as.character(date), 1, 4),
-    "-", 
-    ifelse(substring(as.character(date), 6, 7) == "1", "10", substring(as.character(date), 6, 7)),
-    "-01", 
-    "%Y-%m-%d")),
-    year = year(date))
 
 #Create function for S&P data
 plot_sp <- function(from_year, to_year, lag_cape, title){
@@ -61,8 +49,6 @@ plot_sp <- function(from_year, to_year, lag_cape, title){
   file_path <- paste0(exportdir, "0067_sp_price_chart/sp-price-",from_year, "-", to_year, "-lag-", lag_cape ,".jpeg")
   
   y_max <- max(to_plot$index)
-  
-  
   
   plot <- ggplot(data = to_plot, aes(x=date, y=index)) +
     geom_line() +

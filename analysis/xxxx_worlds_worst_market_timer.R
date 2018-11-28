@@ -26,9 +26,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 # Read in data for individual stocks and sp500 Shiller data
 sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-                    filter(date >= 1972.11)
-
-# Calculate returns for the S&P data
+                    filter(date >= "1972-11-01")
 
 
 # Purchases for the world's market timer
@@ -38,12 +36,6 @@ purchases <- data.frame(date = c("1972-12-01", "1987-08-01", "1999-12-01", "2007
 
 # Change the Date to a Date type for plotting the S&P data
 df <- select(sp500_ret_pe, date, price_plus_div) %>%
-                  mutate(date = as.Date(paste0(
-                    substring(as.character(date), 1, 4),
-                    "-", 
-                    ifelse(substring(as.character(date), 6, 7) == "1", "10", substring(as.character(date), 6, 7)),
-                    "-01", 
-                    "%Y-%m-%d"))) %>%
                   left_join(purchases) %>%
                   mutate(amount = ifelse(is.na(amount), 0, amount),
                          ret_sp500 = price_plus_div/lag(price_plus_div, 1) - 1) %>%

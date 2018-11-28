@@ -18,24 +18,16 @@ library(RColorBrewer)
 library(stringr)
 library(ggrepel)
 
+folder_name <- "0023_drawdown_plots"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+
 ########################## Start Program Here ######################### #
 
 # Read in data for individual stocks and sp500 Shiller data
 all_wiki_stocks <- readRDS(paste0(localdir, "0023_wiki_single_stocks.Rds"))
 sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                     filter(Date > 1960)
-
-# Calculate returns for the S&P data
-
-
-# Change the Date to a Date type for plotting the S&P data
-sp500_ret_pe <- select(sp500_ret_pe, Date, price_plus_div) %>%
-                  mutate(Date = as.Date(paste0(
-                    substring(as.character(Date), 1, 4),
-                    "-", 
-                    ifelse(substring(as.character(Date), 6, 7) == "1", "10", substring(as.character(Date), 6, 7)),
-                    "-01", 
-                    "%Y-%m-%d")))
   
 # Create function to calculate the drawdowns over time
 drawdown_path <- function(vp){

@@ -25,18 +25,6 @@ out_path <- paste0(exportdir, "0080_drawdown_recency_sp500")
 
 # Read in data for individual stocks and sp500 Shiller data
 sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
-
-# Calculate returns for the S&P data
-
-
-# Change the Date to a Date type for plotting the S&P data
-sp500_ret_pe <- select(sp500_ret_pe, date, price_plus_div) %>%
-                  mutate(date = as.Date(paste0(
-                    substring(as.character(date), 1, 4),
-                    "-", 
-                    ifelse(substring(as.character(date), 6, 7) == "1", "10", substring(as.character(date), 6, 7)),
-                    "-01", 
-                    "%Y-%m-%d")))
   
 # Create function to calculate the drawdowns over time
 drawdown_path <- function(vp){

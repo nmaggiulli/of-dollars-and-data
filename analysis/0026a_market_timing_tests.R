@@ -22,13 +22,10 @@ library(ggrepel)
 
 # Load in S&P data from Shiller
 sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-                    filter(cape != "NA", date < 2017.01)
+                    filter(cape != "NA", date < "2017-01-01")
 
-first_year <- floor(min(sp500_ret_pe$date))
-last_year <- floor(max(sp500_ret_pe$date))
-
-# Calculate returns for the S&P data
-
+first_year <- min(sp500_ret_pe$date)
+last_year <- max(sp500_ret_pe$date)
 
 # Convert the cape to a numeric
 sp500_ret_pe$cape <- as.numeric(sp500_ret_pe$cape)
@@ -88,7 +85,7 @@ test_market <- function(cape_min, cape_max, start_date){
   assign("results_df", full, envir = .GlobalEnv)
 }
   
-s_dates <- seq(1881.01, 1976.01, 5)
+s_dates <- seq.Date(as.Date("1881-01-01"), as.Date('1976-01-01'), "5 years")
 
 for (s_date in s_dates){
   test_market(cape_min = 30, cape_max = 30, start_date = s_date)

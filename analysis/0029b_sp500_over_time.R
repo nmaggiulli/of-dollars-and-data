@@ -30,10 +30,8 @@ sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 # Subset S&P 500 returns
 sp500_ret_pe <- filter(sp500_ret_pe, cape != "NA")
 
-first_year <- floor(min(sp500_ret_pe$date))
-last_year <- floor(max(sp500_ret_pe$date))
-
-
+first_year <- min(sp500_ret_pe$date)
+last_year <- max(sp500_ret_pe$date)
 
 # Convert the cape to a numeric
 sp500_ret_pe$cape <- as.numeric(sp500_ret_pe$cape)
@@ -43,14 +41,14 @@ create_period_return <- function(start_year, end_year){
   ret_yr            <- filter(sp500_ret_pe, date >= start_year, date < end_year)
   initial_value     <- filter(sp500_ret_pe, date == start_year) %>%
     select(price_plus_div)
-  ret_yr$price      <- (ret_yr$price_plus_div / rep(as.numeric(initial_value), 12*(end_year-start_year))) * 1
+  ret_yr$price      <- (ret_yr$price_plus_div / rep(as.numeric(initial_value), 12*(year(end_year)-year(start_year)))) * 1
   ret_yr$start_date <- start_year
-  ret_yr$period     <- seq(1/12, (end_year-start_year), 1/12)
+  ret_yr$period     <- seq(1/12, (year(end_year)-year(start_year)), 1/12)
   return(ret_yr)
 }
 
-ret_1900 <- create_period_return(1900.01, 2000.01)
-ret_2000 <- create_period_return(2000.01, 2017.01)
+ret_1900 <- create_period_return("1900-01-01", "2000-01-01")
+ret_2000 <- create_period_return("2000-01-01", "2017-01-01")
 
 n_years <- 100
 
@@ -64,7 +62,7 @@ plot <- ggplot(data = to_plot, aes(x = period, y = price, col = as.factor(start_
   scale_x_continuous(limits = c(1/12, n_years), breaks = seq(5,n_years, 5)) +
   scale_y_continuous(label = dollar, trans = log_trans(), breaks = c(0, 1, 10, 100, 1000)) +
   scale_color_discrete(guide = FALSE) +
-  geom_text_repel(data = filter(to_plot, period > 16.99, start_date == 2000.01),
+  geom_text_repel(data = filter(to_plot, period > 16.99, start_date == "2000-01-01"),
                   aes(x = period, 
                       y = price,
                       col = as.factor(start_date),

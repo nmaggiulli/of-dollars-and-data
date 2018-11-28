@@ -28,35 +28,6 @@ my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00"
 sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                       filter(date > "1928-01-01")
 
-# Calculate returns for the S&P data
-
-
-# Change the Date to a Date type for plotting the S&P data
-sp500_ret_pe <- select(sp500_ret_pe, date, price_plus_div) %>%
-                  mutate(date = as.Date(paste0(
-                    substring(as.character(date), 1, 4),
-                    "-", 
-                    ifelse(substring(as.character(date), 6, 7) == "1", "10", substring(as.character(date), 6, 7)),
-                    "-01", 
-                    "%Y-%m-%d")))
-  
-# Create function to calculate the drawdowns over time
-drawdown_path <- function(vp){
-  dd      <- data.frame(Date = as.Date(1:nrow(vp), origin=Sys.Date()), pct = numeric(nrow(vp)))
-  loc_max <- 0
-  for (i in 1:(nrow(vp))){
-    if (vp[i, 2] < loc_max & i != 1){
-      dd[i, 1] <- vp[i, 1]
-      dd[i, 2] <- vp[i, 2]/loc_max - 1
-    } else{
-      dd[i, 1] <- vp[i, 1]
-      dd[i, 2] <- 0
-      loc_max  <- vp[i, 2]
-    }
-  }
-  return(dd)
-}
-
 # Find the drawdowns for investigative purposes
 # Use this list to find the most recent peak from each bottom in the data
 dd        <- drawdown_path(sp500_ret_pe)
@@ -91,9 +62,9 @@ file_path = paste0(exportdir, "0035_aligned_drawdown_plots/drawdowns-with-marker
 top_title <- paste0("The S&P 500 Has Had ", drawdown_30pct, " Drawdowns of \nOver 30% Since the Late 1920s")
 
 # Create the plot object
-plot <- ggplot(dd, aes(x = Date, y = pct)) +
+plot <- ggplot(dd, aes(x = date, y = pct)) +
   geom_area(fill = "red") +
-  geom_point(data = filter(dd, drawdown_30pct == 1), aes(x = Date, y = pct), col = "black") +
+  geom_point(data = filter(dd, drawdown_30pct == 1), aes(x = date, y = pct), col = "black") +
   ggtitle(top_title) +
   guides(fill = FALSE) +
   of_dollars_and_data_theme +
@@ -135,8 +106,8 @@ plot_aligned_drawdowns <- function(n_years_after_peak, ymax){
   counter            <- 1
   
   # Loop through each date to make a subset
-  for (date in date_list){
-    sp500_filtered <- filter(sp500_ret_pe, Date >= as.Date(date), Date < as.Date(date) %m+% months(n_years_after_peak * 12))
+  for (d in date_list){
+    sp500_filtered <- filter(sp500_ret_pe, date >= as.Date(d), date < as.Date(d) %m+% months(n_years_after_peak * 12))
     for (i in 1:nrow(sp500_filtered)){
       sp500_filtered[i, "year"] <- i/12
       if (i == 1){
@@ -148,7 +119,7 @@ plot_aligned_drawdowns <- function(n_years_after_peak, ymax){
     
     # Drop unneeded columns
     sp500_filtered <- sp500_filtered %>% 
-                        mutate(peak = year(date)) %>%
+                        mutate(peak = year(d)) %>%
                         select(year, peak, index)
     
     # Append the rows as we loop through each subset

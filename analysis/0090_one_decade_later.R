@@ -21,19 +21,6 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 # Read in data for individual stocks and sp500 Shiller data
 sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
-# Calculate returns for the S&P data
-
-
-
-# Change the Date to a Date type for plotting the S&P data
-sp500_ret_pe <- select(sp500_ret_pe, date, price_plus_div) %>%
-  mutate(date = as.Date(paste0(
-    substring(as.character(date), 1, 4),
-    "-", 
-    ifelse(substring(as.character(date), 6, 7) == "1", "10", substring(as.character(date), 6, 7)),
-    "-01", 
-    "%Y-%m-%d")))
-
 to_plot <- sp500_ret_pe %>%
             filter(date >= "2008-08-01")
 

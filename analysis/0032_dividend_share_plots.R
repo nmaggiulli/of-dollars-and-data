@@ -18,6 +18,10 @@ library(gtable)
 library(ggrepel)
 library(stringr)
 
+folder_name <- "0032_dividend_share_plots"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+
 ########################## Start Program Here ######################### #
 
 # Create a custom palette with black using COlorBrewer
@@ -28,12 +32,10 @@ my_palette <- c("#E41A1C", "#4DAF4A", "#000000", "#377EB8", "#984EA3", "#FF7F00"
 sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
 # Subset S&P 500 returns
-sp500_ret_pe <- filter(sp500_ret_pe, Date < 2017.01)
+sp500_ret_pe <- filter(sp500_ret_pe, date < "2017-01-01")
 
-first_year <- floor(min(sp500_ret_pe$Date))
-last_year <- floor(max(sp500_ret_pe$Date))
-
-
+first_year <- min(sp500_ret_pe$date)
+last_year <- max(sp500_ret_pe$date)
 
 # Loop over different time horizons
 n_years_vec <- seq(20, 50, 10)
@@ -46,20 +48,22 @@ for (n in n_years_vec){
   n_months <- n_years*12
   
   # Create a date sequence for each decade
-  date_seq <- seq(min(sp500_ret_pe$Date), max(sp500_ret_pe$Date) - n_years, 1)
+  date_seq <- seq.Date(min(sp500_ret_pe$date), max(sp500_ret_pe$date) - years(n_years), "1 years")
+  
+  print(date_seq)
     
   # Loop through the dates to get each return period for a specified number of years and stack it
   for (i in 1:length(date_seq)){
-    ret_yr              <- filter(sp500_ret_pe, Date >= date_seq[i], Date <= date_seq[i] + n_years) %>%
+    ret_yr              <- filter(sp500_ret_pe, date >= date_seq[i], date <= (date_seq[i] + years(n_years))) %>%
       mutate(total_diff = ((price_plus_div / lag(price_plus_div, n = n_months)) - 1),
              price_diff = ((real_price / lag(real_price, n = n_months)) - 1),
              div_share =  ifelse(price_diff < 0, 1, 1 - (price_diff/total_diff))) %>%
-      filter(Date == date_seq[i] + n_years) %>%
-      select(Date, div_share, total_diff)
+      filter(date == date_seq[i] + years(n_years)) %>%
+      select(date, div_share, total_diff)
     if (i == 1){
       to_plot <- ret_yr
     } else{
-      to_plot <- rbind(to_plot, ret_yr)
+      to_plot <- bind_rows(to_plot, ret_yr)
     }
   }
   
@@ -79,7 +83,7 @@ for (n in n_years_vec){
   file_path = paste0(exportdir, "0032_dividend_share_plots/dividend-share-over-time-", n_years, ".jpeg")
   
   # Create plot 
-  plot <- ggplot(data = to_plot, aes(x = Date, y = div_share, fill = as.factor(1))) +
+  plot <- ggplot(data = to_plot, aes(x = date, y = div_share, fill = as.factor(1))) +
     geom_area() +
     scale_color_manual(values = my_palette, guide = FALSE) +
     scale_fill_manual(values = my_palette, guide = FALSE) +

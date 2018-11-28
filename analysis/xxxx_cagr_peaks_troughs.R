@@ -28,18 +28,6 @@ my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00"
 sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                       filter(date > "1928-01-01")
 
-# Calculate returns for the S&P data
-
-
-# Change the Date to a Date type for plotting the S&P data
-sp500_ret_pe <- select(sp500_ret_pe, date, price_plus_div) %>%
-                  mutate(date = as.Date(paste0(
-                    substring(as.character(date), 1, 4),
-                    "-", 
-                    ifelse(substring(as.character(date), 6, 7) == "1", "10", substring(as.character(date), 6, 7)),
-                    "-01", 
-                    "%Y-%m-%d")))
-
 # Create function to plot aligned drawdowns
   ## Create an aligned drawdown plot for specific crashes throughout market history
   # Select the date list manually

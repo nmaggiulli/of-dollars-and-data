@@ -21,17 +21,7 @@ library(tidyverse)
 ########################## Start Program Here ######################### #
 
 # Load in S&P data from Shiller
-sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-                    mutate(date = as.Date(paste0(
-                      substring(as.character(date), 1, 4),
-                      "-", 
-                      ifelse(substring(as.character(date), 6, 7) == "1", "10", substring(as.character(date), 6, 7)),
-                      "-01", 
-                      "%Y-%m-%d")))
-
-# Calculate returns for the S&P data
-
-
+sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
 # Change the Date to a Date type for plotting the S&P data
 sp500_ret_pe <- select(sp500_ret_pe, date, price_plus_div) %>%

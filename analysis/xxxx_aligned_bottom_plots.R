@@ -20,6 +20,10 @@ library(ggjoy)
 library(tidyr)
 library(dplyr)
 
+folder_name <- "xxxx_aligned_bottom_plots"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+
 ########################## Start Program Here ######################### #
 
 # Create a custom palette with black using COlorBrewer
@@ -28,19 +32,7 @@ my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00"
 
 # Read in data for individual stocks and sp500 Shiller data
 sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-  filter(Date > "1928-01-01")
-
-# Calculate returns for the S&P data
-
-
-# Change the Date to a Date type for plotting the S&P data
-sp500_ret_pe <- select(sp500_ret_pe, Date, price_plus_div) %>%
-  mutate(Date = as.Date(paste0(
-    substring(as.character(Date), 1, 4),
-    "-", 
-    ifelse(substring(as.character(Date), 6, 7) == "1", "10", substring(as.character(Date), 6, 7)),
-    "-01", 
-    "%Y-%m-%d")))
+  filter(date > "1928-01-01")
 
 
 # Create a date list for the bottoms
@@ -53,8 +45,8 @@ plot_aligned_drawdowns <- function(n_years_after_bottom){
   counter            <- 1
 
   # Loop through each date to make a subset
-  for (date in date_list){
-    sp500_filtered <- filter(sp500_ret_pe, Date >= as.Date(date), Date < as.Date(date) %m+% months(n_years_after_bottom * 12))
+  for (d in date_list){
+    sp500_filtered <- filter(sp500_ret_pe, date >= as.Date(d), date < as.Date(d) %m+% months(n_years_after_bottom * 12))
     for (i in 1:nrow(sp500_filtered)){
       sp500_filtered[i, "year"] <- i/12
       if (i == 1){
@@ -66,7 +58,7 @@ plot_aligned_drawdowns <- function(n_years_after_bottom){
     
     # Drop unneeded columns
     sp500_filtered <- sp500_filtered %>% 
-      mutate(bottom = year(date)) %>%
+      mutate(bottom = year(d)) %>%
       select(year, bottom, index)
     
     # Append the rows as we loop through each subset
@@ -79,12 +71,11 @@ plot_aligned_drawdowns <- function(n_years_after_bottom){
   }
   
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "0047_aligned_bottom_plots/sp500-aligned-bottoms-", n_years_after_bottom, ".jpeg")
+  file_path = paste0(exportdir, "xxxx_aligned_bottom_plots/sp500-aligned-bottoms-", n_years_after_bottom, ".jpeg")
   
   # Create title based on the number of years
   top_title <- paste0("Larger Declines Usually Lead to\nStronger Recoveries") 
 
-  
   # Create the plot object
   plot <- ggplot(to_plot, aes(x = year, y = index, col = as.factor(bottom))) +
     geom_line() +

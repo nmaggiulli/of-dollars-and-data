@@ -23,23 +23,20 @@ library(ggjoy)
 library(tidyr)
 library(dplyr)
 
+folder_name <- "0044_world_equities"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+
 # ############################  End  ################################## #
 
 non_us   <- readRDS(paste0(localdir, "0044_ms_non_us_equity.Rds"))
 
 sp500_ret_pe <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-                  mutate(date = as.Date(paste0(
-                    substring(as.character(Date), 1, 4),
-                    "-", 
-                    ifelse(substring(as.character(Date), 6, 7) == "1", "10", substring(as.character(Date), 6, 7)),
-                    "-01", 
-                    "%Y-%m-%d")),
-                    ret_cpi = CPI/lag(CPI) - 1)
+                  mutate(
+                    ret_cpi = cpi/lag(cpi) - 1)
 
 min_date <- max(min(non_us$date), min(sp500_ret_pe$date))
 max_date <- min(max(non_us$date), max(sp500_ret_pe$date))
-
-
 
 # Filter the US data
 us_filtered <- sp500_ret_pe %>%
