@@ -55,7 +55,7 @@ for (i in 1:nrow(sp500_ret_pe)){
 }
 
 # Change the Date to a Date type for plotting the S&P data
-sp500_ret_pe <- select(sp500_ret_pe, date, price_plus_div) %>%
+sp500_ret_pe <- sp500_ret_pe %>%
   mutate(date = as.Date(paste0(
     substring(as.character(date), 1, 4),
     "-", 
