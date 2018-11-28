@@ -16,7 +16,12 @@ library(gridExtra)
 library(gtable)
 library(RColorBrewer)
 library(stringr)
+library(lubridate)
 library(ggrepel)
+
+folder_name <- "0021_returns_by_decade"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
@@ -34,35 +39,32 @@ hist_bond_stock <- readRDS(paste0(localdir, "0021_historical_returns_sp500_bond_
 cpi <- readRDS(paste0(localdir, "0021_FRED_cpi.Rds"))
 
 # Create a starting date for subsetting
-starting_date <- 2011.01
+starting_date <- "2011-01-01"
 
 # Subset S&P 500 returns
-sp500_ret_pe <- filter(sp500_ret_pe, Date < starting_date, Date > 1900)
+sp500_ret_pe <- filter(sp500_ret_pe, date < starting_date, date > "1900-01-01")
 
 # Subset historical bond and stock returns and adjust for CPI using FRED data
-hist_bond_stock <- filter(hist_bond_stock, Date < starting_date) %>%
-                      left_join(cpi, by = c("Date" = "year")) %>%
+hist_bond_stock <- filter(hist_bond_stock, date < starting_date) %>%
+                      left_join(cpi, by = c("date" = "year")) %>%
                       mutate(ret_sp500 = ret_sp500 - rate_cpi,
                              ret_10yr_bond = ret_10yr_bond - rate_cpi) %>%
                       select(Date, ret_sp500, ret_10yr_bond)
 
 # Create Date min and max vars for plotting
-first_year <- floor(min(sp500_ret_pe$Date))
-last_year <- floor(max(sp500_ret_pe$Date))
-
-# Calculate returns for the S&P data
-
+first_year <- min(sp500_ret_pe$date)
+last_year <- max(sp500_ret_pe$date)
 
 # Create a function for custom plotting
 plot_returns <- function(n_years, ymin, ymax, yby){
 
   # Create a date sequence for each decade
-  date_seq <- seq(1901.01, (2011.01-n_years), 10)
+  date_seq <- seq.Date(as.Date("1901-01-01"), (as.Date("2011-01-01")-years(n_years)), by = "10 years")
   
   # Loop through the dates to get each return period for a specified number of years and stack it
   for (i in 1:length(date_seq)){
-    ret_yr            <- filter(sp500_ret_pe, Date >= date_seq[i], Date < date_seq[i] + n_years)
-    initial_value     <- filter(sp500_ret_pe, Date == date_seq[i]) %>%
+    ret_yr            <- filter(sp500_ret_pe, date >= date_seq[i], date < (date_seq[i] + years(n_years)))
+    initial_value     <- filter(sp500_ret_pe, date == date_seq[i]) %>%
                           select(price_plus_div)
     ret_yr$price      <- (ret_yr$price_plus_div / rep(as.numeric(initial_value), 12*n_years)) * 100
     ret_yr$start_date <- date_seq[i]
@@ -71,12 +73,17 @@ plot_returns <- function(n_years, ymin, ymax, yby){
     if (i == 1){
       to_plot <- ret_yr
     } else{
-      to_plot <- rbind(to_plot, ret_yr)
+      to_plot <- bind_rows(to_plot, ret_yr)
     }
   }
     
   # Set the file_path for the next output
   file_path = paste0(exportdir, "0021_returns_by_decade/", n_years ,"yr-returns-by-decade.jpeg")
+  
+  # Add a source and note string for the plots
+  source_string <- str_wrap(paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)"),
+                            width = 85)
+  note_string   <- str_wrap(paste0("Note:  Annualized real returns include reinvested dividends."), width = 85)
   
   plot <- ggplot(data = to_plot, aes(x = period, y = price, col = as.factor(start_date))) +
     geom_line(alpha = 0.5) +
@@ -87,29 +94,17 @@ plot_returns <- function(n_years, ymin, ymax, yby){
                     aes(x = period, 
                         y = price,
                         col = as.factor(start_date),
-                        label = round(start_date, digits=0),
-                        family = "my_font")
+                        label = year(start_date),
+                        family = "my_font"),
+                    segment.color = "transparent"
                     ) +
     ggtitle(paste0("What Decade You Start In Matters\n(", n_years, " Year Returns for S&P 500)")) +
     of_dollars_and_data_theme +
-    labs(x = "Year" , y = "Index (Year 1 = 100)")
-  
-  # Add a source and note string for the plots
-  source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
-  note_string   <- paste0("Note:  Annualized real returns include reinvested dividends.") 
+    labs(x = "Year" , y = "Index (Year 1 = 100)",
+         caption = paste0("\n", source_string, "\n", note_string))
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
-  
-  # Make the source and note text grobs
-  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  
-  # Add the text grobs to the bototm of the gtable
-  my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
-  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
   
   # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
@@ -133,11 +128,11 @@ plot_diversified <- function(n_years, wt_sp500){
   }
   
   # Create a date sequence for each decade
-  date_seq <- seq(1931, (2011-n_years), 10)
+  date_seq <- seq(1931, 2011-n_years, by = 10)
   
   # Loop through the dates to get each return period for a specified number of years and stack it
   for (i in 1:length(date_seq)){
-    ret_yr            <- filter(hist_bond_stock, Date >= date_seq[i], Date < date_seq[i] + n_years)
+    ret_yr            <- filter(hist_bond_stock, Date >= date_seq[i], Date < (date_seq[i] + n_years))
     initial_value     <- filter(hist_bond_stock, Date == date_seq[i]) %>%
       select(index)
     ret_yr$price      <- (ret_yr$index / rep(as.numeric(initial_value), n_years)) * 100
@@ -147,7 +142,7 @@ plot_diversified <- function(n_years, wt_sp500){
     if (i == 1){
       to_plot <- ret_yr
     } else{
-      to_plot <- rbind(to_plot, ret_yr)
+      to_plot <- bind_rows(to_plot, ret_yr)
     }
   }
   
@@ -163,7 +158,8 @@ plot_diversified <- function(n_years, wt_sp500){
                         y = price,
                         col = as.factor(start_date),
                         label = round(start_date, digits=0),
-                        family = "my_font")
+                        family = "my_font"),
+                    segment.colour = "transparent"
     ) +
     ggtitle(paste0(100*wt_sp500, "% Stock, ", 100*(1-wt_sp500),"% Bond Portfolio\n(", n_years, " Year Returns)")) +
     of_dollars_and_data_theme +
