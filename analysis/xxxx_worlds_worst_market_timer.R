@@ -29,17 +29,7 @@ sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                     filter(date >= 1972.11)
 
 # Calculate returns for the S&P data
-for (i in 1:nrow(sp500_ret_pe)){
-  if (i == 1){
-    sp500_ret_pe[i, "n_shares"]       <- 1
-    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
-    sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
-  } else{
-    sp500_ret_pe[i, "n_shares"]       <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "real_price"]
-    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
-    sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
-  }
-}
+
 
 # Purchases for the world's market timer
 purchases <- data.frame(date = c("1972-12-01", "1987-08-01", "1999-12-01", "2007-10-01"),

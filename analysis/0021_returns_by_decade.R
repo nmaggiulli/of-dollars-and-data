@@ -51,17 +51,7 @@ first_year <- floor(min(sp500_ret_pe$Date))
 last_year <- floor(max(sp500_ret_pe$Date))
 
 # Calculate returns for the S&P data
-for (i in 1:nrow(sp500_ret_pe)){
-  if (i == 1){
-    sp500_ret_pe[i, "n_shares"]       <- 1
-    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
-    sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
-  } else{
-    sp500_ret_pe[i, "n_shares"]       <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "real_price"]
-    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
-    sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
-  }
-}
+
 
 # Create a function for custom plotting
 plot_returns <- function(n_years, ymin, ymax, yby){

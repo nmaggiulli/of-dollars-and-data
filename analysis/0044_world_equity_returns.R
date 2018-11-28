@@ -39,17 +39,7 @@ sp500_ret_pe <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
 min_date <- max(min(non_us$date), min(sp500_ret_pe$date))
 max_date <- min(max(non_us$date), max(sp500_ret_pe$date))
 
-for (i in 1:nrow(sp500_ret_pe)){
-  if (i == 1){
-    sp500_ret_pe[i, "n_shares"]       <- 1
-    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
-    sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
-  } else{
-    sp500_ret_pe[i, "n_shares"]       <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "real_price"]
-    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
-    sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
-  }
-}
+
 
 # Filter the US data
 us_filtered <- sp500_ret_pe %>%

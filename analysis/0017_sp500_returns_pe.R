@@ -34,17 +34,7 @@ sp500_ret_pe <- filter(sp500_ret_pe, !is.na(cape), date < 2017.01)
 first_year <- floor(min(sp500_ret_pe$date))
 last_year <- floor(max(sp500_ret_pe$date))
 
-for (i in 1:nrow(sp500_ret_pe)){
-  if (i == 1){
-    sp500_ret_pe[i, "n_shares"]       <- 1
-    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
-    sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
-  } else{
-    sp500_ret_pe[i, "n_shares"]       <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "real_price"]
-    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
-    sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
-  }
-}
+
 
 # Setup a vector of different returns to calculate
 # This will be for 5 year, 10 year, 20 year, and 30 year returns
