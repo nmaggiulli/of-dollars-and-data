@@ -76,6 +76,8 @@ compare_months <- function(start_date, end_date){
   to_plot <- sp500_ret_pe %>%
               filter(date >= start_date, date <= end_date)
   
+  assign("to_plot", to_plot, envir = .GlobalEnv)
+  
   first_year <- min(year(to_plot$date))
   last_year <- max(year(to_plot$date))
   
@@ -101,7 +103,15 @@ compare_months <- function(start_date, end_date){
     results_df[counter, "month1"] <- i
     results_df[counter, "month2"] <- paste0("Not ", i)
     results_df[counter, "p_value_ks"] <- ks.test(dist1, dist2)$p.value
-
+    
+    if(i == 11){
+      counter <- counter + 1
+      dist1 <- filter(to_plot, month == 12) %>% pull(ret)
+      dist2 <- filter(to_plot, month != 12) %>% pull(ret)
+      results_df[counter, "month1"] <- 12
+      results_df[counter, "month2"] <- paste0("Not ", 12)
+      results_df[counter, "p_value_ks"] <- ks.test(dist1, dist2)$p.value
+    }
   }
   
   assign("results_df", results_df, envir = .GlobalEnv)
