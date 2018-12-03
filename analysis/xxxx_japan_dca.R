@@ -87,7 +87,7 @@ plot_jpy_value <- function(date_start, n_years){
   
   plot <- ggplot(dd, aes(x = date, y = pct)) +
     geom_area(position = "identity", alpha = 0.4, fill = "red") +
-    scale_y_continuous(label = percent, limits = c(-0.75, 0)) +
+    scale_y_continuous(label = percent) +
     of_dollars_and_data_theme +
     ggtitle(paste0("Drawdowns for Japanese DCA Strategy\n", first_year, "-", last_year)) +
     labs(x = "Date" , y = "Percentage of Value Lost",
