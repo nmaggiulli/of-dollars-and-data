@@ -96,6 +96,7 @@ check_above_below <- function(start_date, end_date){
 check_above_below("1950-01-01", "2018-08-31")
 check_above_below("1926-01-01", "2018-08-31")
 check_above_below("1932-07-01", "2018-08-31")
+check_above_below("1978-01-01", "2018-08-31")
 
 
 
