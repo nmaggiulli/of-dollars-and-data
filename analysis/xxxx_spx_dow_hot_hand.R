@@ -27,13 +27,17 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-df <- read_excel(paste0(importdir, "0097_spx_daily/spx_daily.xlsx")) %>%
-        rename(date = Period,
-               index = `S&P 500 Level`) %>%
-        mutate(ret = index/lag(index) - 1,
-               pos = ifelse(ret > 0 , 1, 0)) %>%
-        filter(!is.na(ret)) %>%
-        select(date, ret, pos)
+# set.seed(12345)
+# 
+# df <- data.frame(pos=sample(0:1, 10000, replace = TRUE), ret = runif(10000, 0, 1))
+# 
+# df <- read_excel(paste0(importdir, "0097_spx_daily/spx_daily.xlsx")) %>%
+#         rename(date = Period,
+#                index = `S&P 500 Level`) %>%
+#         mutate(ret = index/lag(index) - 1,
+#                pos = ifelse(ret > 0 , 1, 0)) %>%
+#         filter(!is.na(ret)) %>%
+#         select(date, ret, pos)
 
 df <- read_excel(paste0(importdir, "xxxx_dow_daily/dow_daily.xlsx")) %>%
       rename(date = Date,
