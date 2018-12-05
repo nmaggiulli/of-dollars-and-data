@@ -21,7 +21,7 @@ library(readxl)
 library(ggjoy)
 library(tidyverse)
 
-folder_name <- "xxxx_df_hot_hand"
+folder_name <- "xxxx_spx_dow_hot_hand"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
