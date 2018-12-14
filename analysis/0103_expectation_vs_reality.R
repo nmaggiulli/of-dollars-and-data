@@ -20,7 +20,7 @@ library(lubridate)
 library(readxl)
 library(tidyverse)
 
-folder_name <- "xxxx_expectation_vs_reality"
+folder_name <- "0103_expectation_vs_reality"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -93,9 +93,6 @@ check_above_below <- function(start_date, end_date){
   print(mean(spx$above_reality))
 }
 
-check_above_below("1950-01-01", "2018-08-31")
-check_above_below("1926-01-01", "2018-08-31")
-check_above_below("1932-07-01", "2018-08-31")
 check_above_below("1978-01-01", "2018-08-31")
 
 
