@@ -59,11 +59,14 @@ check_above_below <- function(start_date, end_date){
   
   spx <- spx %>%
           mutate(reality = reality/first_index, 
-                above_reality = ifelse(reality > expectation, 1, 0)
-                )
+                above_reality = ifelse(reality > expectation, 1, 0),
+                real_over_ex = reality/expectation)
+  
+  print(paste0("The Real was : ", -100*round(1-min(spx$real_over_ex), 4), "% below Expected at its worst point."))
+  print(paste0("The Real was: ", 100*round(max(spx$real_over_ex), 4), "% above Expected at its best point."))
   
   to_plot <- spx %>%
-              select(-above_reality) %>%
+              select(-above_reality, -real_over_ex) %>%
               gather(-date, key=key, value=value)
   
   # Set note and source string
@@ -90,7 +93,7 @@ check_above_below <- function(start_date, end_date){
   # Save the plot
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
   
-  print(mean(spx$above_reality))
+  print(paste0("Percentage of months where SPX is above its average growth: ", 100*round(mean(spx$above_reality), 4), "%."))
   
   assign("to_plot", to_plot, envir = .GlobalEnv)
 }
