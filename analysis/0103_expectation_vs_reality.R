@@ -59,7 +59,7 @@ check_above_below <- function(start_date, end_date){
   
   spx <- spx %>%
           mutate(reality = reality/first_index, 
-                above_reality = ifelse(reality > expectation, 1, 0),
+                above_reality = ifelse(reality > expectation, 1, 0)
                 )
   
   to_plot <- spx %>%
@@ -69,7 +69,7 @@ check_above_below <- function(start_date, end_date){
   # Set note and source string
   source_string <- str_wrap("Source: DFA (OfDollarsAndData.com)",
                             width = 85)
-  note_string   <- str_wrap(paste0("Note: Return includes dividends."), 
+  note_string   <- str_wrap(paste0("Note: Includes dividends, but not adjusted for inflation. The S&P 500 compounded at an average rate of ", 100*round((1 + total_return)^12 - 1, 4), "% annually over this period."), 
                             width = 85)
   
   # Set the file_path based on the function input 
@@ -91,9 +91,11 @@ check_above_below <- function(start_date, end_date){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
   
   print(mean(spx$above_reality))
+  
+  assign("to_plot", to_plot, envir = .GlobalEnv)
 }
 
-check_above_below("1978-01-01", "2018-08-31")
+check_above_below("1978-01-01", "2017-12-31")
 
 
 
