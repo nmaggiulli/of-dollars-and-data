@@ -99,6 +99,7 @@ check_above_below <- function(start_date, end_date){
 }
 
 check_above_below("1978-01-01", "2017-12-31")
+check_above_below("1926-01-31", "2017-12-31")
 
 
 
