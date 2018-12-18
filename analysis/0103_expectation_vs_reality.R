@@ -96,12 +96,46 @@ check_above_below <- function(start_date, end_date){
   print(paste0("Percentage of months where SPX is above its average growth: ", 100*round(mean(spx$above_reality), 4), "%."))
   
   assign("to_plot", to_plot, envir = .GlobalEnv)
+  
+  # Just plot reality with an LM line and find the % of residuals that are positive versus negative
+  to_plot_reality <- filter(to_plot, key == "reality")
+  
+  assign("to_plot_reality", to_plot_reality, envir = .GlobalEnv)
+  
+  # Set the file_path based on the function input 
+  file_path <- paste0(out_path, "/lm_", start_date_string, "_to_", end_date_string, ".jpeg")
+  
+  plot <- ggplot(to_plot_reality, aes(x=date, y = value)) +
+    geom_point() +
+    scale_y_continuous(trans='log10') +
+    geom_smooth(method="lm") +
+    of_dollars_and_data_theme +
+    ggtitle("The S&P 500 With Linear Fit") +
+    labs(x = "Year", y = "Growth of $1 (Log Scale)",
+         caption = paste0("\n", source_string, "\n", note_string))
+  
+  # Turn plot into a gtable for adding text grobs
+  my_gtable   <- ggplot_gtable(ggplot_build(plot))
+  
+  # Save the plot
+  ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+  
+  # Create LM and print stats
+  lm <- lm(log(value)~date, data=to_plot_reality)
+  
+  assign("lm", lm, envir = .GlobalEnv)
+  
+  print(paste0("Percentage of months where SPX is above its LM: ", 100*round(length(which(lm$residuals>0))/length(lm$residuals), 4), "%."))
+
+  # Transform the logs back before getting the percentage above and below
+  lm_fit_over_real <- exp(lm$fitted.values)/(exp(lm$residuals) + exp(lm$fitted.values))
+  lm_real_over_fit <- (exp(lm$residuals) + exp(lm$fitted.values))/exp(lm$fitted.values)
+  
+  print(paste0("The Real was : ", -100*round(1-min(lm_fit_over_real), 4), "% below the LM at its worst point."))
+  print(paste0("The Real was: ", 100*round(max(lm_real_over_fit), 4), "% above the LM at its best point."))
 }
 
 check_above_below("1978-01-01", "2017-12-31")
 check_above_below("1926-01-31", "2017-12-31")
-
-
-
 
 # ############################  End  ################################## #
