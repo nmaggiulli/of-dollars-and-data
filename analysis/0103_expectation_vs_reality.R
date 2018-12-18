@@ -62,6 +62,8 @@ check_above_below <- function(start_date, end_date){
                 above_reality = ifelse(reality > expectation, 1, 0),
                 real_over_ex = reality/expectation)
   
+  print("**** Expectation Results ****")
+  
   print(paste0("The Real was : ", -100*round(1-min(spx$real_over_ex), 4), "% below Expected at its worst point."))
   print(paste0("The Real was: ", 100*round(max(spx$real_over_ex), 4), "% above Expected at its best point."))
   
@@ -100,8 +102,6 @@ check_above_below <- function(start_date, end_date){
   # Just plot reality with an LM line and find the % of residuals that are positive versus negative
   to_plot_reality <- filter(to_plot, key == "reality")
   
-  assign("to_plot_reality", to_plot_reality, envir = .GlobalEnv)
-  
   # Set the file_path based on the function input 
   file_path <- paste0(out_path, "/lm_", start_date_string, "_to_", end_date_string, ".jpeg")
   
@@ -125,14 +125,15 @@ check_above_below <- function(start_date, end_date){
   
   assign("lm", lm, envir = .GlobalEnv)
   
-  print(paste0("Percentage of months where SPX is above its LM: ", 100*round(length(which(lm$residuals>0))/length(lm$residuals), 4), "%."))
-
   # Transform the logs back before getting the percentage above and below
   lm_fit_over_real <- exp(lm$fitted.values)/(exp(lm$residuals) + exp(lm$fitted.values))
   lm_real_over_fit <- (exp(lm$residuals) + exp(lm$fitted.values))/exp(lm$fitted.values)
   
+  print("**** Log Linear Results ****")
   print(paste0("The Real was : ", -100*round(1-min(lm_fit_over_real), 4), "% below the LM at its worst point."))
   print(paste0("The Real was: ", 100*round(max(lm_real_over_fit), 4), "% above the LM at its best point."))
+  print(paste0("Percentage of months where SPX is above its LM: ", 100*round(length(which(lm$residuals>0))/length(lm$residuals), 4), "%."))
+  
 }
 
 check_above_below("1978-01-01", "2017-12-31")
