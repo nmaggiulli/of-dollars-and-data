@@ -133,7 +133,7 @@ check_above_below <- function(start_date, end_date){
   print(paste0("The Real was : ", -100*round(1-min(lm_fit_over_real), 4), "% below the LM at its worst point."))
   print(paste0("The Real was: ", 100*round(max(lm_real_over_fit), 4), "% above the LM at its best point."))
   print(paste0("Percentage of months where SPX is above its LM: ", 100*round(length(which(lm$residuals>0))/length(lm$residuals), 4), "%."))
-  
+  print(paste0("The CAGR over this period was: ", 100*round(((exp(lm$fitted.values[length(lm$residuals)])/exp(lm$fitted.values[1]))^(1/1103))^12 - 1, 4), "%."))
 }
 
 check_above_below("1978-01-01", "2017-12-31")
