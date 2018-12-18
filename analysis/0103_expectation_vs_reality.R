@@ -110,7 +110,7 @@ check_above_below <- function(start_date, end_date){
     scale_y_continuous(trans='log10') +
     geom_smooth(method="lm") +
     of_dollars_and_data_theme +
-    ggtitle("The S&P 500 With Linear Fit") +
+    ggtitle("The S&P 500 With Log-Linear Fit") +
     labs(x = "Year", y = "Growth of $1 (Log Scale)",
          caption = paste0("\n", source_string, "\n", note_string))
   
