@@ -77,4 +77,6 @@ ggplot(to_plot, aes(x=date, y=value, col = key)) +
   labs(x="Date", y="Growth of $1") +
   ggtitle("Global Markets")
 
+# Create dd datasets
+
 # ############################  End  ################################## #
