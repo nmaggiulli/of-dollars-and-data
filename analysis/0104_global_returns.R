@@ -18,6 +18,7 @@ library(ggrepel)
 library(slackr)
 library(lubridate)
 library(readxl)
+library(zoo)
 library(tidyverse)
 
 folder_name <- "0104_global_returns"
@@ -32,57 +33,60 @@ plot_global <- function(start_date, end_date){
   end_date_string <- str_replace_all(end_date, "-", "_")
   
   gr <- read.csv(paste0(importdir, "/0104_world_indices_total_return/world_tr_data_ycharts.csv")) %>%
-          clean_cols() %>%
-          mutate(date = as.Date(gsub("(.*)\\s.*", "\\1", date), format = "%m/%d/%y")) %>%
-          filter(date >= start_date, date <= end_date)
+        clean_cols() %>%
+        mutate(date = as.Date(gsub("(.*)\\s.*", "\\1", period), format = "%Y-%m-%d")) %>%
+        filter(date >= start_date, date <= end_date) %>%
+        select(-period) %>%
+        arrange(date)
   
-  countries <- data.frame(country = c("France", "Germany", "Greece", "Italy", "Japan",
-                 "SouthAfrica", "Spain", "UK", "US"),
-                 group = c(1, 1, 1, 1, 1, 2, 2, 2, 2)
+  countries <- data.frame(country = c("China", "Germany", "Greece", "Italy", "Japan",
+                 "Spain", "UK", "US")
                 )
           
-  colnames(gr) <- c("date", countries$country)
+  colnames(gr) <- c(countries$country, "date")
   
   gr_long <- gr %>%
-          mutate(year = year(date),
-                 month = month(date)) %>%
-          gather(key=key, value=value, -date, -month, -year)
+              gather(key=key, value=value, -date)
   
-  gr_yr_mo <- gr_long %>%
-            group_by(year, month, key) %>%
-            summarize(avg_index = mean(value, na.rm = TRUE)) %>%
-            ungroup() %>%
-            mutate(date = as.Date(paste0(year,"-", month, "-01"))) %>%
-            filter(!is.na(avg_index))
-  
-  first_yr_mo <- gr_yr_mo %>%
+  first_date <- gr_long %>%
+            filter(!is.na(value)) %>%
             group_by(date) %>%
             summarize(n_countries = n()) %>%
             filter(n_countries == (ncol(gr) - 1)) %>%
             head(1)
   
-  gr_yr_mo <- gr_yr_mo %>%
-                filter(date >= pull(first_yr_mo[1, "date"]))
+  gr_1 <- gr_long %>%
+            filter(date== pull(first_date[1, "date"])) %>%
+            rename(first_index = value) %>%
+            select(key, first_index)
   
-  gr_yr_mo_1 <- gr_yr_mo %>%
-                  inner_join(first_yr_mo) %>%
-                  rename(first_index = avg_index) %>%
-                  select(key, first_index)
+  gr_no_na <- gr %>%
+                filter(date >= pull(first_date[1, "date"]))
   
-  to_plot <- gr_yr_mo %>%
-                left_join(gr_yr_mo_1) %>%
-                mutate(value = avg_index/first_index) %>%
-                select(date, key, value) %>%
-                left_join(countries, by = c("key" = "country"))
+  # Fill in NAs by date
+  for (i in 1:(ncol(gr_no_na)-1)){
+    gr_no_na[, i] <- na.locf(gr_no_na[, i])
+  }
+  
+  to_plot <- gr_no_na %>%
+                gather(key = key, value = value, -date) %>%
+                mutate(yr = year(date),
+                       mt = month(date)) %>%
+                group_by(yr, mt, key) %>%
+                summarize(value = mean(value)) %>%
+                ungroup() %>%
+                mutate(date = as.Date(paste0(yr,"-", mt, "-01"))) %>%
+                left_join(gr_1) %>%
+                mutate(value = value/first_index) %>%
+                select(date, key, value)
   
   last_month <- filter(to_plot, date == max(to_plot$date)) 
   
   # Plot Growth of $1
-  
   # Set note and source string
   source_string <- str_wrap("Source: YCharts (OfDollarsAndData.com)",
                             width = 85)
-  note_string   <- str_wrap(paste0("Note: Includes dividends, but not adjusted for inflation or currency effects."), 
+  note_string   <- str_wrap(paste0("Note: Total return index values are averaged monthly and are not adjusted for inflation or currency effects."), 
                             width = 85)
   
   # Set the file_path based on the function input 
@@ -96,7 +100,8 @@ plot_global <- function(start_date, end_date){
                     label = paste0(last_month$key, " $", round(last_month$value, 2)),
                     max.iter = 1000) +
     of_dollars_and_data_theme +
-    labs(x="Date", y="Growth of $1") +
+    labs(x="Date", y= "Growth of $1",
+         caption = paste0(source_string, "\n", note_string)) +
     ggtitle(paste0("Global Market Growth of $1\n", year(start_date), "-", year(end_date)))
   
   # Turn plot into a gtable for adding text grobs
@@ -108,12 +113,10 @@ plot_global <- function(start_date, end_date){
   # Create dd datasets
   for (i in 1:nrow(countries)){
     country <- countries[i, "country"]
-    grp <- countries[i, "group"]
-    pre_dd <- filter(gr_yr_mo, key == country) %>%
-                select(date, avg_index)
+    pre_dd <- filter(to_plot, key == country) %>%
+                select(date, value)
     dd <- drawdown_path(pre_dd) %>%
-            mutate(key = country,
-                   group = grp)
+            mutate(key = country)
     
     if (i == 1){
       final_dd <- dd
@@ -136,7 +139,8 @@ plot_global <- function(start_date, end_date){
                     label = paste0(last_month$key),
                     max.iter = 1000) +
     of_dollars_and_data_theme +
-    labs(x="Date", y="Percentage Decline from All-Time High") +
+    labs(x="Date", y="Percentage Decline from All-Time High",
+         caption = paste0(source_string, "\n", note_string)) +
     ggtitle(paste0("Global Market Drawdowns\n", year(start_date), "-", year(end_date)))
   
   # Turn plot into a gtable for adding text grobs
@@ -146,9 +150,6 @@ plot_global <- function(start_date, end_date){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-plot_global("1995-02-01", "2018-11-30")
-plot_global("1995-02-01", "2015-12-31")
-plot_global("2009-01-01", "2018-11-30")
-plot_global("2013-01-01", "2018-11-30")
+plot_global("1995-02-01", "2018-12-31")
 
 # ############################  End  ################################## #
