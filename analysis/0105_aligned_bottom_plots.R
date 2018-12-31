@@ -20,7 +20,7 @@ library(ggjoy)
 library(tidyr)
 library(dplyr)
 
-folder_name <- "xxxx_aligned_bottom_plots"
+folder_name <- "0105_aligned_bottom_plots"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -71,7 +71,7 @@ plot_aligned_drawdowns <- function(n_years_after_bottom){
   }
   
   # Set the file_path based on the function input 
-  file_path = paste0(exportdir, "xxxx_aligned_bottom_plots/sp500-aligned-bottoms-", n_years_after_bottom, ".jpeg")
+  file_path = paste0(out_path, "/sp500-aligned-bottoms-", n_years_after_bottom, ".jpeg")
   
   # Create title based on the number of years
   top_title <- paste0("Larger Declines Usually Lead to\nStronger Recoveries") 
