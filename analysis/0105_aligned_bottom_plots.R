@@ -18,6 +18,7 @@ library(ggrepel)
 library(lubridate)
 library(ggjoy)
 library(tidyr)
+library(readxl)
 library(dplyr)
 
 folder_name <- "0105_aligned_bottom_plots"
@@ -32,8 +33,38 @@ my_palette <- c("#4DAF4A", "#E41A1C", "#377EB8", "#000000", "#984EA3", "#FF7F00"
 
 # Read in data for individual stocks and sp500 Shiller data
 sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-  filter(date > "1928-01-01")
+  filter(date > "1910-01-01") %>%
+  mutate(ret_fwd_6m = lead(price_plus_div, 6)/price_plus_div - 1,
+         ret_fwd_12m = lead(price_plus_div, 12)/price_plus_div - 1,
+         year = year(date))
 
+# Approximate down percentage
+cutoff_2018 <- -0.1475
+
+sp500_dd <- drawdown_path(select(sp500_ret_pe, date, price_plus_div)) %>%
+            mutate(year = year(date),
+                   month = month(date)) %>%
+            group_by(year, month) %>%
+            filter(row_number() == 1) %>%
+            ungroup() %>%
+            mutate(pct_below_cutoff = ifelse(pct < cutoff_2018, 1, 0))
+
+sp500_cutoff_years <- sp500_dd %>%
+                      filter(month == 1) %>%
+                      rename(yr_beg_pct = pct) %>%
+                      select(year, yr_beg_pct, pct_below_cutoff) %>%
+                      filter(year >= 1920) %>%
+                      left_join(sp500_ret_pe)  %>%
+                      mutate(month = month(date)) %>%
+                      filter(month == 1) %>%
+                      select(date, month, year, yr_beg_pct, pct_below_cutoff, ret_fwd_6m, ret_fwd_12m)
+
+print(sum(sp500_cutoff_years$pct_below_cutoff))
+
+cutoff_summary <- sp500_cutoff_years %>%
+                    group_by(pct_below_cutoff) %>%
+                    summarize(ret_fwd_6m = mean(ret_fwd_6m, na.rm = TRUE),
+                              ret_fwd_12m = mean(ret_fwd_12m, na.rm = TRUE))
 
 # Create a date list for the bottoms
 date_list <- c("1932-06-01", "1974-12-01", "1987-12-01", "2003-02-01", "2009-03-01")
