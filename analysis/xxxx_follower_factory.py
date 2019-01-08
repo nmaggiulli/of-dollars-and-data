@@ -34,6 +34,9 @@ OAUTH_SECRET = 'x2'
 CONSUMER_KEY = 'y1'
 CONSUMER_SECRET = 'y2'
 
+# Directory to write images too
+OUT_DIR = '/Volumes/GoogleDrive/My Drive/of_dollars_and_data/export/xxxx_follower_factory/'
+
 twitter_connection = Twitter(auth=OAuth(OAUTH_TOKEN, OAUTH_SECRET, CONSUMER_KEY, CONSUMER_SECRET))
 
 pbar = tqdm()
@@ -116,6 +119,7 @@ with plt.style.context(mpl_style_url):
     plt.yticks(range(0, 365 * (datetime.today().year + 1 - 2006), 365), range(2006, datetime.today().year + 1))
     plt.xlabel('Follower count for @{}'.format(USER_TO_ANALYZE))
     plt.ylabel('Date follower joined Twitter')
-    plt.savefig('/Users/nmaggiulli/data/of_dollars_and_data/export/xxxx_follower_factory/{}_follower_factory.png'.format(USER_TO_ANALYZE))
+    plt.savefig(OUT_DIR + '{}-follower-factory.png'.format(USER_TO_ANALYZE))
 
 print('Follower Factory visualization saved to directory.')
+
