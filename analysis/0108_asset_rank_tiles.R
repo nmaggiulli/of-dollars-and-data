@@ -44,7 +44,7 @@ year_tiles <- data.frame(year = seq(first_year, last_year)) %>%
          text = as.character(year))
 
 to_plot <- cbind(rets, rank=seq(1, n_assets)) %>%
-  mutate(text = paste0(asset, "\n", 100*round(ret, 3), "%")) %>%
+  mutate(text = paste0(asset, "\n", round(ret, 3), "%")) %>%
   bind_rows(year_tiles)
 
 # Create function for coloring
