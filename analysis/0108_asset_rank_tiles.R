@@ -58,6 +58,7 @@ full_colors_22 <- c(
 create_tiles <- function(file_in, color_list, file_out, size_small, size_large, source_string){
   
   rets <- read_excel(paste0(importdir, "0108_asset_ranks/", file_in)) %>%
+    filter(year>= 2009) %>%
     arrange(year, ret)
   
   n_assets <- length(unique(rets$asset))
