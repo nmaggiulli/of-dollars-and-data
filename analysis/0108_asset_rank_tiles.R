@@ -65,7 +65,7 @@ create_tiles <- function(file_in, color_list, file_out, size_small, size_large, 
   
   first_year <- min(rets$year)
   last_year  <- max(rets$year)
-  n_years    <- last_year - first_year
+  n_years    <- last_year - first_year + 1
   
   avg <- rets %>%
     group_by(asset) %>%
