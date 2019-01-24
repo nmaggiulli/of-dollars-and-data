@@ -10,6 +10,7 @@ source(file.path(paste0(getwd(),"/header.R")))
 library(scales)
 library(readxl)
 library(lubridate)
+library(ggrepel)
 library(tidyverse)
 
 folder_name <- "0110_buy_bottoms"
@@ -103,7 +104,7 @@ buy_bottoms_dca <- function(n_month_delay, start_date, end_date){
   return(df)
 }
 
-start_date <- '1979-01-01'
+start_date <- '1990-01-01'
 end_date <- '2018-12-01'
 
 # Calculate data
@@ -127,14 +128,14 @@ bottom <- full_df %>%
 source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)" 
 note_string <- paste0("Note:  Real return includes reinvested dividends.") 
 
-dot_size <- 1.5
+dot_size <- 1.2
 
 file_path <- paste0(out_path, "/ath_sp500.jpeg")
 
 plot <- ggplot(to_plot, aes(x=date, y=value)) +
   geom_line() +
   geom_point(data=ath, aes(x=date, y=value), col = "green", size = dot_size, alpha = 0.7) +
-  scale_y_continuous(label = dollar) +
+  scale_y_continuous(label = dollar, trans = log10_trans()) +
   of_dollars_and_data_theme +
   ggtitle("All-Time Highs for the S&P 500") +
   labs(x = "Date", y = "Growth of $1",
@@ -150,7 +151,7 @@ plot <- ggplot(to_plot, aes(x=date, y=value)) +
   geom_line() +
   geom_point(data=ath, aes(x=date, y=value), col = "green", size = dot_size, alpha = 0.7) +
   geom_point(data=bottom, aes(x=date, y=value), col = "red", size = dot_size, alpha = 0.7) +
-  scale_y_continuous(label = dollar) +
+  scale_y_continuous(label = dollar, trans = log10_trans()) +
   of_dollars_and_data_theme +
   ggtitle("All-Time Highs & Relative Bottoms\nfor the S&P 500") +
   labs(x = "Date", y = "Growth of $1",
@@ -159,60 +160,125 @@ plot <- ggplot(to_plot, aes(x=date, y=value)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-to_plot <- full_df %>%
-            select(date, dca_value, bottom_value) %>%
-            rename(DCA = dca_value,
-                   `Bottom\nBuying` = bottom_value) %>%
-            gather(-date, key=key, value=value)
+plot_dca_v_bottom <- function(lag_length){
+  
+  if(lag_length > 0){
+    end_title <- paste0(" (With ", lag_length, "-Month Lag)")
+  } else{
+    end_title <- ""
+  }
+  
+  to_plot <- buy_bottoms_dca(lag_length, start_date, end_date) %>%
+              select(date, dca_value, bottom_vested, bottom_cash) %>%
+              rename(DCA = dca_value,
+                     `Bottom\nBuying` = bottom_vested,
+                     `Cash` = bottom_cash) %>%
+              gather(-date, key=key, value=value)
+  
+  text_labels <- to_plot %>%
+                  filter(date == "2014-12-01")
+  
+  # New plot
+  file_path <- paste0(out_path, "/dca_vs_bottom_lag_", lag_length, ".jpeg")
+  
+  plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
+    geom_line() +
+    scale_y_continuous(label = dollar) +
+    scale_color_manual(values = c("red", "green", "black"), guide = FALSE) +
+    geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
+                    label = text_labels$key,
+                    nudge_y = ifelse(text_labels$key == "DCA", -9000, 9000),
+                    segment.color = "transparent") +
+    of_dollars_and_data_theme +
+    ggtitle(paste0("DCA vs. Bottom Buying", end_title)) +
+    labs(x = "Date", y = "Value",
+         caption = paste0(source_string, "\n", note_string))
+  
+  # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+}
 
-text_labels <- to_plot %>%
-                filter(date == "2014-12-01")
+plot_dca_v_bottom(0)
+plot_dca_v_bottom(2)
 
-# New plot
-file_path <- paste0(out_path, "/dca_vs_bottom_lag_0.jpeg")
+# Do more efficient simulations of bottom buying strategy
+calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
+  sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
+    filter(date >= as.Date(start_date), date <= as.Date(end_date))
+  
+  dd <- drawdown_path(select(sp500_ret_pe, date, price_plus_div))
+  
+  # Find bottoms
+  for (i in 1:nrow(dd)){
+    if(dd[i, "pct"] == 0){
+      dd[i, "ath"] <- 1
+    } else{
+      dd[i, "ath"] <- 0
+    }
+    
+    if(dd[i, "ath"] == 1){
+      local_min <- 0
+    } else{
+      local_min <- min(local_min, dd[i, "pct"])
+    }
+    
+    dd[i, "min_dd"] <- local_min 
+  }
+  
+  # Reverse sort to overwrite bottoms
+  for (i in nrow(dd):1){
+    if(dd[i, "ath"] == 1){
+      local_min <- 0
+    } else{
+      local_min <- min(local_min, dd[i, "min_dd"])
+    }
+    
+    dd[i, "min_dd"] <- local_min 
+  }
+  
+  purchase_dates <- dd %>%
+    filter(pct == min_dd, min_dd < 0) %>%
+    mutate(date = date + months(n_month_delay)) %>%
+    mutate(bottom_amount = (interval(lag(date), date) %/% months(1)) * monthly_buy) %>%
+    select(date, bottom_amount)
+  
+  purchase_dates[1, "bottom_amount"] <- (interval(start_date, purchase_dates[1, "date"]) %/% months(1) + 1) * monthly_buy
+  
+  end <- pull(sp500_ret_pe[nrow(sp500_ret_pe), "price_plus_div"])
+  
+  n_periods <- nrow(sp500_ret_pe)
+  
+  df <- sp500_ret_pe %>%
+          mutate(dca_total_ret = (end/price_plus_div)^(12/(n_periods- row_number() + 1)) - 1) %>%
+          left_join(purchase_dates) %>%
+          mutate(bottom_amount = ifelse(is.na(bottom_amount), 0, bottom_amount),
+                 bottom_weight = bottom_amount/(n_periods*monthly_buy),
+                 bottom_total_ret = dca_total_ret*bottom_weight) %>%
+          select(date, price_plus_div, dca_total_ret, bottom_amount, bottom_weight, bottom_total_ret)
+  
+  #assign("df", df, envir = .GlobalEnv)
+  
+  return(ifelse(mean(df$dca_total_ret) > sum(df$bottom_total_ret), 1, 0))
+}
 
-plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
-  geom_line() +
-  scale_y_continuous(label = dollar) +
-  scale_color_manual(values = c("black", "red"), guide = FALSE) +
-  geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
-                  label = text_labels$key,
-                  nudge_y = ifelse(text_labels$key == "DCA", -9000, 9000),
-                  segment.color = "transparent") +
-  of_dollars_and_data_theme +
-  ggtitle("DCA vs. Bottom Buying") +
-  labs(x = "Date", y = "Portfolio Value",
-       caption = paste0(source_string, "\n", note_string))
+final_results <- data.frame()
 
-# Save the plot
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+all_dates <- seq.Date(as.Date("1920-01-01"), as.Date("1979-01-01"), "year")
 
-to_plot <- buy_bottoms_dca(2, start_date, end_date) %>%
-  select(date, dca_value, bottom_value) %>%
-  rename(DCA = dca_value,
-         `Bottom\nBuying` = bottom_value) %>%
-  gather(-date, key=key, value=value)
+n_years <- 40
+counter <- 1
+for (d in 1:length(all_dates)){
+  
+  st <- all_dates[d]
+  print(st)
+  
+  final_results[counter, "date"] <- st
+  final_results[counter, "n_years"] <- n_years
+  final_results[counter, "dca_win_lag_0"] <-calculate_dca_bottom_diff(0, st, st + years(n_years) - months(1))
+  final_results[counter, "dca_win_lag_1"] <-calculate_dca_bottom_diff(1, st, st + years(n_years) - months(1))
+  final_results[counter, "dca_win_lag_2"] <-calculate_dca_bottom_diff(2, st, st + years(n_years) - months(1))
+  counter <- counter + 1
+}
 
-text_labels <- to_plot %>%
-  filter(date == "2014-12-01")
-
-# New plot
-file_path <- paste0(out_path, "/dca_vs_bottom_lag_2.jpeg")
-
-plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
-  geom_line() +
-  scale_y_continuous(label = dollar) +
-  scale_color_manual(values = c("black", "red"), guide = FALSE) +
-  geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
-                  label = text_labels$key,
-                  nudge_y = ifelse(text_labels$key == "DCA", -9000, 9000),
-                  segment.color = "transparent") +
-  of_dollars_and_data_theme +
-  ggtitle("DCA vs. Bottom Buying (with 2-Month Lag)") +
-  labs(x = "Date", y = "Portfolio Value",
-       caption = paste0(source_string, "\n", note_string))
-
-# Save the plot
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #
