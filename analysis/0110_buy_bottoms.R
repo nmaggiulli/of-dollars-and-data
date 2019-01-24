@@ -61,7 +61,7 @@ buy_bottoms_dca <- function(n_month_delay, start_date, end_date){
   
   purchase_dates <- dd %>%
                       filter(pct == min_dd, min_dd < 0) %>%
-                      mutate(date = date + months(n_month_delay),
+                      mutate(date = date + months(n_month_delay + 1),
                              bottom = 1) %>%
                       select(date, bottom)
   
@@ -238,7 +238,7 @@ calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
   
   purchase_dates <- dd %>%
     filter(pct == min_dd, min_dd < 0) %>%
-    mutate(date = date + months(n_month_delay)) %>%
+    mutate(date = date + months(n_month_delay + 1)) %>%
     mutate(bottom_amount = (interval(lag(date), date) %/% months(1)) * monthly_buy) %>%
     select(date, bottom_amount)
   
