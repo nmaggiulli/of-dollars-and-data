@@ -132,7 +132,7 @@ create_tiles <- function(file_in, color_list, file_out, size_small, size_large, 
   create_gif(out_path, paste0(file_out, "_ranks_*.jpeg"), 120, 0, paste0("_gif_", file_out, "_ranks.gif"))
 }
 
-create_tiles("jpm_asset_returns_2004_2018.xlsx", full_colors_10, "asset", 1.6, 2.5, "Source: J.P.Morgan Guide to the Markets 1Q 2019 (OfDollarsAndData.com)")
-create_tiles("country_returns_1998_2018.xlsx", full_colors_22, "country", 1.1, 2.0, "Source: DFA (OfDollarsAndData.com)")
+create_tiles("jpm_asset_returns_2004_2018.xlsx", full_colors_10, "assets", 1.6, 2.5, "Source: J.P.Morgan Guide to the Markets 1Q 2019 (OfDollarsAndData.com)")
+create_tiles("country_returns_1998_2018.xlsx", full_colors_22, "countries", 1.1, 2.0, "Source: DFA (OfDollarsAndData.com)")
 
 # ############################  End  ################################## #
