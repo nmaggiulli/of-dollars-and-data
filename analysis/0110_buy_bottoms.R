@@ -21,12 +21,13 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 monthly_buy <- 100
 
-buy_bottoms_dca <- function(n_month_delay, start_date, end_date){
+full_dca_bottom <- function(n_month_delay, start_date, end_date){
 
   # Read in data for individual stocks and sp500 Shiller data
   sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-    filter(date >= as.Date(start_date), date <= as.Date(end_date)) %>%
+    filter(date >= as.Date(start_date) - months(1), date <= as.Date(end_date)) %>%
     mutate(ret = price_plus_div/lag(price_plus_div) - 1) %>%
+    filter(!is.na(ret)) %>%
     select(date, price_plus_div, ret)
   
   dd <- drawdown_path(select(sp500_ret_pe, date, price_plus_div))
@@ -72,8 +73,8 @@ buy_bottoms_dca <- function(n_month_delay, start_date, end_date){
   
   for(i in 1:nrow(df)){
     if (i == 1){
-      df[i, "dca_value"] <- monthly_buy
-      df[i, "bottom_vested"] <- monthly_buy
+      df[i, "dca_value"] <- monthly_buy * (1 + df[i, "ret"])
+      df[i, "bottom_vested"] <- monthly_buy * (1 + df[i, "ret"])
       df[i, "bottom_cash"] <- 0
     } else{
       df[i, "dca_value"] <- (df[(i-1), "dca_value"] + monthly_buy) * (1 + df[i, "ret"])
@@ -108,7 +109,7 @@ start_date <- '1990-01-01'
 end_date <- '2018-12-01'
 
 # Calculate data
-full_df <- buy_bottoms_dca(0, start_date, end_date)
+full_df <- full_dca_bottom(0, start_date, end_date)
 
 to_plot <- full_df %>%
             select(date, lump_sum) %>%
@@ -168,7 +169,7 @@ plot_dca_v_bottom <- function(lag_length){
     end_title <- ""
   }
   
-  to_plot <- buy_bottoms_dca(lag_length, start_date, end_date) %>%
+  to_plot <- full_dca_bottom(lag_length, start_date, end_date) %>%
               select(date, dca_value, bottom_vested, bottom_cash) %>%
               rename(DCA = dca_value,
                      `Bottom\nBuying` = bottom_vested,
@@ -204,7 +205,9 @@ plot_dca_v_bottom(2)
 # Do more efficient simulations of bottom buying strategy
 calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
   sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-    filter(date >= as.Date(start_date), date <= as.Date(end_date))
+    filter(date >= as.Date(start_date) - months(1), date <= as.Date(end_date)) %>%
+    mutate(lag_price = lag(price_plus_div)) %>%
+    filter(!is.na(lag_price))
   
   dd <- drawdown_path(select(sp500_ret_pe, date, price_plus_div))
   
@@ -249,36 +252,46 @@ calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
   n_periods <- nrow(sp500_ret_pe)
   
   df <- sp500_ret_pe %>%
-          mutate(dca_total_ret = (end/price_plus_div)^(12/(n_periods- row_number() + 1)) - 1) %>%
+          mutate(period_ret = (end/lag_price)^(12/(n_periods - row_number() + 1)),
+                 dca_growth = (end/lag_price)*monthly_buy,
+                 dca_total_ret = (1/n_periods)*period_ret) %>%
           left_join(purchase_dates) %>%
           mutate(bottom_amount = ifelse(is.na(bottom_amount), 0, bottom_amount),
-                 bottom_weight = bottom_amount/(n_periods*monthly_buy),
-                 bottom_total_ret = dca_total_ret*bottom_weight) %>%
-          select(date, price_plus_div, dca_total_ret, bottom_amount, bottom_weight, bottom_total_ret)
+                 bottom_growth = (end/lag_price)*bottom_amount,
+                 bottom_total_ret = (bottom_amount/(n_periods*monthly_buy))*period_ret) %>%
+          select(date, price_plus_div, lag_price, period_ret, dca_growth, dca_total_ret,
+                 bottom_amount, bottom_growth, bottom_total_ret)
   
-  #assign("df", df, envir = .GlobalEnv)
-  
-  return(ifelse(mean(df$dca_total_ret) > sum(df$bottom_total_ret), 1, 0))
+  return(df)
 }
 
 final_results <- data.frame()
 
-all_dates <- seq.Date(as.Date("1920-01-01"), as.Date("1979-01-01"), "year")
+all_dates <- seq.Date(as.Date("1920-01-01"), as.Date("1979-01-01"), "month")
 
 n_years <- 40
 counter <- 1
 for (d in 1:length(all_dates)){
-  
+
   st <- all_dates[d]
   print(st)
-  
-  final_results[counter, "date"] <- st
+
+  final_results[counter, "date"] <- format.Date(st)
   final_results[counter, "n_years"] <- n_years
-  final_results[counter, "dca_win_lag_0"] <-calculate_dca_bottom_diff(0, st, st + years(n_years) - months(1))
-  final_results[counter, "dca_win_lag_1"] <-calculate_dca_bottom_diff(1, st, st + years(n_years) - months(1))
-  final_results[counter, "dca_win_lag_2"] <-calculate_dca_bottom_diff(2, st, st + years(n_years) - months(1))
+  
+  tmp_0 <- calculate_dca_bottom_diff(0, st, st + years(n_years) - months(1))
+  tmp_1 <- calculate_dca_bottom_diff(1, st, st + years(n_years) - months(1))
+  tmp_2 <- calculate_dca_bottom_diff(2, st, st + years(n_years) - months(1))
+  
+  final_results[counter, "dca_win_lag_0"] <- ifelse(sum(tmp_0$dca_total_ret) > sum(tmp_0$bottom_total_ret), 1, 0)
+  final_results[counter, "dca_win_lag_1"] <- ifelse(sum(tmp_1$dca_total_ret) > sum(tmp_1$bottom_total_ret), 1, 0)
+  final_results[counter, "dca_win_lag_2"] <- ifelse(sum(tmp_2$dca_total_ret) > sum(tmp_2$bottom_total_ret), 1, 0)
   counter <- counter + 1
 }
+
+print(mean(final_results$dca_win_lag_0))
+print(mean(final_results$dca_win_lag_1))
+print(mean(final_results$dca_win_lag_2))
 
 
 # ############################  End  ################################## #
