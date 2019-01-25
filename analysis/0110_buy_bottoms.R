@@ -279,13 +279,16 @@ for (d in 1:length(all_dates)){
   final_results[counter, "date"] <- format.Date(st)
   final_results[counter, "n_years"] <- n_years
   
-  tmp_0 <- calculate_dca_bottom_diff(0, st, st + years(n_years) - months(1))
-  tmp_1 <- calculate_dca_bottom_diff(1, st, st + years(n_years) - months(1))
-  tmp_2 <- calculate_dca_bottom_diff(2, st, st + years(n_years) - months(1))
+  for(i in 0:2){
+    tmp <- calculate_dca_bottom_diff(0, st, st + years(n_years) - months(1))
+    
+    dca_diff_name <- paste0("dca_bottom_diff_lag_", i)
+    dca_win_name <- paste0("dca_win_lag_", i)
+    
+    final_results[counter, dca_diff_name] <- sum(tmp$dca_total_ret) - sum(tmp$bottom_total_ret)
+    final_results[counter, dca_win_name] <- ifelse(final_results[counter, dca_diff_name] > 0, 1, 0)
+  }
   
-  final_results[counter, "dca_win_lag_0"] <- ifelse(sum(tmp_0$dca_total_ret) > sum(tmp_0$bottom_total_ret), 1, 0)
-  final_results[counter, "dca_win_lag_1"] <- ifelse(sum(tmp_1$dca_total_ret) > sum(tmp_1$bottom_total_ret), 1, 0)
-  final_results[counter, "dca_win_lag_2"] <- ifelse(sum(tmp_2$dca_total_ret) > sum(tmp_2$bottom_total_ret), 1, 0)
   counter <- counter + 1
 }
 
