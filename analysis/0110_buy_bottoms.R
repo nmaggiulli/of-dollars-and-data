@@ -358,7 +358,7 @@ plot_dca_v_cash(2, "1995-01-01", "2018-12-01", "2014-12-01")
 testing <- 1
 
 if(testing == 1){
-  test_date <- "1973-01-01"
+  test_date <- "1995-01-01"
   t <- calculate_dca_bottom_diff(0, test_date, as.Date(test_date) + years(n_years) - months(1))
   t_full <- full_dca_bottom(0, test_date, as.Date(test_date) + years(n_years) - months(1))
 }
