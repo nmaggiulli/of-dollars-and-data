@@ -105,7 +105,7 @@ full_dca_bottom <- function(n_month_delay, start_date, end_date){
   return(df)
 }
 
-start_date <- '1990-01-01'
+start_date <- '1995-01-01'
 end_date <- '2018-12-01'
 
 # Calculate data
@@ -121,6 +121,7 @@ ath <- full_df %>%
       gather(key=key, value=value, -date)
 
 bottom <- full_df %>%
+          mutate(bottom = ifelse(lead(bottom) == 1, 1, 0)) %>%
           filter(bottom == 1) %>%
           select(date, lump_sum) %>%
           gather(key=key, value=value, -date)
@@ -136,7 +137,16 @@ file_path <- paste0(out_path, "/ath_sp500.jpeg")
 plot <- ggplot(to_plot, aes(x=date, y=value)) +
   geom_line() +
   geom_point(data=ath, aes(x=date, y=value), col = "green", size = dot_size, alpha = 0.7) +
-  scale_y_continuous(label = dollar, trans = log10_trans()) +
+  scale_y_continuous(label = dollar) +
+  scale_x_date(date_labels = "%Y", breaks = c(
+    as.Date("1995-01-01"),
+    as.Date("2000-01-01"),
+    as.Date("2005-01-01"),
+    as.Date("2010-01-01"),
+    as.Date("2015-01-01"),
+    as.Date("2020-01-01")
+  ),
+  limits = c(as.Date("1995-01-01"), as.Date("2020-01-01"))) +
   of_dollars_and_data_theme +
   ggtitle("All-Time Highs for the S&P 500") +
   labs(x = "Date", y = "Growth of $1",
@@ -152,7 +162,16 @@ plot <- ggplot(to_plot, aes(x=date, y=value)) +
   geom_line() +
   geom_point(data=ath, aes(x=date, y=value), col = "green", size = dot_size, alpha = 0.7) +
   geom_point(data=bottom, aes(x=date, y=value), col = "red", size = dot_size, alpha = 0.7) +
-  scale_y_continuous(label = dollar, trans = log10_trans()) +
+  scale_y_continuous(label = dollar) +
+  scale_x_date(date_labels = "%Y", breaks = c(
+    as.Date("1995-01-01"),
+    as.Date("2000-01-01"),
+    as.Date("2005-01-01"),
+    as.Date("2010-01-01"),
+    as.Date("2015-01-01"),
+    as.Date("2020-01-01")
+  ),
+  limits = c(as.Date("1995-01-01"), as.Date("2020-01-01"))) +
   of_dollars_and_data_theme +
   ggtitle("All-Time Highs & Relative Bottoms\nfor the S&P 500") +
   labs(x = "Date", y = "Growth of $1",
@@ -280,7 +299,7 @@ for (d in 1:length(all_dates)){
   final_results[counter, "n_years"] <- n_years
   
   for(i in 0:2){
-    tmp <- calculate_dca_bottom_diff(0, st, st + years(n_years) - months(1))
+    tmp <- calculate_dca_bottom_diff(i, st, st + years(n_years) - months(1))
     
     dca_diff_name <- paste0("dca_bottom_diff_lag_", i)
     dca_win_name <- paste0("dca_win_lag_", i)
