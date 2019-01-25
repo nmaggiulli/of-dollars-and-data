@@ -361,13 +361,6 @@ if(testing == 1){
   test_date <- "1973-01-01"
   t <- calculate_dca_bottom_diff(0, test_date, as.Date(test_date) + years(n_years) - months(1))
   t_full <- full_dca_bottom(0, test_date, as.Date(test_date) + years(n_years) - months(1))
-  
-  to_plot_tmp <- t_full %>% select(date, dca_value, bottom_value) %>% gather(-date, key=key, value=value)
-  
-  ggplot(to_plot_tmp, aes(x=date, y=value, col = key)) +
-    geom_line() +
-    scale_y_continuous() +
-    of_dollars_and_data_theme
 }
 
 # Define final results data frame
