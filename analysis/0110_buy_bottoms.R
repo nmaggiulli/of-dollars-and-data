@@ -180,7 +180,7 @@ plot <- ggplot(to_plot, aes(x=date, y=value)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-plot_dca_v_bottom <- function(lag_length){
+plot_dca_v_cash <- function(lag_length){
   
   if(lag_length > 0){
     end_title <- paste0(" (With ", lag_length, "-Month Lag)")
@@ -189,11 +189,16 @@ plot_dca_v_bottom <- function(lag_length){
   }
   
   to_plot <- full_dca_bottom(lag_length, start_date, end_date) %>%
-              select(date, dca_value, bottom_vested, bottom_cash) %>%
-              rename(DCA = dca_value,
-                     `Bottom\nBuying` = bottom_vested,
+              select(date, bottom_vested, bottom_cash) %>%
+              rename(`Invested\nAmount` = bottom_vested,
                      `Cash` = bottom_cash) %>%
               gather(-date, key=key, value=value)
+  
+  bottom <- full_dca_bottom(lag_length, start_date, end_date) %>%
+              mutate(bottom = ifelse(lead(bottom) == 1, 1, 0)) %>%
+              filter(bottom == 1) %>%
+              select(date, bottom_vested) %>%
+              gather(key=key, value=value, -date)
   
   text_labels <- to_plot %>%
                   filter(date == "2014-12-01")
@@ -203,23 +208,23 @@ plot_dca_v_bottom <- function(lag_length){
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
     geom_line() +
+    geom_point(data=bottom, aes(x=date, y=value), col = "red", size = dot_size, alpha = 0.7) +
     scale_y_continuous(label = dollar) +
-    scale_color_manual(values = c("red", "green", "black"), guide = FALSE) +
+    scale_color_manual(values = c("green", "black"), guide = FALSE) +
     geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
                     label = text_labels$key,
                     nudge_y = ifelse(text_labels$key == "DCA", -9000, 9000),
                     segment.color = "transparent") +
     of_dollars_and_data_theme +
-    ggtitle(paste0("DCA vs. Bottom Buying", end_title)) +
-    labs(x = "Date", y = "Value",
+    ggtitle(paste0("Bottom-Buying Strategy", end_title)) +
+    labs(x = "Date", y = "Amount",
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-plot_dca_v_bottom(0)
-plot_dca_v_bottom(2)
+plot_dca_v_cash(0)
 
 # Do more efficient simulations of bottom buying strategy
 calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
@@ -264,31 +269,50 @@ calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
     mutate(bottom_amount = (interval(lag(date), date) %/% months(1)) * monthly_buy) %>%
     select(date, bottom_amount)
   
+  # Find first purchase amount
   purchase_dates[1, "bottom_amount"] <- (interval(start_date, purchase_dates[1, "date"]) %/% months(1) + 1) * monthly_buy
+  
+  # Fix last purchase amount
+  last_purchase_date <- purchase_dates[nrow(purchase_dates), "date"]
+  last2_purchase_date <- purchase_dates[(nrow(purchase_dates)-1), "date"]
+  
+  if(last_purchase_date < end_date){
+    purchase_dates[nrow(purchase_dates), "bottom_amount"] <- (interval(last_purchase_date, end_date) %/% months(1) + 1) * monthly_buy
+    purchase_dates[nrow(purchase_dates), "date"] <- end_date
+  } else if(last_purchase_date > end_date){
+    purchase_dates[nrow(purchase_dates), "bottom_amount"] <- (interval(last2_purchase_date, end_date) %/% months(1) + 1) * monthly_buy
+    purchase_dates[nrow(purchase_dates), "date"] <- end_date
+  }
   
   end <- pull(sp500_ret_pe[nrow(sp500_ret_pe), "price_plus_div"])
   
   n_periods <- nrow(sp500_ret_pe)
   
   df <- sp500_ret_pe %>%
-          mutate(period_ret = (end/lag_price)^(12/(n_periods - row_number() + 1)),
-                 dca_growth = (end/lag_price)*monthly_buy,
-                 dca_total_ret = (1/n_periods)*period_ret) %>%
+          mutate(period_ret = ((end/lag_price)^(12/(n_periods - row_number() + 1))) - 1,
+                 dca_growth = (end/lag_price)*monthly_buy) %>%
           left_join(purchase_dates) %>%
           mutate(bottom_amount = ifelse(is.na(bottom_amount), 0, bottom_amount),
-                 bottom_growth = (end/lag_price)*bottom_amount,
-                 bottom_total_ret = (bottom_amount/(n_periods*monthly_buy))*period_ret) %>%
-          select(date, price_plus_div, lag_price, period_ret, dca_growth, dca_total_ret,
-                 bottom_amount, bottom_growth, bottom_total_ret)
+                 bottom_growth = (end/lag_price)*bottom_amount) %>%
+          select(date, price_plus_div, lag_price, period_ret, dca_growth,
+                 bottom_amount, bottom_growth)
   
   return(df)
 }
 
+# Define the number of years to look over for the full-period comparisons
+n_years <- 40
+test_date <- "1973-04-01"
+t <- calculate_dca_bottom_diff(0, test_date, as.Date(test_date) + years(n_years) - months(1))
+t_full <- full_dca_bottom(0, test_date, as.Date(test_date) + years(n_years) - months(1))
+
+# Define final results data frame
 final_results <- data.frame()
 
-all_dates <- seq.Date(as.Date("1920-01-01"), as.Date("1979-01-01"), "month")
+# Define list of dates
+all_dates <- seq.Date(as.Date("1920-01-01"), as.Date("1979-01-01"), "year")
 
-n_years <- 40
+# Loop through all dates to run DCA vs. Bottom-Buying Strategy comparisons
 counter <- 1
 for (d in 1:length(all_dates)){
 
@@ -301,10 +325,10 @@ for (d in 1:length(all_dates)){
   for(i in 0:2){
     tmp <- calculate_dca_bottom_diff(i, st, st + years(n_years) - months(1))
     
-    dca_diff_name <- paste0("dca_bottom_diff_lag_", i)
+    dca_diff_name <- paste0("dca_bottom_pct_gt_lag_", i)
     dca_win_name <- paste0("dca_win_lag_", i)
     
-    final_results[counter, dca_diff_name] <- sum(tmp$dca_total_ret) - sum(tmp$bottom_total_ret)
+    final_results[counter, dca_diff_name] <- sum(tmp$dca_growth)/sum(tmp$bottom_growth) - 1
     final_results[counter, dca_win_name] <- ifelse(final_results[counter, dca_diff_name] > 0, 1, 0)
   }
   
@@ -314,6 +338,41 @@ for (d in 1:length(all_dates)){
 print(mean(final_results$dca_win_lag_0))
 print(mean(final_results$dca_win_lag_1))
 print(mean(final_results$dca_win_lag_2))
+
+print(mean(final_results$dca_bottom_pct_gt_lag_0))
+print(mean(final_results$dca_bottom_pct_gt_lag_1))
+print(mean(final_results$dca_bottom_pct_gt_lag_2))
+
+to_plot <- final_results %>%
+            select(date, dca_bottom_pct_gt_lag_0, dca_bottom_pct_gt_lag_1, dca_bottom_pct_gt_lag_2) %>%
+            mutate(date = as.Date(date)) %>%
+            rename(`No Lag` = dca_bottom_pct_gt_lag_0,
+                   `1-Month Lag` = dca_bottom_pct_gt_lag_1,
+                   `2-Month Lag` = dca_bottom_pct_gt_lag_2) %>%
+            gather(-date, key=key, value=value) %>%
+            mutate(key = factor(key, levels = c("2-Month Lag", "1-Month Lag", "No Lag")))
+
+file_path <- paste0(out_path, "/dca_outperformance.jpeg")
+note_string <- str_wrap(paste0("Note:  The DCA strategy buys the S&P 500 every month and stays fully invested.  ",
+                               "The Bottom-Buying strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
+                               "The outperformance percentage is defined as how much more (or less) money that the DCA has compared to",
+                                " the Bottom-Buying strategy in the terminal period."), 
+                        width = 85)
+
+plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_y_continuous(label = percent) +
+  scale_color_manual(values = c("#3182bd", "#9ecae1", "#deebf7")) +
+  scale_x_date(date_labels = "%Y") +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("DCA vs. Bottom-Buying Strategy\nAll ", n_years, "-Year Periods")) +
+  labs(x = "Date", y = "DCA Outperformance (%)",
+       caption = paste0(source_string, "\n", note_string)) +
+  theme(legend.title = element_blank())
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 
 # ############################  End  ################################## #
