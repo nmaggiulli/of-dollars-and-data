@@ -213,6 +213,7 @@ plot_dca_v_cash <- function(lag_length){
     scale_color_manual(values = c("green", "black"), guide = FALSE) +
     geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
                     label = text_labels$key,
+                    family = "my_font",
                     nudge_y = ifelse(text_labels$key == "DCA", -9000, 9000),
                     segment.color = "transparent") +
     of_dollars_and_data_theme +
@@ -274,14 +275,17 @@ calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
   
   # Fix last purchase amount
   last_purchase_date <- purchase_dates[nrow(purchase_dates), "date"]
-  last2_purchase_date <- purchase_dates[(nrow(purchase_dates)-1), "date"]
+  
+  # Find the number of purchases
+  n_purchases <- nrow(purchase_dates)
   
   if(last_purchase_date < end_date){
-    purchase_dates[nrow(purchase_dates), "bottom_amount"] <- (interval(last_purchase_date, end_date) %/% months(1) + 1) * monthly_buy
-    purchase_dates[nrow(purchase_dates), "date"] <- end_date
+    purchase_dates[(n_purchases+1), "bottom_amount"] <- (interval(last_purchase_date, end_date) %/% months(1)) * monthly_buy
+    purchase_dates[(n_purchases+1), "date"] <- end_date
   } else if(last_purchase_date > end_date){
-    purchase_dates[nrow(purchase_dates), "bottom_amount"] <- (interval(last2_purchase_date, end_date) %/% months(1) + 1) * monthly_buy
-    purchase_dates[nrow(purchase_dates), "date"] <- end_date
+    last2_purchase_date <- purchase_dates[(nrow(purchase_dates)-1), "date"]
+    purchase_dates[n_purchases, "bottom_amount"] <- (interval(last2_purchase_date, end_date) %/% months(1)) * monthly_buy
+    purchase_dates[n_purchases, "date"] <- end_date
   }
   
   end <- pull(sp500_ret_pe[nrow(sp500_ret_pe), "price_plus_div"])
@@ -302,9 +306,20 @@ calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
 
 # Define the number of years to look over for the full-period comparisons
 n_years <- 40
-test_date <- "1973-04-01"
-t <- calculate_dca_bottom_diff(0, test_date, as.Date(test_date) + years(n_years) - months(1))
-t_full <- full_dca_bottom(0, test_date, as.Date(test_date) + years(n_years) - months(1))
+
+testing <- 1
+if(testing == 1){
+  test_date <- "1960-01-01"
+  t <- calculate_dca_bottom_diff(0, test_date, as.Date(test_date) + years(n_years) - months(1))
+  t_full <- full_dca_bottom(0, test_date, as.Date(test_date) + years(n_years) - months(1))
+  
+  to_plot_tmp <- t_full %>% select(date, dca_value, bottom_value) %>% gather(-date, key=key, value=value)
+  
+  ggplot(to_plot_tmp, aes(x=date, y=value, col = key)) +
+    geom_line() +
+    scale_y_continuous(trans = log10_trans()) +
+    of_dollars_and_data_theme
+}
 
 # Define final results data frame
 final_results <- data.frame()
@@ -344,13 +359,11 @@ print(mean(final_results$dca_bottom_pct_gt_lag_1))
 print(mean(final_results$dca_bottom_pct_gt_lag_2))
 
 to_plot <- final_results %>%
-            select(date, dca_bottom_pct_gt_lag_0, dca_bottom_pct_gt_lag_1, dca_bottom_pct_gt_lag_2) %>%
+            select(date, dca_bottom_pct_gt_lag_0) %>%
             mutate(date = as.Date(date)) %>%
-            rename(`No Lag` = dca_bottom_pct_gt_lag_0,
-                   `1-Month Lag` = dca_bottom_pct_gt_lag_1,
-                   `2-Month Lag` = dca_bottom_pct_gt_lag_2) %>%
+            rename(`No Lag` = dca_bottom_pct_gt_lag_0) %>%
             gather(-date, key=key, value=value) %>%
-            mutate(key = factor(key, levels = c("2-Month Lag", "1-Month Lag", "No Lag")))
+            mutate(key = factor(key, levels = c("No Lag")))
 
 file_path <- paste0(out_path, "/dca_outperformance.jpeg")
 note_string <- str_wrap(paste0("Note:  The DCA strategy buys the S&P 500 every month and stays fully invested.  ",
@@ -359,17 +372,21 @@ note_string <- str_wrap(paste0("Note:  The DCA strategy buys the S&P 500 every m
                                 " the Bottom-Buying strategy in the terminal period."), 
                         width = 85)
 
+text_labels <- data.frame(date = c(as.Date("1950-01-01"), as.Date("1951-01-01")),
+                          value = c(0.1, -0.1),
+                          label = c("DCA Outperforms", "DCA Underperforms"))
+
 plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   geom_line() +
   geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_text_repel(data=text_labels, aes(x=date, y=value), label = text_labels$label, col="black", family = "my_font") +
   scale_y_continuous(label = percent) +
-  scale_color_manual(values = c("#3182bd", "#9ecae1", "#deebf7")) +
+  scale_color_manual(values = c("#3182bd"), guide = FALSE) +
   scale_x_date(date_labels = "%Y") +
   of_dollars_and_data_theme +
   ggtitle(paste0("DCA vs. Bottom-Buying Strategy\nAll ", n_years, "-Year Periods")) +
   labs(x = "Date", y = "DCA Outperformance (%)",
-       caption = paste0(source_string, "\n", note_string)) +
-  theme(legend.title = element_blank())
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
