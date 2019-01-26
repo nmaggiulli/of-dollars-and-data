@@ -216,9 +216,9 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
     geom_line() +
-    geom_point(data=bottom, aes(x=date, y=value), col = "green", size = dot_size, alpha = 0.7) +
+    geom_point(data=bottom, aes(x=date, y=value), col = "red", size = dot_size, alpha = 0.7) +
     scale_y_continuous(label = dollar) +
-    scale_color_manual(values = c("#3182bd", "black"), guide = FALSE) +
+    scale_color_manual(values = c("green", "black"), guide = FALSE) +
     geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
                     label = text_labels$key,
                     family = "my_font",
@@ -256,7 +256,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
     geom_line() +
-    geom_point(data=bottom, aes(x=date, y=value), col = "green", size = dot_size, alpha = 0.7) +
+    geom_point(data=bottom, aes(x=date, y=value), col = "red", size = dot_size, alpha = 0.7) +
     scale_y_continuous(label = dollar) +
     scale_color_manual(values = c("#3182bd", "black"), guide = FALSE) +
     geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
@@ -281,7 +281,7 @@ calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
     filter(!is.na(lag_price))
   
   purchase_dates <- full_dd %>%
-    filter(pct == min_dd, min_dd < 0) %>%
+    filter(pct == min_dd, min_dd < 0, date >= as.Date(start_date) - months(1), date <= as.Date(end_date)) %>%
     mutate(date = date + months(n_month_delay + 1)) %>%
     mutate(bottom_amount = (interval(lag(date), date) %/% months(1)) * monthly_buy) %>%
     select(date, bottom_amount)
@@ -335,21 +335,26 @@ dot_size <- 1.2
 # Create full_dd dataset for use in other functions
 full_dd <- create_full_dd(analysis_start, analysis_end)
 
+testing <- 1
+
+if(testing == 1){
+  test_date <- "1932-07-01"
+  t <- calculate_dca_bottom_diff(0, test_date, as.Date(test_date) + years(n_years) - months(1))
+  t_full <- full_dca_bottom(0, test_date, as.Date(test_date) + years(n_years) - months(1))
+}
+
 # Do all plotting
 plot_ath_bottoms(0, "1995-01-01", "2018-12-01")
 plot_dca_v_cash(0, "1995-01-01", "2018-12-01", "2014-12-01")
 plot_dca_v_cash(2, "1995-01-01", "2018-12-01", "2014-12-01")
 
-plot_ath_bottoms(0, "1973-01-01", as.Date("1973-01-01") + years(40) - months(1))
-plot_dca_v_cash(0, "1973-01-01", as.Date("1973-01-01") + years(40) - months(1), "2009-03-01")
+dt1 <- "1928-01-01"
+plot_ath_bottoms(0, dt1, as.Date(dt1) + years(40) - months(1))
+plot_dca_v_cash(0, dt1, as.Date(dt1) + years(40) - months(1), "1940-01-01")
 
-testing <- 1
-
-if(testing == 1){
-  test_date <- "1995-01-01"
-  t <- calculate_dca_bottom_diff(0, test_date, as.Date(test_date) + years(n_years) - months(1))
-  t_full <- full_dca_bottom(0, test_date, as.Date(test_date) + years(n_years) - months(1))
-}
+dt2 <- "1975-01-01"
+plot_ath_bottoms(0, dt2, as.Date(dt2) + years(40) - months(1))
+plot_dca_v_cash(0, dt2 , as.Date(dt2) + years(40) - months(1), "1980-01-01")
 
 # Define final results data frame
 final_results <- data.frame()
@@ -364,7 +369,8 @@ for (d in 1:length(all_dates)){
   st <- all_dates[d]
   print(st)
 
-  final_results[counter, "date"] <- format.Date(st)
+  final_results[counter, "start_date"] <- format.Date(st)
+  final_results[counter, "end_date"] <- format.Date(st + years(n_years) - months(1))
   final_results[counter, "n_years"] <- n_years
   
   for(i in 0:2){
@@ -382,8 +388,9 @@ for (d in 1:length(all_dates)){
 
 # Plot the DCA outperformance by year
 to_plot <- final_results %>%
-            select(date, dca_bottom_pct_gt_lag_0) %>%
-            mutate(date = as.Date(date)) %>%
+            select(start_date, dca_bottom_pct_gt_lag_0) %>%
+            mutate(date = as.Date(start_date)) %>%
+            select(-start_date) %>%
             rename(`No Lag` = dca_bottom_pct_gt_lag_0) %>%
             gather(-date, key=key, value=value) %>%
             mutate(key = factor(key, levels = c("No Lag")))
@@ -413,7 +420,6 @@ plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-
 
 # Print summary stats
 print(mean(final_results$dca_win_lag_0))
