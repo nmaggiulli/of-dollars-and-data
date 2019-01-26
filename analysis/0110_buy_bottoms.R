@@ -62,8 +62,6 @@ create_full_dd <- function(start_date, end_date){
   return(dd)
 }
 
-full_dd <- create_full_dd("1920-01-01", "2018-12-01")
-
 # Do a full DCA vs. Bottom-Buying simulation
 full_dca_bottom <- function(n_month_delay, start_date, end_date){
 
@@ -282,37 +280,7 @@ calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
     mutate(lag_price = lag(price_plus_div)) %>%
     filter(!is.na(lag_price))
   
-  dd <- drawdown_path(select(sp500_ret_pe, date, price_plus_div))
-  
-  # Find bottoms
-  for (i in 1:nrow(dd)){
-    if(dd[i, "pct"] == 0){
-      dd[i, "ath"] <- 1
-    } else{
-      dd[i, "ath"] <- 0
-    }
-    
-    if(dd[i, "ath"] == 1){
-      local_min <- 0
-    } else{
-      local_min <- min(local_min, dd[i, "pct"])
-    }
-    
-    dd[i, "min_dd"] <- local_min 
-  }
-  
-  # Reverse sort to overwrite bottoms
-  for (i in nrow(dd):1){
-    if(dd[i, "ath"] == 1){
-      local_min <- 0
-    } else{
-      local_min <- min(local_min, dd[i, "min_dd"])
-    }
-    
-    dd[i, "min_dd"] <- local_min 
-  }
-  
-  purchase_dates <- dd %>%
+  purchase_dates <- full_dd %>%
     filter(pct == min_dd, min_dd < 0) %>%
     mutate(date = date + months(n_month_delay + 1)) %>%
     mutate(bottom_amount = (interval(lag(date), date) %/% months(1)) * monthly_buy) %>%
@@ -354,13 +322,18 @@ calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
 
 ###### End function definition ############
 
-# Define monthly buy amount and number of years for all simulations
+# Define simulation parameters
 monthly_buy <- 100
 n_years <- 40
+analysis_start <- as.Date("1920-01-01")
+analysis_end <- as.Date("2018-12-01")
 
 # Parameters for all plots
 source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)" 
 dot_size <- 1.2
+
+# Create full_dd dataset for use in other functions
+full_dd <- create_full_dd(analysis_start, analysis_end)
 
 # Do all plotting
 plot_ath_bottoms(0, "1995-01-01", "2018-12-01")
@@ -382,7 +355,7 @@ if(testing == 1){
 final_results <- data.frame()
 
 # Define list of dates
-all_dates <- seq.Date(as.Date("1920-01-01"), as.Date("1979-01-01"), "year")
+all_dates <- seq.Date(analysis_start, analysis_end - years(n_years) + months(1), "year")
 
 # Loop through all dates to run DCA vs. Bottom-Buying Strategy comparisons
 counter <- 1
@@ -422,8 +395,8 @@ note_string <- str_wrap(paste0("Note:  The DCA strategy buys the S&P 500 every m
                                 " the Bottom-Buying strategy in the terminal period."), 
                         width = 85)
 
-text_labels <- data.frame(date = c(as.Date("1950-01-01"), as.Date("1951-01-01")),
-                          value = c(0.1, -0.1),
+text_labels <- data.frame(date = c(as.Date("1960-01-01"), as.Date("1960-01-01")),
+                          value = c(0.4, -0.2),
                           label = c("DCA Outperforms", "DCA Underperforms"))
 
 plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
