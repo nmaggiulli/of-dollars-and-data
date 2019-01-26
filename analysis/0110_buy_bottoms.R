@@ -21,9 +21,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ######## Define all functions first ########
 
-# Do a full DCA vs. Bottom-Buying simulation
-full_dca_bottom <- function(n_month_delay, start_date, end_date){
-
+create_full_dd <- function(start_date, end_date){
   # Read in data for individual stocks and sp500 Shiller data
   sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
     filter(date >= as.Date(start_date) - months(1), date <= as.Date(end_date)) %>%
@@ -49,7 +47,7 @@ full_dca_bottom <- function(n_month_delay, start_date, end_date){
     
     dd[i, "min_dd"] <- local_min 
   }
-
+  
   # Reverse sort to overwrite bottoms
   for (i in nrow(dd):1){
     if(dd[i, "ath"] == 1){
@@ -61,14 +59,28 @@ full_dca_bottom <- function(n_month_delay, start_date, end_date){
     dd[i, "min_dd"] <- local_min 
   }
   
-  purchase_dates <- dd %>%
+  return(dd)
+}
+
+full_dd <- create_full_dd("1920-01-01", "2018-12-01")
+
+# Do a full DCA vs. Bottom-Buying simulation
+full_dca_bottom <- function(n_month_delay, start_date, end_date){
+
+  sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
+    filter(date >= as.Date(start_date) - months(1), date <= as.Date(end_date)) %>%
+    mutate(ret = price_plus_div/lag(price_plus_div) - 1) %>%
+    filter(!is.na(ret)) %>%
+    select(date, price_plus_div, ret)
+  
+  purchase_dates <- full_dd %>%
                       filter(pct == min_dd, min_dd < 0) %>%
                       mutate(date = date + months(n_month_delay + 1),
                              bottom = 1) %>%
                       select(date, bottom)
   
   df <- sp500_ret_pe %>%
-          left_join(select(dd, date, pct, ath)) %>%
+          left_join(select(full_dd, date, pct, ath)) %>%
           left_join(purchase_dates) %>%
           mutate(bottom = ifelse(is.na(bottom), 0, 1))
   
@@ -354,6 +366,9 @@ dot_size <- 1.2
 plot_ath_bottoms(0, "1995-01-01", "2018-12-01")
 plot_dca_v_cash(0, "1995-01-01", "2018-12-01", "2014-12-01")
 plot_dca_v_cash(2, "1995-01-01", "2018-12-01", "2014-12-01")
+
+plot_ath_bottoms(0, "1973-01-01", as.Date("1973-01-01") + years(40) - months(1))
+plot_dca_v_cash(0, "1973-01-01", as.Date("1973-01-01") + years(40) - months(1), "2009-03-01")
 
 testing <- 1
 
