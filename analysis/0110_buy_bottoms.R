@@ -193,7 +193,7 @@ plot_ath_bottoms <- function(lag_length, start_date, end_date){
   #Create directory
   dir.create(file.path(paste0(out_path, "/", start_date_string)), showWarnings = FALSE)
   
-  file_path <- paste0(out_path, "/", start_date_string, "/ath_sp500.jpeg")
+  file_path <- paste0(out_path, "/", start_date_string, "/ath_sp500_", start_date_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
     geom_line() +
@@ -209,7 +209,7 @@ plot_ath_bottoms <- function(lag_length, start_date, end_date){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
   # New plot
-  file_path <- paste0(out_path, "/", start_date_string,"/ath_bottom_sp500.jpeg")
+  file_path <- paste0(out_path, "/", start_date_string,"/ath_bottom_sp500_", start_date_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
     geom_line() +
@@ -256,7 +256,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   dir.create(file.path(paste0(out_path, "/", start_date_string)), showWarnings = FALSE)
   
   # New plot
-  file_path <- paste0(out_path, "/", start_date_string, "/bottom_cash_lag_", lag_length,".jpeg")
+  file_path <- paste0(out_path, "/", start_date_string, "/bottom_cash_lag_", lag_length, "_", start_date_string, ".jpeg")
   
   note_string <- str_wrap(paste0("Note: The Bottom-Buying strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
                                  "Real return includes reinvested dividends."), 
@@ -296,7 +296,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
               gather(key=key, value=value, -date)
   
   # New plot
-  file_path <- paste0(out_path, "/", start_date_string, "/dca_vs_bottom_lag_", lag_length, ".jpeg")
+  file_path <- paste0(out_path, "/", start_date_string, "/dca_vs_bottom_lag_", lag_length, "_", start_date_string, ".jpeg")
   
   note_string <- str_wrap(paste0("Note: The Bottom-Buying strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
                                  "Real return includes reinvested dividends."), 
@@ -333,7 +333,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
                   filter(date == text_date)
   
   # Plot Cumululative growth
-  file_path <- paste0(out_path, "/", start_date_string, "/cumulative_growth_lag_", lag_length, ".jpeg")
+  file_path <- paste0(out_path, "/", start_date_string, "/cumulative_growth_lag_", lag_length, "_", start_date_string, ".jpeg")
   
   note_string <- str_wrap(paste0("Note: The Bottom-Buying strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
                                  "Real return includes reinvested dividends."), 
@@ -361,7 +361,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
               select(date, dca_growth) %>%
               gather(-date, key=key, value=value)
   
-  file_path <- paste0(out_path, "/", start_date_string, "/dca_final_growth.jpeg")
+  file_path <- paste0(out_path, "/", start_date_string, "/dca_final_growth_", start_date_string, ".jpeg")
   
   note_string <- str_wrap(paste0("Note: Real return includes reinvested dividends.  ",  
                                  "Assumes a monthly payment of $", formatC(monthly_buy, digits=0, big.mark = ",", format = "f"),"."), 
