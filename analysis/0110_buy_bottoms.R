@@ -281,7 +281,10 @@ calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
     filter(!is.na(lag_price))
   
   purchase_dates <- full_dd %>%
-    filter(pct == min_dd, min_dd < 0, date >= as.Date(start_date) - months(1), date <= as.Date(end_date)) %>%
+    filter(pct == min_dd, min_dd < 0, 
+           date >= as.Date(start_date) - months(1) + months(n_month_delay), 
+           date <= as.Date(end_date) + months(n_month_delay)
+           ) %>%
     mutate(date = date + months(n_month_delay + 1)) %>%
     mutate(bottom_amount = (interval(lag(date), date) %/% months(1)) * monthly_buy) %>%
     select(date, bottom_amount)
@@ -289,20 +292,8 @@ calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
   # Find first purchase amount
   purchase_dates[1, "bottom_amount"] <- (interval(start_date, purchase_dates[1, "date"]) %/% months(1) + 1) * monthly_buy
   
-  # Fix last purchase amount
+  # Find the last purchase date
   last_purchase_date <- purchase_dates[nrow(purchase_dates), "date"]
-  
-  # Find the number of purchases
-  n_purchases <- nrow(purchase_dates)
-  
-  if(last_purchase_date < end_date){
-    purchase_dates[(n_purchases+1), "bottom_amount"] <- (interval(last_purchase_date, end_date) %/% months(1)) * monthly_buy
-    purchase_dates[(n_purchases+1), "date"] <- end_date
-  } else if(last_purchase_date > end_date){
-    last2_purchase_date <- purchase_dates[(nrow(purchase_dates)-1), "date"]
-    purchase_dates[n_purchases, "bottom_amount"] <- (interval(last2_purchase_date, end_date) %/% months(1)) * monthly_buy
-    purchase_dates[n_purchases, "date"] <- end_date
-  }
   
   end <- pull(sp500_ret_pe[nrow(sp500_ret_pe), "price_plus_div"])
   
@@ -316,6 +307,12 @@ calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
                  bottom_growth = (end/lag_price)*bottom_amount) %>%
           select(date, price_plus_div, lag_price, period_ret, dca_growth,
                  bottom_amount, bottom_growth)
+  
+  # Add last cash and "growth" for any remaining cash balances
+  if(pull(df[nrow(df), "date"]) != last_purchase_date){
+    df[nrow(df), "bottom_amount"] <- (interval(last_purchase_date, end_date) %/% months(1)) * monthly_buy
+    df[nrow(df), "bottom_growth"] <- (interval(last_purchase_date, end_date) %/% months(1)) * monthly_buy
+  }
   
   return(df)
 }
@@ -339,8 +336,14 @@ testing <- 1
 
 if(testing == 1){
   test_date <- "1932-07-01"
-  t <- calculate_dca_bottom_diff(0, test_date, as.Date(test_date) + years(n_years) - months(1))
-  t_full <- full_dca_bottom(0, test_date, as.Date(test_date) + years(n_years) - months(1))
+  test_end <- ""
+  if(test_end == ""){
+    t <- calculate_dca_bottom_diff(0, test_date, as.Date(test_date) + years(n_years) - months(1))
+    t_full <- full_dca_bottom(0, test_date, as.Date(test_date) + years(n_years) - months(1))
+  } else{
+    t <- calculate_dca_bottom_diff(0, test_date, test_end)
+    t_full <- full_dca_bottom(0, test_date, test_end)
+  }
 }
 
 # Do all plotting
@@ -402,14 +405,18 @@ note_string <- str_wrap(paste0("Note:  The DCA strategy buys the S&P 500 every m
                                 " the Bottom-Buying strategy in the terminal period."), 
                         width = 85)
 
-text_labels <- data.frame(date = c(as.Date("1960-01-01"), as.Date("1960-01-01")),
-                          value = c(0.4, -0.2),
+text_labels <- data.frame(date = c(as.Date("1950-01-01"), as.Date("1950-01-01")),
+                          value = c(0.15, -0.15),
                           label = c("DCA Outperforms", "DCA Underperforms"))
 
 plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   geom_line() +
   geom_hline(yintercept = 0, linetype = "dashed") +
-  geom_text_repel(data=text_labels, aes(x=date, y=value), label = text_labels$label, col="black", family = "my_font") +
+  geom_text_repel(data=text_labels, aes(x=date, y=value), 
+                  label = text_labels$label, 
+                  col="black", 
+                  family = "my_font",
+                  max.iter = 1) +
   scale_y_continuous(label = percent) +
   scale_color_manual(values = c("#3182bd"), guide = FALSE) +
   scale_x_date(date_labels = "%Y") +
