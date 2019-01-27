@@ -379,11 +379,11 @@ for (d in 1:length(all_dates)){
   for(i in 0:2){
     tmp <- calculate_dca_bottom_diff(i, st, st + years(n_years) - months(1))
     
-    dca_diff_name <- paste0("dca_bottom_pct_gt_lag_", i)
-    dca_win_name <- paste0("dca_win_lag_", i)
+    bottom_diff_name <- paste0("bottom_pct_gt_lag_", i)
+    bottom_win_name <- paste0("bottom_win_lag_", i)
     
-    final_results[counter, dca_diff_name] <- sum(tmp$dca_growth)/sum(tmp$bottom_growth) - 1
-    final_results[counter, dca_win_name] <- ifelse(final_results[counter, dca_diff_name] > 0, 1, 0)
+    final_results[counter, bottom_diff_name] <- sum(tmp$bottom_growth)/sum(tmp$dca_growth) - 1
+    final_results[counter, bottom_win_name] <- ifelse(final_results[counter, bottom_diff_name] > 0, 1, 0)
   }
   
   counter <- counter + 1
@@ -391,23 +391,23 @@ for (d in 1:length(all_dates)){
 
 # Plot the DCA outperformance by year
 to_plot <- final_results %>%
-            select(start_date, dca_bottom_pct_gt_lag_0) %>%
+            select(start_date, bottom_pct_gt_lag_0) %>%
             mutate(date = as.Date(start_date)) %>%
             select(-start_date) %>%
-            rename(`No Lag` = dca_bottom_pct_gt_lag_0) %>%
+            rename(`No Lag` = bottom_pct_gt_lag_0) %>%
             gather(-date, key=key, value=value) %>%
             mutate(key = factor(key, levels = c("No Lag")))
 
-file_path <- paste0(out_path, "/dca_outperformance.jpeg")
+file_path <- paste0(out_path, "/bottom_buying_outperformance.jpeg")
 note_string <- str_wrap(paste0("Note:  The DCA strategy buys the S&P 500 every month and stays fully invested.  ",
                                "The Bottom-Buying strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
-                               "The outperformance percentage is defined as how much more (or less) money that the DCA has compared to",
-                                " the Bottom-Buying strategy in the terminal period."), 
+                               "The outperformance percentage is defined as how much more (or less) money that the Bottom-Buying strategy has compared to",
+                                " the DCA strategy in the terminal period."), 
                         width = 85)
 
 text_labels <- data.frame(date = c(as.Date("1950-01-01"), as.Date("1950-01-01")),
                           value = c(0.15, -0.15),
-                          label = c("DCA Outperforms", "DCA Underperforms"))
+                          label = c("Bottom-Buying Outperforms", "Bottom-Buying Underperforms"))
 
 plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   geom_line() +
@@ -421,20 +421,20 @@ plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   scale_color_manual(values = c("#3182bd"), guide = FALSE) +
   scale_x_date(date_labels = "%Y") +
   of_dollars_and_data_theme +
-  ggtitle(paste0("DCA vs. Bottom-Buying Strategy\nAll ", n_years, "-Year Periods")) +
-  labs(x = "Date", y = "DCA Outperformance (%)",
+  ggtitle(paste0("Bottom-Buying Strategy vs. DCA\nAll ", n_years, "-Year Periods")) +
+  labs(x = "Date", y = "Bottom-Buying Outperformance (%)",
        caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Print summary stats
-print(mean(final_results$dca_win_lag_0))
-print(mean(final_results$dca_win_lag_1))
-print(mean(final_results$dca_win_lag_2))
+print(mean(final_results$bottom_win_lag_0))
+print(mean(final_results$bottom_win_lag_1))
+print(mean(final_results$bottom_win_lag_2))
 
-print(mean(final_results$dca_bottom_pct_gt_lag_0))
-print(mean(final_results$dca_bottom_pct_gt_lag_1))
-print(mean(final_results$dca_bottom_pct_gt_lag_2))
+print(mean(final_results$bottom_pct_gt_lag_0))
+print(mean(final_results$bottom_pct_gt_lag_1))
+print(mean(final_results$bottom_pct_gt_lag_2))
 
 # ############################  End  ################################## #
