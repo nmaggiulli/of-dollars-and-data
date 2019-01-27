@@ -424,7 +424,7 @@ dt2 <- "1975-01-01"
 plot_ath_bottoms(0, dt2, as.Date(dt2) + years(40) - months(1))
 plot_dca_v_cash(0, dt2 , as.Date(dt2) + years(40) - months(1), "1980-01-01")
 
-run_all_years <- 0
+run_all_years <- 1
 
 if (run_all_years == 1){
   # Define final results data frame
