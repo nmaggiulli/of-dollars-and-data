@@ -236,10 +236,14 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   }
   
   to_plot <- full_dca_bottom(lag_length, start_date, end_date) %>%
-              select(date, bottom_vested, bottom_cash) %>%
-              rename(`Invested\nAmount` = bottom_vested,
-                     `Cash` = bottom_cash) %>%
+              select(date, bottom_vested) %>%
+              rename(`Invested\nAmount` = bottom_vested) %>%
               gather(-date, key=key, value=value)
+  
+  cash <- full_dca_bottom(lag_length, start_date, end_date) %>%
+            select(date, bottom_cash) %>%
+            rename(`Cash` = bottom_cash) %>%
+            gather(-date, key=key, value=value)
   
   bottom <- full_dca_bottom(lag_length, start_date, end_date) %>%
               mutate(bottom = ifelse(lead(bottom) == 1, 1, 0)) %>%
@@ -248,6 +252,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
               gather(key=key, value=value, -date)
   
   text_labels <- to_plot %>%
+                  bind_rows(cash) %>%
                   filter(date == text_date)
   
   start_date_string <- str_replace_all(paste0(start_date), "-", "_")
@@ -262,8 +267,9 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
                                  "Real return includes reinvested dividends."), 
                           width = 80)
   
-  plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
-    geom_line() +
+  plot <- ggplot(to_plot, aes(x=date, y=value)) +
+    geom_bar(data=cash, aes(x=date, y=value), col = "green", stat="identity") +
+    geom_line(col = "black") +
     geom_point(data=bottom, aes(x=date, y=value), col = "red", size = dot_size, alpha = 0.7) +
     scale_y_continuous(label = dollar) +
     scale_color_manual(values = c("green", "black"), guide = FALSE) +
@@ -361,19 +367,26 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
               select(date, dca_growth) %>%
               gather(-date, key=key, value=value)
   
-  file_path <- paste0(out_path, "/", start_date_string, "/dca_final_growth_", start_date_string, ".jpeg")
+  bottom <- cumulative_totals %>%
+              filter(bottom_amount != 0) %>%
+              select(date, dca_growth) %>%
+              gather(-date, key=key, value=value)
+  
+  file_path <- paste0(out_path, "/", start_date_string, "/dca_final_growth_lag_", lag_length, "_", start_date_string, ".jpeg")
   
   note_string <- str_wrap(paste0("Note: Real return includes reinvested dividends.  ",  
-                                 "Assumes a monthly payment of $", formatC(monthly_buy, digits=0, big.mark = ",", format = "f"),"."), 
-                          width = 85)
+                                 "Assumes a monthly payment of $", formatC(monthly_buy, digits=0, big.mark = ",", format = "f"),".  ",
+                                 "Red dots represent when the bottom-buying strategy makes purchases."), 
+                          width = 80)
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
     geom_bar(stat="identity", position="dodge", col = "black") +
+    geom_point(data=bottom, aes(x=date, y=value), col = "red", alpha = 0.7)+
     geom_hline(yintercept = monthly_buy, linetype = "dashed", col="red") +
     scale_y_continuous(label = dollar) +
     scale_color_manual(values = c("#3182bd", "black"), guide = FALSE) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Final Growth of Each DCA Payment")) +
+    ggtitle(paste0("Final Growth of Each DCA Payment\nAnd Bottom-Buying Purchases")) +
     labs(x = "Date", y = "Amount",
          caption = paste0(source_string, "\n", note_string))
   
@@ -396,7 +409,7 @@ dot_size <- 1.2
 # Create full_dd dataset for use in other functions
 full_dd <- create_full_dd(analysis_start, analysis_end)
 
-testing <- 0
+testing <- 1
 
 if(testing == 1){
   test_date <- "1932-07-01"
@@ -424,7 +437,7 @@ dt2 <- "1975-01-01"
 plot_ath_bottoms(0, dt2, as.Date(dt2) + years(40) - months(1))
 plot_dca_v_cash(0, dt2 , as.Date(dt2) + years(40) - months(1), "1980-01-01")
 
-run_all_years <- 1
+run_all_years <- 0
 
 if (run_all_years == 1){
   # Define final results data frame
