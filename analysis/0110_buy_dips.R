@@ -164,7 +164,7 @@ calculate_dca_dip_diff <- function(n_month_delay, start_date, end_date){
   return(df)
 }
 
-# Plot ATHs and Relative Bottoms
+# Plot ATHs and Dips
 plot_ath_dips <- function(lag_length, start_date, end_date){
 
   # Calculate data
@@ -218,7 +218,7 @@ plot_ath_dips <- function(lag_length, start_date, end_date){
     scale_y_continuous(label = dollar) +
     scale_x_date(date_labels = "%Y") +
     of_dollars_and_data_theme +
-    ggtitle("All-Time Highs & Relative Bottoms\nfor the S&P 500") +
+    ggtitle("All-Time Highs & 'Dips'\nfor the S&P 500") +
     labs(x = "Date", y = "Growth of $1",
          caption = paste0(source_string, "\n", note_string))
   
@@ -263,7 +263,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   # New plot
   file_path <- paste0(out_path, "/", start_date_string, "/dip_cash_lag_", lag_length, "_", start_date_string, ".jpeg")
   
-  note_string <- str_wrap(paste0("Note: The Buy the Dip strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
+  note_string <- str_wrap(paste0("Note: The Buy the Dip strategy accumulates cash and buys at 'dips' in the S&P 500.  ",
                                  "Real return includes reinvested dividends."), 
                           width = 80)
   
@@ -276,7 +276,9 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
     geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
                     label = text_labels$key,
                     family = "my_font",
-                    segment.color = "transparent") +
+                    segment.color = "transparent", 
+                    nudge_y = ifelse(text_labels$key == "Cash", 10000, 15000),
+                    max.iter = 3000) +
     of_dollars_and_data_theme +
     ggtitle(paste0("Buy the Dip Strategy", end_title)) +
     labs(x = "Date", y = "Amount",
@@ -304,7 +306,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   # New plot
   file_path <- paste0(out_path, "/", start_date_string, "/dca_vs_dip_lag_", lag_length, "_", start_date_string, ".jpeg")
   
-  note_string <- str_wrap(paste0("Note: The Buy the Dip strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
+  note_string <- str_wrap(paste0("Note: The Buy the Dip strategy accumulates cash and buys at 'dips' in the S&P 500.  ",
                                  "Real return includes reinvested dividends."), 
                           width = 80)
   
@@ -319,7 +321,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
                     nudge_y = ifelse(text_labels$key == "DCA", -15000, 15000),
                     segment.color = "transparent") +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Buy the Dip Strategy", end_title)) +
+    ggtitle(paste0("Buy the Dip Strategy", end_title, "\nvs. DCA")) +
     labs(x = "Date", y = "Amount",
          caption = paste0(source_string, "\n", note_string))
   
@@ -341,7 +343,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   # Plot Cumululative growth
   file_path <- paste0(out_path, "/", start_date_string, "/cumulative_growth_lag_", lag_length, "_", start_date_string, ".jpeg")
   
-  note_string <- str_wrap(paste0("Note: The Buy the Dip strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
+  note_string <- str_wrap(paste0("Note: The Buy the Dip strategy accumulates cash and buys at 'dips' in the S&P 500.  ",
                                  "Real return includes reinvested dividends."), 
                           width = 80)
   
@@ -437,7 +439,7 @@ dt2 <- "1975-01-01"
 plot_ath_dips(0, dt2, as.Date(dt2) + years(40) - months(1))
 plot_dca_v_cash(0, dt2 , as.Date(dt2) + years(40) - months(1), "1980-01-01")
 
-run_all_years <- 0
+run_all_years <- 1
 
 if (run_all_years == 1){
   # Define final results data frame
@@ -481,9 +483,9 @@ if (run_all_years == 1){
   
   file_path <- paste0(out_path, "/dip_buying_outperformance.jpeg")
   note_string <- str_wrap(paste0("Note:  The DCA strategy buys the S&P 500 every month and stays fully invested.  ",
-                                 "The Buy the Dip strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
+                                 "The Buy the Dip strategy accumulates cash and buys at 'dips' in the S&P 500.  ",
                                  "The outperformance percentage is defined as how much more (or less) money that the Buy the Dip strategy has compared to",
-                                  " the DCA strategy in the terminal period."), 
+                                  " the DCA strategy in the final period."), 
                           width = 85)
   
   text_labels <- data.frame(date = c(as.Date("1950-01-01"), as.Date("1950-01-01")),
