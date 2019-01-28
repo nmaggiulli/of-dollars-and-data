@@ -13,7 +13,7 @@ library(lubridate)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "0110_buy_bottoms"
+folder_name <- "0110_buy_dips"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -62,8 +62,8 @@ create_full_dd <- function(start_date, end_date){
   return(dd)
 }
 
-# Do a full DCA vs. Bottom-Buying simulation
-full_dca_bottom <- function(n_month_delay, start_date, end_date){
+# Do a full DCA vs. Buy the Dip simulation
+full_dca_dip <- function(n_month_delay, start_date, end_date){
 
   sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
     filter(date >= as.Date(start_date) - months(1), date <= as.Date(end_date)) %>%
@@ -85,27 +85,27 @@ full_dca_bottom <- function(n_month_delay, start_date, end_date){
   for(i in 1:nrow(df)){
     if (i == 1){
       df[i, "dca_value"] <- monthly_buy * (1 + df[i, "ret"])
-      df[i, "bottom_vested"] <- monthly_buy * (1 + df[i, "ret"])
-      df[i, "bottom_cash"] <- 0
+      df[i, "dip_vested"] <- monthly_buy * (1 + df[i, "ret"])
+      df[i, "dip_cash"] <- 0
     } else{
       df[i, "dca_value"] <- (df[(i-1), "dca_value"] + monthly_buy) * (1 + df[i, "ret"])
       
       if(df[i, "bottom"] == 0){
-          df[i, "bottom_vested"] <- df[(i-1), "bottom_vested"] * (1 + df[i, "ret"])
-          df[i, "bottom_cash"] <- df[(i-1), "bottom_cash"] + monthly_buy
+          df[i, "dip_vested"] <- df[(i-1), "dip_vested"] * (1 + df[i, "ret"])
+          df[i, "dip_cash"] <- df[(i-1), "dip_cash"] + monthly_buy
           
       } else{
-        df[i, "bottom_vested"] <- (df[(i-1), "bottom_vested"] + df[(i-1), "bottom_cash"] + monthly_buy) * (1 + df[i, "ret"])
-        df[i, "bottom_cash"] <- 0
+        df[i, "dip_vested"] <- (df[(i-1), "dip_vested"] + df[(i-1), "dip_cash"] + monthly_buy) * (1 + df[i, "ret"])
+        df[i, "dip_cash"] <- 0
       }
     }
     
     if (i == nrow(df)){
-      df[i, "bottom_vested"] <- df[i, "bottom_vested"] + df[i, "bottom_cash"]
-      df[i, "bottom_cash"] <- 0
+      df[i, "dip_vested"] <- df[i, "dip_vested"] + df[i, "dip_cash"]
+      df[i, "dip_cash"] <- 0
     }
     
-    df[i, "bottom_value"] <- df[i, "bottom_vested"] + df[i, "bottom_cash"]
+    df[i, "dip_value"] <- df[i, "dip_vested"] + df[i, "dip_cash"]
   }
   
   first <- pull(df[1, "price_plus_div"])
@@ -117,7 +117,7 @@ full_dca_bottom <- function(n_month_delay, start_date, end_date){
 }
 
 # Do more efficient simulation of bottom buying strategy
-calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
+calculate_dca_dip_diff <- function(n_month_delay, start_date, end_date){
   sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
     filter(date >= as.Date(start_date) - months(1), date <= as.Date(end_date)) %>%
     mutate(lag_price = lag(price_plus_div)) %>%
@@ -129,11 +129,11 @@ calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
            date <= as.Date(end_date) + months(n_month_delay)
     ) %>%
     mutate(date = date + months(n_month_delay + 1)) %>%
-    mutate(bottom_amount = (interval(lag(date), date) %/% months(1)) * monthly_buy) %>%
-    select(date, bottom_amount)
+    mutate(dip_amount = (interval(lag(date), date) %/% months(1)) * monthly_buy) %>%
+    select(date, dip_amount)
   
   # Find first purchase amount
-  purchase_dates[1, "bottom_amount"] <- (interval(start_date, purchase_dates[1, "date"]) %/% months(1) + 1) * monthly_buy
+  purchase_dates[1, "dip_amount"] <- (interval(start_date, purchase_dates[1, "date"]) %/% months(1) + 1) * monthly_buy
   
   # Find the last purchase date
   last_purchase_date <- purchase_dates[nrow(purchase_dates), "date"]
@@ -146,29 +146,29 @@ calculate_dca_bottom_diff <- function(n_month_delay, start_date, end_date){
     mutate(period_ret = ((end/lag_price)^(12/(n_periods - row_number() + 1))) - 1,
            dca_growth = (end/lag_price)*monthly_buy) %>%
     left_join(purchase_dates) %>%
-    mutate(bottom_amount = ifelse(is.na(bottom_amount), 0, bottom_amount),
-           bottom_growth = (end/lag_price)*bottom_amount) %>%
+    mutate(dip_amount = ifelse(is.na(dip_amount), 0, dip_amount),
+           dip_growth = (end/lag_price)*dip_amount) %>%
     select(date, price_plus_div, lag_price, period_ret, dca_growth,
-           bottom_amount, bottom_growth)
+           dip_amount, dip_growth)
   
   # Add last cash and "growth" for any remaining cash balances
   if(pull(df[nrow(df), "date"]) != last_purchase_date){
-    df[nrow(df), "bottom_amount"] <- (interval(last_purchase_date, end_date) %/% months(1)) * monthly_buy
-    df[nrow(df), "bottom_growth"] <- (interval(last_purchase_date, end_date) %/% months(1)) * monthly_buy
+    df[nrow(df), "dip_amount"] <- (interval(last_purchase_date, end_date) %/% months(1)) * monthly_buy
+    df[nrow(df), "dip_growth"] <- (interval(last_purchase_date, end_date) %/% months(1)) * monthly_buy
   }
   
   df <- df %>%
     mutate(cumulative_dca = cumsum(dca_growth),
-           cumulative_bottom = cumsum(bottom_growth))
+           cumulative_dip = cumsum(dip_growth))
   
   return(df)
 }
 
 # Plot ATHs and Relative Bottoms
-plot_ath_bottoms <- function(lag_length, start_date, end_date){
+plot_ath_dips <- function(lag_length, start_date, end_date){
 
   # Calculate data
-  full_df <- full_dca_bottom(0, start_date, end_date)
+  full_df <- full_dca_dip(0, start_date, end_date)
   
   to_plot <- full_df %>%
               select(date, lump_sum) %>%
@@ -209,7 +209,7 @@ plot_ath_bottoms <- function(lag_length, start_date, end_date){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
   # New plot
-  file_path <- paste0(out_path, "/", start_date_string,"/ath_bottom_sp500_", start_date_string, ".jpeg")
+  file_path <- paste0(out_path, "/", start_date_string,"/ath_dip_sp500_", start_date_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
     geom_line() +
@@ -235,20 +235,20 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
     end_title <- ""
   }
   
-  to_plot <- full_dca_bottom(lag_length, start_date, end_date) %>%
-              select(date, bottom_vested) %>%
-              rename(`Invested\nAmount` = bottom_vested) %>%
+  to_plot <- full_dca_dip(lag_length, start_date, end_date) %>%
+              select(date, dip_vested) %>%
+              rename(`Invested\nAmount` = dip_vested) %>%
               gather(-date, key=key, value=value)
   
-  cash <- full_dca_bottom(lag_length, start_date, end_date) %>%
-            select(date, bottom_cash) %>%
-            rename(`Cash` = bottom_cash) %>%
+  cash <- full_dca_dip(lag_length, start_date, end_date) %>%
+            select(date, dip_cash) %>%
+            rename(`Cash` = dip_cash) %>%
             gather(-date, key=key, value=value)
   
-  bottom <- full_dca_bottom(lag_length, start_date, end_date) %>%
+  bottom <- full_dca_dip(lag_length, start_date, end_date) %>%
               mutate(bottom = ifelse(lead(bottom) == 1, 1, 0)) %>%
               filter(bottom == 1) %>%
-              select(date, bottom_vested) %>%
+              select(date, dip_vested) %>%
               gather(key=key, value=value, -date)
   
   text_labels <- to_plot %>%
@@ -261,9 +261,9 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   dir.create(file.path(paste0(out_path, "/", start_date_string)), showWarnings = FALSE)
   
   # New plot
-  file_path <- paste0(out_path, "/", start_date_string, "/bottom_cash_lag_", lag_length, "_", start_date_string, ".jpeg")
+  file_path <- paste0(out_path, "/", start_date_string, "/dip_cash_lag_", lag_length, "_", start_date_string, ".jpeg")
   
-  note_string <- str_wrap(paste0("Note: The Bottom-Buying strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
+  note_string <- str_wrap(paste0("Note: The Buy the Dip strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
                                  "Real return includes reinvested dividends."), 
                           width = 80)
   
@@ -278,7 +278,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
                     family = "my_font",
                     segment.color = "transparent") +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Bottom-Buying Strategy", end_title)) +
+    ggtitle(paste0("Buy the Dip Strategy", end_title)) +
     labs(x = "Date", y = "Amount",
          caption = paste0(source_string, "\n", note_string))
 
@@ -286,25 +286,25 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
   # Second plot
-  to_plot <- full_dca_bottom(lag_length, start_date, end_date) %>%
-                select(date, bottom_value, dca_value) %>%
+  to_plot <- full_dca_dip(lag_length, start_date, end_date) %>%
+                select(date, dip_value, dca_value) %>%
                 rename(`DCA` = dca_value,
-                       `Bottom-Buying` = bottom_value) %>%
+                       `Buy the Dip` = dip_value) %>%
                 gather(-date, key=key, value=value)
   
   text_labels <- to_plot %>%
                   filter(date == text_date)
   
-  bottom <- full_dca_bottom(lag_length, start_date, end_date) %>%
+  bottom <- full_dca_dip(lag_length, start_date, end_date) %>%
               mutate(bottom = ifelse(lead(bottom) == 1, 1, 0)) %>%
               filter(bottom == 1) %>%
-              select(date, bottom_value) %>%
+              select(date, dip_value) %>%
               gather(key=key, value=value, -date)
   
   # New plot
-  file_path <- paste0(out_path, "/", start_date_string, "/dca_vs_bottom_lag_", lag_length, "_", start_date_string, ".jpeg")
+  file_path <- paste0(out_path, "/", start_date_string, "/dca_vs_dip_lag_", lag_length, "_", start_date_string, ".jpeg")
   
-  note_string <- str_wrap(paste0("Note: The Bottom-Buying strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
+  note_string <- str_wrap(paste0("Note: The Buy the Dip strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
                                  "Real return includes reinvested dividends."), 
                           width = 80)
   
@@ -319,7 +319,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
                     nudge_y = ifelse(text_labels$key == "DCA", -15000, 15000),
                     segment.color = "transparent") +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Bottom-Buying Strategy", end_title)) +
+    ggtitle(paste0("Buy the Dip Strategy", end_title)) +
     labs(x = "Date", y = "Amount",
          caption = paste0(source_string, "\n", note_string))
   
@@ -327,12 +327,12 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
   # Pull cumulative dollar growth
-  cumulative_totals <- calculate_dca_bottom_diff(lag_length, start_date, end_date)
+  cumulative_totals <- calculate_dca_dip_diff(lag_length, start_date, end_date)
   
   to_plot <- cumulative_totals %>%
-                select(date, cumulative_dca, cumulative_bottom) %>%
+                select(date, cumulative_dca, cumulative_dip) %>%
                 rename(`DCA` = cumulative_dca,
-                       `Bottom-Buying` = cumulative_bottom) %>%
+                       `Buy the Dip` = cumulative_dip) %>%
                 gather(-date, key=key, value=value)
   
   text_labels <- to_plot %>%
@@ -341,7 +341,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   # Plot Cumululative growth
   file_path <- paste0(out_path, "/", start_date_string, "/cumulative_growth_lag_", lag_length, "_", start_date_string, ".jpeg")
   
-  note_string <- str_wrap(paste0("Note: The Bottom-Buying strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
+  note_string <- str_wrap(paste0("Note: The Buy the Dip strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
                                  "Real return includes reinvested dividends."), 
                           width = 80)
   
@@ -355,7 +355,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
                     nudge_y = ifelse(text_labels$key == "DCA", -15000, 1000),
                     segment.color = "transparent") +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Cumulative Growth of DCA and\nBottom-Buying Strategy", end_title)) +
+    ggtitle(paste0("Cumulative Growth of DCA and\nBuy the Dip Strategy", end_title)) +
     labs(x = "Date", y = "Amount",
          caption = paste0(source_string, "\n", note_string))
   
@@ -368,7 +368,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
               gather(-date, key=key, value=value)
   
   bottom <- cumulative_totals %>%
-              filter(bottom_amount != 0) %>%
+              filter(dip_amount != 0) %>%
               select(date, dca_growth) %>%
               gather(-date, key=key, value=value)
   
@@ -376,7 +376,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   
   note_string <- str_wrap(paste0("Note: Real return includes reinvested dividends.  ",  
                                  "Assumes a monthly payment of $", formatC(monthly_buy, digits=0, big.mark = ",", format = "f"),".  ",
-                                 "Red dots represent when the bottom-buying strategy makes purchases."), 
+                                 "Red dots represent when the Buy the Dip strategy makes purchases."), 
                           width = 80)
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
@@ -386,7 +386,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
     scale_y_continuous(label = dollar) +
     scale_color_manual(values = c("#3182bd", "black"), guide = FALSE) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Final Growth of Each DCA Payment\nAnd Bottom-Buying Purchases")) +
+    ggtitle(paste0("Final Growth of Each DCA Payment\nAnd Buy the Dip Purchases")) +
     labs(x = "Date", y = "Amount",
          caption = paste0(source_string, "\n", note_string))
   
@@ -415,26 +415,26 @@ if(testing == 1){
   test_date <- "1932-07-01"
   test_end <- ""
   if(test_end == ""){
-    t <- calculate_dca_bottom_diff(0, test_date, as.Date(test_date) + years(n_years) - months(1))
-    t_full <- full_dca_bottom(0, test_date, as.Date(test_date) + years(n_years) - months(1))
+    t <- calculate_dca_dip_diff(0, test_date, as.Date(test_date) + years(n_years) - months(1))
+    t_full <- full_dca_dip(0, test_date, as.Date(test_date) + years(n_years) - months(1))
   } else{
-    t <- calculate_dca_bottom_diff(0, test_date, test_end)
-    t_full <- full_dca_bottom(0, test_date, test_end)
+    t <- calculate_dca_dip_diff(0, test_date, test_end)
+    t_full <- full_dca_dip(0, test_date, test_end)
   }
 }
 
 # Do all plotting
-plot_ath_bottoms(0, "1995-01-01", "2018-12-01")
+plot_ath_dips(0, "1995-01-01", "2018-12-01")
 plot_dca_v_cash(0, "1995-01-01", "2018-12-01", "2014-12-01")
 plot_dca_v_cash(2, "1995-01-01", "2018-12-01", "2014-12-01")
 
 dt1 <- "1928-01-01"
-plot_ath_bottoms(0, dt1, as.Date(dt1) + years(40) - months(1))
+plot_ath_dips(0, dt1, as.Date(dt1) + years(40) - months(1))
 plot_dca_v_cash(0, dt1, as.Date(dt1) + years(40) - months(1), "1940-01-01")
 plot_dca_v_cash(2, dt1, as.Date(dt1) + years(40) - months(1), "1940-01-01")
 
 dt2 <- "1975-01-01"
-plot_ath_bottoms(0, dt2, as.Date(dt2) + years(40) - months(1))
+plot_ath_dips(0, dt2, as.Date(dt2) + years(40) - months(1))
 plot_dca_v_cash(0, dt2 , as.Date(dt2) + years(40) - months(1), "1980-01-01")
 
 run_all_years <- 0
@@ -446,7 +446,7 @@ if (run_all_years == 1){
   # Define list of dates
   all_dates <- seq.Date(analysis_start, analysis_end - years(n_years) + months(1), "year")
   
-  # Loop through all dates to run DCA vs. Bottom-Buying Strategy comparisons
+  # Loop through all dates to run DCA vs. Buy the Dip Strategy comparisons
   counter <- 1
   for (d in 1:length(all_dates)){
   
@@ -458,13 +458,13 @@ if (run_all_years == 1){
     final_results[counter, "n_years"] <- n_years
     
     for(i in 0:2){
-      tmp <- calculate_dca_bottom_diff(i, st, st + years(n_years) - months(1))
+      tmp <- calculate_dca_dip_diff(i, st, st + years(n_years) - months(1))
       
-      bottom_diff_name <- paste0("bottom_pct_gt_lag_", i)
-      bottom_win_name <- paste0("bottom_win_lag_", i)
+      dip_diff_name <- paste0("dip_pct_gt_lag_", i)
+      dip_win_name <- paste0("dip_win_lag_", i)
       
-      final_results[counter, bottom_diff_name] <- sum(tmp$bottom_growth)/sum(tmp$dca_growth) - 1
-      final_results[counter, bottom_win_name] <- ifelse(final_results[counter, bottom_diff_name] > 0, 1, 0)
+      final_results[counter, dip_diff_name] <- sum(tmp$dip_growth)/sum(tmp$dca_growth) - 1
+      final_results[counter, dip_win_name] <- ifelse(final_results[counter, dip_diff_name] > 0, 1, 0)
     }
     
     counter <- counter + 1
@@ -472,23 +472,23 @@ if (run_all_years == 1){
   
   # Plot the DCA outperformance by year
   to_plot <- final_results %>%
-              select(start_date, bottom_pct_gt_lag_0) %>%
+              select(start_date, dip_pct_gt_lag_0) %>%
               mutate(date = as.Date(start_date)) %>%
               select(-start_date) %>%
-              rename(`No Lag` = bottom_pct_gt_lag_0) %>%
+              rename(`No Lag` = dip_pct_gt_lag_0) %>%
               gather(-date, key=key, value=value) %>%
               mutate(key = factor(key, levels = c("No Lag")))
   
-  file_path <- paste0(out_path, "/bottom_buying_outperformance.jpeg")
+  file_path <- paste0(out_path, "/dip_buying_outperformance.jpeg")
   note_string <- str_wrap(paste0("Note:  The DCA strategy buys the S&P 500 every month and stays fully invested.  ",
-                                 "The Bottom-Buying strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
-                                 "The outperformance percentage is defined as how much more (or less) money that the Bottom-Buying strategy has compared to",
+                                 "The Buy the Dip strategy accumulates cash and buys at relative bottoms in the S&P 500.  ",
+                                 "The outperformance percentage is defined as how much more (or less) money that the Buy the Dip strategy has compared to",
                                   " the DCA strategy in the terminal period."), 
                           width = 85)
   
   text_labels <- data.frame(date = c(as.Date("1950-01-01"), as.Date("1950-01-01")),
                             value = c(0.15, -0.15),
-                            label = c("Bottom-Buying Outperforms", "Bottom-Buying Underperforms"))
+                            label = c("Buy the Dip Outperforms", "Buy the Dip Underperforms"))
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
     geom_line() +
@@ -511,21 +511,21 @@ if (run_all_years == 1){
                    as.Date("1980-01-01")
                  )) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Bottom-Buying Strategy vs. DCA\nAll ", n_years, "-Year Periods")) +
-    labs(x = "Date", y = "Bottom-Buying Outperformance (%)",
+    ggtitle(paste0("Buy the Dip Strategy vs. DCA\nAll ", n_years, "-Year Periods")) +
+    labs(x = "Date", y = "Buy the Dip Outperformance (%)",
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
   # Print summary stats
-  print(mean(final_results$bottom_win_lag_0))
-  print(mean(final_results$bottom_win_lag_1))
-  print(mean(final_results$bottom_win_lag_2))
+  print(mean(final_results$dip_win_lag_0))
+  print(mean(final_results$dip_win_lag_1))
+  print(mean(final_results$dip_win_lag_2))
   
-  print(mean(final_results$bottom_pct_gt_lag_0))
-  print(mean(final_results$bottom_pct_gt_lag_1))
-  print(mean(final_results$bottom_pct_gt_lag_2))
+  print(mean(final_results$dip_pct_gt_lag_0))
+  print(mean(final_results$dip_pct_gt_lag_1))
+  print(mean(final_results$dip_pct_gt_lag_2))
 }
 
 # ############################  End  ################################## #
