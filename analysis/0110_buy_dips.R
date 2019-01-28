@@ -464,9 +464,11 @@ if (run_all_years == 1){
       
       dip_diff_name <- paste0("dip_pct_gt_lag_", i)
       dip_win_name <- paste0("dip_win_lag_", i)
+      dca_name <- paste0("dca_lag_", i)
       
       final_results[counter, dip_diff_name] <- sum(tmp$dip_growth)/sum(tmp$dca_growth) - 1
       final_results[counter, dip_win_name] <- ifelse(final_results[counter, dip_diff_name] > 0, 1, 0)
+      final_results[counter, dca_name] <- sum(tmp$dca_growth)
     }
     
     counter <- counter + 1
