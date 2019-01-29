@@ -280,7 +280,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
                     nudge_y = ifelse(text_labels$key == "Cash", 10000, 15000),
                     max.iter = 3000) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Buy the Dip Strategy", end_title)) +
+    ggtitle(paste0("Buy the Dip", end_title)) +
     labs(x = "Date", y = "Amount",
          caption = paste0(source_string, "\n", note_string))
 
@@ -321,7 +321,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
                     nudge_y = ifelse(text_labels$key == "DCA", -15000, 15000),
                     segment.color = "transparent") +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Buy the Dip Strategy", end_title, "\nvs. DCA")) +
+    ggtitle(paste0("Buy the Dip", end_title, "\nvs. DCA")) +
     labs(x = "Date", y = "Amount",
          caption = paste0(source_string, "\n", note_string))
   
@@ -357,7 +357,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
                     nudge_y = ifelse(text_labels$key == "DCA", -15000, 1000),
                     segment.color = "transparent") +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Cumulative Growth of DCA and\nBuy the Dip Strategy", end_title)) +
+    ggtitle(paste0("Cumulative Growth of DCA and\nBuy the Dip", end_title)) +
     labs(x = "Date", y = "Amount",
          caption = paste0(source_string, "\n", note_string))
   
@@ -515,7 +515,7 @@ if (run_all_years == 1){
                    as.Date("1980-01-01")
                  )) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Buy the Dip Strategy vs. DCA\nAll ", n_years, "-Year Periods")) +
+    ggtitle(paste0("Buy the Dip vs. DCA\nAll ", n_years, "-Year Periods")) +
     labs(x = "Date", y = "Buy the Dip Outperformance (%)",
          caption = paste0(source_string, "\n", note_string))
   
