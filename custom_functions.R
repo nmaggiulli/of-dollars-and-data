@@ -167,3 +167,8 @@ drawdown_path <- function(vp){
   }
   return(dd)
 }
+
+date_to_string <- function(x){
+  require(stringr)
+  str_replace_all(paste0(x), "-", "_")
+}
