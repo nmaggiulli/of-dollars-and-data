@@ -52,19 +52,43 @@ for(i in 1:nrow(sp500_ret_pe)){
   }
 }
 
+# File path and source/note strings
+file_path <- paste0(out_path, "/banded_no_index_sp500_.jpeg")
+source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)" 
+note_string <- paste0("Note:  Real return includes reinvested dividends.") 
+
 to_plot <- sp500_ret_pe %>%
             mutate(future_low = future_low/min(sp500_ret_pe$future_low),
-                   current_high = current_high/min(sp500_ret_pe$current_high)) %>%
-            select(date, future_low, current_high) %>%
+                   current_high = current_high/min(sp500_ret_pe$current_high),
+                   index = price_plus_div/min(sp500_ret_pe$price_plus_div)) %>%
+            select(date, future_low, current_high, index) %>%
             gather(-date, key=key, value=value)
 
-ggplot(to_plot, aes(x=date, y=value, col = key)) +
+plot <- ggplot(filter(to_plot, key != "index"), aes(x=date, y=value, col = key)) +
   geom_line() +
   scale_y_continuous(label = dollar, trans = log10_trans()) +
-  scale_color_discrete(guide = FALSE) +
+  scale_color_manual(guide = FALSE, values = c("green", "red", "black")) +
   of_dollars_and_data_theme +
   ggtitle("Minimum Progress of the S&P 500") +
-  labs(x="Date", y="Real Growth of $1")
+  labs(x="Date", y="Real Growth of $1",
+       caption = paste0(source_string, "\n", note_string))
     
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+file_path <- paste0(out_path, "/banded_index_sp500_.jpeg")
+
+plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
+  geom_line() +
+  scale_y_continuous(label = dollar, trans = log10_trans()) +
+  scale_color_manual(guide = FALSE, values = c("green", "red", "black")) +
+  of_dollars_and_data_theme +
+  ggtitle("Minimum Progress of the S&P 500") +
+  labs(x="Date", y="Real Growth of $1",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 
 # ############################  End  ################################## #
