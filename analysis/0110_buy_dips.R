@@ -124,11 +124,10 @@ calculate_dca_dip_diff <- function(n_month_delay, start_date, end_date){
     filter(!is.na(lag_price))
   
   purchase_dates <- full_dd %>%
-    filter(pct == min_dd, min_dd < 0, 
-           date >= as.Date(start_date) - months(1) + months(n_month_delay), 
-           date <= as.Date(end_date) + months(n_month_delay)
-    ) %>%
+    filter(pct == min_dd, min_dd < 0) %>%
     mutate(date = date + months(n_month_delay + 1)) %>%
+    filter(date >= as.Date(start_date), 
+                      date <= as.Date(end_date)) %>%
     mutate(dip_amount = (interval(lag(date), date) %/% months(1)) * monthly_buy) %>%
     select(date, dip_amount)
   
@@ -414,8 +413,8 @@ full_dd <- create_full_dd(analysis_start, analysis_end)
 testing <- 1
 
 if(testing == 1){
-  test_date <- "1932-07-01"
-  test_end <- ""
+  test_date <- "1995-01-01"
+  test_end <- "2018-12-01"
   if(test_end == ""){
     t <- calculate_dca_dip_diff(0, test_date, as.Date(test_date) + years(n_years) - months(1))
     t_full <- full_dca_dip(0, test_date, as.Date(test_date) + years(n_years) - months(1))
