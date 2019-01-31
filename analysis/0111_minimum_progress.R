@@ -60,7 +60,8 @@ note_string <- paste0("Note:  Real return includes reinvested dividends.")
 to_plot <- sp500_ret_pe %>%
             mutate(future_low = future_low/min(sp500_ret_pe$future_low),
                    current_high = current_high/min(sp500_ret_pe$current_high),
-                   index = price_plus_div/min(sp500_ret_pe$price_plus_div)) %>%
+                   index = price_plus_div/min(sp500_ret_pe$price_plus_div),
+                   mid = (future_low +current_high)/2) %>%
             select(date, future_low, current_high, index) %>%
             gather(-date, key=key, value=value)
 
