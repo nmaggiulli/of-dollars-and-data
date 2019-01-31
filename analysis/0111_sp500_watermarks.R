@@ -19,7 +19,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-plot_absolute_min_max <- function(start_date, end_date, select_vars, file_name_string){
+plot_watermarks <- function(start_date, end_date, select_vars, file_name_string){
   
   start_date_string <- date_to_string(start_date)
   end_date_string <- date_to_string(end_date)
@@ -55,10 +55,10 @@ plot_absolute_min_max <- function(start_date, end_date, select_vars, file_name_s
   for(i in 1:nrow(sp500_ret_pe)){
     current_p <- pull(sp500_ret_pe[i, "index"])
     if (current_p < absolute_minumum){
-      sp500_ret_pe[i, "low_matermark"] <- current_p
+      sp500_ret_pe[i, "low_watermark"] <- current_p
       absolute_minumum <- current_p
     } else{
-      sp500_ret_pe[i, "low_matermark"] <- absolute_minumum
+      sp500_ret_pe[i, "low_watermark"] <- absolute_minumum
     }
   }
   
@@ -94,13 +94,13 @@ plot_absolute_min_max <- function(start_date, end_date, select_vars, file_name_s
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-plot_absolute_min_max("1871-01-01", "2018-12-01", c("index"),
+plot_watermarks("1871-01-01", "2018-12-01", c("index"),
                       "banded_01_sp500")
 
-plot_absolute_min_max("1871-01-01", "2018-12-01", c("high_watermark", "low_matermark", "index"),
+plot_watermarks("1871-01-01", "2018-12-01", c("high_watermark", "low_watermark", "index"),
                       "banded_02_sp500")
 
-plot_absolute_min_max("1871-01-01", "2018-12-01", c("high_watermark", "low_matermark"),
+plot_watermarks("1871-01-01", "2018-12-01", c("high_watermark", "low_watermark"),
                       "banded_03_sp500")
 
 
