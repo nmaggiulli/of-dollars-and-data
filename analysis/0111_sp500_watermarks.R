@@ -19,6 +19,9 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+color_map <- data.frame(var = c("high_watermark", "low_watermark", "price_plus_div"),
+                        color = c("green", "red", "black"))
+
 plot_watermarks <- function(start_date, end_date, select_vars, file_name_string){
   
   start_date_string <- date_to_string(start_date)
@@ -28,16 +31,16 @@ plot_watermarks <- function(start_date, end_date, select_vars, file_name_string)
   sp500_ret_pe  <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                       filter(date >= start_date, date <= end_date)
   
-  # Create index that starts at 1
+  # Start price_plus_div at 1
   sp500_ret_pe <-  sp500_ret_pe %>%
-                    mutate(index = price_plus_div/pull(sp500_ret_pe[1, "price_plus_div"])) %>%
-                      select(date, index)
+                    mutate(price_plus_div = price_plus_div/pull(sp500_ret_pe[1, "price_plus_div"])) %>%
+                      select(date, price_plus_div)
   
   # Find high watermark
   absolute_maximum <- 0
   
   for(i in 1:nrow(sp500_ret_pe)){
-    current_p <- pull(sp500_ret_pe[i, "index"])
+    current_p <- pull(sp500_ret_pe[i, "price_plus_div"])
     if (current_p > absolute_maximum){
       sp500_ret_pe[i, "high_watermark"] <- current_p
       absolute_maximum <- current_p
@@ -53,7 +56,7 @@ plot_watermarks <- function(start_date, end_date, select_vars, file_name_string)
   absolute_minumum <- 10^8
   
   for(i in 1:nrow(sp500_ret_pe)){
-    current_p <- pull(sp500_ret_pe[i, "index"])
+    current_p <- pull(sp500_ret_pe[i, "price_plus_div"])
     if (current_p < absolute_minumum){
       sp500_ret_pe[i, "low_watermark"] <- current_p
       absolute_minumum <- current_p
@@ -63,7 +66,7 @@ plot_watermarks <- function(start_date, end_date, select_vars, file_name_string)
   }
   
   # File path and source/note strings
-  file_path <- paste0(out_path, "/", file_name_string, "_", start_date_string, "_", end_date_string, ".jpeg")
+  file_path <- paste0(out_path, "/", start_date_string, "_", end_date_string, "_", file_name_string, ".jpeg")
   source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)" 
   note_string <- paste0("Note:  Real return includes reinvested dividends.") 
   
@@ -71,11 +74,15 @@ plot_watermarks <- function(start_date, end_date, select_vars, file_name_string)
               select_("date", .dots = select_vars) %>%
               gather(-date, key=key, value=value)
   
-  # Define the colors based on the length of "select_vars"
-  if(length(select_vars) <= 1){
-    my_colors <- "black"
-  } else{
-    my_colors <- c("green", "red", "black")
+  # Define the colors based on the select_vars
+  my_colors <- c()
+  
+  # Sort the select vars
+  select_vars_sorted <- sort(select_vars)
+  
+  for(i in 1:length(select_vars_sorted)){
+    my_var       <- select_vars_sorted[i]
+    my_colors[i] <- filter(color_map, var == my_var) %>% pull(color)
   }
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
@@ -83,25 +90,36 @@ plot_watermarks <- function(start_date, end_date, select_vars, file_name_string)
     scale_y_continuous(label = dollar, trans = log10_trans()) +
     scale_color_manual(guide = FALSE, values = my_colors) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Progress of the S&P 500\n", 
+    ggtitle(paste0("The Watermarks of the S&P 500\n", 
                    format.Date(start_date, "%Y"), 
                    "-", 
                    format.Date(end_date, "%Y"))) +
-    labs(x="Date", y="Real Growth of $1",
+    labs(x="Date", y="Real Growth of $1 (Log Scale)",
          caption = paste0(source_string, "\n", note_string))
       
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-plot_watermarks("1871-01-01", "2018-12-01", c("index"),
-                      "banded_01_sp500")
+plot_all <- function(start_date, end_date){
+  plot_watermarks(start_date, end_date, c("high_watermark", "price_plus_div"), 
+                  "banded_01_sp500")
+  plot_watermarks(start_date, end_date, c("high_watermark", "low_watermark", "price_plus_div"),
+                  "banded_02_sp500")
+  plot_watermarks(start_date, end_date, c("high_watermark", "low_watermark"),
+                  "banded_03_sp500")
+  start_date_string <- date_to_string(start_date)
+  create_gif(path = out_path, 
+             file_stub = paste0(start_date_string, "*"), 
+             speed_milliseconds = 120, 
+             out_name = paste0("_gif_", start_date_string, ".gif")
+  )
+}
 
-plot_watermarks("1871-01-01", "2018-12-01", c("high_watermark", "low_watermark", "index"),
-                      "banded_02_sp500")
+plot_all("1871-01-01", "2018-12-01")
+plot_all("1990-01-01", "2018-12-01")
 
-plot_watermarks("1871-01-01", "2018-12-01", c("high_watermark", "low_watermark"),
-                      "banded_03_sp500")
+
 
 
 
