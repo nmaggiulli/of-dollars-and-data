@@ -34,23 +34,8 @@ plot_watermarks <- function(start_date, end_date, select_vars, file_name_string)
   # Start price_plus_div at 1
   sp500_ret_pe <-  sp500_ret_pe %>%
                     mutate(price_plus_div = price_plus_div/pull(sp500_ret_pe[1, "price_plus_div"])) %>%
-                      select(date, price_plus_div)
-  
-  # Find high watermark
-  absolute_maximum <- 0
-  
-  for(i in 1:nrow(sp500_ret_pe)){
-    current_p <- pull(sp500_ret_pe[i, "price_plus_div"])
-    if (current_p > absolute_maximum){
-      sp500_ret_pe[i, "high_watermark"] <- current_p
-      absolute_maximum <- current_p
-    } else{
-      sp500_ret_pe[i, "high_watermark"] <- absolute_maximum
-    }
-  }
-  
-  # Sort the data in descending order
-  sp500_ret_pe <- arrange(sp500_ret_pe, desc(date))
+                      select(date, price_plus_div) %>%
+                      arrange(desc(date))
   
   # Find low matermark
   absolute_minumum <- 10^8
@@ -63,7 +48,52 @@ plot_watermarks <- function(start_date, end_date, select_vars, file_name_string)
     } else{
       sp500_ret_pe[i, "low_watermark"] <- absolute_minumum
     }
+    
+    if (i > 1){
+      low_wm     <- sp500_ret_pe[i, "low_watermark"]
+      prior_low  <- sp500_ret_pe[(i-1), "low_watermark"]
+      
+      if(low_wm == prior_low){
+        sp500_ret_pe[i, "low_wm_length"] <- sp500_ret_pe[(i-1), "low_wm_length"] + 1
+      } else{
+        sp500_ret_pe[i, "low_wm_length"] <- 1
+      }
+    } else{
+      sp500_ret_pe[i, "low_wm_length"]  <- 1
+    }
   }
+  
+  # Re-sort data
+  sp500_ret_pe <- sp500_ret_pe %>% arrange(date)
+  
+  # Find high watermark and add length of watermarks
+  absolute_maximum <- 0
+  
+  for(i in 1:nrow(sp500_ret_pe)){
+    current_p <- pull(sp500_ret_pe[i, "price_plus_div"])
+    if (current_p > absolute_maximum){
+      sp500_ret_pe[i, "high_watermark"] <- current_p
+      absolute_maximum <- current_p
+    } else{
+      sp500_ret_pe[i, "high_watermark"] <- absolute_maximum
+    }
+
+    if (i > 1){
+      high_wm    <- sp500_ret_pe[i, "high_watermark"]
+      prior_high <- sp500_ret_pe[(i-1), "high_watermark"]
+      
+      if(high_wm == prior_high){
+        sp500_ret_pe[i, "high_wm_length"] <- sp500_ret_pe[(i-1), "high_wm_length"] + 1
+      } else{
+        sp500_ret_pe[i, "high_wm_length"] <- 1
+      }
+
+    } else{
+      sp500_ret_pe[i, "high_wm_length"] <- 1
+    }
+  }
+  
+  assign("sp500_ret_pe", sp500_ret_pe, envir = .GlobalEnv)
   
   # File path and source/note strings
   file_path <- paste0(out_path, "/", start_date_string, "_", end_date_string, "_", file_name_string, ".jpeg")
@@ -99,21 +129,42 @@ plot_watermarks <- function(start_date, end_date, select_vars, file_name_string)
       
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  # Print watermark lengths
+  to_plot <- sp500_ret_pe %>%
+              select(date, low_wm_length) %>%
+              gather(-date, key=key, value=value)
+  
+  file_path <- paste0(out_path, "/low_watermark_duration_", start_date_string, "_", end_date_string, ".jpeg")
+  
+  plot <- ggplot(to_plot, aes(x=date, y=value, fill = key)) +
+    geom_area(alpha = 0.5) +
+    scale_fill_manual(values = c("red"), guide = FALSE) +
+    of_dollars_and_data_theme +
+    ggtitle(paste0("Number of Months Until Bottom\n", 
+                   format.Date(start_date, "%Y"), 
+                   "-", 
+                   format.Date(end_date, "%Y"))) +
+    labs(x="Date", y="Number of Months",
+         caption = paste0(source_string, "\n", note_string))
+  
+  # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
 plot_all <- function(start_date, end_date){
   plot_watermarks(start_date, end_date, c("high_watermark", "price_plus_div"), 
                   "banded_01_sp500")
-  plot_watermarks(start_date, end_date, c("high_watermark", "low_watermark", "price_plus_div"),
-                  "banded_02_sp500")
-  plot_watermarks(start_date, end_date, c("high_watermark", "low_watermark"),
-                  "banded_03_sp500")
-  start_date_string <- date_to_string(start_date)
-  create_gif(path = out_path, 
-             file_stub = paste0(start_date_string, "*"), 
-             speed_milliseconds = 120, 
-             out_name = paste0("_gif_", start_date_string, ".gif")
-  )
+  # plot_watermarks(start_date, end_date, c("high_watermark", "low_watermark", "price_plus_div"),
+  #                 "banded_02_sp500")
+  # plot_watermarks(start_date, end_date, c("high_watermark", "low_watermark"),
+  #                 "banded_03_sp500")
+  # start_date_string <- date_to_string(start_date)
+  # create_gif(path = out_path, 
+  #            file_stub = paste0(start_date_string, "*"), 
+  #            speed_milliseconds = 120, 
+  #            out_name = paste0("_gif_", start_date_string, ".gif")
+  #)
 }
 
 plot_all("1871-01-01", "2018-12-01")
