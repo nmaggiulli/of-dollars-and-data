@@ -369,7 +369,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
               gather(-date, key=key, value=value)
   
   bottom <- cumulative_totals %>%
-              filter(dip_amount != 0) %>%
+              filter(dip_amount != 0, row_number() != 1) %>%
               select(date, dca_growth) %>%
               gather(-date, key=key, value=value)
   
@@ -413,8 +413,8 @@ full_dd <- create_full_dd(analysis_start, analysis_end)
 testing <- 1
 
 if(testing == 1){
-  test_date <- "1995-01-01"
-  test_end <- "2018-12-01"
+  test_date <- "1975-01-01"
+  test_end <- ""
   if(test_end == ""){
     t <- calculate_dca_dip_diff(0, test_date, as.Date(test_date) + years(n_years) - months(1))
     t_full <- full_dca_dip(0, test_date, as.Date(test_date) + years(n_years) - months(1))
