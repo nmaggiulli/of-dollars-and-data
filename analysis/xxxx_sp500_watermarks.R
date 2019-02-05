@@ -155,16 +155,16 @@ plot_watermarks <- function(start_date, end_date, select_vars, file_name_string)
 plot_all <- function(start_date, end_date){
   plot_watermarks(start_date, end_date, c("high_watermark", "price_plus_div"), 
                   "banded_01_sp500")
-  # plot_watermarks(start_date, end_date, c("high_watermark", "low_watermark", "price_plus_div"),
-  #                 "banded_02_sp500")
-  # plot_watermarks(start_date, end_date, c("high_watermark", "low_watermark"),
-  #                 "banded_03_sp500")
-  # start_date_string <- date_to_string(start_date)
-  # create_gif(path = out_path, 
-  #            file_stub = paste0(start_date_string, "*"), 
-  #            speed_milliseconds = 120, 
-  #            out_name = paste0("_gif_", start_date_string, ".gif")
-  #)
+  plot_watermarks(start_date, end_date, c("high_watermark", "low_watermark", "price_plus_div"),
+                  "banded_02_sp500")
+  plot_watermarks(start_date, end_date, c("high_watermark", "low_watermark"),
+                  "banded_03_sp500")
+  start_date_string <- date_to_string(start_date)
+  create_gif(path = out_path,
+             file_stub = paste0(start_date_string, "*"),
+             speed_milliseconds = 120,
+             out_name = paste0("_gif_", start_date_string, ".gif")
+  )
 }
 
 plot_all("1871-01-01", "2018-12-01")
