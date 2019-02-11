@@ -29,7 +29,11 @@ colnames(raw) <- c("date", "ret_sp500", "ret_treasury_5yr")
 # Filter out bad rows from import
 raw <- raw %>%
           filter(!is.na(ret_sp500)) %>%
-          mutate(date = as.Date(date, format = "%m/%d/%Y"))
+          mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
+          filter(date >= "1960-01-01")
+
+first_yr <- min(year(raw$date))
+last_yr <- max(year(raw$date))
 
 # Get growth of $1 from returns
 for (i in 1:nrow(raw)){
@@ -41,6 +45,14 @@ for (i in 1:nrow(raw)){
     raw[i, "index_treasury_5yr"] <- raw[(i-1), "index_treasury_5yr"] * (1 + raw[i, "ret_treasury_5yr"])
   }
 }
+
+dd <- drawdown_path(select(raw, date, index_sp500)) %>%
+        mutate(dd_cat = as.factor(case_when(
+          pct > -0.05 ~ 0,
+          pct < -0.2 ~ 2,
+          TRUE ~ 1
+          ))
+        )
 
 # Grab only the index columns for the matrix
 raw_matrix <- as.matrix(raw[, grepl("index_", colnames(raw))])
@@ -68,7 +80,7 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
 
   for(i in 1:(length(raw_matrix[,1]) - n_month_dca)){
     
-    end_row_num <- i+n_month_dca
+    end_row_num <- i + n_month_dca
     
     beg_sp500 <- raw_matrix[i, sp_col_num]
     beg_treasury <- raw_matrix[i, treasury_col_num]
@@ -88,13 +100,18 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
     final_results[i, dca_col] <- end_dca/end_ls - 1
   }
   
+  # Define an out folder to delete and re-create
+  out_folder <- paste0(out_path,"/time_sw_", pct_sp500)
+  
   # Plot the LS outperformance
-  file_path <- paste0(out_path, "/dca_outperformance_over_time_sw_", pct_sp500, "_", n_month_string, "_m.jpeg")
+  file_path <- paste0(out_folder,"/dca_perf_time_sw_", pct_sp500, "_", n_month_string, "_m.jpeg")
   
-  to_plot <- final_results
+  to_plot <- final_results %>%
+              rename_(.dots = setNames(paste0(dca_col), "dca_col")) %>%
+              left_join(dd)
   
-  avg_performance <- mean(to_plot[, dca_col], na.rm = TRUE)
-  pct_underperformance <- (to_plot %>% filter_(paste0(dca_col, " < 0")) %>% nrow())/nrow(to_plot)
+  avg_performance <- mean(to_plot$dca_col, na.rm = TRUE)
+  pct_underperformance <- (to_plot %>% filter(dca_col < 0) %>% nrow())/nrow(to_plot)
   
   if(avg_performance > 0){
     perf_string <- "outperforms"
@@ -103,11 +120,11 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
     avg_performance <- abs(avg_performance)
   }
   
-  source_string <- paste0("Source:  DFA (OfDollarsAndData.com)")
+  source_string <- paste0("Source:  DFA, ", first_yr, "-", last_yr, " (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note: 'Stocks' are represented by the S&P 500 and 'Bonds' are represented by 5-Year U.S. Treasuries.  ",
                                  "The S&P 500 return includes dividends, but is not adjusted for inflation.  ",
-                                 "On average, DCA over ", n_month_dca, " months ", perf_string, " Lump Sum by ", round(100*avg_performance, 1), "%.  ",
-                                 "DCA underperforms Lump Sum in ", round(100*pct_underperformance, 1), "% of all months shown."), 
+                                 "On average, DCA (over ", n_month_dca, " months) ", perf_string, " Lump Sum by ", round(100*avg_performance, 1), "% and ",
+                                 "underperforms Lump Sum in ", round(100*pct_underperformance, 1), "% of all months shown."), 
                           width = 80)
   
   if(y_unit == 1){
@@ -126,34 +143,47 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
   }
   
   text_labels <- data.frame()
-  text_labels[1, dca_col] <- y_unit * 0.9
+  text_labels[1, "dca_col"] <- y_unit * 0.95
   text_labels[1, "label"] <- "DCA Outperforms Lump Sum"
-  text_labels[1, "date"] <- as.Date("1970-01-01")
-  text_labels[2, dca_col] <- -y_unit * 0.9
+  text_labels[1, "date"] <- as.Date("1990-01-01")
+  text_labels[1, "dd_cat"] <- 1
+  text_labels[2, "dca_col"] <- -y_unit * 0.95
   text_labels[2, "label"] <- "DCA Underperforms Lump Sum"
-  text_labels[2, "date"] <- as.Date("1970-01-01")
+  text_labels[2, "date"] <- as.Date("1990-01-01")
+  text_labels[2, "dd_cat"] <- 1
   
-  plot <- ggplot(to_plot, aes_string(x="date", y=dca_col)) +
+  plot <- ggplot(to_plot, aes(x=date, y=dca_col)) +
     geom_hline(yintercept = 0, col = "black") +
     geom_line() +
-    geom_text_repel(data=text_labels, aes_string(x="date", y=dca_col),
-                      label = text_labels$label,
-                      max.iter = 1) +
+    geom_text_repel(data=text_labels, aes(x=date, y=dca_col),
+                    color = "black",
+                    label = text_labels$label,
+                    max.iter = 1) +
     scale_y_continuous(label = percent, limits = c(-y_unit, y_unit),
                        breaks = seq(-y_unit, y_unit, y_break)) +
+    scale_x_date(date_labels = "%Y", breaks = c(
+      as.Date("1960-01-01"),
+      as.Date("1970-01-01"),
+      as.Date("1980-01-01"),
+      as.Date("1990-01-01"),
+      as.Date("2000-01-01"),
+      as.Date("2010-01-01")
+    )) +
     of_dollars_and_data_theme +
     ggtitle(paste0("DCA Performance Over ", n_month_dca, " Months\nvs. Lump Sum Investment\n",
                    title_portfolio_string)) +
     labs(x = "Date", y="DCA Outperformance (%)",
          caption = paste0(source_string, "\n", note_string))
-    
+  
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
-  # Plot distribution of returns as well
-  file_path <- paste0(out_path, "/dca_dist_sw_", pct_sp500, "_", n_month_string, "_m.jpeg")
+  out_folder <- paste0(out_path,"/dist_sw_", pct_sp500)
   
-  plot <- ggplot(to_plot, aes_string(x=dca_col)) +
+  # Plot distribution of returns as well
+  file_path <- paste0(out_folder, "/dca_dist_sw_", pct_sp500, "_", n_month_string, "_m.jpeg")
+  
+  plot <- ggplot(to_plot, aes(x=dca_col)) +
     geom_density(fill = "black") +
     geom_vline(xintercept = 0, linetype = "dashed", col = "grey") +
     scale_fill_discrete(guide = FALSE) +
@@ -173,15 +203,23 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
   return(final_results)
 }
 
-months_to_run <- seq(2, 24, 1)
+remove_and_recreate_folder <- function(path){
+  unlink(path)
+  dir.create(file.path(paste0(path)), showWarnings = FALSE)
+}
+
+months_to_run <- seq(2, 60, 1)
 results <- data.frame()
 
 for (j in c(60, 100)){
-  if(j == 60){
-    y_unit_max <- 0.5
-  } else{
-    y_unit_max <- 1
-  }
+  
+  y_unit_max <- 0.5
+  
+  folder_time <- paste0(out_path, "/time_sw_", j)
+  folder_dist <- paste0(out_path, "/dist_sw_", j)
+  
+  remove_and_recreate_folder(folder_time)
+  remove_and_recreate_folder(folder_dist)
   
   for(m in months_to_run){
     tmp <- run_lump_sum_simulation(m, j, y_unit_max)
@@ -197,13 +235,13 @@ for (j in c(60, 100)){
   
   assign(paste0("final_results_", j, "_sw"), results, envir = .GlobalEnv)
   
-  create_gif(out_path,
-             paste0("dca_outperformance_over_time_sw_", j,"_*.jpeg"),
+  create_gif(folder_time,
+             paste0("dca_perf_time_sw_", j,"_*.jpeg"),
              40,
              0,
              paste0("_gif_dca_outperformance_sw_", j, ".gif"))
 
-  create_gif(out_path,
+  create_gif(folder_dist,
              paste0("dca_dist_sw_", j,"_*.jpeg"),
              40,
              0,
