@@ -96,22 +96,36 @@ run_lump_sum_simulation <- function(n_month_dca, weight_sp500, y_unit){
   
   to_plot <- final_results
   
-  avg_outperformance <- mean(to_plot[which(to_plot[, dca_col] > 0), dca_col], na.rm = TRUE)
   avg_performance <- mean(to_plot[, dca_col], na.rm = TRUE)
-  avg_underperformance <- mean(to_plot[which(to_plot[, dca_col] < 0), dca_col], na.rm = TRUE)
-  
+
   plot <- ggplot(to_plot, aes_string(x="date", y=dca_col)) +
     geom_hline(yintercept = 0, col = "black") +
     geom_line() +
-    geom_hline(yintercept = avg_outperformance, col = "green", linetype= "dashed") +
     geom_hline(yintercept = avg_performance, col = "blue", linetype= "dashed") +
-    geom_hline(yintercept = avg_underperformance, col = "red", linetype= "dashed") +
     scale_y_continuous(label = percent, limits = c(-y_unit, y_unit),
                        breaks = seq(-y_unit, y_unit, 0.1)) +
     of_dollars_and_data_theme +
     ggtitle(paste0("DCA Outperformance over ", n_month_dca, " Months\nvs. Lump Sum Investment")) +
     labs(x = "Date", y="DCA Outperformance (%)")
     
+  # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  # Plot distribution of returns as well
+  file_path <- paste0(out_path, "/dca_dist_sw_", 100*weight_sp500, "_", n_month_string, "_m.jpeg")
+  
+  plot <- ggplot(to_plot, aes_string(x=dca_col)) +
+    geom_density(fill = "black") +
+    geom_vline(xintercept = 0, linetype = "dashed", col = "grey") +
+    scale_fill_discrete(guide = FALSE) +
+    scale_x_continuous(label = percent, limits = c(-y_unit, y_unit),
+                       breaks = seq(-y_unit, y_unit, 0.1)) +
+    of_dollars_and_data_theme +
+    theme(axis.ticks.y     = element_blank(),
+          axis.text.y     = element_blank()) +
+    ggtitle(paste0("DCA Outperformance over ", n_month_dca, " Months\nvs. Lump Sum Investment")) +
+    labs(x = "DCA Outperformance (%)", y="Frequency")
+  
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
@@ -144,11 +158,22 @@ create_gif(out_path,
            paste0("_gif_dca_outperformance_sw_60.gif"))
 
 create_gif(out_path, 
+           paste0("dca_dist_sw_60_*.jpeg"), 
+           40, 
+           0, 
+           paste0("_gif_dca_dist_sw_60.gif"))
+
+create_gif(out_path, 
            paste0("dca_outperformance_over_time_sw_100_*.jpeg"), 
            40, 
            0, 
            paste0("_gif_dca_outperformance_sw_100.gif"))
 
+create_gif(out_path, 
+           paste0("dca_dist_sw_100_*.jpeg"), 
+           40, 
+           0, 
+           paste0("_gif_dca_dist_sw_100.gif"))
 
 
 # ############################  End  ################################## #
