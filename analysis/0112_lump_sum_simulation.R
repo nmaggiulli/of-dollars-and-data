@@ -46,14 +46,6 @@ for (i in 1:nrow(raw)){
   }
 }
 
-dd <- drawdown_path(select(raw, date, index_sp500)) %>%
-        mutate(dd_cat = as.factor(case_when(
-          pct > -0.05 ~ 0,
-          pct < -0.2 ~ 2,
-          TRUE ~ 1
-          ))
-        )
-
 # Grab only the index columns for the matrix
 raw_matrix <- as.matrix(raw[, grepl("index_", colnames(raw))])
 
@@ -95,9 +87,13 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
     
     end_dca <- dca_sp500 + dca_treasury
     
-    dca_col <- paste0("dca_outperformance_", n_month_dca, "m")
+    ls_col  <- paste0("ls_", n_month_dca, "m")
+    dca_col <- paste0("dca_", n_month_dca, "m")
+    out_col <- paste0("dca_outperformance_", n_month_dca, "m")
     
-    final_results[i, dca_col] <- end_dca/end_ls - 1
+    final_results[i, ls_col] <- end_ls - 1
+    final_results[i, dca_col] <- end_dca - 1
+    final_results[i, out_col] <- end_dca/end_ls - 1
   }
   
   # Define an out folder to delete and re-create
@@ -107,11 +103,10 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
   file_path <- paste0(out_folder,"/dca_perf_time_sw_", pct_sp500, "_", n_month_string, "_m.jpeg")
   
   to_plot <- final_results %>%
-              rename_(.dots = setNames(paste0(dca_col), "dca_col")) %>%
-              left_join(dd)
+              rename_(.dots = setNames(paste0(out_col), "perf_col"))
   
-  avg_performance <- mean(to_plot$dca_col, na.rm = TRUE)
-  pct_underperformance <- (to_plot %>% filter(dca_col < 0) %>% nrow())/nrow(to_plot)
+  avg_performance <- mean(to_plot$perf_col, na.rm = TRUE)
+  pct_underperformance <- (to_plot %>% filter(perf_col < 0) %>% nrow())/nrow(to_plot)
   
   if(avg_performance > 0){
     perf_string <- "outperforms"
@@ -143,19 +138,17 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
   }
   
   text_labels <- data.frame()
-  text_labels[1, "dca_col"] <- y_unit * 0.95
+  text_labels[1, "perf_col"] <- y_unit * 0.95
   text_labels[1, "label"] <- "DCA Outperforms Lump Sum"
   text_labels[1, "date"] <- as.Date("1990-01-01")
-  text_labels[1, "dd_cat"] <- 1
-  text_labels[2, "dca_col"] <- -y_unit * 0.95
+  text_labels[2, "perf_col"] <- -y_unit * 0.95
   text_labels[2, "label"] <- "DCA Underperforms Lump Sum"
   text_labels[2, "date"] <- as.Date("1990-01-01")
-  text_labels[2, "dd_cat"] <- 1
   
-  plot <- ggplot(to_plot, aes(x=date, y=dca_col)) +
+  plot <- ggplot(to_plot, aes(x=date, y=perf_col)) +
     geom_hline(yintercept = 0, col = "black") +
     geom_line() +
-    geom_text_repel(data=text_labels, aes(x=date, y=dca_col),
+    geom_text_repel(data=text_labels, aes(x=date, y=perf_col),
                     color = "black",
                     label = text_labels$label,
                     max.iter = 1) +
@@ -168,7 +161,7 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
       as.Date("1990-01-01"),
       as.Date("2000-01-01"),
       as.Date("2010-01-01")
-    )) +
+    ), limits = c(as.Date("1960-01-01"), as.Date("2019-01-01"))) +
     of_dollars_and_data_theme +
     ggtitle(paste0("DCA Performance Over ", n_month_dca, " Months\nvs. Lump Sum Investment\n",
                    title_portfolio_string)) +
@@ -178,12 +171,52 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
+  # Create a line plot showing performance of both
+  out_folder <- paste0(out_path,"/compare_sw_", pct_sp500)
+  
+  # Plot the LS outperformance
+  file_path <- paste0(out_folder,"/dca_ls_time_sw_", pct_sp500, "_", n_month_string, "_m.jpeg")
+  
+  to_plot_no_perf <- final_results %>%
+                      rename_(.dots = setNames(paste0(out_col), "perf_col")) %>%
+                      rename_(.dots = setNames(paste0(dca_col), "DCA")) %>%
+                      rename_(.dots = setNames(paste0(ls_col), "Lump Sum")) %>%
+                      select(-perf_col) %>%
+                      gather(-date, key=key, value=value)
+  
+  plot <- ggplot(to_plot_no_perf, aes(x=date, y=value, col = key)) +
+    geom_hline(yintercept = 0, col = "black") +
+    geom_line() +
+    scale_color_manual(values = c("black", "blue")) +
+    scale_linetype_discrete() +
+    scale_y_continuous(label = percent, limits = c(-y_unit/2, y_unit*3),
+                       breaks = seq(-y_unit/2, y_unit*3, y_break*2.5)) +
+    scale_x_date(date_labels = "%Y", breaks = c(
+      as.Date("1960-01-01"),
+      as.Date("1970-01-01"),
+      as.Date("1980-01-01"),
+      as.Date("1990-01-01"),
+      as.Date("2000-01-01"),
+      as.Date("2010-01-01")
+    ), limits = c(as.Date("1960-01-01"), as.Date("2019-01-01"))) +
+    of_dollars_and_data_theme +
+    theme(legend.title = element_blank(),
+          legend.position = "bottom") +
+    ggtitle(paste0("DCA Over ", n_month_dca, " Months\nvs. Lump Sum Investment\n",
+                   title_portfolio_string)) +
+    labs(x = "Date", y="Performance (%)",
+         caption = paste0(source_string, "\n", note_string))
+  
+  # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  # Plot dists
   out_folder <- paste0(out_path,"/dist_sw_", pct_sp500)
   
   # Plot distribution of returns as well
   file_path <- paste0(out_folder, "/dca_dist_sw_", pct_sp500, "_", n_month_string, "_m.jpeg")
   
-  plot <- ggplot(to_plot, aes(x=dca_col)) +
+  plot <- ggplot(to_plot, aes(x=perf_col)) +
     geom_density(fill = "black") +
     geom_vline(xintercept = 0, linetype = "dashed", col = "grey") +
     scale_fill_discrete(guide = FALSE) +
@@ -208,17 +241,19 @@ remove_and_recreate_folder <- function(path){
   dir.create(file.path(paste0(path)), showWarnings = FALSE)
 }
 
-months_to_run <- seq(2, 60, 1)
+months_to_run <- seq(2, 60, 2)
 results <- data.frame()
 
 for (j in c(60, 100)){
   
   y_unit_max <- 0.5
   
-  folder_time <- paste0(out_path, "/time_sw_", j)
-  folder_dist <- paste0(out_path, "/dist_sw_", j)
+  folder_time    <- paste0(out_path, "/time_sw_", j)
+  folder_compare <- paste0(out_path, "/compare_sw_", j)
+  folder_dist    <- paste0(out_path, "/dist_sw_", j)
   
   remove_and_recreate_folder(folder_time)
+  remove_and_recreate_folder(folder_compare)
   remove_and_recreate_folder(folder_dist)
   
   for(m in months_to_run){
@@ -235,15 +270,23 @@ for (j in c(60, 100)){
   
   assign(paste0("final_results_", j, "_sw"), results, envir = .GlobalEnv)
   
+  gif_ms <- 50
+  
   create_gif(folder_time,
              paste0("dca_perf_time_sw_", j,"_*.jpeg"),
-             40,
+             gif_ms,
              0,
              paste0("_gif_dca_outperformance_sw_", j, ".gif"))
+  
+  create_gif(folder_compare,
+             paste0("dca_ls_time_sw_", j,"_*.jpeg"),
+             gif_ms,
+             0,
+             paste0("_gif_dca_ls_sw_", j, ".gif"))
 
   create_gif(folder_dist,
              paste0("dca_dist_sw_", j,"_*.jpeg"),
-             40,
+             gif_ms,
              0,
              paste0("_gif_dca_dist_sw_", j,".gif"))
 }
