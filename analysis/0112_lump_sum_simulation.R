@@ -129,7 +129,7 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
   }
   
   # Set the title
-  if(pct_sp500 < 100){
+  if(pct_sp500 != 100 & pct_sp500 != 0){
     title_portfolio_string <- paste0(pct_sp500, "/", pct_treasury, " Portfolio")
   } else if (pct_sp500 == 100){
     title_portfolio_string <- paste0("All Stock Portfolio")
@@ -151,6 +151,7 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
     geom_text_repel(data=text_labels, aes(x=date, y=perf_col),
                     color = "black",
                     label = text_labels$label,
+                    family = "my_font",
                     max.iter = 1) +
     scale_y_continuous(label = percent, limits = c(-y_unit, y_unit),
                        breaks = seq(-y_unit, y_unit, y_break)) +
@@ -174,41 +175,43 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
   # Create a line plot showing performance of both
   out_folder <- paste0(out_path,"/compare_sw_", pct_sp500)
   
-  # Plot the LS outperformance
-  file_path <- paste0(out_folder,"/dca_ls_time_sw_", pct_sp500, "_", n_month_string, "_m.jpeg")
-  
-  to_plot_no_perf <- final_results %>%
-                      rename_(.dots = setNames(paste0(out_col), "perf_col")) %>%
-                      rename_(.dots = setNames(paste0(dca_col), "DCA")) %>%
-                      rename_(.dots = setNames(paste0(ls_col), "Lump Sum")) %>%
-                      select(-perf_col) %>%
-                      gather(-date, key=key, value=value)
-  
-  plot <- ggplot(to_plot_no_perf, aes(x=date, y=value, col = key)) +
-    geom_hline(yintercept = 0, col = "black") +
-    geom_line() +
-    scale_color_manual(values = c("black", "blue")) +
-    scale_linetype_discrete() +
-    scale_y_continuous(label = percent, limits = c(-y_unit/2, y_unit*3),
-                       breaks = seq(-y_unit/2, y_unit*3, y_break*2.5)) +
-    scale_x_date(date_labels = "%Y", breaks = c(
-      as.Date("1960-01-01"),
-      as.Date("1970-01-01"),
-      as.Date("1980-01-01"),
-      as.Date("1990-01-01"),
-      as.Date("2000-01-01"),
-      as.Date("2010-01-01")
-    ), limits = c(as.Date("1960-01-01"), as.Date("2019-01-01"))) +
-    of_dollars_and_data_theme +
-    theme(legend.title = element_blank(),
-          legend.position = "bottom") +
-    ggtitle(paste0("DCA Over ", n_month_dca, " Months\nvs. Lump Sum Investment\n",
-                   title_portfolio_string)) +
-    labs(x = "Date", y="Performance (%)",
-         caption = paste0(source_string, "\n", note_string))
-  
-  # Save the plot
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  if(n_month_dca <= 24){
+    # Plot the LS outperformance
+    file_path <- paste0(out_folder,"/dca_ls_time_sw_", pct_sp500, "_", n_month_string, "_m.jpeg")
+    
+    to_plot_no_perf <- final_results %>%
+                        rename_(.dots = setNames(paste0(out_col), "perf_col")) %>%
+                        rename_(.dots = setNames(paste0(dca_col), "DCA")) %>%
+                        rename_(.dots = setNames(paste0(ls_col), "Lump Sum")) %>%
+                        select(-perf_col) %>%
+                        gather(-date, key=key, value=value)
+    
+    plot <- ggplot(to_plot_no_perf, aes(x=date, y=value, col = key)) +
+      geom_hline(yintercept = 0, col = "black") +
+      geom_line() +
+      scale_color_manual(values = c("black", "blue")) +
+      scale_linetype_discrete() +
+      scale_y_continuous(label = percent, limits = c(-y_unit/2, y_unit*2),
+                         breaks = seq(-y_unit/2, y_unit*2, y_break*2.5)) +
+      scale_x_date(date_labels = "%Y", breaks = c(
+        as.Date("1960-01-01"),
+        as.Date("1970-01-01"),
+        as.Date("1980-01-01"),
+        as.Date("1990-01-01"),
+        as.Date("2000-01-01"),
+        as.Date("2010-01-01")
+      ), limits = c(as.Date("1960-01-01"), as.Date("2019-01-01"))) +
+      of_dollars_and_data_theme +
+      theme(legend.title = element_blank(),
+            legend.position = "bottom") +
+      ggtitle(paste0("DCA Over ", n_month_dca, " Months\nvs. Lump Sum Investment\n",
+                     title_portfolio_string)) +
+      labs(x = "Date", y="Performance (%)",
+           caption = paste0(source_string, "\n", note_string))
+    
+    # Save the plot
+    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  }
   
   # Plot dists
   out_folder <- paste0(out_path,"/dist_sw_", pct_sp500)
@@ -241,10 +244,73 @@ remove_and_recreate_folder <- function(path){
   dir.create(file.path(paste0(path)), showWarnings = FALSE)
 }
 
+# Create illustrative chart to start
+# Plot distribution of returns as well
+file_path <- paste0(out_path, "/sample_return_path.jpeg")
+
+starting_price <- 100
+price_change <- 15
+label_increment <- 35
+
+to_plot <- data.frame(month = seq(1, 20),
+                      price = c(starting_price, 
+                                starting_price-(price_change*1), 
+                                starting_price-(price_change*2), 
+                                starting_price-(price_change*3), 
+                                starting_price-(price_change*4), 
+                                starting_price-(price_change*5), 
+                                starting_price-(price_change*6),
+                                starting_price-(price_change*5), 
+                                starting_price-(price_change*4), 
+                                starting_price-(price_change*3), 
+                                starting_price-(price_change*2), 
+                                starting_price-(price_change*1), 
+                                starting_price, 
+                                rep(starting_price, 7)),
+                      purchase = c(1, 0, 0, 0, 0, 0, 1,
+                                   0, 0, 0, 0, 0, 1,
+                                   rep(0, 7))
+)
+
+# Create manual text labels for plot
+text_labels <- data.frame()
+text_labels[1, "month"] <- 3.5
+text_labels[1, "price"] <- starting_price + label_increment
+text_labels[1, "label"] <- "DCA Outperforms\nLump Sum"
+text_labels[2, "month"] <- 10
+text_labels[2, "price"] <- starting_price + label_increment
+text_labels[2, "label"] <- "Lump Sum\nOutperforms DCA"
+text_labels[3, "month"] <- 16.5
+text_labels[3, "price"] <- starting_price + label_increment
+text_labels[3, "label"] <- "Equal Performance"
+
+plot <- ggplot(to_plot, aes(x=month, y=price)) +
+  geom_vline(xintercept = 7, linetype="dashed") +
+  geom_vline(xintercept = 13, linetype="dashed") +
+  geom_line() +
+  geom_point(aes(col = as.factor(purchase))) +
+  scale_color_manual(guide = FALSE, values = c("black", "green")) +
+  geom_text_repel(data=text_labels, aes(x=month, y=price),
+                  color = "black",
+                  label = text_labels$label,
+                  family = "my_font",
+                  size = 3.5,
+                  max.iter = 1) +
+  scale_y_continuous(limits = c(0, starting_price + 50), breaks = seq(0, starting_price + 50, 25), label = dollar)+
+  scale_x_continuous(breaks = seq(1, 20)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Different Market Regimes")) +
+  labs(x = "Month", y="Price",
+       caption = paste0("Source: Simulated data (OfDollarsAndData.com)"))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Run simulation for all buying periods
 months_to_run <- seq(2, 60, 2)
 results <- data.frame()
 
-for (j in c(60, 100)){
+for (j in c(60, 100, 0)){
   
   y_unit_max <- 0.5
   
@@ -290,6 +356,5 @@ for (j in c(60, 100)){
              0,
              paste0("_gif_dca_dist_sw_", j,".gif"))
 }
-
 
 # ############################  End  ################################## #
