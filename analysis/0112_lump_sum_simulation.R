@@ -246,7 +246,7 @@ remove_and_recreate_folder <- function(path){
 
 # Create illustrative chart to start
 # Plot distribution of returns as well
-file_path <- paste0(out_path, "/sample_return_path.jpeg")
+file_path <- paste0(out_path, "/perf_market_regimes.jpeg")
 
 starting_price <- 100
 price_change <- 15
