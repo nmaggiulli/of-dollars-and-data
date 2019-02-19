@@ -97,7 +97,6 @@ run_life_cycle <- function(working_years, spending_years,
 
 run_all_life_cycles <- function(working_years, spending_years, 
                                 savings_rate_low, savings_rate_high,
-                                wt_sp500_low, wt_sp500_high,
                                 first_date){
   
   last_date <- max_date - years(working_years + spending_years + 1) + months(1)
@@ -107,7 +106,7 @@ run_all_life_cycles <- function(working_years, spending_years,
   
   counter <- 1
   for(sr in seq(savings_rate_low, savings_rate_high, 0.01)){
-    for(wt in seq(wt_sp500_low, wt_sp500_high, 0.2)){
+    for(wt in sp500_weights){
       for(i in 1:length(all_dates)){
         dt <- all_dates[i]
         print(dt)
@@ -116,10 +115,18 @@ run_all_life_cycles <- function(working_years, spending_years,
         assign(paste0("m_", counter), m, envir = .GlobalEnv)
         mf <- na.omit(m[m[,4] < 0, 4])
 
+        if(wt == 0){
+          wt_name <- "100% Bonds"
+        } else if(wt == 1){
+          wt_name <- "100% Stocks"
+        } else{
+          wt_name <- paste0(100*wt, "/", 100*(1-wt), " Stock/Bond")
+        }
+        
         df <- data.frame(starting_date = dt + years(working_years),
                working_years = working_years,
                savings_rate = sr,
-               weight_sp500 = paste0(100*wt, "/", 100*(1-wt), " Stock/Bond"),
+               weight_sp500 = wt_name,
                n_years_survival = length(mf)/12
         )
         if(counter == 1){
@@ -141,12 +148,11 @@ min_sr       <- 0.05
 max_sr       <- 0.3
 working_yrs  <- 40
 spending_yrs <- 25
-
+sp500_weights <- c(0, 0.6, 1)
 
 run_all_life_cycles(working_yrs, 
                     spending_yrs, 
                     min_sr, max_sr,
-                    0.4, 0.8,
                     "1926-01-01")
 
 for (sr in seq(min_sr, max_sr, 0.01)){
