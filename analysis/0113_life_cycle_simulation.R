@@ -112,8 +112,7 @@ run_all_life_cycles <- function(working_years, spending_years,
         print(dt)
         
         m  <- run_life_cycle(working_years, spending_years, sr, dt, wt)
-        assign(paste0("m_", counter), m, envir = .GlobalEnv)
-        mf <- na.omit(m[m[,4] < 0, 4])
+        mf <- na.omit(m[m[,4] < 0, ])
 
         if(wt == 0){
           wt_name <- "100% Bonds"
@@ -127,7 +126,9 @@ run_all_life_cycles <- function(working_years, spending_years,
                working_years = working_years,
                savings_rate = sr,
                weight_sp500 = wt_name,
-               n_years_survival = length(mf)/12
+               n_years_survival = length(mf[, 4])/12,
+               total_portfolio = mf[1, 5] + mf[1, 6],
+               first_year_spend = mf[1, 4]*-1
         )
         if(counter == 1){
           final_df <- df
@@ -187,13 +188,31 @@ for (sr in seq(min_sr, max_sr, 0.01)){
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  if(sr_string == "30"){
+    # Plot portfolio value as well
+    file_path <- paste0(out_path, "/portfolio_value_", sr_string, ".jpeg")
+    
+    plot <- ggplot(to_plot, aes(x=starting_date, y = total_portfolio, col = as.factor(weight_sp500), linetype = as.factor(weight_sp500))) +
+      geom_line() +
+      scale_y_continuous(label = dollar) +
+      of_dollars_and_data_theme +
+      theme(legend.position = "bottom",
+            legend.title = element_blank()) +
+      ggtitle(paste0("Portfolio Value by Asset Allocation\nWith a ", 100*sr, "% Savings Rate")) +
+      labs(x="Retirement Start Year", y="Portfolio Value",
+           caption = paste0(source_string, "\n", note_string))
+    
+    # Save the plot
+    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  }
 }
 
 create_gif(out_path,
            paste0("survival_years_*.jpeg"),
            40,
            0,
-           paste0("_gif_all_savings_rates.gif"))
+           paste0("_gif_survival_years.gif"))
 
 
 # ############################  End  ################################## #
