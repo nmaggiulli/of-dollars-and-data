@@ -26,11 +26,22 @@ raw <- read.csv(paste0(importdir, "/0112_dfa_sp500_treasury_5yr/DFA_PeriodicRetu
 
 colnames(raw) <- c("date", "ret_sp500", "ret_treasury_5yr")
 
+tbills_cpi <- read_excel(paste0(importdir, "0113_life_cycle_simulations/dfa_tbill_sp500_5yr.xlsx"), skip = 4) %>%
+                filter(!is.na(Date)) %>%
+                mutate(Date = as.Date(Date)) %>%
+                select(1, 2, 3)
+
+colnames(tbills_cpi) <- c("date", "cpi", "ret_tbill")
+
 # Filter out bad rows from import
 raw <- raw %>%
           filter(!is.na(ret_sp500)) %>%
           mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
-          filter(date >= "1960-01-01")
+          mutate(date = as.Date(paste0(year(date), "-", month(date), "-01"))) %>%
+          left_join(tbills_cpi) %>%
+          filter(date >= "1960-01-01") %>%
+          mutate(ret_tbill = ret_tbill + cpi) %>%
+          select(-cpi)
 
 first_yr <- min(year(raw$date))
 last_yr <- max(year(raw$date))
@@ -40,9 +51,11 @@ for (i in 1:nrow(raw)){
   if(i == 1){
     raw[i, "index_sp500"]        <- 1 * (1 + raw[i, "ret_sp500"])
     raw[i, "index_treasury_5yr"] <- 1 * (1 + raw[i, "ret_treasury_5yr"])
+    raw[i, "index_tbill"] <- 1 * (1 + raw[i, "ret_tbill"])
   } else{
     raw[i, "index_sp500"] <- raw[(i-1), "index_sp500"] * (1 + raw[i, "ret_sp500"])
     raw[i, "index_treasury_5yr"] <- raw[(i-1), "index_treasury_5yr"] * (1 + raw[i, "ret_treasury_5yr"])
+    raw[i, "index_tbill"] <- raw[(i-1), "index_tbill"] * (1 + raw[i, "ret_tbill"])
   }
 }
 
@@ -51,8 +64,9 @@ raw_matrix <- as.matrix(raw[, grepl("index_", colnames(raw))])
 
 sp_col_num <- grepl("sp500", colnames(raw_matrix))
 treasury_col_num <- grepl("treasury", colnames(raw_matrix))
+tbill_col_num <- grepl("tbill", colnames(raw_matrix))
 
-run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
+run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit, invest_dca_cash){
   
   if(n_month_dca < 10){
     n_month_string <- paste0("0", n_month_dca)
@@ -74,17 +88,30 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
     
     end_row_num <- i + n_month_dca
     
-    beg_sp500 <- raw_matrix[i, sp_col_num]
+    beg_sp500    <- raw_matrix[i, sp_col_num]
     beg_treasury <- raw_matrix[i, treasury_col_num]
+    beg_tbill    <- raw_matrix[i, tbill_col_num]
     
-    end_sp500 <- raw_matrix[end_row_num, sp_col_num]
+    end_sp500    <- raw_matrix[end_row_num, sp_col_num]
     end_treasury <- raw_matrix[end_row_num, treasury_col_num]
     
     end_ls <- (end_sp500/beg_sp500 * weight_sp500) + (end_treasury/beg_treasury * weight_treasury)
     
-    dca_sp500 <- sum(end_sp500/raw_matrix[i:(end_row_num-1), sp_col_num] * (1/n_month_dca) * weight_sp500)
-    dca_treasury <- sum(end_treasury/raw_matrix[i:(end_row_num-1), treasury_col_num] * (1/n_month_dca) * weight_treasury)
+    # Calculate the growth of the money in cash, the S&P 500 return and the Treasury return
+    if (invest_dca_cash == 1){
+      tbill_growth <- raw_matrix[i:(end_row_num - 1), tbill_col_num]/beg_tbill
+    } else{
+      tbill_growth <- 1
+    }
     
+    sp500_growth    <- end_sp500/raw_matrix[i:(end_row_num-1), sp_col_num]
+    treasury_growth <- end_treasury/raw_matrix[i:(end_row_num-1), treasury_col_num]
+    
+    # Combine for total nominal return for each section of portfolio
+    dca_sp500 <- sum(sp500_growth * tbill_growth * (1/n_month_dca) * weight_sp500)
+    dca_treasury <- sum(treasury_growth * tbill_growth * (1/n_month_dca) * weight_treasury)
+    
+    # Combine for total DCA return
     end_dca <- dca_sp500 + dca_treasury
     
     ls_col  <- paste0("ls_", n_month_dca, "m")
@@ -115,11 +142,18 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit){
     avg_performance <- abs(avg_performance)
   }
   
+  if(invest_dca_cash == 1){
+    additional_note <- paste0("For DCA, cash receives the nominal 1-month T-Bill return before being invested.")
+  } else{
+    additional_note <- ""
+  }
+  
   source_string <- paste0("Source:  DFA, ", first_yr, "-", last_yr, " (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note: 'Stocks' are represented by the S&P 500 and 'Bonds' are represented by 5-Year U.S. Treasuries.  ",
                                  "The S&P 500 return includes dividends, but is not adjusted for inflation.  ",
                                  "On average, DCA (over ", n_month_dca, " months) ", perf_string, " Lump Sum by ", round(100*avg_performance, 1), "% and ",
-                                 "underperforms Lump Sum in ", round(100*pct_underperformance, 1), "% of all months shown."), 
+                                 "underperforms Lump Sum in ", round(100*pct_underperformance, 1), "% of all months shown.  ",
+                                 additional_note), 
                           width = 80)
   
   if(y_unit == 1){
@@ -261,7 +295,7 @@ for (j in c(60, 100, 0)){
   remove_and_recreate_folder(folder_dist)
   
   for(m in months_to_run){
-    tmp <- run_lump_sum_simulation(m, j, y_unit_max)
+    tmp <- run_lump_sum_simulation(m, j, y_unit_max, 0)
     
     if(m == months_to_run[1]){
       results <- tmp
