@@ -28,6 +28,10 @@ dfa_data <- read_excel(paste0(importdir, "0113_life_cycle_simulations/dfa_tbill_
 
 colnames(dfa_data) <- c("date", "cpi", "ret_tbill", "ret_sp500", "ret_treasury_5yr")
 
+# Convert 5-yr treasury into a real rate of return (since it is nominal)
+dfa_data <- dfa_data %>%
+              mutate(ret_treasury_5yr = ret_treasury_5yr - cpi)
+
 max_date <- max(dfa_data$date)
 
 run_life_cycle <- function(working_years, spending_years, 
@@ -60,9 +64,9 @@ run_life_cycle <- function(working_years, spending_years,
   
   for(i in 1:nrow(df)){
     
-    ret_sp500 <- df[i, "ret_sp500"]
-    ret_treasury <- df[i, "ret_treasury_5yr"]
     cpi <- df[i, "cpi"]
+    ret_sp500 <- df[i, "ret_sp500"] 
+    ret_treasury <- df[i, "ret_treasury_5yr"]
     
     if(i == 1){
       df[i, 4] <- starting_salary/12 * savings_rate
@@ -93,7 +97,6 @@ run_life_cycle <- function(working_years, spending_years,
     }
   } 
 }
-
 
 run_all_life_cycles <- function(working_years, spending_years, 
                                 savings_rate_low, savings_rate_high,
@@ -165,7 +168,7 @@ for (sr in seq(min_sr, max_sr, 0.01)){
   }
   
   file_path <- paste0(out_path, "/survival_years_", sr_string, ".jpeg")
-
+  
   source_string <- paste0("Source:  DFA, 1926-2018 (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note: Assumes income grows with inflation while saved money grows at the portfolio return level.   ",
                                  "Spending in the first retirement year is indexed to inflation.  ",
@@ -214,5 +217,34 @@ create_gif(out_path,
            0,
            paste0("_gif_survival_years.gif"))
 
+# Create decade stock and bond plots
+to_plot <- dfa_data %>%
+                  filter(date >= "1930-01-01", date < "2000-01-01") %>%
+                  mutate(decade = year(floor_date(date, years(10)))) %>%
+                  group_by(decade) %>%
+                  summarize(`Stocks` = prod(1+ret_sp500) - 1,
+                            `Bonds` = prod(1+ret_treasury_5yr) - 1) %>%
+                  ungroup() %>%
+                  gather(-decade, key=key, value=value)
+
+file_path <- paste0(out_path, "/decade_plot_stocks_bonds.jpeg")
+
+source_string <- paste0("Source:  DFA, 1926-2018 (OfDollarsAndData.com)")
+note_string <- str_wrap(paste0("Note:  'Stocks' are represented by the S&P 500 and 'Bonds' are represented by 5-Year U.S. Treasuries."), 
+                        width = 80)
+
+plot <- ggplot(to_plot, aes(x=as.factor(decade), y=value, fill = key)) +
+  geom_bar(stat="identity", position = "dodge") +
+  scale_fill_manual(values = c("blue", "dark green")) +
+  scale_y_continuous(label = percent) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle("Each Decade Brings Different Challenges") +
+  labs(x = "Decade", y="Total Real Return",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #
