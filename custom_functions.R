@@ -172,3 +172,15 @@ date_to_string <- function(x){
   require(stringr)
   str_replace_all(paste0(x), "-", "_")
 }
+
+round_to_nearest <- function(num, round_direction, unit){
+  final <- round(num/unit)*unit
+  
+  if(round_direction == "up" & final < num){
+    final <- final + unit
+  } else if (round_direction == "down" & final > num){
+    final <- final - unit
+  }
+  
+  return(final)
+} 

@@ -196,9 +196,11 @@ for (sr in seq(min_sr, max_sr, 0.01)){
     # Plot portfolio value as well
     file_path <- paste0(out_path, "/portfolio_value_", sr_string, ".jpeg")
     
+    y_max <- round_to_nearest(max(to_plot$total_portfolio), "up", 10^6)
+    
     plot <- ggplot(to_plot, aes(x=starting_date, y = total_portfolio, col = as.factor(weight_sp500), linetype = as.factor(weight_sp500))) +
       geom_line() +
-      scale_y_continuous(label = dollar) +
+      scale_y_continuous(label = dollar, limits = c(0, y_max)) +
       of_dollars_and_data_theme +
       theme(legend.position = "bottom",
             legend.title = element_blank()) +
