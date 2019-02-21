@@ -26,7 +26,7 @@ raw <- read.csv(paste0(importdir, "/0112_dfa_sp500_treasury_5yr/DFA_PeriodicRetu
 
 colnames(raw) <- c("date", "ret_sp500", "ret_treasury_5yr")
 
-tbills_cpi <- read_excel(paste0(importdir, "0113_life_cycle_simulations/dfa_tbill_sp500_5yr.xlsx"), skip = 4) %>%
+tbills_cpi <- read_excel(paste0(importdir, "0112_dfa_sp500_treasury_5yr/dfa_tbill_sp500.xlsx"), skip = 4) %>%
                 filter(!is.na(Date)) %>%
                 mutate(Date = as.Date(Date)) %>%
                 select(1, 2, 3)
