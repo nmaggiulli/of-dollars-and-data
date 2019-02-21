@@ -28,9 +28,9 @@ dfa_data <- read_excel(paste0(importdir, "0113_life_cycle_simulations/dfa_tbill_
 
 colnames(dfa_data) <- c("date", "cpi", "ret_tbill", "ret_sp500", "ret_treasury_5yr")
 
-# Convert 5-yr treasury into a real rate of return (since it is nominal)
+# Convert S&P 500 rate of return into a nominal rate of return
 dfa_data <- dfa_data %>%
-              mutate(ret_treasury_5yr = ret_treasury_5yr - cpi)
+              mutate(ret_sp500 = ret_sp500 + cpi)
 
 max_date <- max(dfa_data$date)
 
@@ -192,7 +192,7 @@ for (sr in seq(min_sr, max_sr, 0.01)){
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
-  if(sr_string == "30"){
+  if(sr_string %in% c("10", "20", "30")){
     # Plot portfolio value as well
     file_path <- paste0(out_path, "/portfolio_value_", sr_string, ".jpeg")
     
@@ -217,13 +217,21 @@ create_gif(out_path,
            0,
            paste0("_gif_survival_years.gif"))
 
+# Returns by year (for checking)
+dfa_data_by_year <- dfa_data %>%
+                      mutate(yr = year(date)) %>%
+                      group_by(yr) %>%
+                      summarize(ret_sp500 = prod(1+ret_sp500) - 1,
+                                ret_treasury_5yr = prod(1+ret_treasury_5yr) - 1) %>%
+                      ungroup()
+
 # Create decade stock and bond plots
 to_plot <- dfa_data %>%
                   filter(date >= "1930-01-01", date < "2000-01-01") %>%
                   mutate(decade = year(floor_date(date, years(10)))) %>%
                   group_by(decade) %>%
-                  summarize(`Stocks` = prod(1+ret_sp500) - 1,
-                            `Bonds` = prod(1+ret_treasury_5yr) - 1) %>%
+                  summarize(`Stocks` = prod(1+ret_sp500 - cpi) - 1,
+                            `Bonds` = prod(1+ret_treasury_5yr - cpi) - 1) %>%
                   ungroup() %>%
                   gather(-decade, key=key, value=value)
 
