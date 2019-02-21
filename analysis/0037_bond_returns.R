@@ -20,6 +20,10 @@ library(lubridate)
 library(tidyr)
 library(dplyr)
 
+folder_name <- "0037_bond_returns"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+
 ########################## Start Program Here ######################### #
 
 # Load in Damodaran SP500 and Bond data

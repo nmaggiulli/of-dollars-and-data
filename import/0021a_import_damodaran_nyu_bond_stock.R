@@ -13,7 +13,7 @@ library(readxl)
 ########################## Start Program Here ######################### #
 
 # Add link to the file path
-link_to_file <- paste0(importdir, "21a-damodaran-nyu-stock-bond-data/histretSP.xls")
+link_to_file <- paste0(importdir, "0021a_damodaran_nyu_stock_bond_data/histretSP.xls")
 
 hist_ret <- read_excel(link_to_file, sheet="Returns by year")
 
