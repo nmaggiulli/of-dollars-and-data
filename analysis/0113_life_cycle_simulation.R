@@ -220,7 +220,7 @@ for (sr in seq(min_sr, max_sr, 0.01)){
     ggsave(file_path, plot, width = 15, height = 12, units = "cm")
     
     # Final income by retirement year
-    file_path <- paste0(out_path, "/final_income_", sr_string, ".jpeg")
+    file_path <- paste0(out_path, "/final_income.jpeg")
     
     y_max <- round_to_nearest(max(to_plot$final_year_income), "up", 10^5)
     
