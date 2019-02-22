@@ -228,7 +228,7 @@ for (sr in seq(min_sr, max_sr, 0.01)){
       geom_line() +
       scale_y_continuous(label = dollar, limits = c(0, y_max)) +
       of_dollars_and_data_theme +
-      ggtitle(paste0("Final Annual Salary by Retirement Year\nWith a ", 100*sr, "% Savings Rate")) +
+      ggtitle(paste0("Final Annual Salary by Retirement Year")) +
       labs(x="Retirement Start Year", y="Final Annual Salary",
            caption = paste0(source_string, "\nNote:  Assumes a starting salary of $", salary_string, " that grows with inflation.")
       )
