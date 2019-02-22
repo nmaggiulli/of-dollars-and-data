@@ -34,12 +34,14 @@ dfa_data <- dfa_data %>%
 
 max_date <- max(dfa_data$date)
 
+# Set arbitrary starting salary
+starting_salary <- 50000
+salary_string   <- formatC(starting_salary, format="f", big.mark = ",", digits = 0)
+
 run_life_cycle <- function(working_years, spending_years, 
                            savings_rate, 
                            starting_date, wt_sp500){
   
-  #Starting salary is arbitrary
-  starting_salary <- 40000
   starting_date <- as.Date(starting_date)
   
   total_years <- working_years + spending_years
@@ -116,6 +118,7 @@ run_all_life_cycles <- function(working_years, spending_years,
         
         m  <- run_life_cycle(working_years, spending_years, sr, dt, wt)
         mf <- na.omit(m[m[,4] < 0, ])
+        mf_pos_savings <- na.omit(m[m[,4] > 0, 4])
 
         if(wt == 0){
           wt_name <- "100% Bonds"
@@ -125,13 +128,16 @@ run_all_life_cycles <- function(working_years, spending_years,
           wt_name <- paste0(100*wt, "/", 100*(1-wt), " Stock/Bond")
         }
         
-        df <- data.frame(starting_date = dt + years(working_years),
+        df <- data.frame(retirement_start = year(dt) + working_years,
+               working_dates = paste0(year(dt),"-", year(dt) + (working_years-1)),
                working_years = working_years,
                savings_rate = sr,
                weight_sp500 = wt_name,
                n_years_survival = length(mf[, 4])/12,
                total_portfolio = mf[1, 5] + mf[1, 6],
-               first_year_spend = mf[1, 4]*-1
+               retirement_start_monthly_spend = mf[1, 4]*-1,
+               final_year_income = mf_pos_savings[length(mf_pos_savings)]/sr*12,
+               total_savings = sum(mf_pos_savings)
         )
         if(counter == 1){
           final_df <- df
@@ -170,8 +176,8 @@ for (sr in seq(min_sr, max_sr, 0.01)){
   file_path <- paste0(out_path, "/survival_years_", sr_string, ".jpeg")
   
   source_string <- paste0("Source:  DFA, 1926-2018 (OfDollarsAndData.com)")
-  note_string <- str_wrap(paste0("Note: Assumes income grows with inflation while saved money grows at the portfolio return level.   ",
-                                 "Spending in the first retirement year is indexed to inflation.  ",
+  note_string <- str_wrap(paste0("Note: Assumes a starting salary of $", salary_string," that grows with inflation while saved money grows at the portfolio return level.   ",
+                                 "Spending throughout retirement is indexed to inflation.  ",
                                  "'Stocks' are represented by the S&P 500 and 'Bonds' are represented by 5-Year U.S. Treasuries.  ",
                                  "The portfolio is rebalanced annually."), 
                           width = 80)
@@ -179,7 +185,7 @@ for (sr in seq(min_sr, max_sr, 0.01)){
   to_plot <- all_results %>%
               filter(savings_rate == sr)
   
-  plot <- ggplot(to_plot, aes(x=starting_date, y = n_years_survival, col = as.factor(weight_sp500), linetype = as.factor(weight_sp500))) +
+  plot <- ggplot(to_plot, aes(x=retirement_start, y = n_years_survival, col = as.factor(weight_sp500), linetype = as.factor(weight_sp500))) +
             geom_line() +
             scale_y_continuous(limits = c(0, spending_yrs), breaks = seq(0, spending_yrs, 5)) +
             of_dollars_and_data_theme +
@@ -192,13 +198,15 @@ for (sr in seq(min_sr, max_sr, 0.01)){
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
-  if(sr_string %in% c("10", "20", "30")){
+  if(sr_string == "10"){
     # Plot portfolio value as well
     file_path <- paste0(out_path, "/portfolio_value_", sr_string, ".jpeg")
     
     y_max <- round_to_nearest(max(to_plot$total_portfolio), "up", 10^6)
     
-    plot <- ggplot(to_plot, aes(x=starting_date, y = total_portfolio, col = as.factor(weight_sp500), linetype = as.factor(weight_sp500))) +
+    assign("to_plot_10pct", to_plot, envir = .GlobalEnv)
+
+    plot <- ggplot(to_plot, aes(x=retirement_start, y = total_portfolio, col = as.factor(weight_sp500), linetype = as.factor(weight_sp500))) +
       geom_line() +
       scale_y_continuous(label = dollar, limits = c(0, y_max)) +
       of_dollars_and_data_theme +
@@ -207,6 +215,23 @@ for (sr in seq(min_sr, max_sr, 0.01)){
       ggtitle(paste0("Portfolio Value by Asset Allocation\nWith a ", 100*sr, "% Savings Rate")) +
       labs(x="Retirement Start Year", y="Portfolio Value",
            caption = paste0(source_string, "\n", note_string))
+    
+    # Save the plot
+    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+    
+    # Final income by retirement year
+    file_path <- paste0(out_path, "/final_income_", sr_string, ".jpeg")
+    
+    y_max <- round_to_nearest(max(to_plot$final_year_income), "up", 10^5)
+    
+    plot <- ggplot(to_plot, aes(x=retirement_start, y = final_year_income)) +
+      geom_line() +
+      scale_y_continuous(label = dollar, limits = c(0, y_max)) +
+      of_dollars_and_data_theme +
+      ggtitle(paste0("Final Annual Salary by Retirement Year\nWith a ", 100*sr, "% Savings Rate")) +
+      labs(x="Retirement Start Year", y="Final Annual Salary",
+           caption = paste0(source_string, "\nNote:  Assumes a starting salary of $", salary_string, " that grows with inflation.")
+      )
     
     # Save the plot
     ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -232,8 +257,8 @@ to_plot <- dfa_data %>%
                   filter(date >= "1930-01-01", date < "2000-01-01") %>%
                   mutate(decade = year(floor_date(date, years(10)))) %>%
                   group_by(decade) %>%
-                  summarize(`Stocks` = prod(1+ret_sp500 - cpi) - 1,
-                            `Bonds` = prod(1+ret_treasury_5yr - cpi) - 1) %>%
+                  summarize(`Stocks` = prod(1+ret_sp500 - cpi)^(1/10) - 1,
+                            `Bonds` = prod(1+ret_treasury_5yr - cpi)^(1/10) - 1) %>%
                   ungroup() %>%
                   gather(-decade, key=key, value=value)
 
@@ -251,7 +276,7 @@ plot <- ggplot(to_plot, aes(x=as.factor(decade), y=value, fill = key)) +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
   ggtitle("Each Decade Brings Different Challenges") +
-  labs(x = "Decade", y="Total Real Return",
+  labs(x = "Decade", y="Total Real Annualized Return",
        caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
