@@ -173,7 +173,7 @@ for (sr in seq(min_sr, max_sr, 0.01)){
     sr_string <- paste0(100*sr)
   }
   
-  file_path <- paste0(out_path, "/survival_years_", sr_string, ".jpeg")
+  file_path <- paste0(out_path, "/survival_yrs_", sr_string, ".jpeg")
   
   source_string <- paste0("Source:  DFA, 1926-2018 (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note: Assumes a starting salary of $", salary_string," that grows with inflation while saved money grows at the portfolio return level.   ",
@@ -185,8 +185,8 @@ for (sr in seq(min_sr, max_sr, 0.01)){
   to_plot <- all_results %>%
               filter(savings_rate == sr)
   
-  plot <- ggplot(to_plot, aes(x=retirement_start, y = n_years_survival, col = as.factor(weight_sp500), linetype = as.factor(weight_sp500))) +
-            geom_line() +
+  plot <- ggplot(to_plot, aes(x=retirement_start, y = n_years_survival, col = as.factor(weight_sp500), shape = as.factor(weight_sp500))) +
+            geom_point() +
             scale_y_continuous(limits = c(0, spending_yrs), breaks = seq(0, spending_yrs, 5)) +
             of_dollars_and_data_theme +
             theme(legend.position = "bottom",
@@ -200,14 +200,14 @@ for (sr in seq(min_sr, max_sr, 0.01)){
   
   if(sr_string == "10"){
     # Plot portfolio value as well
-    file_path <- paste0(out_path, "/retirement_start_port_value_", sr_string, ".jpeg")
+    file_path <- paste0(out_path, "/retirement_start_p_value_", sr_string, ".jpeg")
     
     y_max <- round_to_nearest(max(to_plot$total_portfolio), "up", 10^6)
     
     assign("to_plot_10pct", to_plot, envir = .GlobalEnv)
 
-    plot <- ggplot(to_plot, aes(x=retirement_start, y = total_portfolio, col = as.factor(weight_sp500), linetype = as.factor(weight_sp500))) +
-      geom_line() +
+    plot <- ggplot(to_plot, aes(x=retirement_start, y = total_portfolio, col = as.factor(weight_sp500), shape = as.factor(weight_sp500))) +
+      geom_point() +
       scale_y_continuous(label = dollar, limits = c(0, y_max)) +
       of_dollars_and_data_theme +
       theme(legend.position = "bottom",
@@ -225,7 +225,7 @@ for (sr in seq(min_sr, max_sr, 0.01)){
     y_max <- round_to_nearest(max(to_plot$final_year_income), "up", 10^5)
     
     plot <- ggplot(to_plot, aes(x=retirement_start, y = final_year_income)) +
-      geom_line() +
+      geom_point() +
       scale_y_continuous(label = dollar, limits = c(0, y_max)) +
       of_dollars_and_data_theme +
       ggtitle(paste0("Final Annual Salary by Retirement Year")) +
@@ -239,10 +239,10 @@ for (sr in seq(min_sr, max_sr, 0.01)){
 }
 
 create_gif(out_path,
-           paste0("survival_years_*.jpeg"),
+           paste0("survival_yrs_*.jpeg"),
            40,
            0,
-           paste0("_gif_survival_years.gif"))
+           paste0("_gif_survival_yrs.gif"))
 
 # Returns by year (for checking)
 dfa_data_by_year <- dfa_data %>%
