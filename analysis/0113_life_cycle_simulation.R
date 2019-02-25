@@ -200,7 +200,7 @@ for (sr in seq(min_sr, max_sr, 0.01)){
   
   if(sr_string == "10"){
     # Plot portfolio value as well
-    file_path <- paste0(out_path, "/portfolio_value_", sr_string, ".jpeg")
+    file_path <- paste0(out_path, "/retirement_start_port_value_", sr_string, ".jpeg")
     
     y_max <- round_to_nearest(max(to_plot$total_portfolio), "up", 10^6)
     
@@ -212,7 +212,7 @@ for (sr in seq(min_sr, max_sr, 0.01)){
       of_dollars_and_data_theme +
       theme(legend.position = "bottom",
             legend.title = element_blank()) +
-      ggtitle(paste0("Portfolio Value by Asset Allocation\nWith a ", 100*sr, "% Savings Rate")) +
+      ggtitle(paste0("Retirement Start Portfolio Value\nWith a ", 100*sr, "% Savings Rate")) +
       labs(x="Retirement Start Year", y="Portfolio Value",
            caption = paste0(source_string, "\n", note_string))
     
