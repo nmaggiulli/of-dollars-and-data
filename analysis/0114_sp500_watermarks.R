@@ -13,7 +13,7 @@ library(lubridate)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "xxxx_sp500_watermarks"
+folder_name <- "0114_sp500_watermarks"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -120,7 +120,7 @@ plot_watermarks <- function(start_date, end_date, select_vars, file_name_string)
     scale_y_continuous(label = dollar, trans = log10_trans()) +
     scale_color_manual(guide = FALSE, values = my_colors) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("The Watermarks of the S&P 500\n", 
+    ggtitle(paste0("The Tendencies of the S&P 500\n", 
                    format.Date(start_date, "%Y"), 
                    "-", 
                    format.Date(end_date, "%Y"))) +
