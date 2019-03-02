@@ -27,7 +27,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-jpy <- read.csv(paste0(importdir, "xxxx_japan_nikkei/nikk.csv"), skip = 1) %>%
+jpy <- read.csv(paste0(importdir, "0114_japan_nikkei/nikk.csv"), skip = 1) %>%
         rename(date = Date,
                close = Close) %>%
         mutate(ret = ifelse(is.na(lag(close)), 0, close/lag(close) - 1),

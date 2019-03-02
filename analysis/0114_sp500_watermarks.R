@@ -19,88 +19,106 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-color_map <- data.frame(var = c("high_watermark", "low_watermark", "price_plus_div"),
+color_map <- data.frame(var = c("high_watermark", "low_watermark", "index"),
                         color = c("green", "red", "black"))
 
-plot_watermarks <- function(start_date, end_date, select_vars, file_name_string){
+#Bring in all data
+sp500 <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
+                  rename(index = price_plus_div) %>%
+                  select(date, index)
+
+jpy <- read.csv(paste0(importdir, "0114_japan_nikkei/nikk.csv"), skip = 1) %>%
+  rename(date = Date,
+         index = Close) %>%
+  mutate(date = as.Date(date, "%m/%d/%Y")) %>%
+  as.tibble() %>%
+  select(date, index) 
+
+plot_watermarks <- function(df, data_name, start_date, end_date, select_vars, file_name_string){
   
   start_date_string <- date_to_string(start_date)
   end_date_string <- date_to_string(end_date)
+  
+  if(data_name == "sp500"){
+    title_string <- "S&P 500"
+  } else if (data_name == "jpy"){
+    title_string <- "Nikkei"
+  }
 
   # Filter by dates
-  sp500_ret_pe  <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-                      filter(date >= start_date, date <= end_date)
+  ret  <- df %>%
+            filter(date >= start_date, date <= end_date)
   
-  # Start price_plus_div at 1
-  sp500_ret_pe <-  sp500_ret_pe %>%
-                    mutate(price_plus_div = price_plus_div/pull(sp500_ret_pe[1, "price_plus_div"])) %>%
-                      select(date, price_plus_div) %>%
-                      arrange(desc(date))
+  # Start index at 1
+  ret <-  ret %>%
+            mutate(index = index/pull(ret[1, "index"])) %>%
+            select(date, index) %>%
+            arrange(desc(date))
   
   # Find low matermark
   absolute_minumum <- 10^8
   
-  for(i in 1:nrow(sp500_ret_pe)){
-    current_p <- pull(sp500_ret_pe[i, "price_plus_div"])
+  for(i in 1:nrow(ret)){
+    current_p <- pull(ret[i, "index"])
     if (current_p < absolute_minumum){
-      sp500_ret_pe[i, "low_watermark"] <- current_p
+      ret[i, "low_watermark"] <- current_p
       absolute_minumum <- current_p
     } else{
-      sp500_ret_pe[i, "low_watermark"] <- absolute_minumum
+      ret[i, "low_watermark"] <- absolute_minumum
     }
     
     if (i > 1){
-      low_wm     <- sp500_ret_pe[i, "low_watermark"]
-      prior_low  <- sp500_ret_pe[(i-1), "low_watermark"]
+      low_wm     <- ret[i, "low_watermark"]
+      prior_low  <- ret[(i-1), "low_watermark"]
       
       if(low_wm == prior_low){
-        sp500_ret_pe[i, "low_wm_length"] <- sp500_ret_pe[(i-1), "low_wm_length"] + 1
+        ret[i, "low_wm_length"] <- ret[(i-1), "low_wm_length"] + 1
       } else{
-        sp500_ret_pe[i, "low_wm_length"] <- 1
+        ret[i, "low_wm_length"] <- 1
       }
     } else{
-      sp500_ret_pe[i, "low_wm_length"]  <- 1
+      ret[i, "low_wm_length"]  <- 1
     }
   }
   
   # Re-sort data
-  sp500_ret_pe <- sp500_ret_pe %>% arrange(date)
+  ret <- ret %>% arrange(date)
   
   # Find high watermark and add length of watermarks
   absolute_maximum <- 0
   
-  for(i in 1:nrow(sp500_ret_pe)){
-    current_p <- pull(sp500_ret_pe[i, "price_plus_div"])
+  for(i in 1:nrow(ret)){
+    current_p <- pull(ret[i, "index"])
     if (current_p > absolute_maximum){
-      sp500_ret_pe[i, "high_watermark"] <- current_p
+      ret[i, "high_watermark"] <- current_p
       absolute_maximum <- current_p
     } else{
-      sp500_ret_pe[i, "high_watermark"] <- absolute_maximum
+      ret[i, "high_watermark"] <- absolute_maximum
     }
 
     if (i > 1){
-      high_wm    <- sp500_ret_pe[i, "high_watermark"]
-      prior_high <- sp500_ret_pe[(i-1), "high_watermark"]
+      high_wm    <- ret[i, "high_watermark"]
+      prior_high <- ret[(i-1), "high_watermark"]
       
       if(high_wm == prior_high){
-        sp500_ret_pe[i, "high_wm_length"] <- sp500_ret_pe[(i-1), "high_wm_length"] + 1
+        ret[i, "high_wm_length"] <- ret[(i-1), "high_wm_length"] + 1
       } else{
-        sp500_ret_pe[i, "high_wm_length"] <- 1
+        ret[i, "high_wm_length"] <- 1
       }
 
     } else{
-      sp500_ret_pe[i, "high_wm_length"] <- 1
+      ret[i, "high_wm_length"] <- 1
     }
   }
   
-  assign("sp500_ret_pe", sp500_ret_pe, envir = .GlobalEnv)
+  assign("ret", ret, envir = .GlobalEnv)
   
   # File path and source/note strings
-  file_path <- paste0(out_path, "/", start_date_string, "_", end_date_string, "_", file_name_string, ".jpeg")
+  file_path <- paste0(out_path, "/", data_name, "_", start_date_string, "_", end_date_string, "_", file_name_string, ".jpeg")
   source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)" 
   note_string <- paste0("Note:  Real return includes reinvested dividends.") 
   
-  to_plot <- sp500_ret_pe %>%
+  to_plot <- ret %>%
               select_("date", .dots = select_vars) %>%
               gather(-date, key=key, value=value)
   
@@ -120,7 +138,7 @@ plot_watermarks <- function(start_date, end_date, select_vars, file_name_string)
     scale_y_continuous(label = dollar, trans = log10_trans()) +
     scale_color_manual(guide = FALSE, values = my_colors) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("The Tendencies of the S&P 500\n", 
+    ggtitle(paste0("High and Low Watermarks of the ", title_string, "\n", 
                    format.Date(start_date, "%Y"), 
                    "-", 
                    format.Date(end_date, "%Y"))) +
@@ -131,17 +149,17 @@ plot_watermarks <- function(start_date, end_date, select_vars, file_name_string)
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
   # Print watermark lengths
-  to_plot <- sp500_ret_pe %>%
+  to_plot <- ret %>%
               select(date, low_wm_length) %>%
               gather(-date, key=key, value=value)
   
-  file_path <- paste0(out_path, "/low_watermark_duration_", start_date_string, "_", end_date_string, ".jpeg")
+  file_path <- paste0(out_path, "/", data_name, "_low_watermark_duration_", start_date_string, "_", end_date_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value, fill = key)) +
     geom_area(alpha = 0.5) +
     scale_fill_manual(values = c("red"), guide = FALSE) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Number of Months Until Bottom\n", 
+    ggtitle(paste0("Number of Months Until Bottom for the ", title_string, "\n", 
                    format.Date(start_date, "%Y"), 
                    "-", 
                    format.Date(end_date, "%Y"))) +
@@ -152,26 +170,24 @@ plot_watermarks <- function(start_date, end_date, select_vars, file_name_string)
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-plot_all <- function(start_date, end_date){
-  plot_watermarks(start_date, end_date, c("high_watermark", "price_plus_div"), 
-                  "banded_01_sp500")
-  plot_watermarks(start_date, end_date, c("high_watermark", "low_watermark", "price_plus_div"),
-                  "banded_02_sp500")
-  plot_watermarks(start_date, end_date, c("high_watermark", "low_watermark"),
-                  "banded_03_sp500")
+plot_all <- function(df, data_name, start_date, end_date){
+  
+  plot_watermarks(df, data_name, start_date, end_date, c("high_watermark", "index"), 
+                  "banded_01")
+  plot_watermarks(df, data_name, start_date, end_date, c("high_watermark", "low_watermark", "index"),
+                  "banded_02")
+  plot_watermarks(df, data_name, start_date, end_date, c("high_watermark", "low_watermark"),
+                  "banded_03")
   start_date_string <- date_to_string(start_date)
   create_gif(path = out_path,
-             file_stub = paste0(start_date_string, "*"),
+             file_stub = paste0(data_name, "_", start_date_string, "*"),
              speed_milliseconds = 120,
-             out_name = paste0("_gif_", start_date_string, ".gif")
+             out_name = paste0("_gif_", data_name, "_", start_date_string, ".gif")
   )
 }
 
-plot_all("1871-01-01", "2018-12-01")
-plot_all("1990-01-01", "2018-12-01")
-
-
-
-
+plot_all(sp500, "sp500", "1871-01-01", "2018-12-01")
+plot_all(sp500, "sp500", "1990-01-01", "2018-12-01")
+plot_all(jpy, "jpy", "1970-01-01", "2018-11-01")
 
 # ############################  End  ################################## #
