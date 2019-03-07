@@ -30,9 +30,13 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 
+today <- Sys.Date() - 1
+t_day <- day(today)
+t_month <-month(today)
+
 pull_yahoo_data <- function(ticker, full_name, from_year, to_year){
 
-  getSymbols(ticker, from = paste0(from_year,'-01-01'), to = paste0(to_year,'-12-31'), 
+  getSymbols(ticker, from = paste0(from_year,'-', t_month, '-', t_day), to = paste0(to_year,'-', t_month, '-', t_day), 
              src="yahoo", periodicity = "daily")
   
   df <- data.frame(date = index(get(ticker)), 
@@ -54,7 +58,7 @@ for(t in 1:nrow(tickers)){
   tkr  <- tickers[t, "ticker"]
   full <- tickers[t, "full_name"]
   
-  temp <- pull_yahoo_data(tkr, full, 2009, 2018) 
+  temp <- pull_yahoo_data(tkr, full, 2009, 2019) 
   
   temp <- temp %>%
             mutate(value = value/temp[1, "value"])
