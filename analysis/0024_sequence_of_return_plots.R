@@ -18,6 +18,10 @@ library(RColorBrewer)
 library(stringr)
 library(ggrepel)
 
+folder_name <- "0024_sequence_of_return_plots"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+
 ########################## Start Program Here ######################### #
 
 # Define the number of years and the level of good and bad returns
@@ -139,11 +143,11 @@ for (i in 1:n_years){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
 }
 
-# Instead of creating these images as a GIF in R, do it in Bash
-# I use Git Bash + magick because this is way faster than creating the GIF in R
-# After navigating to the correct folder, use this command:
-#
-# magick convert -delay 220 loop -0 *.jpeg all_sequence_plots.gif
+create_gif(path = out_path,
+           file_stub = paste0("*.jpeg"),
+           speed_milliseconds = 220,
+           out_name = paste0("_gif_all_sequence_plots.gif")
+)
 
 # ############################  End  ################################## #
 
