@@ -23,7 +23,7 @@ library(tidyr)
 library(ggjoy)
 library(tidyverse)
 
-folder_name <- "0117_yahoo_returns_markowitz_6"
+folder_name <- "0116_yahoo_returns_markowitz_6"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
