@@ -26,12 +26,14 @@ ret_yr <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                          mt = month(date)) %>%
                   filter(mt == 1) %>%
                   mutate(ret = index/lag(index) - 1) %>%
-                  select(date, ret, yr) %>%
+                  select(date, ret, yr, index) %>%
                   filter(!is.na(ret), yr > 1940)
 
 avg_ret <- ret_yr %>%
             summarize(mean_ret = mean(ret)) %>%
             pull()
+
+print(avg_ret)
 
 file_path <- paste0(out_path, "/sp500_returns_by_yr.jpeg")
 source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)" 
