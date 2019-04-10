@@ -114,7 +114,7 @@ file_path <- paste0(out_path, "/life_drawdowns.jpeg")
 # Set source/note
 source_string <- paste0("Source:  https://www.e-education.psu.edu/earth103/node/713 (OfDollarsAndData.com)")
 note_string   <- str_wrap(paste0("Note:  Shows the percentage loss in genetic diversity from millions of years ago until today.  ",
-                                 "Only aggregates the extinction rate when it is above the base extinction rate of 15%."), 
+                                 "The extinction rate is aggregated only when it is above the base extinction rate (15%)."), 
                           width = 80)
 
 plot <- ggplot(to_plot, aes(x = years_ago_millions, y = pct_extinction)) +
