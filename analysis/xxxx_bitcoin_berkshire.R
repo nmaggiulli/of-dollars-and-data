@@ -37,7 +37,9 @@ bcoin <- readRDS(paste0(localdir, "0027_quandl_bitcoin.Rds")) %>%
   rename(`Bitcoin` = value) %>%
   select(date, `Bitcoin`)
 
-getSymbols("BRK-A", from = paste0('2010-01-01'), to = paste0('2018-11-28'), 
+last_day <- Sys.Date() - 1
+
+getSymbols("BRK-A", from = paste0('2010-01-01'), to = paste0(last_day), 
            src="yahoo", periodicity = "daily")
 
 brk <- data.frame(date = index(get("BRK-A")), 
