@@ -115,12 +115,12 @@ to_plot <- ext %>%
             mutate(pct_extinction = life_index-1)
 
 # Reset file path
-file_path <- paste0(out_path, "/genetic_diversity_drawdowns.jpeg")
+file_path <- paste0(out_path, "/genetic_diversity_drawdowns_plot.jpeg")
 
 # Set source/note
 source_string <- paste0("Source:  https://www.e-education.psu.edu/earth103/node/713 (OfDollarsAndData.com)")
 note_string   <- str_wrap(paste0("Note:  Shows the percentage loss in genetic diversity from millions of years ago until today.  ",
-                                 "The extinction rate is aggregated only during known mass extinction events."), 
+                                 "The extinction rate is only aggregated during known mass extinction events."), 
                           width = 80)
 
 plot <- ggplot(to_plot, aes(x = years_ago_millions, y = pct_extinction)) +
