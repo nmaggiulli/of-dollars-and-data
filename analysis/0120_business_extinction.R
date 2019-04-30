@@ -90,18 +90,24 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Bring in extinction data
 ext <- read.csv(paste0(importdir, "/0120_bls_business_birth_death/extinction_data.csv")) %>%
-          mutate(ext_rate = ifelse(ext_rate < 15, 0, ext_rate/-100))
+          mutate(ext_rate = ext_rate/-100)
 
 # Create a species index based on the extinction rate
 for (i in 1:nrow(ext)){
+  yago <- ext[i, "years_ago_millions"]
   pct <- ext[i, "ext_rate"]
   
   if(i == 1){
     ext[i, "life_index"] <- 1 * (1+pct)
-  } else if(pct == 0){
-    ext[i, "life_index"] <- 1
-  } else{
+  } else if(yago > -450 & yago < -443 |
+    yago > -385 & yago < -374 |
+    yago > -265 & yago < -250 |
+    yago > -208 & yago < -198 |
+    yago > -67 & yago < -64){
     ext[i, "life_index"] <- ext[(i-1), "life_index"] * (1+pct)
+    print("mass")
+  } else{
+    ext[i, "life_index"] <- 1 + pct
   }
 }
 
@@ -109,12 +115,12 @@ to_plot <- ext %>%
             mutate(pct_extinction = life_index-1)
 
 # Reset file path
-file_path <- paste0(out_path, "/life_drawdowns.jpeg")
+file_path <- paste0(out_path, "/genetic_diversity_drawdowns_plot.jpeg")
 
 # Set source/note
 source_string <- paste0("Source:  https://www.e-education.psu.edu/earth103/node/713 (OfDollarsAndData.com)")
 note_string   <- str_wrap(paste0("Note:  Shows the percentage loss in genetic diversity from millions of years ago until today.  ",
-                                 "Only aggregates the extinction rate when it is above the base extinction rate of 15%."), 
+                                 "The extinction rate is only aggregated during known mass extinction events."), 
                           width = 80)
 
 plot <- ggplot(to_plot, aes(x = years_ago_millions, y = pct_extinction)) +
@@ -122,7 +128,7 @@ plot <- ggplot(to_plot, aes(x = years_ago_millions, y = pct_extinction)) +
   scale_y_continuous(label = percent, limits = c(-1, 0)) +
   of_dollars_and_data_theme +
   of_dollars_and_data_theme +
-  ggtitle("The Mass Extinctions of Earth") +
+  ggtitle("Mass Extinctions on Earth") +
   labs(x = "Millions of Years Ago" , y = "Percentage of Genetic Diversity Lost",
        caption = paste0("\n", source_string, "\n", note_string))
 
