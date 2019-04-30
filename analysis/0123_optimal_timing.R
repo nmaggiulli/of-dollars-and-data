@@ -90,7 +90,7 @@ df_matrix <- df_w_mins %>%
               select(-date) %>%
               as.matrix()
 
-n_days_from_bottom_top <- c(1, 10, 30, 50)
+n_days_from_bottom_top <- c(1, 10, 20, 62, 125, 250)
   
 for(i in 1:length(n_days_from_bottom_top)){
   n_days <- n_days_from_bottom_top[i]
@@ -140,7 +140,7 @@ final_df <- df_matrix %>%
             mutate(date = df_w_mins$date)
 
 to_plot <- final_df %>%
-            select(date, index_sp500_tr, contains("lag_50")) %>%
+            select(date, index_sp500_tr, contains("lag_250")) %>%
             gather(-date, key=key, value = value)
 
 tops <- final_df %>%
@@ -154,9 +154,11 @@ bottoms <- final_df %>%
               gather(-date, key=key, value = value)
 
 ggplot(to_plot, aes(x=date, y=value, col= key)) +
-  geom_line() +
+  geom_line(alpha = 0.8) +
   geom_point(data=tops, aes(x=date, y=value), col="green") +
   geom_point(data=bottoms, aes(x=date, y=value), col="red") +
-  scale_y_continuous(label = dollar)
+  scale_y_continuous(label = dollar) +
+  #scale_color_manual(values = c("black", "blue")) +
+  of_dollars_and_data_theme
 
 # ############################  End  ################################## #
