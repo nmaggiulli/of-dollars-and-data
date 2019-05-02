@@ -23,23 +23,17 @@ library(magrittr)
 
 # Load in S&P data from Shiller
 sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-                    filter(date >= 1880.01, date < 2017.01)
+                    filter(date >= "1800-01-01")
 
-first_year <- floor(min(sp500_ret_pe$date))
-last_year <- floor(max(sp500_ret_pe$date))
+first_year <- min(year(sp500_ret_pe$date))
+last_year <- max(year(sp500_ret_pe$date))
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){
   if (i == 1){
-    sp500_ret_pe[i, "n_shares"]       <- 1
-    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
-    sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
     sp500_ret_pe[i, "global_max"]      <- 1
     global_max                         <- sp500_ret_pe[i, "price_plus_div"]
   } else{
-    sp500_ret_pe[i, "n_shares"]       <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "real_price"]
-    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
-    sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
     if (sp500_ret_pe[i, "price_plus_div"] > global_max){
       sp500_ret_pe[i, "global_max"]      <- 1
       global_max                         <- sp500_ret_pe[i, "price_plus_div"]
@@ -48,9 +42,6 @@ for (i in 1:nrow(sp500_ret_pe)){
     }
   }
 }
-
-# Convert the cape to a numeric
-sp500_ret_pe$cape <- as.numeric(sp500_ret_pe$cape)
 
 # Function for setting up breaks on y axis for the plot
 base_breaks <- function(n = 10){
@@ -93,7 +84,6 @@ for (i in 2:length(years)){
     geom_line() +
     geom_point(data=filter(to_plot, global_max == 1), col="red") +
     scale_y_continuous(label = dollar, limits = c(0.5, 5000), trans = log_trans(), breaks = c(0, 1, 10, 100, 1000, 5000)) +
-    scale_x_continuous(limits = c(1880, 2020), breaks = seq(1880, 2020, 20)) +
     of_dollars_and_data_theme +
     labs(x = "Year", y = "Real Price w/ Dividends (Log Scale)") +
     ggtitle("The Fits and Starts of the S&P 500")
@@ -171,7 +161,6 @@ file_path = paste0(exportdir, "0026a_market_timing_tests/sp500-peaks-global-maxi
 plot <- ggplot(df_months, aes(x = x)) +
   geom_area(data = df_months, aes(y = y), fill = "blue", stat = "identity") +
   of_dollars_and_data_theme +
-  scale_x_continuous(limits = c(1880, 2020), breaks = seq(1880, 2020, 20)) +
   labs(x = "Date", y = "Number of Months From Previous Peak") +
   ggtitle("Most Market Peaks Occur\nIn Consecutive Months")
   

@@ -22,13 +22,10 @@ library(ggrepel)
 
 # Load in S&P data from Shiller
 sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-                    filter(cape != "NA", date < "2017-01-01")
+                    filter(!is.na(cape), date < "2017-01-01")
 
-first_year <- min(sp500_ret_pe$date)
-last_year <- max(sp500_ret_pe$date)
-
-# Convert the cape to a numeric
-sp500_ret_pe$cape <- as.numeric(sp500_ret_pe$cape)
+first_year <- min(year(sp500_ret_pe$date))
+last_year <- max(year(sp500_ret_pe$date))
 
 # Create an empty data frame
 results_df <- data.frame(start_date = numeric(), 
