@@ -66,7 +66,7 @@ years <- c(years, rep(last_year, 12))
 
 for (i in 2:length(years)){
   to_plot <- sp500_ret_pe %>%
-                filter(date <= years[i])
+                filter(year(date) <= years[i])
 
   if(i < 10){
     i_string <- paste0("00", i)
@@ -82,17 +82,18 @@ for (i in 2:length(years)){
   # Plot the entire price series with local maxima
   plot <- ggplot(to_plot, aes(x = date, y = price_final)) +
     geom_line() +
-    geom_point(data=filter(to_plot, global_max == 1), col="red") +
-    scale_y_continuous(label = dollar, limits = c(0.5, 5000), trans = log_trans(), breaks = c(0, 1, 10, 100, 1000, 5000)) +
+    geom_point(data=filter(to_plot, global_max == 1), col="red", alpha = 0.5, size = 1) +
+    scale_y_continuous(label = dollar, limits = c(0.5, 20000), trans = log_trans(), breaks = c(0, 1, 10, 100, 1000, 10000, 20000)) +
+    scale_x_date(limits = c(as.Date("1871-01-01"), as.Date("2018-12-01"))) +
     of_dollars_and_data_theme +
     labs(x = "Year", y = "Real Price w/ Dividends (Log Scale)") +
-    ggtitle("The Fits and Starts of the S&P 500")
+    ggtitle("The Fits and Starts of the U.S. Stock Market")
 
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
 
   source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_year, " - ", last_year," (OfDollarsAndData.com)")
-  note_string   <- paste0("Note:  A red point represents the highest value of the S&P 500 as of that point in time.")
+  note_string   <- paste0("Note:  A red point represents an all-time high in the U.S. stock market.")
 
   # Make the source and note text grobs
   source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
