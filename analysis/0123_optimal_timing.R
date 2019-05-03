@@ -42,6 +42,9 @@ if(read_raw == 1){
   df <- readRDS(paste0(localdir, "0123_spxtr_w_dd.Rds"))
 }
 
+min_year <- min(year(df$date))
+max_year <- max(year(df$date))
+
 # create final results data frame
 final_results <- data.frame(dd_pct = c(),
                             dd_pct_name = c(),
@@ -166,7 +169,7 @@ for(dd_pct in dd_percentages){
 file_path <- paste0(out_path, "/overall_results.jpeg")
 
 # Set source/note
-source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
+source_string <- paste0("Source:  YCharts, ", min_year, "-", max_year," (OfDollarsAndData.com)")
 note_string   <- str_wrap(paste0("Note:  Assumes you miss selling at the top and re-buying at the bottom by the same number of trading days."), 
                           width = 85)
 
@@ -225,8 +228,7 @@ plot_tops_bottoms <- function(dd_pct_string, n_days){
     # Reset file path
     file_path <- paste0(out_path, "/market_dd_pct_", dd_pct_string, ".jpeg")
     
-    # Set source/note
-    source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
+    # Set note
     note_string   <- str_wrap(paste0("Note:  Market tops are in green and market bottoms are in red for the drawdown size listed.  ",
                                      "Includes dividends, but not adjusted for inflation."), 
                               width = 85)
@@ -293,7 +295,6 @@ plot_tops_bottoms <- function(dd_pct_string, n_days){
   file_path <- paste0(out_path, "/timing_dd_", dd_pct_string, "_", n_days_string, "_days.jpeg")
   
   # Set source/note
-  source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
   note_string   <- str_wrap(paste0("Note: Includes dividends, but not adjusted for inflation, taxes, or transaction costs.  ",
                                     "Only shows drawdowns of ", dd_pct_string, "% or greater."), 
                             width = 85)
@@ -302,7 +303,7 @@ plot_tops_bottoms <- function(dd_pct_string, n_days){
     geom_line() +
     geom_point(data=tops, aes(x=date, y=value), col="green") +
     geom_point(data=bottoms, aes(x=date, y=value), col="red") +
-    scale_y_continuous(label = dollar) +
+    scale_y_continuous(label = dollar, trans = log10_trans()) +
     scale_color_manual(values = c("black", "blue"), guide = FALSE) +
     of_dollars_and_data_theme +
     ggtitle(paste0("Market Timing vs. Buy & Hold\nWhen Missing the Top/Bottom by ", n_days, " Days")) +
