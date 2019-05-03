@@ -54,7 +54,7 @@ final_results <- data.frame(dd_pct = c(),
 final_results_row_number <- 1
 
 # Create a set of drawdown percentages and lag lengths to loop through
-dd_percentages <- seq(-0.10, -0.2, -0.05)
+dd_percentages <- seq(-0.10, -0.2, -0.1)
 lags <- c(0, 1, seq(5, 500, 5))
 
 for(dd_pct in dd_percentages){
