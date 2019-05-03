@@ -202,7 +202,7 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 #Plot the 10pct and 20 pct tops and bottoms
 
-plot_tops_bottoms <- function(dd_pct_string){
+plot_tops_bottoms <- function(dd_pct_string, n_days){
   
   df_name <- paste0("final_df_", dd_pct_string)
   final_df <- get(df_name)
@@ -221,32 +221,105 @@ plot_tops_bottoms <- function(dd_pct_string){
     select(date, index_spxtr) %>%
     gather(-date, key=key, value = value)
   
+  if(n_days == 0){
+    # Reset file path
+    file_path <- paste0(out_path, "/market_dd_pct_", dd_pct_string, ".jpeg")
+    
+    # Set source/note
+    source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
+    note_string   <- str_wrap(paste0("Note:  Market tops are in green and market bottoms are in red for the drawdown size listed.  ",
+                                     "Includes dividends, but not adjusted for inflation."), 
+                              width = 85)
+    
+    plot <- ggplot(to_plot, aes(x=date, y=value)) +
+      geom_line() +
+      geom_point(data=tops, aes(x=date, y=value), col="green") +
+      geom_point(data=bottoms, aes(x=date, y=value), col="red") +
+      scale_y_continuous(label = dollar) +
+      scale_color_manual(values = c("black"), guide = FALSE) +
+      of_dollars_and_data_theme +
+      ggtitle(paste0("S&P 500 Tops and Bottoms\nWhen a ", dd_pct_string, "% Drawdown (or Greater) Occurs")) +
+      labs(x="Date", y="Portfolio Value",
+           caption = paste0("\n", source_string, "\n", note_string))
+    
+    # Save the plot
+    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  }
+  
+  #Create data with the appropriate lag
+  in_out <- 1
+  for(j in 1:nrow(final_df)){
+    if(j > 1){
+      ret <- final_df[j, "index_spxtr"]/final_df[(j-1), "index_spxtr"] - 1
+    }
+    
+    if(j == 1){
+      final_df[j, "lagged_var"] <- 1
+    } else if (j <= n_days){
+      final_df[j, "lagged_var"] <- final_df[(j-1), "lagged_var"] * (1 + ret)
+    } else {
+      top <- final_df[(j-n_days), "top"]
+      bot <- final_df[(j-n_days), "bottom"]
+      
+      if (in_out == 1){
+        final_df[j, "lagged_var"] <- final_df[(j-1), "lagged_var"] * (1 + ret)
+      } else {
+        final_df[j, "lagged_var"] <- final_df[(j-1), "lagged_var"]
+      }
+      
+      if (!is.na(top) & in_out == 1){
+        # sell
+        in_out <- 0
+      } else if (!is.na(bot) & in_out == 0){
+        # buy
+        in_out <- 1
+      }
+    } 
+  }
+  
+  to_plot <- final_df %>%
+    select(date, index_spxtr, lagged_var) %>%
+    gather(-date, key=key, value=value)
+  
+  if(n_days < 10){
+    n_days_string <- paste0("00", n_days)
+  } else if(n_days < 100){
+    n_days_string <- paste0("0", n_days)
+  } else{
+    n_days_string <- paste0(n_days)
+  }
+  
   # Reset file path
-  file_path <- paste0(out_path, "/market_dd_pct_", dd_pct_string, ".jpeg")
+  file_path <- paste0(out_path, "/timing_dd_", dd_pct_string, "_", n_days_string, "_days.jpeg")
   
   # Set source/note
   source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
-  note_string   <- str_wrap(paste0("Note:  Market tops are in green and market bottoms are in red for the drawdown size listed.  ",
-                                   "Includes dividends, but not adjusted for inflation."), 
+  note_string   <- str_wrap(paste0("Note: Includes dividends, but not adjusted for inflation, taxes, or transaction costs.  ",
+                                    "Only shows drawdowns of ", dd_pct_string, "% or greater."), 
                             width = 85)
   
-  plot <- ggplot(filter(to_plot, key == "index_spxtr"), aes(x=date, y=value)) +
+  plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
     geom_line() +
     geom_point(data=tops, aes(x=date, y=value), col="green") +
     geom_point(data=bottoms, aes(x=date, y=value), col="red") +
     scale_y_continuous(label = dollar) +
-    scale_color_manual(values = c("black"), guide = FALSE) +
+    scale_color_manual(values = c("black", "blue"), guide = FALSE) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("S&P 500 Tops and Bottoms\nWhen a ", dd_pct_string, "% Drawdown (or Greater) Occurs")) +
-    labs(x="Date", y="Portfolio Value",
+    ggtitle(paste0("Market Timing vs. Buy & Hold\nWhen Missing the Top/Bottom by ", n_days, " Days")) +
+    labs(x="Date", y="Growth of $1",
          caption = paste0("\n", source_string, "\n", note_string))
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-plot_tops_bottoms(20)  
-plot_tops_bottoms(10)
+n_days_to_plot <- c(0, 5, 20, 60, 250)
+
+for (days in n_days_to_plot){
+  plot_tops_bottoms(20, days) 
+}
+
+plot_tops_bottoms(10, 0)  
 
 
 
