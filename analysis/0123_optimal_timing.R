@@ -159,6 +159,9 @@ for(dd_pct in dd_percentages){
       }
       final_perf_vector[i] <- final_perf
     }
+    #print(paste0("Lag Length is ", lag, " days."))
+    #print(final_perf_vector)
+    
     final_results[final_results_row_number, "avg_perf"] <- mean(final_perf_vector)
     final_results_row_number <- final_results_row_number + 1
   }
