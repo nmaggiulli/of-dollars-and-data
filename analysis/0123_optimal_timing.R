@@ -317,6 +317,7 @@ plot_tops_bottoms <- function(dd_pct_string, n_days){
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  assign("to_plot", to_plot, envir = .GlobalEnv)
 }
 
 n_days_to_plot <- c(0, 5, 20, 60, 250)
