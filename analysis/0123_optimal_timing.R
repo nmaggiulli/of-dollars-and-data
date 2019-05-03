@@ -327,6 +327,10 @@ for (days in n_days_to_plot){
 
 plot_tops_bottoms(10, 0)  
 
+create_gif(path = out_path,
+           file_stub = paste0("market_dd_pct_*.jpeg"),
+           speed_milliseconds = 180,
+           out_name = paste0("_gif_market_dd.gif"))
 
 
 # ############################  End  ################################## #
