@@ -24,6 +24,7 @@ library(lubridate)
 library(fTrading)
 library(quantmod)
 library(tidyr)
+detach("package:dplyr", unload=TRUE)
 library(dplyr)
 
 # ############################  End  ################################## #
