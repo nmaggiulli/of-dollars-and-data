@@ -54,7 +54,7 @@ final_results <- data.frame(dd_pct = c(),
 final_results_row_number <- 1
 
 # Create a set of drawdown percentages and lag lengths to loop through
-dd_percentages <- seq(-0.10, -0.2, -0.05)
+dd_percentages <- seq(-0.10, -0.2, -0.1)
 lags <- c(0, 1, seq(5, 500, 5))
 
 for(dd_pct in dd_percentages){
@@ -317,6 +317,7 @@ plot_tops_bottoms <- function(dd_pct_string, n_days){
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  assign("to_plot", to_plot, envir = .GlobalEnv)
 }
 
 n_days_to_plot <- c(0, 5, 20, 60, 250)
@@ -327,6 +328,10 @@ for (days in n_days_to_plot){
 
 plot_tops_bottoms(10, 0)  
 
+create_gif(path = out_path,
+           file_stub = paste0("market_dd_pct_*.jpeg"),
+           speed_milliseconds = 180,
+           out_name = paste0("_gif_market_dd.gif"))
 
 
 # ############################  End  ################################## #
