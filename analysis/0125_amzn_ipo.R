@@ -37,7 +37,7 @@ file_path <- paste0(out_path, "/amzn_since_ipo.jpeg")
 
 # Set source/note
 source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
-note_string   <- str_wrap(paste0("Note:  Includes total return, but not adjusted for inflation."), 
+note_string   <- str_wrap(paste0("Note:  Adjusted for stock splits, but not inflation."), 
                           width = 85)
 
 # Dates of interest
