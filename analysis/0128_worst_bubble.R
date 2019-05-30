@@ -19,6 +19,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+# Bring in JPY data
 fred_jpy_mcap_to_gdp <- read_excel(paste0(importdir, "0128_bubble_data/fred_mcap_to_gdp_DDDM01JPA156NWDB.xls"),
                                    skip = 10)
 
@@ -36,11 +37,29 @@ jpy <- fred_jpy_mcap_to_gdp %>%
           filter(!is.na(mcap_billions)) %>%
           select(date, mcap_billions)
 
+# Bring in Bitcoin data
 bcoin_mcap <- read_excel(paste0(importdir, "0128_bubble_data/bitcoin_coin_market_cap.xlsx")) %>%
                 mutate(mcap_billions = mcap/(10^9),
                        date = as.Date(date)) %>%
                 select(date, mcap_billions) %>%
                 arrange(date)
+
+# Bring in DotCom data for NASDAQ
+nq <- read.csv(paste0(importdir, "0128_bubble_data/IXIC_data.csv")) %>%
+          rename(index = `NASDAQ.Composite.Level`) %>%
+          mutate(date = as.Date(Period)) %>%
+          arrange(date) %>%
+          select(date, index) %>%
+          filter(date >= as.Date("1990-01-01"))
+
+highest_nq <- filter(nq, date == as.Date("2000-03-10", format = "%Y-%m-%d")) %>%
+                  pull(index)
+
+nq <- nq %>%
+        mutate(mcap_billions = 6600*index/highest_nq)
+
+nq_mcap_low <- filter(nq, date == as.Date("2002-10-09", format = "%Y-%m-%d")) %>%
+                    pull(mcap_billions)
 
 # Reset file path
 file_path <- paste0(out_path, "/jpy_mcap.jpeg")
