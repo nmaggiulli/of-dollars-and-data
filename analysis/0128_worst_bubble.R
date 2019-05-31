@@ -37,6 +37,12 @@ jpy <- fred_jpy_mcap_to_gdp %>%
           filter(!is.na(mcap_billions)) %>%
           select(date, mcap_billions)
 
+jpy_index <- read.csv(paste0(importdir, "0114_japan_nikkei/nikk.csv"), skip = 1) %>%
+            rename(date = Date,
+                   index = Close) %>%
+            mutate(date = as.Date(date, "%m/%d/%Y")) %>%
+            select(date, index) 
+
 # Bring in Bitcoin data
 bcoin_mcap <- read_excel(paste0(importdir, "0128_bubble_data/bitcoin_coin_market_cap.xlsx")) %>%
                 mutate(mcap_billions = mcap/(10^9),
@@ -60,6 +66,10 @@ nq <- nq %>%
 
 nq_mcap_low <- filter(nq, date == as.Date("2002-10-09", format = "%Y-%m-%d")) %>%
                     pull(mcap_billions)
+
+# Bring in data for 1929
+sp500 <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
+            filter(date >= "1920-01-01")
 
 # Reset file path
 file_path <- paste0(out_path, "/jpy_mcap.jpeg")
