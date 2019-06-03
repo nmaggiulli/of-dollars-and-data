@@ -41,7 +41,7 @@ to_plot <- bind_rows(dd_amzn, dd_nq) %>%
               filter(date <= pull(min_amzn, date))
 
 # Plot DD for each
-file_path <- paste0(out_path, "/amzn_nq_to_bottom.jpeg")
+file_path <- paste0(out_path, "/amzn_nq_to_bottom_dd.jpeg")
 
 # Set source/note
 source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
@@ -72,7 +72,7 @@ plot <- ggplot(to_plot, aes(x=date, y=pct, col = ticker)) +
                   segment.colour = "transparent",
                   nudge_y = ifelse(text_labels$label == "Amazon", 0.05, 0.08)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Amazon Lost 95% Following the\nAmazon.Bomb Article")) +
+  ggtitle(paste0("Amazon Lost Nearly 95% Following the\nAmazon.bomb Article")) +
   labs(x="Date", y="Value Lost (%)",
        caption = paste0("\n", source_string, "\n", note_string))
 
