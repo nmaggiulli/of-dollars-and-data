@@ -93,6 +93,33 @@ my_gtable   <- ggplot_gtable(ggplot_build(plot))
 # Save the plot
 ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
+# Plot another chart
+# Set the file_path based on the function input 
+file_path <- paste0(out_path, "/bytime_equity_allocation_and_forward_returns.jpeg")
+
+# Set note and source string
+source_string <- str_wrap("Source: AAII, DFA, 1987-2018 (OfDollarsAndData.com)",
+                          width = 85)
+
+to_plot <- raw %>%
+            select(date, stock_allocation, ret_forward_10yr) %>%
+            gather(-date, key=key, value=value)
+
+# Plot the allocation vs. future returns
+plot <- ggplot(to_plot, aes(x = date, y = value, col = key)) +
+  geom_line() +
+  scale_y_continuous(label = percent) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Higher Investor Allocation to Equities\nCorresponds to Lower Future Returns")) +
+  labs(x = "Date" , y = "Future Returns and Equity Allocation",
+       caption = paste0("\n", source_string))
+
+# Turn plot into a gtable for adding text grobs
+my_gtable   <- ggplot_gtable(ggplot_build(plot))
+
+# Save the plot
+ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+
 # Model to test trend in AAII
 trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_date){
   
