@@ -20,16 +20,36 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-annuity_monthly <- 1800
-ret_retire <- 0.04/12
-n_months_retire <- 30*12
+# Define working and retirement parameters
+n_years_work <- 17
+n_years_retire <- 25
 
-lump_sum <- 155000
+pmt_annuity <- 1800*12
 
-ret_work <- 0.06/12
-n_months_work <- 17*12
+ret_work <- 0.05
+ret_retire <- 0.05
 
-fv <- fv(r = ret_work, n = n_months_work, pv = lump_sum, pmt = 0, type = 0)
+# Calculate value of annuity at time of retirement
+pv_annuity <- pv(r = ret_retire,
+                 n = n_years_retire,
+                 fv = 0,
+                 pmt = -pmt_annuity)
 
+# Include lump sum v
+lump_sum <- -135000
+
+
+
+fv_lump_sum <- fv(r = ret_work, n = n_years_work, pv = lump_sum, pmt = 0, type = 0)
+
+ret_eq <- discount.rate(n = n_years_work, 
+                        pv = lump_sum,
+                        fv = -pv_annuity,
+                        pmt = 0,
+                        type=0
+                        )
+
+print(paste0("Future Value of Lump Sum is: $", formatC(fv_lump_sum, digits = 0, big.mark = ",", format = "f")))
+print(paste0("Present Value of Annuity is: $", formatC(-pv_annuity, digits = 0, big.mark = ",", format = "f")))
 
 # ############################  End  ################################## #
