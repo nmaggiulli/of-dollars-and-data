@@ -20,6 +20,13 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+# Load in historical stock and bond data to calculate historical 60/40 portfolio return
+hist_bond_stock <- readRDS(paste0(localdir, "0021_historical_returns_sp500_bond_damodaran.Rds")) %>%
+                    mutate(ret_60_40 = 0.6*ret_sp500 + 0.4*ret_10yr_bond)
+
+# Find average 60/40 return
+mean(hist_bond_stock$ret_60_40)
+
 # Define working and retirement parameters
 n_years_work <- 17
 n_years_retire <- 25
@@ -36,15 +43,13 @@ pv_annuity <- pv(r = ret_retire,
                  pmt = -pmt_annuity)
 
 # Include lump sum v
-lump_sum <- -135000
-
-
+lump_sum <- -138000
 
 fv_lump_sum <- fv(r = ret_work, n = n_years_work, pv = lump_sum, pmt = 0, type = 0)
 
 ret_eq <- discount.rate(n = n_years_work, 
                         pv = lump_sum,
-                        fv = -pv_annuity,
+                        fv = pv_annuity,
                         pmt = 0,
                         type=0
                         )
