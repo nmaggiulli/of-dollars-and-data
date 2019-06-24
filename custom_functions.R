@@ -154,6 +154,8 @@ create_gif <- function(path, file_stub, speed_milliseconds, n_loops = 0, out_nam
 # Create function to calculate the drawdowns over time
 drawdown_path <- function(vp){
   
+  vp <- as.data.frame(vp)
+  
   dd_dates <- vp[, 1]
   dd_index <- as.vector(vp[, 2])
   
