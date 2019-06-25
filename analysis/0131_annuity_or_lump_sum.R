@@ -100,11 +100,13 @@ lump_sum_v_annuity <- function(client_staring_age,
   
   
   # Reset file path
-  file_path <- paste0(out_path, "/ls_vs_annuity_retire_", n_years_retire,"_years.jpeg")
+  file_path <- paste0(out_path, "/ls_vs_annuity_", n_years_retire,"_years.jpeg")
   
   # Set source/note
   source_string <- paste0("Source:  SSA, Math (OfDollarsAndData.com)")
-  note_string   <- str_wrap(paste0("Note:  Assumes a", 100*ret_retire,"% real return during working years and retirement."), 
+  note_string   <- str_wrap(paste0("Note:  Assumes a ", 
+                                   100*ret_retire,
+                                   "% real return during working years and retirement."), 
                             width = 85)
   
   text_labels <- data.frame(age = c(55, 65))
@@ -119,9 +121,9 @@ lump_sum_v_annuity <- function(client_staring_age,
   text_labels[2, "label"] <- "Annuity"
   
   if(df[nrow(df), "value_lump_sum"] > df[nrow(df), "value_annuity"]){
-    title <- "The Lump Sum is Worth More than\nthe Annuity at Retirement"
+    title <- "The Lump Sum is Worth More Than\nthe Annuity at Retirement"
   } else{
-    title <- "The Annuity is Worth More than\nthe Lump Sum at Retirement"
+    title <- "With a Longer Lifespan, the Annuity is\nWorth More Than the Lump Sum"
   }
   
   plot <- ggplot(to_plot, aes(x=age, y=value, fill = key)) +
@@ -139,7 +141,7 @@ lump_sum_v_annuity <- function(client_staring_age,
                     nudge_x = ifelse(text_labels$label == "Lump Sum", -5, 7)) +
     of_dollars_and_data_theme +
     ggtitle(paste0(title)) +
-    labs(x="Age", y="Value",
+    labs(x="Age", y="Present Value",
          caption = paste0("\n", source_string, "\n", note_string))
   
   # Save the plot
