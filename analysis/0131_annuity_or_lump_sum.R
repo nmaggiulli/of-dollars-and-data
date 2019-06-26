@@ -24,24 +24,26 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 hist_bond_stock <- readRDS(paste0(localdir, "0021_historical_returns_sp500_bond_damodaran.Rds")) %>%
                     mutate(ret_60_40 = 0.6*ret_sp500 + 0.4*ret_10yr_bond)
 
+# Find average 60/40 return
+mean(hist_bond_stock$ret_60_40)
+
 # Bring in SSA life table
 ssa_life <- read_excel(paste0(importdir, "/0131_lump_sum_annuity/2016_ssa_life_table.xlsx"))
 
-# Calculate her survival probability
-death_p_female_45_61 <- ssa_life %>%
-                            filter(age >= 45, age <= 61) %>%
-                            mutate(female_death_p = female_death_p + 1) %>%
-                            summarize(cumulative_female_death_p = prod(female_death_p) - 1) %>%
-                            pull()
+# Calculate her survival probability with a function
+calculate_survival_p <- function(start_age, end_age){
+  p <- ssa_life %>%
+    filter(age == start_age | age == end_age) %>%
+    mutate(p_survive = female_survivors/lag(female_survivors)) %>%
+    filter(!is.na(p_survive)) %>%
+    pull(p_survive)
+  return(p)
+}
 
-death_p_female_85_86 <- ssa_life %>%
-                        filter(age >= 84, age <= 86) %>%
-                        mutate(female_death_p = female_death_p + 1) %>%
-                        summarize(cumulative_female_death_p = prod(female_death_p) - 1) %>%
-                        pull()
-
-# Find average 60/40 return
-mean(hist_bond_stock$ret_60_40)
+# Survivorship probability
+1-calculate_survival_p(45, 62)
+calculate_survival_p(45, 87)
+calculate_survival_p(85, 87)
 
 # Write a function
 lump_sum_v_annuity <- function(client_staring_age,
@@ -106,7 +108,7 @@ lump_sum_v_annuity <- function(client_staring_age,
   source_string <- paste0("Source:  SSA, Math (OfDollarsAndData.com)")
   note_string   <- str_wrap(paste0("Note:  Assumes a ", 
                                    100*ret_retire,
-                                   "% real return during working years and retirement."), 
+                                   "% nominal return during working years and retirement."), 
                             width = 85)
   
   text_labels <- data.frame(age = c(55, 65))
@@ -157,8 +159,8 @@ n_years_work <- 17
 client_starting_age <- 45
 lump_sum <- -138000
 pmt_annuity <- 1800*12
-ret_work <- 0.05
-ret_retire <- 0.05
+ret_work <- 0.06
+ret_retire <- ret_work
 
 # Run the simulations but play with the retiremnt years
 lump_sum_v_annuity(client_staring_age,
