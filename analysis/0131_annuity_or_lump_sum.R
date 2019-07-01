@@ -43,7 +43,7 @@ calculate_survival_p <- function(start_age, end_age){
 # Survivorship probability
 1-calculate_survival_p(45, 62)
 calculate_survival_p(45, 87)
-1-calculate_survival_p(62, 87)
+calculate_survival_p(62, 87)
 
 # Write a function
 lump_sum_v_annuity <- function(client_staring_age,
