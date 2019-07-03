@@ -51,18 +51,23 @@ file_path <- paste0(out_path, "/dd_intrayear_max.jpeg")
 
 to_plot <- dd_all
 avg_intrayear_dd <- mean(to_plot$min_dd)
+median_intrayear_dd <- quantile(to_plot$min_dd, probs = 0.5, na.rm = TRUE)
 
 # Set source/note
 source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
 note_string   <- str_wrap(paste0("Note:  Does not adjust for inflation or dividends.  ",
-                                 "The average intrayear maximum drawdown is ", 100*round(avg_intrayear_dd, 3), "%."), 
-                          width = 90)
+                                 "The average intrayear maximum drawdown is ", 
+                                 100*round(avg_intrayear_dd, 3), 
+                                 "% and the median intrayear maximum drawdown is ",
+                                 100*round(median_intrayear_dd, 3),
+                                 "%."), 
+                          width = 85)
 
 plot <- ggplot(to_plot, aes(x=year, y=min_dd)) +
-  geom_line() +
+  geom_bar(stat="identity", fill = "red") +
   scale_y_continuous(label = percent, limits = c(-0.6, 0)) +
   of_dollars_and_data_theme +
-  ggtitle("Worst Intrayear Drawdown by Year") +
+  ggtitle("Maximum Intrayear Drawdown by Year") +
   labs(x="Year", y="Percentage Lost",
        caption = paste0("\n", source_string, "\n", note_string))
 
@@ -101,11 +106,11 @@ calculate_genie_performance <- function(dd_pct){
   return(df_in_out)
 }
 
-for(j in seq(-0.15, -0.05, 0.01)){
+for(j in seq(-0.14, -0.05, 0.01)){
   to_plot <- calculate_genie_performance(j) %>%
               select(date, value_bh, value_av) %>%
               rename(`Buy & Hold` = value_bh,
-                     `Avoid Volatility` = value_av) %>%
+                     `Avoid Drawdowns` = value_av) %>%
               gather(-date, key=key, value=value)
   
   dd_pos <- -100*j
@@ -113,17 +118,18 @@ for(j in seq(-0.15, -0.05, 0.01)){
   dd_string <- paste0(str_pad(dd_pos, width = 2, side = "left"), "_pct")
   
   # Set file path
-  file_path <- paste0(out_path, "/bh_vs_av_dd_", dd_string, ".jpeg")
+  file_path <- paste0(out_path, "/bh_vs_ad_dd_", dd_string, ".jpeg")
   
   # Set source/note
   source_string <- paste0("Source:  YCharts, DFA (OfDollarsAndData.com)")
-  note_string   <- str_wrap(paste0("Note:  Invests in the S&P 500 (total return) in all years with a drawdown smaller than ", dd_pos  , "% ", 
-                              "and in 5-Year U.S. Treasuries in all other years."), 
+  note_string   <- str_wrap(paste0("Note:  Invests in the S&P 500 (total return) during years with a drawdown smaller than ", dd_pos  , "% ", 
+                              "and in 5-Year U.S. Treasuries during all other years."), 
                             width = 85)
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   geom_line() +
-  scale_y_continuous(label = dollar, trans = log10_trans()) +
+  scale_y_continuous(label = dollar, limits = c(0.8, 10000), breaks = c(1, 10, 100, 1000, 10000),  trans = log10_trans()) +
+  scale_color_manual(values = c("blue", "black")) +
   of_dollars_and_data_theme +
   theme(legend.title = element_blank(),
         legend.position = "bottom") +
@@ -135,7 +141,7 @@ for(j in seq(-0.15, -0.05, 0.01)){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-create_gif(out_path, "bh_vs_av_dd_*.jpeg", 60, 0, "_gif_bh_vs_av.gif")
+create_gif(out_path, "bh_vs_ad_dd_*.jpeg", 60, 0, "_gif_bh_vs_ad.gif")
 
 
 # ############################  End  ################################## #
