@@ -107,7 +107,13 @@ calculate_genie_performance <- function(dd_pct){
 }
 
 for(j in seq(-0.14, -0.05, 0.01)){
-  to_plot <- calculate_genie_performance(j) %>%
+  raw_perf <- calculate_genie_performance(j)
+  
+  pct_in <- mean(raw_perf$in_out)
+  years_in <-sum(raw_perf$in_out)/12
+  years_total <- nrow(raw_perf)/12
+  
+  to_plot <- raw_perf %>%
               select(date, value_bh, value_av) %>%
               rename(`Buy & Hold` = value_bh,
                      `Avoid Drawdowns` = value_av) %>%
@@ -123,7 +129,8 @@ for(j in seq(-0.14, -0.05, 0.01)){
   # Set source/note
   source_string <- paste0("Source:  YCharts, DFA (OfDollarsAndData.com)")
   note_string   <- str_wrap(paste0("Note:  Invests in the S&P 500 (total return) during years with a drawdown smaller than ", dd_pos  , "% ", 
-                              "and in 5-Year U.S. Treasuries during all other years."), 
+                              "and in 5-Year U.S. Treasuries during all other years.  ",
+                              "The strategy was invested in the S&P 500 in ", round(years_in, digits=0), " of ", round(years_total, digits = 0), " years or ", 100*round(pct_in, 2), "% of the time."), 
                             width = 85)
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
