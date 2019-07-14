@@ -158,7 +158,7 @@ calculate_genie_performance <- function(dd_pct){
   return(df_in_out)
 }
 
-for(j in seq(-0.40, -0.05, 0.01)){
+for(j in seq(-0.40, -0.05, 0.05)){
   raw_perf <- calculate_genie_performance(j)
   dd_pos <- -100*j
   
@@ -233,7 +233,7 @@ for(j in seq(-0.40, -0.05, 0.01)){
     ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-create_gif(out_path, "bh_vs_ad_dd_*.jpeg", 60, 0, "_gif_bh_vs_ad.gif")
+create_gif(out_path, "bh_vs_ad_dd_*.jpeg", 80, 0, "_gif_bh_vs_ad_5pct.gif")
 
 
 # ############################  End  ################################## #
