@@ -20,7 +20,19 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-raw <- read.csv(paste0(importdir, "xxxx_sp500_individual_stocks/ycharts.csv"), skip = 6) %>%
+spx <- read.csv(paste0(importdir, "0139_sp500_individual_stocks/ycharts_spx.csv"), skip = 6) %>%
+  rename(symbol = Symbol,
+         name = Name,
+         metric = Metric) %>%
+  gather(-symbol, -name, -metric, key=key, value=value) %>%
+  mutate(year = as.numeric(gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\1", key, perl = TRUE))) %>%
+  arrange(symbol, year) %>%
+  filter(!is.na(value), year < 2019) %>%
+  mutate(spx_ret = value/lag(value) - 1) %>%
+  filter(!is.na(spx_ret)) %>%
+  select(year, spx_ret) 
+
+raw <- read.csv(paste0(importdir, "0139_sp500_individual_stocks/ycharts.csv"), skip = 6) %>%
   rename(symbol = Symbol,
          name = Name,
          metric = Metric) %>%
@@ -30,7 +42,14 @@ raw <- read.csv(paste0(importdir, "xxxx_sp500_individual_stocks/ycharts.csv"), s
   filter(!is.na(value), year < 2019) %>%
   mutate(ret = value/lag(value) - 1) %>%
   filter(!is.na(ret)) %>%
-  select(year, symbol, name, ret) 
+  left_join(spx) %>%
+  mutate(above_market = ifelse(ret > spx_ret, 1, 0)) %>%
+  select(year, symbol, name, ret, above_market) 
+
+above_market_by_year <- raw %>%
+                          group_by(year) %>%
+                          summarize(above_market = mean(above_market)) %>%
+                          ungroup()
 
 n_years_data <- raw %>%
           group_by(symbol) %>%
@@ -39,6 +58,9 @@ n_years_data <- raw %>%
           select(symbol, n_obs)
 
 full_data <- filter(n_years_data, n_obs == max(n_years_data$n_obs)) %>%
+                inner_join(raw)
+
+full_symbols <- full_data %>%
               select(symbol)
 
 # Simulation parameters
@@ -55,7 +77,7 @@ final_results <- data.frame(year = c(),
 for(p in portfolio_sizes){
   print(p)
   for(i in 1:n_simulations){
-    s <- sample(full_data$symbol, p, replace = FALSE)
+    s <- sample(full_symbols$symbol, p, replace = FALSE)
     
     tmp <- raw %>%
             filter(symbol %in% s) %>%
@@ -83,7 +105,8 @@ overall_summary <- final_results %>%
                       group_by(year, portfolio_size) %>%
                       summarize(avg_ret = mean(mean_ret),
                                 sd_ret = sd(mean_ret)) %>%
-                      ungroup()
+                      ungroup() %>%
+                      left_join(spx)
 
 # Plot by portfolio size
 for(p in portfolio_sizes){
