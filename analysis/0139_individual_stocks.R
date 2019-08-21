@@ -32,7 +32,7 @@ spx <- read.csv(paste0(importdir, "0139_sp500_individual_stocks/ycharts_spx.csv"
   filter(!is.na(spx_ret)) %>%
   select(year, spx_ret) 
 
-raw <- read.csv(paste0(importdir, "0139_sp500_individual_stocks/ycharts.csv"), skip = 6) %>%
+raw <- read.csv(paste0(importdir, "0139_sp500_individual_stocks/ycharts_tr.csv"), skip = 6) %>%
   rename(symbol = Symbol,
          name = Name,
          metric = Metric) %>%
@@ -47,11 +47,6 @@ raw <- read.csv(paste0(importdir, "0139_sp500_individual_stocks/ycharts.csv"), s
   select(year, symbol, name, ret, spx_ret, above_market) %>%
   filter(year < 2019)
 
-above_market_by_year <- raw %>%
-                          group_by(year) %>%
-                          summarize(above_market = mean(above_market)) %>%
-                          ungroup()
-
 n_years_data <- raw %>%
           group_by(symbol) %>%
           summarize(n_obs = n()) %>%
@@ -62,7 +57,8 @@ full_data <- filter(n_years_data, n_obs == max(n_years_data$n_obs)) %>%
                 inner_join(raw)
 
 full_symbols <- full_data %>%
-              select(symbol)
+              select(symbol) %>%
+              distinct()
 
 # Simulation parameters
 n_simulations <- 1000
@@ -97,11 +93,12 @@ for(p in portfolio_sizes){
                    )
     
     fnl <- tmp %>%
-            summarize(p_ret = prod(1+mean_ret) - 1,
-                      spx_ret = prod(1+spx_ret) - 1)
+            summarize(p_ret = prod(1+mean_ret)^(1/nrow(tmp)) - 1,
+                      spx_ret = prod(1+spx_ret)^(1/nrow(tmp)) - 1)
     
     tmp <- tmp %>%
-              mutate(above_market = ifelse(fnl$p_ret > fnl$spx_ret, 1, 0))
+              mutate(above_market = ifelse(fnl$p_ret > fnl$spx_ret, 1, 0),
+                     annual_outperformance_full_period = fnl$p_ret - fnl$spx_ret)
     
     if(p == portfolio_sizes[1] & i == 1){
       final_results <- tmp
@@ -111,20 +108,59 @@ for(p in portfolio_sizes){
   }
 }
 
-above_market_stats <- final_results %>%
-                        group_by(portfolio_size, simulation) %>%
-                        summarize(above_market = mean(above_market)) %>%
-                        ungroup() %>%
-                        group_by(portfolio_size) %>%
-                        summarize(above_market = mean(above_market)) %>%
-                        ungroup()
+# Summarize above market stats
+above_market_stats_year <- raw %>%
+                              group_by(year) %>%
+                              summarize(above_market = mean(above_market)) %>%
+                              ungroup()
 
-all_stocks_above_market <- full_data %>%
-                            group_by(symbol) %>%
-                            summarize(p_ret = prod(1+ret)- 1,
-                                      spx_ret = prod(1+spx_ret) - 1) %>%
-                            ungroup() %>%
-                            mutate(above_market = ifelse(p_ret>spx_ret, 1, 0))
+# Loop by start year
+all_years <- unique(full_data$year)
+above_market_stats_stock <- data.frame(start_year = c(), 
+                                              market_outperformance_2018 = c())
+above_market_stats_portfolio_size <- data.frame(start_year = c(), 
+                                                portfolio_size = c(), 
+                                                above_market = c(), 
+                                                annual_outperformance = c())
+
+for(y in all_years){
+  print(y)
+  ind <- full_data %>%
+    filter(year >= y) %>%
+    group_by(symbol) %>%
+    summarize(p_ret = prod(1+ret)- 1,
+              spx_ret = prod(1+spx_ret) - 1) %>%
+    ungroup() %>%
+    mutate(above_market = ifelse(p_ret>spx_ret, 1, 0)) %>%
+    summarize(market_outperformance_2018 = mean(above_market)) %>%
+    mutate(start_year = y) %>%
+    select(start_year, market_outperformance_2018)
+  
+  n_years <- length(all_years) - which(all_years == y) + 1
+  
+  port <- final_results %>%
+    filter(year >= y) %>%
+    group_by(portfolio_size, simulation) %>%
+    summarize(p_ret = prod(1+mean_ret)^(1/n_years) - 1,
+              spx_ret = prod(1+spx_ret)^(1/n_years) - 1) %>%
+    ungroup() %>%
+    mutate(above_market = ifelse(p_ret>spx_ret, 1, 0),
+           market_outperformance_2018 = p_ret - spx_ret,
+           start_year = y) %>%
+    group_by(start_year, portfolio_size) %>%
+    summarize(above_market = mean(above_market),
+              market_outperformance_2018 = mean(market_outperformance_2018)) %>%
+    ungroup() %>%
+    select(start_year, portfolio_size, above_market, market_outperformance_2018)
+  
+  if(y == all_years[1]){
+    above_market_stats_stock <- ind
+    above_market_stats_portfolio_size <- port
+  } else{
+    above_market_stats_stock <- bind_rows(above_market_stats_stock, ind)
+    above_market_stats_portfolio_size <- bind_rows(above_market_stats_portfolio_size, port)
+  }
+}
 
 overall_summary <- final_results %>%
                       group_by(year, portfolio_size) %>%
@@ -141,17 +177,31 @@ for(p in portfolio_sizes){
                 filter(portfolio_size == p)
   
   source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
-  note_string   <- str_wrap(paste0("Note:  Stocks are selected from the S&P 500 and only include those with data for all years.  Returns shown exclude dividends."), 
+  note_string   <- str_wrap(paste0("Note:  Stocks are selected from the S&P 500 and only include those with data for all years.  Returns shown include dividends."), 
                             width = 85)
   
   file_path <- paste0(out_path, "/dist_returns_portfolio_", p_string, "_stocks.jpeg")
 
   plot <- ggplot(data = to_plot, aes(x=binned_ret, y=as.factor(year))) +
     geom_joy_gradient(rel_min_height = 0.01, scale = 3, fill = "blue") +
-    scale_x_continuous(label = percent, limit = c(-0.5, 0.5), breaks = seq(-0.5, 0.5, 0.25)) +
+    scale_x_continuous(label = percent, limit = c(-0.6, 0.6), breaks = seq(-0.6, 0.6, 0.2)) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Return Distribution by Year\n", p, "-Stock Portfolio")) +
+    ggtitle(paste0("Return Distribution by Year\n", p, "-Stock Equal Weight Portfolio")) +
     labs(x = "1-Year Return", y = "Year",
+         caption = paste0(source_string, "\n", note_string))
+  
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  # Do annual outperformance
+  file_path <- paste0(out_path, "/outperf_portfolio_", p_string, "_stocks.jpeg")
+  
+  plot <- ggplot(data = to_plot, aes(x=annual_outperformance_full_period)) +
+    geom_density(fill = "blue") +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+    scale_x_continuous(label = percent, limit = c(-0.2, 0.2)) +
+    of_dollars_and_data_theme +
+    ggtitle(paste0("Annual Outperformance Compared to S&P 500\n", p, "-Stock Equal Weight Portfolio")) +
+    labs(x = "Annualized Return", y = "Frequency",
          caption = paste0(source_string, "\n", note_string))
   
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -162,6 +212,12 @@ create_gif(out_path,
            100,
            0,
            paste0("_gif_dist_portfolio_size_returns.gif"))
+
+create_gif(out_path,
+           paste0("outperf_portfolio_*.jpeg"),
+           100,
+           0,
+           paste0("_gif_outperf_portfolio_size_returns.gif"))
 
 
 # ############################  End  ################################## #
