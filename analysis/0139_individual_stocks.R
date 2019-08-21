@@ -27,7 +27,7 @@ spx <- read.csv(paste0(importdir, "0139_sp500_individual_stocks/ycharts_spx.csv"
   gather(-symbol, -name, -metric, key=key, value=value) %>%
   mutate(year = as.numeric(gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\1", key, perl = TRUE))) %>%
   arrange(symbol, year) %>%
-  filter(!is.na(value), year < 2019) %>%
+  filter(!is.na(value)) %>%
   mutate(spx_ret = value/lag(value) - 1) %>%
   filter(!is.na(spx_ret)) %>%
   select(year, spx_ret) 
@@ -39,12 +39,13 @@ raw <- read.csv(paste0(importdir, "0139_sp500_individual_stocks/ycharts.csv"), s
   gather(-symbol, -name, -metric, key=key, value=value) %>%
   mutate(year = as.numeric(gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\1", key, perl = TRUE))) %>%
   arrange(symbol, year) %>%
-  filter(!is.na(value), year < 2019) %>%
+  filter(!is.na(value)) %>%
   mutate(ret = value/lag(value) - 1) %>%
   filter(!is.na(ret)) %>%
   left_join(spx) %>%
   mutate(above_market = ifelse(ret > spx_ret, 1, 0)) %>%
-  select(year, symbol, name, ret, spx_ret, above_market) 
+  select(year, symbol, name, ret, spx_ret, above_market) %>%
+  filter(year < 2019)
 
 above_market_by_year <- raw %>%
                           group_by(year) %>%
@@ -72,7 +73,8 @@ final_results <- data.frame(year = c(),
                             mean_ret = c(),
                             binned_ret = c(),
                             simulation = c(),
-                            portfolio_size = c())
+                            portfolio_size = c(),
+                            above_market = c())
 
 for(p in portfolio_sizes){
   print(p)
@@ -94,6 +96,13 @@ for(p in portfolio_sizes){
                    portfolio_size = p
                    )
     
+    fnl <- tmp %>%
+            summarize(p_ret = prod(1+mean_ret) - 1,
+                      spx_ret = prod(1+spx_ret) - 1)
+    
+    tmp <- tmp %>%
+              mutate(above_market = ifelse(fnl$p_ret > fnl$spx_ret, 1, 0))
+    
     if(p == portfolio_sizes[1] & i == 1){
       final_results <- tmp
     } else{
@@ -101,6 +110,21 @@ for(p in portfolio_sizes){
     }
   }
 }
+
+above_market_stats <- final_results %>%
+                        group_by(portfolio_size, simulation) %>%
+                        summarize(above_market = mean(above_market)) %>%
+                        ungroup() %>%
+                        group_by(portfolio_size) %>%
+                        summarize(above_market = mean(above_market)) %>%
+                        ungroup()
+
+all_stocks_above_market <- full_data %>%
+                            group_by(symbol) %>%
+                            summarize(p_ret = prod(1+ret)- 1,
+                                      spx_ret = prod(1+spx_ret) - 1) %>%
+                            ungroup() %>%
+                            mutate(above_market = ifelse(p_ret>spx_ret, 1, 0))
 
 overall_summary <- final_results %>%
                       group_by(year, portfolio_size) %>%
