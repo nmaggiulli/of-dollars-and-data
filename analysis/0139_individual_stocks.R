@@ -44,7 +44,7 @@ raw <- read.csv(paste0(importdir, "0139_sp500_individual_stocks/ycharts.csv"), s
   filter(!is.na(ret)) %>%
   left_join(spx) %>%
   mutate(above_market = ifelse(ret > spx_ret, 1, 0)) %>%
-  select(year, symbol, name, ret, above_market) 
+  select(year, symbol, name, ret, spx_ret, above_market) 
 
 above_market_by_year <- raw %>%
                           group_by(year) %>%
@@ -82,7 +82,8 @@ for(p in portfolio_sizes){
     tmp <- raw %>%
             filter(symbol %in% s) %>%
             group_by(year) %>%
-            summarize(mean_ret = mean(ret)) %>%
+            summarize(mean_ret = mean(ret),
+                      spx_ret = mean(spx_ret)) %>%
             ungroup() %>%
             mutate(binned_ret = case_when(
               mean_ret > 0.5 ~ 0.5,
