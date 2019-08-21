@@ -20,6 +20,12 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+start_year <- 2000
+
+spx_2000 <- read_excel(paste0(importdir, "0139_sp500_individual_stocks/spx_components_2000.xlsx")) %>%
+              mutate(symbol = trimws(ticker)) %>%
+              select(symbol)
+
 spx <- read.csv(paste0(importdir, "0139_sp500_individual_stocks/ycharts_spx.csv"), skip = 6) %>%
   rename(symbol = Symbol,
          name = Name,
@@ -45,24 +51,31 @@ raw <- read.csv(paste0(importdir, "0139_sp500_individual_stocks/ycharts_tr.csv")
   left_join(spx) %>%
   mutate(above_market = ifelse(ret > spx_ret, 1, 0)) %>%
   select(year, symbol, name, ret, spx_ret, above_market) %>%
-  filter(year < 2019)
+  filter(year < 2019, year >= start_year)
 
-n_years_data <- raw %>%
-          group_by(symbol) %>%
-          summarize(n_obs = n()) %>%
-          ungroup() %>%
-          select(symbol, n_obs)
+first_last <- raw %>%
+                group_by(symbol) %>%
+                summarize(min_year = min(year),
+                          max_year = max(year),
+                          n_years_data = n()) %>%
+                ungroup()
 
-full_data <- filter(n_years_data, n_obs == max(n_years_data$n_obs)) %>%
+full_data <- filter(first_last, n_years_data == max(first_last$n_years_data)) %>%
                 inner_join(raw)
 
 full_symbols <- full_data %>%
               select(symbol) %>%
               distinct()
 
+not_spx_2000 <- full_symbols %>%
+                  anti_join(spx_2000)
+
+missing_symbols <- spx_2000 %>%
+                    anti_join(full_data)
+
 # Simulation parameters
 n_simulations <- 1000
-portfolio_sizes <- c(5, 10, 20, 30, 50, 100, 200, 300)
+portfolio_sizes <- c(5, 10, 20, 30, 50, 100, 200)
 set.seed(12345)
 
 final_results <- data.frame(year = c(), 
@@ -77,7 +90,7 @@ for(p in portfolio_sizes){
   for(i in 1:n_simulations){
     s <- sample(full_symbols$symbol, p, replace = FALSE)
     
-    tmp <- raw %>%
+    tmp <- full_data %>%
             filter(symbol %in% s) %>%
             group_by(year) %>%
             summarize(mean_ret = mean(ret),
@@ -109,7 +122,7 @@ for(p in portfolio_sizes){
 }
 
 # Summarize above market stats
-above_market_stats_year <- raw %>%
+above_market_stats_year <- full_data %>%
                               group_by(year) %>%
                               summarize(above_market = mean(above_market)) %>%
                               ungroup()
@@ -177,7 +190,7 @@ for(p in portfolio_sizes){
                 filter(portfolio_size == p)
   
   source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
-  note_string   <- str_wrap(paste0("Note:  Stocks are selected from the S&P 500 and only include those with data for all years.  Returns shown include dividends."), 
+  note_string   <- str_wrap(paste0("Note:  Stocks are selected from the S&P 500 and only include those with data going back to ", start_year, ".  Returns shown include dividends."), 
                             width = 85)
   
   file_path <- paste0(out_path, "/dist_returns_portfolio_", p_string, "_stocks.jpeg")
@@ -201,7 +214,7 @@ for(p in portfolio_sizes){
     scale_x_continuous(label = percent, limit = c(-0.2, 0.2)) +
     of_dollars_and_data_theme +
     ggtitle(paste0("Annual Outperformance Compared to S&P 500\n", p, "-Stock Equal Weight Portfolio")) +
-    labs(x = "Annualized Return", y = "Frequency",
+    labs(x = paste0("Annualized Outperformance Since ", start_year), y = "Frequency",
          caption = paste0(source_string, "\n", note_string))
   
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -209,15 +222,35 @@ for(p in portfolio_sizes){
 
 create_gif(out_path,
            paste0("dist_returns_portfolio_*.jpeg"),
-           100,
+           105,
            0,
            paste0("_gif_dist_portfolio_size_returns.gif"))
 
 create_gif(out_path,
            paste0("outperf_portfolio_*.jpeg"),
-           100,
+           105,
            0,
            paste0("_gif_outperf_portfolio_size_returns.gif"))
+
+# Do stock beats by year
+file_path <- paste0(out_path, "/above_market_year.jpeg")
+
+source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
+note_string   <- str_wrap(paste0("Note:  Stocks are selected from the S&P 500 and only include those with data going back to ", start_year, ".  Returns shown include dividends."), 
+                          width = 85)
+
+to_plot <- above_market_stats_year
+
+plot <- ggplot(data = to_plot, aes(x=year, y = above_market)) +
+  geom_bar(stat="identity", fill = "blue") +
+  geom_hline(yintercept = 0.5, linetype = "dashed") +
+  scale_y_continuous(label = percent, limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Percentage of Stocks That\nBeat the S&P 500 by Year")) +
+  labs(x = paste0("Year"), y = "Percentage",
+       caption = paste0(source_string, "\n", note_string))
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 
 # ############################  End  ################################## #
