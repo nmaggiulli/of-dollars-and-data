@@ -11,6 +11,7 @@ library(scales)
 library(readxl)
 library(lubridate)
 library(ggrepel)
+library(zoo)
 library(tidyverse)
 
 folder_name <- "0112_lump_sum_simulation"
@@ -178,6 +179,9 @@ run_lump_sum_simulation <- function(n_month_dca, pct_sp500, y_unit, invest_dca_c
   text_labels[2, "perf_col"] <- -y_unit * 0.95
   text_labels[2, "label"] <- "DCA Underperforms Lump Sum"
   text_labels[2, "date"] <- as.Date("1990-01-01")
+  
+  text_labels <- text_labels %>%
+                  mutate(date = as.Date(date))
   
   plot <- ggplot(to_plot, aes(x=date, y=perf_col)) +
     geom_hline(yintercept = 0, col = "black") +
