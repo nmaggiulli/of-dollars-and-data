@@ -73,7 +73,7 @@ run_lump_sum_simulation <- function(n_month_dca,
                                     y_unit, 
                                     invest_dca_cash){
   
-  pct_string <- paste0(pct_sp500, "_cons_sw_", pct_sp500_cons)
+  pct_string <- paste0(pct_sp500)
   
   if(n_month_dca < 10){
     n_month_string <- paste0("0", n_month_dca)
@@ -85,6 +85,7 @@ run_lump_sum_simulation <- function(n_month_dca,
   weight_sp500    <- pct_sp500/100
   weight_treasury <- 1 - weight_sp500
   
+  pct_treasury_cons    <- 100 - pct_sp500_cons
   weight_sp500_cons    <- pct_sp500_cons/100
   weight_treasury_cons <- 1 - weight_sp500_cons
   
@@ -139,8 +140,10 @@ run_lump_sum_simulation <- function(n_month_dca,
   # Define an out folder to delete and re-create
   out_folder <- paste0(out_path,"/time_sw_", pct_string)
   
+  bw_string <- str_pad(pct_treasury_cons, width = 3, side = "left", pad = "0")
+  
   # Plot the LS outperformance
-  file_path <- paste0(out_folder,"/dca_perf_time_sw_", pct_sp500, "_", n_month_string, "m.jpeg")
+  file_path <- paste0(out_folder,"/dca_perf_time_sw_", pct_sp500, "_cons_bw_",bw_string , "_", n_month_string, "m.jpeg")
   
   to_plot <- final_results %>%
               rename_(.dots = setNames(paste0(out_col), "perf_col"))
@@ -176,12 +179,20 @@ run_lump_sum_simulation <- function(n_month_dca,
   }
   
   # Set the title
+  if(pct_sp500_cons != 0 & pct_sp500_cons != 100){
+    title_end <- paste0(pct_sp500_cons, "/", pct_treasury_cons, " LS")
+  } else if(pct_sp500_cons == 0) {
+    title_end <- paste0("All Bond LS")
+  } else if(pct_sp500_cons == 100) {
+    title_end <- paste0("All Stock LS")
+  }
+  
   if(pct_sp500 != 100 & pct_sp500 != 0){
-    title_portfolio_string <- paste0(pct_sp500, "/", pct_treasury, " Portfolio")
+    title_portfolio_string <- paste0(pct_sp500, "/", pct_treasury, " DCA vs. ",title_end)
   } else if (pct_sp500 == 100){
-    title_portfolio_string <- paste0("All Stock Portfolio")
+    title_portfolio_string <- paste0("All Stock DCA vs. ", title_end)
   } else if (pct_sp500 == 0){
-    title_portfolio_string <- paste0("All Bond Portfolio")
+    title_portfolio_string <- paste0("All Bond DCA vs. ", title_end)
   }
   
   text_labels <- data.frame()
@@ -222,52 +233,11 @@ run_lump_sum_simulation <- function(n_month_dca,
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
-  # Create a line plot showing performance of both
-  out_folder <- paste0(out_path,"/compare_sw_", pct_string)
-  
-  if(n_month_dca <= 24){
-    # Plot the LS outperformance
-    file_path <- paste0(out_folder,"/dca_ls_time_sw_", pct_sp500, "_", n_month_string, "m.jpeg")
-    
-    to_plot_no_perf <- final_results %>%
-                        rename_(.dots = setNames(paste0(out_col), "perf_col")) %>%
-                        rename_(.dots = setNames(paste0(dca_col), "DCA")) %>%
-                        rename_(.dots = setNames(paste0(ls_col), "Lump Sum")) %>%
-                        select(-perf_col) %>%
-                        gather(-date, key=key, value=value)
-    
-    plot <- ggplot(to_plot_no_perf, aes(x=date, y=value, col = key)) +
-      geom_hline(yintercept = 0, col = "black") +
-      geom_line() +
-      scale_color_manual(values = c("black", "blue")) +
-      scale_linetype_discrete() +
-      scale_y_continuous(label = percent, limits = c(-y_unit/2, y_unit*2),
-                         breaks = seq(-y_unit/2, y_unit*2, y_break*2.5)) +
-      scale_x_date(date_labels = "%Y", breaks = c(
-        as.Date("1960-01-01"),
-        as.Date("1970-01-01"),
-        as.Date("1980-01-01"),
-        as.Date("1990-01-01"),
-        as.Date("2000-01-01"),
-        as.Date("2010-01-01")
-      ), limits = c(as.Date("1960-01-01"), as.Date("2019-01-01"))) +
-      of_dollars_and_data_theme +
-      theme(legend.title = element_blank(),
-            legend.position = "bottom") +
-      ggtitle(paste0("DCA Over ", n_month_dca, " Months\nvs. Lump Sum Investment\n",
-                     title_portfolio_string)) +
-      labs(x = "Date", y="Performance (%)",
-           caption = paste0(source_string, "\n", note_string))
-    
-    # Save the plot
-    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-  }
-  
   # Plot dists
   out_folder <- paste0(out_path,"/dist_sw_", pct_string)
   
   # Plot distribution of returns as well
-  file_path <- paste0(out_folder, "/dca_dist_sw_", pct_sp500, "_", n_month_string, "m.jpeg")
+  file_path <- paste0(out_folder, "/dca_dist_sw_", pct_sp500, "_cons_bw_", bw_string, "_", n_month_string, "m.jpeg")
   
   plot <- ggplot(to_plot, aes(x=perf_col)) +
     geom_density(fill = "black") +
@@ -295,25 +265,22 @@ remove_and_recreate_folder <- function(path){
 }
 
 # Run simulation for all buying periods
-months_to_run <- seq(2, 60, 2)
+months_to_run <- 24
 results <- data.frame()
 
-for (j in c(60, 100)){
-  for(c in seq(10, 50, 10)){
+for (pct_sw in c(100)){
+  
+  folder_time    <- paste0(out_path, "/time_sw_", pct_sw)
+  folder_dist    <- paste0(out_path, "/dist_sw_", pct_sw)
+  
+  remove_and_recreate_folder(folder_time)
+  remove_and_recreate_folder(folder_dist)
+  
+  for(c in seq(0, 100, 10)){
     
     y_unit_max <- 0.5
     
-    pct_sw <- j
-    pct_sw_cons <- j-c
-    fldr_name <- paste0(pct_sw, "_cons_sw_", pct_sw_cons)
-    
-    folder_time    <- paste0(out_path, "/time_sw_", fldr_name)
-    folder_compare <- paste0(out_path, "/compare_sw_", fldr_name)
-    folder_dist    <- paste0(out_path, "/dist_sw_", fldr_name)
-    
-    remove_and_recreate_folder(folder_time)
-    remove_and_recreate_folder(folder_compare)
-    remove_and_recreate_folder(folder_dist)
+    pct_sw_cons <- max(pct_sw-c, 0)
     
     for(m in months_to_run){
       tmp <- run_lump_sum_simulation(m, 
@@ -330,7 +297,23 @@ for (j in c(60, 100)){
                             left_join(tmp)
       }
     }
+    
+    assign(paste0("final_results_", pct_sw, "_sw_", pct_sw_cons, "_cons_sw"), results, envir = .GlobalEnv)
   }
+  
+  gif_ms <- 80
+  
+  create_gif(folder_time,
+             paste0("dca_perf_time_sw_", pct_sw,"_*.jpeg"),
+             gif_ms,
+             0,
+             paste0("_gif_dca_perf_time_sw_", pct_sw, ".gif"))
+  
+  create_gif(folder_dist,
+             paste0("dca_dist_sw_", pct_sw,"_*.jpeg"),
+             gif_ms,
+             0,
+             paste0("_gif_dist_sw_", pct_sw,".gif"))
 }
 
 # ############################  End  ################################## #
