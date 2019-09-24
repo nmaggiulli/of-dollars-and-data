@@ -62,8 +62,7 @@ to_plot <- final_results
 
 plot <- ggplot(data = to_plot, aes(x=net_worth, y = tax_amount)) +
   geom_line() +
-  scale_y_continuous(label = dollar, trans = log10_trans()) +
-  scale_x_continuous(label = dollar, trans = log10_trans()) +
+  scale_y_continuous(label = dollar) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Effective Annual Wealth Tax by Net Worth")) +
   labs(x = paste0("Net Worth"), y = "Annual Tax ($)",
