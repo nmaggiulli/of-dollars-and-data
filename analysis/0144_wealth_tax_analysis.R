@@ -53,21 +53,29 @@ for(net_worth in net_worths){
   counter <- counter + 1
 }
 
-# Do stock beats by year
-file_path <- paste0(out_path, "/tax_total_by_net_worth.jpeg")
+plot_nw <- function(max_nw, name){
+  
+  file_path <- paste0(out_path, "/tax_total_by_net_worth_", name, ".jpeg")
+  
+  source_string <- paste0("Source:  OfDollarsAndData.com")
+  
+  to_plot <- final_results %>%
+                filter(net_worth <= max_nw) %>%
+                mutate(net_worth = net_worth/(10^6))
+  
+  plot <- ggplot(data = to_plot, aes(x=net_worth, y = tax_amount)) +
+    geom_line() +
+    scale_y_continuous(label = dollar) +
+    scale_x_continuous(label = dollar) +
+    of_dollars_and_data_theme +
+    ggtitle(paste0("Effective Annual Wealth Tax by Net Worth")) +
+    labs(x = paste0("Net Worth (in millions)"), y = "Annual Tax ($)",
+         caption = paste0(source_string))
+  
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+}
 
-source_string <- paste0("Source:  OfDollarsAndData.com")
-
-to_plot <- final_results
-
-plot <- ggplot(data = to_plot, aes(x=net_worth, y = tax_amount)) +
-  geom_line() +
-  scale_y_continuous(label = dollar) +
-  of_dollars_and_data_theme +
-  ggtitle(paste0("Effective Annual Wealth Tax by Net Worth")) +
-  labs(x = paste0("Net Worth"), y = "Annual Tax ($)",
-       caption = paste0(source_string))
-
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+plot_nw(10^10, "all")
+plot_nw(10^9, "1bil")
 
 # ############################  End  ################################## #
