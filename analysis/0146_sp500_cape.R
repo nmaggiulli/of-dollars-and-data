@@ -13,7 +13,7 @@ library(lubridate)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "xxxx_sp500_cape"
+folder_name <- "0146_sp500_cape"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -61,7 +61,7 @@ plot_cape_time <- function(start_date, end_date, n_month_ret, file_out){
 date_seq <- seq.Date(as.Date("1940-01-01"), as.Date("2008-01-01"), "year")
 
 for(i in 1:length(date_seq)){
-  n_month_fwd_ret <- 60
+  n_month_fwd_ret <- 120
   
   start_dt <- date_seq[i]
   start_date_string <- date_to_string(start_dt)
@@ -79,7 +79,7 @@ create_gif(out_path,
            0,
            paste0("_gif_cape_fwd_ret.gif"))
 
-plot_cape_time(as.Date("1940-01-01"), as.Date("2014-01-01"), n_month_fwd_ret, "cape_all_years.jpeg")
+plot_cape_time(as.Date("1940-01-01"), as.Date("2009-01-01"), n_month_fwd_ret, "cape_all_years.jpeg")
 
 
 # ############################  End  ################################## #
