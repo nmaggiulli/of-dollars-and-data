@@ -19,18 +19,20 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+raw <-  ret_yr <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
+            rename(index = price_plus_div)
+
 plot_cape_time <- function(start_date, end_date, n_month_ret, file_out){
   
   n_year_ret <- n_month_ret/12
   
   #Bring in all data
-  ret_yr <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-                    rename(index = price_plus_div) %>%
-                    mutate(fwd_ret = (lead(index, n_month_ret)/index)^(12/n_month_ret) - 1) %>%
-                    select(date, fwd_ret, cape) %>%
-                    filter(!is.na(fwd_ret), !is.na(cape), 
-                           date >= start_date,
-                           date < end_date) 
+  ret_yr <- raw %>%
+            mutate(fwd_ret = (lead(index, n_month_ret)/index)^(12/n_month_ret) - 1) %>%
+            select(date, fwd_ret, cape) %>%
+            filter(!is.na(fwd_ret), !is.na(cape), 
+                   date >= start_date,
+                   date < end_date) 
   
   to_plot <- ret_yr
   
@@ -58,7 +60,7 @@ plot_cape_time <- function(start_date, end_date, n_month_ret, file_out){
   
 }
 
-date_seq <- seq.Date(as.Date("1940-01-01"), as.Date("2008-01-01"), "year")
+date_seq <- seq.Date(as.Date("1940-01-01"), as.Date("2008-01-01"), "2 years")
 
 for(i in 1:length(date_seq)){
   n_month_fwd_ret <- 120
@@ -77,9 +79,15 @@ create_gif(out_path,
            paste0("cape_forward_ret_", n_month_fwd_ret, "m_*.jpeg"),
            40,
            0,
-           paste0("_gif_cape_fwd_ret.gif"))
+           paste0("_gif_cape_10yr_fwd_ret.gif"))
 
 plot_cape_time(as.Date("1940-01-01"), as.Date("2009-01-01"), n_month_fwd_ret, "cape_all_years.jpeg")
+
+#Calculate return since 2014
+ret_2014 <- raw %>%
+              filter(date >= "2014-01-01") 
+
+ret_since_2014 <- pull(ret_2014[nrow(ret_2014), "index"])/pull(ret_2014[1, "index"]) - 1
 
 
 # ############################  End  ################################## #
