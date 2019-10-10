@@ -37,9 +37,6 @@ raw_by_year <- raw %>%
                        ret_bond = ret_bond - cpi)
 
 n_years <- 30
-
-value_add <- 1000
-
 weight_sequence <- seq(0, 1, 0.1)
 
 for(w_sp500 in weight_sequence){
@@ -55,18 +52,25 @@ for(w_sp500 in weight_sequence){
     df <- raw_by_year %>%
             filter(yr >= y, yr < y + n_years)
     
+    #Initialize contributions
+    value_add <- 1000
+    
     for(i in 1:n_years){
       df[i, "year"] <- i
       df[i, "start_year"] <- y
       ret_sp500 <- df[i, "ret_sp500"]
       ret_bond <- df[i, "ret_bond"]
+      cpi <- pull(df[i, "cpi"])
   
       if(i == 1){
         df[i, "value_port"] <- (value_add * w_sp500 * (1 + ret_sp500)) + (value_add * w_bond * (1 + ret_bond))
       } else{
+        value_add <- value_add * (1 + cpi)
         df[i, "value_port"] <- ((df[(i-1), "value_port"] + value_add) * w_sp500 * (1 + ret_sp500)) + ((df[(i-1), "value_port"] + value_add) * w_bond * (1 + ret_bond))
       }
     }
+    
+    value_add <- 1000
     
     if(y == year_list[1]){
       final_results <- df
@@ -92,9 +96,10 @@ for(w_sp500 in weight_sequence){
   
   source_string <- str_wrap(paste0("Source:  Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)"), 
                             width = 85)
-  note_string <-  str_wrap(paste0("Note:  Assumes you invest $", formatC(value_add, big.mark = ",", format="f", digits = 0), " annually with rebalancing into a ", 
+  note_string <-  str_wrap(paste0("Note:  Assumes you invest $", formatC(value_add, big.mark = ",", format="f", digits = 0), " a year into a ", 
                                   100*w_sp500, "/", 100*w_bond,
-                                  " (stock/bond) portfolio.  Adjusted for dividends and inflation."))
+                                  " (stock/bond) portfolio that is rebalanced annually.  Contributions grow with inflation.  ",  
+                                  "Returns are adjusted for dividends and inflation."))
   
   plot <- ggplot(data = to_plot, aes(x=year, y = value_port, col = as.factor(start_year))) +
     geom_line() +
@@ -109,7 +114,7 @@ for(w_sp500 in weight_sequence){
                     segment.colour = "transparent"
     ) +
     scale_color_discrete(guide = FALSE) +
-    scale_y_continuous(label = dollar, limits = c(0, 70000)) +
+    scale_y_continuous(label = dollar, limits = c(0, 2*10^5)) +
     scale_x_continuous(limits = c(0, 30)) +
     of_dollars_and_data_theme +
     ggtitle(paste0("30-Year DCA Results by Year For\n", weight_string, " Portfolio")) +
