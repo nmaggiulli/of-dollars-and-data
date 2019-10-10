@@ -44,7 +44,7 @@ for(w_sp500 in weight_sequence){
   w_bond <- 1 - w_sp500  
     
   year_list <- raw_by_year %>%
-                filter(yr %% 5 == 0, yr < 2019 - n_years) %>%
+                filter(yr %% 10 == 0, yr < 2019 - n_years) %>%
                 pull(yr)
   
   for(y in year_list){
@@ -54,6 +54,7 @@ for(w_sp500 in weight_sequence){
     
     #Initialize contributions
     value_add <- 1000
+    total_contributions <- 0
     
     for(i in 1:n_years){
       df[i, "year"] <- i
@@ -64,13 +65,16 @@ for(w_sp500 in weight_sequence){
   
       if(i == 1){
         df[i, "value_port"] <- (value_add * w_sp500 * (1 + ret_sp500)) + (value_add * w_bond * (1 + ret_bond))
+        total_contributions <- value_add
       } else{
         value_add <- value_add * (1 + cpi)
         df[i, "value_port"] <- ((df[(i-1), "value_port"] + value_add) * w_sp500 * (1 + ret_sp500)) + ((df[(i-1), "value_port"] + value_add) * w_bond * (1 + ret_bond))
+        total_contributions <- total_contributions + value_add
       }
     }
-    
-    value_add <- 1000
+  
+    df <- df %>%
+            mutate(total_contributions = total_contributions)
     
     if(y == year_list[1]){
       final_results <- df
@@ -79,11 +83,13 @@ for(w_sp500 in weight_sequence){
     }
   }
   
+  value_add <- 1000
+  
   to_plot <- final_results %>%
                 select(year, start_year, value_port)
   
   if(w_sp500 != 0 & w_sp500 != 1){
-    weight_string <- paste0(100*w_sp500, "/", 100*w_bond, "(Stock/Bond)")
+    weight_string <- paste0(100*w_sp500, "/", 100*w_bond, " (Stock/Bond)")
   } else if (w_sp500 == 0){
     weight_string <- paste0("All Bond")
   } else if (w_sp500 == 1){
@@ -103,7 +109,7 @@ for(w_sp500 in weight_sequence){
   
   plot <- ggplot(data = to_plot, aes(x=year, y = value_port, col = as.factor(start_year))) +
     geom_line() +
-    geom_hline(yintercept = n_years*value_add, col = "black", linetype = "dashed") + 
+    #geom_hline(yintercept = mean(unique(final_results$total_contributions)), col = "black", linetype = "dashed") + 
     geom_text_repel(data = filter(to_plot, year == max(to_plot$year)),
                     aes(x = year, 
                         y = value_port,
@@ -111,7 +117,8 @@ for(w_sp500 in weight_sequence){
                         label = round(start_year, digits=0),
                         family = "my_font"),
                     size = 2.5,
-                    segment.colour = "transparent"
+                    segment.colour = "transparent", 
+                    max.iter  = 3000
     ) +
     scale_color_discrete(guide = FALSE) +
     scale_y_continuous(label = dollar, limits = c(0, 2*10^5)) +
