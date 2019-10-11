@@ -13,7 +13,7 @@ library(lubridate)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "0146_sp500_cape"
+folder_name <- "0148_sp500_cape"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
