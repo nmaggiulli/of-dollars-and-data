@@ -26,23 +26,27 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-spx <- read_excel(paste0(importdir, "0097_spx_daily/spx_daily.xlsx")) %>%
+spx <- read.csv(paste0(importdir, "0097_spx_daily/spx_daily.csv")) %>%
         rename(date = Period,
-               index = `S&P 500 Level`) %>%
-        filter(date >= "2009-12-31", date < "2018-01-01") %>%
+               index = `S.P.500.Level`) %>%
+        mutate(date = as.Date(date, format = "%Y-%m-%d")) %>%
+        filter(date >= "2009-12-31", date < "2019-01-01") %>%
+        arrange(date) %>%
         mutate(year = year(date),
                date = as.Date(date),
                ret = index/lag(index) - 1) %>%
         select(date, index, year, ret) %>%
         filter(!is.na(ret))
 
+max_year <- max(spx$year)
+
 mcrib_dates <- data.frame(start = c("2010-11-02", "2011-10-24", "2012-12-17",
                                     "2013-10-15", "2014-11-05", "2015-09-15",
-                                    "2016-11-09", "2017-11-09"
+                                    "2016-11-09", "2017-11-09", "2018-10-29"
                                     ),
                           end = c("2010-12-05", "2011-11-14", "2013-01-15",
                                   "2013-12-15", "2014-12-31", "2015-11-30", 
-                                  "2016-12-31", "2017-12-31"
+                                  "2016-12-31", "2017-12-31", "2018-12-31"
                                   )) %>%
                           mutate(n_days = as.Date(end)-as.Date(start),
                                  sim_start = as.Date(paste0(year(start), "-01-01")),
@@ -77,9 +81,9 @@ t.test(spx_mcrib$ret~spx_mcrib$mcrib_dummy)
 
 # Set note and source string
 source_string <- str_wrap("Source: YCharts.com, http://www.jeffreysward.com/editorials/mcrib.htm (OfDollarsAndData.com)",
-                          width = 85)
-note_string   <- str_wrap(paste0("Note:  Only includes McRib release data from 2010-2017.  The McRib was available on ", 100*round(n_pct_days, 3), "% of all trading days from 2010-2017."), 
-                          width = 85)
+                          width = 80)
+note_string   <- str_wrap(paste0("Note:  Only includes McRib release data from 2010-", max_year, ".  The McRib was available on ", 100*round(n_pct_days, 3), "% of all trading days from 2010-", max_year, "."), 
+                          width = 80)
 
 # Set the file_path based on the function input 
 file_path <- paste0(out_path, "/mcrib_days.jpeg")
@@ -93,7 +97,7 @@ plot <- ggplot(to_plot, aes(x=mcrib, y=ret, fill = mcrib)) +
           geom_bar(stat="identity") +
           scale_fill_manual(values = c("red", "blue"), guide = FALSE) +
           of_dollars_and_data_theme +
-          scale_y_continuous(label = percent) +
+          scale_y_continuous(label = percent_format(accuracy = 0.01)) +
           ggtitle("The S&P 500 Has a Higher Daily Return\nWhen the McRib is Available") +
           labs(x = "McRib Status", y = "Average Daily Return (%)",
                caption = paste0("\n", source_string, "\n", note_string))
