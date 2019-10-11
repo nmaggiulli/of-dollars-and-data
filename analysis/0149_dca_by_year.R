@@ -86,7 +86,8 @@ for(w_sp500 in weight_sequence){
   value_add <- 1000
   
   to_plot <- final_results %>%
-                select(year, start_year, value_port)
+                select(year, start_year, value_port, total_contributions) %>%
+                mutate(start_year = as.factor(start_year))
   
   if(w_sp500 != 0 & w_sp500 != 1){
     weight_string <- paste0(100*w_sp500, "/", 100*w_bond, " (Stock/Bond)")
@@ -107,17 +108,16 @@ for(w_sp500 in weight_sequence){
                                   " (stock/bond) portfolio that is rebalanced annually.  Contributions grow with inflation.  ",  
                                   "Returns are adjusted for dividends and inflation."))
   
-  plot <- ggplot(data = to_plot, aes(x=year, y = value_port, col = as.factor(start_year))) +
+  plot <- ggplot(data = to_plot, aes(x=year, y = value_port, col = start_year)) +
     geom_line() +
-    #geom_hline(yintercept = mean(unique(final_results$total_contributions)), col = "black", linetype = "dashed") + 
     geom_text_repel(data = filter(to_plot, year == max(to_plot$year)),
-                    aes(x = year, 
+                    aes(x = year,
                         y = value_port,
-                        col = as.factor(start_year),
-                        label = round(start_year, digits=0),
+                        col = start_year,
+                        label = start_year,
                         family = "my_font"),
                     size = 2.5,
-                    segment.colour = "transparent", 
+                    segment.colour = "transparent",
                     max.iter  = 3000
     ) +
     scale_color_discrete(guide = FALSE) +
