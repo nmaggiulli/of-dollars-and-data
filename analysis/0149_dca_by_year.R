@@ -32,9 +32,7 @@ raw_by_year <- raw %>%
                 summarize(ret_sp500 = prod(1+ret_sp500)-1,
                           ret_bond = prod(1+ret_bond)-1,
                           cpi = prod(1+cpi)-1) %>%
-                ungroup() %>%
-                mutate(ret_sp500 = ret_sp500,
-                       ret_bond = ret_bond)
+                ungroup()
 
 n_years <- 30
 
@@ -116,7 +114,7 @@ for(y in year_list){
                             width = 85)
   note_string <-  str_wrap(paste0("Note:  Assumes you invest $", formatC(value_add, big.mark = ",", format="f", digits = 0), " a year into a ", 
                                   "stock/bond portfolio that is rebalanced annually.  Contributions grow with inflation.  ",  
-                                  "Returns are adjusted for dividends, but not inflation."))
+                                  "Returns shown include dividends, but are not adjusted for inflation."))
   
   plot <- ggplot(data = to_plot, aes(x=sim_year, y = value_port, col = w_sp500)) +
     geom_line(aes(linetype = w_sp500)) +
@@ -132,7 +130,7 @@ for(y in year_list){
     ) +
     scale_color_manual(guide = FALSE, values = c("lightseagreen", "blue", "green", "black")) +
     scale_linetype_manual(guide = FALSE, values = c("solid", "solid", "solid", "dashed")) +
-    scale_y_continuous(label = dollar, limits = c(0, 300000)) +
+    scale_y_continuous(label = dollar) +
     scale_x_continuous(limits = c(0, 30)) +
     of_dollars_and_data_theme +
     ggtitle(paste0("30-Year DCA Results by Stock Weight\n", y)) +
@@ -144,7 +142,7 @@ for(y in year_list){
 
 create_gif(out_path,
             paste0("sp500_*.jpeg"),
-            100,
+            170,
             0,
             paste0("_gif_dca_30yr_periods.gif"))
 
