@@ -22,8 +22,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 raw <- readRDS(paste0(localdir, "0059_goyal_stock_bond_data.Rds")) %>%
           mutate(yr = year(date),
-                 ret_sp500 = stock,
-                 ret_bond = lt_bond) %>%
+                 ret_sp500 = stock_real,
+                 ret_bond = lt_bond_real) %>%
           filter(yr >= 1930) %>%
           select(date, ret_sp500, ret_bond, yr, cpi)
 
@@ -114,7 +114,7 @@ for(y in year_list){
                             width = 85)
   note_string <-  str_wrap(paste0("Note:  Assumes you invest $", formatC(value_add, big.mark = ",", format="f", digits = 0), " a year into a ", 
                                   "stock/bond portfolio that is rebalanced annually.  Contributions grow with inflation.  ",  
-                                  "Returns shown include dividends, but are not adjusted for inflation."))
+                                  "Returns shown are adjusted for dividends and inflation."))
   
   plot <- ggplot(data = to_plot, aes(x=sim_year, y = value_port, col = w_sp500)) +
     geom_line(aes(linetype = w_sp500)) +

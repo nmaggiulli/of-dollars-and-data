@@ -21,12 +21,12 @@ df <- read_excel(tf, sheet="Monthly") %>%
                                                                    "-01"),
                                                             format = "%Y-%m-%d"),
                                              cpi = as.numeric(infl),
-                                             stock = (Index/lag(Index) - 1) - cpi,
-                                             corp_bond = as.numeric(corpr) - cpi,
-                                             rf = (as.numeric(Rfree) - cpi),
-                                             lt_bond = as.numeric(ltr) - cpi) %>%
+                                             stock_real = (Index/lag(Index) - 1) - cpi,
+                                             corp_bond_real = as.numeric(corpr) - cpi,
+                                             rf_real = (as.numeric(Rfree) - cpi),
+                                             lt_bond_real = as.numeric(ltr) - cpi) %>%
   filter(!is.nan(cpi)) %>%
-  select(date, stock, lt_bond, corp_bond, rf, cpi)
+  select(date, stock_real, lt_bond_real, corp_bond_real, rf_real, cpi)
 
 saveRDS(df, paste0(localdir, "0059_goyal_stock_bond_data.Rds"))
 
