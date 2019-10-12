@@ -96,7 +96,7 @@ for(y in year_list){
                       distinct %>%
                       arrange(sim_year) %>%
                       rename(value_port = total_contributions) %>%
-                      mutate(w_sp500 = "Total Contributions")
+                      mutate(w_sp500 = "Inflation")
   
   to_plot <- final_results %>%
                 select(sim_year, w_sp500, value_port, start_year) %>%
@@ -113,8 +113,8 @@ for(y in year_list){
   source_string <- str_wrap(paste0("Source:  Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)"), 
                             width = 85)
   note_string <-  str_wrap(paste0("Note:  Assumes you invest $", formatC(value_add, big.mark = ",", format="f", digits = 0), " a year into a ", 
-                                  "stock/bond portfolio that is rebalanced annually.  Contributions grow with inflation.  ",  
-                                  "Returns shown are adjusted for dividends and inflation."))
+                                  "stock/bond portfolio that is rebalanced annually.  Annual contribution amount grows with inflation.  ",  
+                                  "Amounts shown are adjusted for dividends and inflation."))
   
   plot <- ggplot(data = to_plot, aes(x=sim_year, y = value_port, col = w_sp500)) +
     geom_line(aes(linetype = w_sp500)) +
