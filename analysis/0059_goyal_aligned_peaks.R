@@ -20,6 +20,10 @@ library(lubridate)
 library(tidyr)
 library(dplyr)
 
+folder_name <- "0059_goyal_aligned_peaks"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+
 ########################## Start Program Here ######################### #
 
 df_full <- readRDS(paste0(localdir, "0059_goyal_stock_bond_data.Rds"))
@@ -62,7 +66,7 @@ plot_aligned_crash <- function(n_years_after_peak){
   }
   
   # Set the file_path based on the function input 
-  file_path <- paste0(exportdir, "0059_goyal_aligned_peaks/stock-aligned-peaks-", n_years_after_peak, ".jpeg")
+  file_path <- paste0(out_path, "/stock_aligned_peaks_", n_years_after_peak, ".jpeg")
   
   # Set note and source string
   source_string <- str_wrap("Source: Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)",
@@ -109,7 +113,7 @@ plot_aligned_crash <- function(n_years_after_peak){
     }
   
     # Set the file_path based on the function input 
-    file_path <- paste0(exportdir, "0059_goyal_aligned_peaks/all-", peak_year ,"-", n_years_after_peak, ".jpeg")
+    file_path <- paste0(out_path, "/all_", peak_year ,"_", n_years_after_peak, ".jpeg")
     
     # Set note and source string
     source_string <- str_wrap("Source: Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)",
@@ -148,11 +152,11 @@ plot_aligned_crash <- function(n_years_after_peak){
 
 plot_aligned_crash(5)
 
-# Instead of creating these images as a GIF in R, do it in Bash
-# I use Git Bash + magick because this is way faster than creating the GIF in R
-# After navigating to the correct folder, use this command:
-#
-# convert -delay 110 loop -0 all-*.jpeg all_plots.gif
+create_gif(out_path,
+           paste0("sp500_*.jpeg"),
+           170,
+           0,
+           paste0("_gif_dca_30yr_periods.gif"))
 
 # Create plot of stocks by decade
 decade <- df_full %>%
@@ -164,7 +168,7 @@ decade <- df_full %>%
             select(decade, stock)
 
 # Set the file_path based on the function input 
-file_path <- paste0(exportdir, "0059_goyal_aligned_peaks/stock-returns-by-decade.jpeg")
+file_path <- paste0(exportdir, "0059_goyal_aligned_peaks/stock_returns_by_decade.jpeg")
 
 # Set note and source string
 source_string <- str_wrap("Source: Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)",
@@ -189,5 +193,11 @@ my_gtable   <- ggplot_gtable(ggplot_build(plot))
 # Save the plot
 ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
+
+create_gif(out_path,
+           paste0("all_*.jpeg"),
+           120,
+           0,
+           paste0("_gif_all_peaks.gif"))
 
 # ############################  End  ################################## #
