@@ -33,50 +33,58 @@ raw_by_year <- raw %>%
                           ret_bond = prod(1+ret_bond)-1,
                           cpi = prod(1+cpi)-1) %>%
                 ungroup() %>%
-                mutate(ret_sp500 = ret_sp500 - cpi,
-                       ret_bond = ret_bond - cpi)
+                mutate(ret_sp500 = ret_sp500,
+                       ret_bond = ret_bond)
 
 n_years <- 30
-weight_sequence <- seq(0, 1, 0.1)
 
-for(w_sp500 in weight_sequence){
+year_list <- raw_by_year %>%
+  filter(yr %% 5 == 0, yr < 2019 - n_years) %>%
+  pull(yr)
 
-  w_bond <- 1 - w_sp500  
-    
-  year_list <- raw_by_year %>%
-                filter(yr %% 10 == 0, yr < 2019 - n_years) %>%
-                pull(yr)
+weight_sequence <- c(0, 0.6, 1)
+
+for(y in year_list){
   
-  for(y in year_list){
-    
-    df <- raw_by_year %>%
-            filter(yr >= y, yr < y + n_years)
-    
+  df <- raw_by_year %>%
+    filter(yr >= y, yr < y + n_years)
+  
+  for(w_sp500 in weight_sequence){
+    print(w_sp500)
+
+    w_bond <- 1 - w_sp500  
+  
     #Initialize contributions
     value_add <- 1000
     total_contributions <- 0
     
+    if(w_sp500 == 1){
+      w_string <- "All Stocks"
+    } else if (w_sp500 == 0){
+      w_string <- "All Bonds"
+    } else{
+      w_string <- paste0(100*w_sp500, "% Stocks")
+    }
+    
     for(i in 1:n_years){
-      df[i, "year"] <- i
+      df[i, "sim_year"] <- i
       df[i, "start_year"] <- y
+      df[i, "w_sp500"] <- w_string
       ret_sp500 <- df[i, "ret_sp500"]
       ret_bond <- df[i, "ret_bond"]
       cpi <- pull(df[i, "cpi"])
   
       if(i == 1){
         df[i, "value_port"] <- (value_add * w_sp500 * (1 + ret_sp500)) + (value_add * w_bond * (1 + ret_bond))
-        total_contributions <- value_add
+        df[i, "total_contributions"] <- value_add
       } else{
         value_add <- value_add * (1 + cpi)
         df[i, "value_port"] <- ((df[(i-1), "value_port"] + value_add) * w_sp500 * (1 + ret_sp500)) + ((df[(i-1), "value_port"] + value_add) * w_bond * (1 + ret_bond))
-        total_contributions <- total_contributions + value_add
+        df[i, "total_contributions"] <- df[(i-1), "total_contributions"] + value_add
       }
     }
-  
-    df <- df %>%
-            mutate(total_contributions = total_contributions)
     
-    if(y == year_list[1]){
+    if(w_sp500 == weight_sequence[1]){
       final_results <- df
     } else{
       final_results <- bind_rows(final_results, df)
@@ -85,46 +93,49 @@ for(w_sp500 in weight_sequence){
   
   value_add <- 1000
   
-  to_plot <- final_results %>%
-                select(year, start_year, value_port, total_contributions) %>%
-                mutate(start_year = as.factor(start_year))
+  contributions <- final_results %>%
+                      select(yr, sim_year, total_contributions) %>%
+                      distinct %>%
+                      arrange(sim_year) %>%
+                      rename(value_port = total_contributions) %>%
+                      mutate(w_sp500 = "Total Contributions")
   
-  if(w_sp500 != 0 & w_sp500 != 1){
-    weight_string <- paste0(100*w_sp500, "/", 100*w_bond, " (Stock/Bond)")
-  } else if (w_sp500 == 0){
-    weight_string <- paste0("All Bond")
-  } else if (w_sp500 == 1){
-    weight_string <- paste0("All Stock")
-  }
+  to_plot <- final_results %>%
+                select(sim_year, w_sp500, value_port, start_year) %>%
+                mutate(w_sp500 = as.factor(w_sp500),
+                       yr = start_year + sim_year) %>%
+                bind_rows(contributions)
+
+  start_year_string <- y
   
   w_padded <- str_pad(100*w_sp500, side = "left", width = 3, pad = "0")
   
-  file_path <- paste0(out_path, "/sp500_", w_padded, "_pct_30yr_period_dca.jpeg")
+  file_path <- paste0(out_path, "/sp500_", y, "_pct_30yr_period_dca.jpeg")
   
   source_string <- str_wrap(paste0("Source:  Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)"), 
                             width = 85)
   note_string <-  str_wrap(paste0("Note:  Assumes you invest $", formatC(value_add, big.mark = ",", format="f", digits = 0), " a year into a ", 
-                                  100*w_sp500, "/", 100*w_bond,
-                                  " (stock/bond) portfolio that is rebalanced annually.  Contributions grow with inflation.  ",  
-                                  "Returns are adjusted for dividends and inflation."))
+                                  "stock/bond portfolio that is rebalanced annually.  Contributions grow with inflation.  ",  
+                                  "Returns are adjusted for dividends, but not inflation."))
   
-  plot <- ggplot(data = to_plot, aes(x=year, y = value_port, col = start_year)) +
-    geom_line() +
-    geom_text_repel(data = filter(to_plot, year == max(to_plot$year)),
-                    aes(x = year,
+  plot <- ggplot(data = to_plot, aes(x=sim_year, y = value_port, col = w_sp500)) +
+    geom_line(aes(linetype = w_sp500)) +
+    geom_text_repel(data = filter(to_plot, sim_year == max(to_plot$sim_year)),
+                    aes(x = sim_year,
                         y = value_port,
-                        col = start_year,
-                        label = start_year,
+                        col = w_sp500,
+                        label = w_sp500,
                         family = "my_font"),
                     size = 2.5,
                     segment.colour = "transparent",
-                    max.iter  = 3000
+                    max.iter  = 1000
     ) +
-    scale_color_discrete(guide = FALSE) +
-    scale_y_continuous(label = dollar, limits = c(0, 2*10^5)) +
+    scale_color_manual(guide = FALSE, values = c("lightseagreen", "blue", "green", "black")) +
+    scale_linetype_manual(guide = FALSE, values = c("solid", "solid", "solid", "dashed")) +
+    scale_y_continuous(label = dollar, limits = c(0, 300000)) +
     scale_x_continuous(limits = c(0, 30)) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("30-Year DCA Results by Year For\n", weight_string, " Portfolio")) +
+    ggtitle(paste0("30-Year DCA Results by Stock Weight\n", y)) +
     labs(x = paste0("Year"), y = paste0("Portfolio Value"),
          caption = paste0(source_string, "\n", note_string))
   
@@ -132,9 +143,9 @@ for(w_sp500 in weight_sequence){
 }
 
 create_gif(out_path,
-           paste0("sp500_*.jpeg"),
-           100,
-           0,
-           paste0("_gif_dca_30yr_periods.gif"))
+            paste0("sp500_*.jpeg"),
+            100,
+            0,
+            paste0("_gif_dca_30yr_periods.gif"))
 
 # ############################  End  ################################## #
