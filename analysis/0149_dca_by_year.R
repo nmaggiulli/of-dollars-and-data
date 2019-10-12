@@ -108,7 +108,7 @@ for(y in year_list){
   
   w_padded <- str_pad(100*w_sp500, side = "left", width = 3, pad = "0")
   
-  file_path <- paste0(out_path, "/sp500_", y, "_pct_30yr_period_dca.jpeg")
+  file_path <- paste0(out_path, "/sp500_", y, "_pct_dca.jpeg")
   
   source_string <- str_wrap(paste0("Source:  Amit Goyal, http://www.hec.unil.ch/agoyal/ (OfDollarsAndData.com)"), 
                             width = 85)
@@ -131,9 +131,9 @@ for(y in year_list){
     scale_color_manual(guide = FALSE, values = c("lightseagreen", "blue", "green", "black")) +
     scale_linetype_manual(guide = FALSE, values = c("solid", "solid", "solid", "dashed")) +
     scale_y_continuous(label = dollar) +
-    scale_x_continuous(limits = c(0, 30)) +
+    scale_x_continuous(limits = c(0, n_years)) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("30-Year DCA Results by Stock Weight\n", y)) +
+    ggtitle(paste0(n_years, "-Year DCA Results by Stock Weight\n", y)) +
     labs(x = paste0("Year"), y = paste0("Portfolio Value"),
          caption = paste0(source_string, "\n", note_string))
   
@@ -144,6 +144,6 @@ create_gif(out_path,
             paste0("sp500_*.jpeg"),
             170,
             0,
-            paste0("_gif_dca_30yr_periods.gif"))
+            paste0("_gif_period_dca.gif"))
 
 # ############################  End  ################################## #
