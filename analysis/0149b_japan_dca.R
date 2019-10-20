@@ -21,7 +21,7 @@ library(tools)
 library(quantmod)
 library(dplyr)
 
-folder_name <- "xxxx_japan_dca"
+folder_name <- "0149b_japan_dca"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -42,14 +42,18 @@ plot_jpy_value <- function(date_start, n_years){
   
   for (i in 1:nrow(filtered)){
     if(i == 1){
-      filtered[i, "value"] <- 100
+      filtered[i, "DCA"] <- 100
+      filtered[i, "Contributions"] <- 100
     } else{
-      filtered[i, "value"] <- 100 + (filtered[(i-1), "value"] * (1+filtered[i, "ret"]))
+      filtered[i, "DCA"] <- 100 + (filtered[(i-1), "DCA"] * (1+filtered[i, "ret"]))
+      filtered[i, "Contributions"] <- filtered[(i-1), "Contributions"] + 100
     }
   }
   
   to_plot <- filtered %>%
-              select(date, value)
+              select(-ret) %>%
+              gather(-date, key=key, value=value) %>%
+              select(date, key, value)
   
   assign("to_plot", to_plot, envir = .GlobalEnv)
   
@@ -66,16 +70,18 @@ plot_jpy_value <- function(date_start, n_years){
   # Set note and source string
   source_string <- str_wrap("Source: YCharts (OfDollarsAndData.com)",
                             width = 85)
-  note_string   <- str_wrap(paste0("Note: Assumes a monthly contribution of $100 for a total contribution of $", formatC(total_cont, format="f", big.mark = ",", digits = 0), " across ", n_year_cont, " years."), 
+  note_string   <- str_wrap(paste0("Note: Monthly contribution of $100 are plotted (dashed line) alongside the portfolio value (solid line).  ",
+                                   "In total, $", formatC(total_cont, format="f", big.mark = ",", digits = 0), " are contributed across ", n_year_cont, " years."), 
                             width = 85)
   
   min_dt_decade <- as.Date(paste0(year(min(to_plot$date)) - year(min(to_plot$date)) %% 10, "-01-01", format = "%Y-%m-%d"))
   max_dt_decade <- as.Date(paste0(year(max(to_plot$date)) - year(max(to_plot$date)) %% 10, "-01-01", format = "%Y-%m-%d"))
   
-  last_point <- filter(to_plot, row_number() == nrow(to_plot))
+  last_point <- filter(to_plot, dplyr::row_number() == nrow(filtered), key == "DCA")
   
-  plot <- ggplot(to_plot, aes(x=date, y=value)) +
+  plot <- ggplot(to_plot, aes(x=date, y=value, linetype = key)) +
     geom_line() +
+    scale_linetype_manual(guide = FALSE, values = c("dashed", "solid")) +
     scale_y_continuous(label = dollar) +
     scale_x_date(breaks = seq.Date(min_dt_decade, max_dt_decade, "10 years"), date_labels = "%Y") +
     geom_point(data = last_point, 
@@ -90,7 +96,7 @@ plot_jpy_value <- function(date_start, n_years){
                     nudge_x = -200,
                     segment.color = "transparent") +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Dollar Cost Averaging into Japan\n", first_year, "-", last_year)) +
+    ggtitle(paste0("Dollar-Cost Averaging into Japan\n", first_year, "-", last_year)) +
     labs(x = "Date", y="Portfolio Value",
          caption = paste0(source_string, "\n", note_string))
   
@@ -101,7 +107,7 @@ plot_jpy_value <- function(date_start, n_years){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
   
   # Create drawdown plot
-  dd <- drawdown_path(to_plot)
+  dd <- drawdown_path(select(filtered, date, DCA))
   
   # Set the file_path
   file_path <- paste0(out_path, "/dd_dca_", date_start_string, ".jpeg")
@@ -122,8 +128,6 @@ plot_jpy_value <- function(date_start, n_years){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-plot_jpy_value("1970-01-01", 48)
 plot_jpy_value("1980-01-01", 38)
-plot_jpy_value("1985-01-01", 33)
 
 # ############################  End  ################################## #
