@@ -60,7 +60,7 @@ plot_jpy_value <- function(date_start, n_years){
   total_cont <- 100 * nrow(filtered)
   
   # Set the file_path
-  file_path <- paste0(out_path, "/value_dca_", date_start_string, ".jpeg")
+  file_path <- paste0(out_path, "/japan_value_dca_", date_start_string, ".jpeg")
   
   first_year <- year(min(to_plot$date))
   last_year <- year(max(to_plot$date))
@@ -70,7 +70,7 @@ plot_jpy_value <- function(date_start, n_years){
   # Set note and source string
   source_string <- str_wrap("Source: YCharts (OfDollarsAndData.com)",
                             width = 85)
-  note_string   <- str_wrap(paste0("Note: Monthly contribution of $100 are plotted (dashed line) alongside the portfolio value (solid line).  ",
+  note_string   <- str_wrap(paste0("Note: Monthly contribution of $100 (dashed line) are plotted alongside the portfolio value (solid line).  ",
                                    "In total, $", formatC(total_cont, format="f", big.mark = ",", digits = 0), " are contributed across ", n_year_cont, " years."), 
                             width = 85)
   
