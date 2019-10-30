@@ -60,7 +60,7 @@ plot_cape_time <- function(start_date, end_date, n_month_ret, file_out){
   
 }
 
-date_seq <- seq.Date(as.Date("1940-01-01"), as.Date("2008-01-01"), "2 years")
+date_seq <- seq.Date(as.Date("1940-01-01"), as.Date("2008-01-01"), "5 years")
 
 for(i in 1:length(date_seq)){
   n_month_fwd_ret <- 120
@@ -77,9 +77,9 @@ for(i in 1:length(date_seq)){
 
 create_gif(out_path,
            paste0("cape_forward_ret_", n_month_fwd_ret, "m_*.jpeg"),
-           40,
+           70,
            0,
-           paste0("_gif_cape_10yr_fwd_ret.gif"))
+           paste0("_cape_10yr_fwd_ret.gif"))
 
 plot_cape_time(as.Date("1940-01-01"), as.Date("2009-01-01"), n_month_fwd_ret, "cape_all_years.jpeg")
 
