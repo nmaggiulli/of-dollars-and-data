@@ -127,25 +127,50 @@ for(y in years_to_plot){
                                   "Management fees are assessed on the beginning year balance and charged at year end."),
                            width = 85)
   
-  file_path <- paste0(out_path, "/mf_v_sp500_", file_string, "_", 100*fee_m_high, "_m_", 100*fee_perf_high, "_p.jpeg")
+  file_path <- paste0(out_path, "/medallion_v_sp500_", file_string, "_", 100*fee_m_high, "_m_", 100*fee_perf_high, "_p.jpeg")
+  
+  text_labels <- to_plot %>%
+                  filter(year == max(to_plot$year)) 
   
   if(y == 2019){
     plot <- ggplot(data = to_plot, aes(x=year, y = value, col = key)) +
       geom_line() +
+      geom_text_repel(data = text_labels,
+                      aes(x = year,
+                          y = value,
+                          col = key,
+                          label = paste0(key, "\n$", formatC(value, digits = 2, format = "f", big.mark = ",")),
+                          family = "my_font"),
+                      size = 3,
+                      segment.colour = "transparent",
+                      max.iter  = 1000,
+                      nudge_x = ifelse(text_labels$key == "Medallion Fund", -4, 0),
+                      nudge_y = ifelse(text_labels$key == "Medallion Fund", 0, -0.75)
+      ) +
       scale_y_continuous(label = dollar, trans = log_trans(), breaks = c(0, 1, 10, 100, 1000)) +
+      scale_color_manual(values = c("black", "blue"), guide = FALSE) +
       of_dollars_and_data_theme +
-      theme(legend.position = "bottom",
-            legend.title = element_blank()) +
       ggtitle(paste0("Medallion Fund with ", 100*fee_m_high, "% Fee vs. S&P 500\nGrowth of $1")) +
       labs(x = paste0("Year"), y = y_axis_label,
            caption = paste0(source_string, "\n", note_string))
   } else{
     plot <- ggplot(data = to_plot, aes(x=year, y = value, col = key)) +
       geom_line() +
+      geom_text_repel(data = text_labels,
+                      aes(x = year,
+                          y = value,
+                          col = key,
+                          label = paste0(key, "\n$", formatC(value, digits = 2, format = "f", big.mark = ",")),
+                          family = "my_font"),
+                      size = 3,
+                      segment.colour = "transparent",
+                      max.iter  = 1000,
+                      nudge_x = ifelse(text_labels$key == "Medallion Fund", 0, -1),
+                      nudge_y = ifelse(text_labels$key == "Medallion Fund", 0.8, 0)
+      ) +
       scale_y_continuous(label = dollar) +
+      scale_color_manual(values = c("black", "blue"), guide = FALSE) +
       of_dollars_and_data_theme +
-      theme(legend.position = "bottom",
-            legend.title = element_blank()) +
       ggtitle(paste0("Medallion Fund with ", 100*fee_m_high, "% Fee vs. S&P 500\nGrowth of $1")) +
       labs(x = paste0("Year"), y = y_axis_label,
            caption = paste0(source_string, "\n", note_string))
