@@ -12,6 +12,8 @@ library(dplyr)
 
 ########################## Start Program Here ######################### #
 
+Quandl.api_key("PNidzaHfNknqXchLKsRT")
+
 # Import bitcoin price in USD (note that my API key is imported in the header.R file)
 bcoin       <- Quandl("BCHAIN/MKPRU")  %>%
                   filter(Value > 0) %>%
