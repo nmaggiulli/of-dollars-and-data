@@ -4,7 +4,6 @@ rm(list = ls()) #clear your environment
 
 ########################## Load in Libraries ########################## #
 
-library(ggplot2)
 library(scales)
 library(lubridate)
 library(quantmod)
@@ -12,6 +11,11 @@ library(shiny)
 library(tidyverse)
 
 ########################## Start Program Here ######################### #
+
+quartzFonts(my_font = quartzFont(c("Libre Baskerville", 
+                                   "Libre Baskerville Bold", 
+                                   "Libre Baskerville Italic",
+                                   "Libre Baskerville Bold")))
 
 of_dollars_and_data_theme <- theme(
   plot.title       = element_text(family = "my_font", size = 14, face = "bold", hjust = 0.5, margin = ggplot2::margin(0, 0, 10, 0)),
@@ -48,7 +52,7 @@ ui <- fluidPage(
     ),
     column(3,
            dateInput("end_dt", paste0("End Date:"), 
-                     value = as.Date("2018-12-10"), 
+                     value = as.Date(Sys.Date()-1), 
                      format ="mm/dd/yyyy")
     )
   ),
@@ -57,10 +61,11 @@ ui <- fluidPage(
 
 server <- function(input, output) {
   filtered <- reactive({
-    getSymbols(input$ticker, from = input$start_dt, to = input$end_dt, 
+    tkr <- toupper(input$ticker)
+    getSymbols(tkr, from = input$start_dt, to = input$end_dt, 
                src="yahoo", periodicity = "daily") 
     
-    xticker <- paste0("X", input$ticker, "X")
+    xticker <- paste0("X", tkr, "X")
     
     getSymbols(xticker, from = input$start_dt, to = input$end_dt, 
                src="yahoo", periodicity = "daily") 
@@ -69,9 +74,9 @@ server <- function(input, output) {
       rename_(.dots = setNames(paste0(xticker, ".Close"), "x_close")) %>%
       select(date, x_close)
     
-    raw <- data.frame(date=index(get(input$ticker)), coredata(get(input$ticker))) %>%
-      rename_(.dots = setNames(paste0(input$ticker, ".Close"), "close")) %>%
-      rename_(.dots = setNames(paste0(input$ticker, ".Adjusted"), "adj")) %>%
+    raw <- data.frame(date=index(get(tkr)), coredata(get(tkr))) %>%
+      rename_(.dots = setNames(paste0(tkr, ".Close"), "close")) %>%
+      rename_(.dots = setNames(paste0(tkr, ".Adjusted"), "adj")) %>%
       left_join(x_raw) %>%
       select(date, close, adj, x_close) 
     
