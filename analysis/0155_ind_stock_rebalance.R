@@ -22,35 +22,20 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 # Set seed for randomization
 set.seed(12345)
 
-# Import data
-raw <- read.csv(paste0(importdir, "0155_ind_stocks_rebalance/ycharts.csv"), skip = 6) %>%
-  rename(symbol = Symbol,
-         name = Name) %>%
-  gather(-symbol, -name, key=key, value=value) %>%
-  mutate(year = gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\3", key, perl = TRUE),
-         month =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\1", key, perl = TRUE),
-         day =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\2", key, perl = TRUE),
-         date = as.Date(paste0(year, "-", month, "-", day), format = "%y-%m-%d")) %>%
-  filter(symbol != "", !is.na(value)) %>%
-  select(date, year, month, symbol, name, value) %>%
-  arrange(symbol, date)
+# Import YCharts Data
+raw <- readRDS(paste0(localdir, "0155_ind_stocks_ycharts.Rds"))
 
-starting_stocks <- raw %>%
-                filter(date == min(raw$date)) %>%
-                select(symbol) %>%
-                distinct()
+full_dates <- raw %>%
+                group_by(date) %>%
+                summarize(n_stocks = n()) %>%
+                ungroup() %>%
+                filter(n_stocks > 500) %>%
+                select(date)
 
-raw_starting <- raw %>%
-        inner_join(starting_stocks)
+first_yr <- year(min(full_dates$date))
+last_yr <- year(max(full_dates$date))
 
-full_dates <- raw_starting %>%
-  group_by(date) %>%
-  summarize(n_stocks = n()) %>%
-  ungroup() %>%
-  filter(n_stocks == length(unique(raw_starting$symbol))) %>%
-  select(date)
-
-df <- raw_starting %>%
+df <- raw %>%
         inner_join(full_dates) %>%
         mutate(day_of_week = as.numeric(format(date, "%w")))
 
@@ -64,7 +49,7 @@ latest_date_in_qtr <- latest_date_in_month %>%
                         rename(qtr_date = month_date)
 
 latest_date_in_yr <- latest_date_in_month %>%
-  filter(month %in% c(7)) %>%
+  filter(month %in% c(1)) %>%
   rename(yr_date = month_date)
 
 all_stocks <- df %>%
@@ -82,18 +67,18 @@ df <- df %>%
         left_join(all_stocks) %>%
         mutate(latest_date_in_month = ifelse(date == month_date, 1, 0),
                latest_date_in_qtr = ifelse(date != qtr_date | is.na(qtr_date), 0, 1),
-               latest_date_in_yr = ifelse(date != yr_date | is.na(yr_date), 0, 1),
-               date_num = as.numeric(date)) %>%
-        select(date_num, stock_num, value, day_of_week, 
+               latest_date_in_yr = ifelse(date != yr_date | is.na(yr_date), 0, 1)) %>%
+        select(date, stock_num, index, day_of_week, 
                latest_date_in_month, latest_date_in_qtr, latest_date_in_yr)
 
-n_stocks_list <- c(5, 10, 20, 50, 100, 250)
+n_stocks_list <- c(5, 10, 25, 50, 100, 150, 200)
 n_sims <- 1000
-rebal_types <- c("daily", "weekly", "monthly", "quarterly", "yearly")
+rebal_types <- c("weekly", "monthly", "quarterly", "yearly")
 
 stock_sims <- data.frame(n_stock = c(), simulation = c())
 stock_sim_counter <- 1
 for(n_stocks in n_stocks_list){
+  print(n_stocks)
   for(i in 1:n_sims){
     sim_stocks <- sort(sample(all_stock_nums, n_stocks, replace=TRUE))
     
@@ -110,7 +95,7 @@ counter <- 1
 for(rebal_type in rebal_types){
   print(rebal_type)
   if(rebal_type == "weekly"){
-    filter_string <- paste0("day_of_week == 4")
+    filter_string <- paste0("day_of_week == 3")
     exponent <- 52
   } else if (rebal_type == "monthly"){
     filter_string <- paste0("latest_date_in_month == 1")
@@ -122,14 +107,17 @@ for(rebal_type in rebal_types){
     filter_string <- paste0("latest_date_in_yr == 1")
     exponent <- 1
   } else{
-    filter_string <- paste0("value > 0")
     exponent <- 250
   }
-
-  rets <- df %>%
-    filter_(filter_string) %>%
-    mutate(ret = ifelse(stock_num == lag(stock_num), value/lag(value) - 1, NA)) %>%
-    filter(!is.na(ret))
+  
+  if(rebal_type == "daily"){
+    rets <- df
+  } else{
+    rets <- df %>%
+      filter_(filter_string) %>%
+      mutate(ret = ifelse(stock_num == lag(stock_num), index/lag(index) - 1, NA)) %>%
+      filter(!is.na(ret))
+  }
   
   for(n_stocks in n_stocks_list){
     print(paste0("new number of stocks = ", n_stocks))
@@ -140,10 +128,10 @@ for(rebal_type in rebal_types){
       
       rets_filtered <- rets %>%
               filter(stock_num %in% sim_stocks) %>%
-              group_by(date_num) %>%
+              group_by(date) %>%
               summarize(mean_ret = mean(ret) + 1) %>%
               ungroup() %>%
-              summarize(ret_geo = prod(mean_ret)^(1/(length(unique(rets$date_num))/exponent)) - 1)
+              summarize(ret_geo = prod(mean_ret)^(1/(length(unique(rets$date))/exponent)) - 1)
       
       final_results[counter, "simulation"] <- i
       final_results[counter, "n_stocks"] <- n_stocks
@@ -165,9 +153,10 @@ final_results_summarized <- final_results %>%
 to_plot <- final_results_summarized
 
 source_string <- str_wrap(paste0("Source: YCharts (OfDollarsAndData.com)"), 
-                          width = 85)
-note_string <-  str_wrap(paste0("Note:  Shows ", n_sims, " simulations of various N-stock equal weighted portfolios by rebalancing frequency."), 
-                         width = 85)
+                          width = 80)
+note_string <-  str_wrap(paste0("Note:  Shows ", formatC(n_sims, format = "f", digits = 0, big.mark = ","), " simulations of various sized equal-weighted stock portfolios by rebalancing frequency.  ",
+                                "Individual stocks are sampled from the S&P 500 from ", first_yr, "-", last_yr, " whether or not they existed in the index at the time of sampling."), 
+                         width = 80)
 
 file_path <- paste0(out_path, "/rebal_freq.jpeg")
 
