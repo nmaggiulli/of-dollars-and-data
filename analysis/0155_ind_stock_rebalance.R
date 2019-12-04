@@ -26,11 +26,11 @@ set.seed(12345)
 raw <- readRDS(paste0(localdir, "0155_ind_stocks_ycharts.Rds"))
 
 full_dates <- raw %>%
-                group_by(date) %>%
-                summarize(n_stocks = n()) %>%
-                ungroup() %>%
-                filter(n_stocks > 500) %>%
-                select(date)
+  group_by(date) %>%
+  summarize(n_stocks = n()) %>%
+  ungroup() %>%
+  filter(n_stocks > 500) %>%
+  select(date)
 
 first_yr <- year(min(full_dates$date))
 last_yr <- year(max(full_dates$date))
@@ -49,7 +49,7 @@ latest_date_in_qtr <- latest_date_in_month %>%
                         rename(qtr_date = month_date)
 
 latest_date_in_yr <- latest_date_in_month %>%
-  filter(month %in% c(1)) %>%
+  filter(month %in% c(7)) %>%
   rename(yr_date = month_date)
 
 all_stocks <- df %>%
@@ -68,11 +68,11 @@ df <- df %>%
         mutate(latest_date_in_month = ifelse(date == month_date, 1, 0),
                latest_date_in_qtr = ifelse(date != qtr_date | is.na(qtr_date), 0, 1),
                latest_date_in_yr = ifelse(date != yr_date | is.na(yr_date), 0, 1)) %>%
-        select(date, stock_num, index, day_of_week, 
+        select(date, stock_num, index, ret, day_of_week, 
                latest_date_in_month, latest_date_in_qtr, latest_date_in_yr)
 
-n_stocks_list <- c(5, 10, 25, 50, 100, 150, 200)
-n_sims <- 1000
+n_stocks_list <- c(5, 10, 25, 50, 100, 250)
+n_sims <- 10
 rebal_types <- c("weekly", "monthly", "quarterly", "yearly")
 
 stock_sims <- data.frame(n_stock = c(), simulation = c())
@@ -95,7 +95,7 @@ counter <- 1
 for(rebal_type in rebal_types){
   print(rebal_type)
   if(rebal_type == "weekly"){
-    filter_string <- paste0("day_of_week == 3")
+    filter_string <- paste0("day_of_week == 5")
     exponent <- 52
   } else if (rebal_type == "monthly"){
     filter_string <- paste0("latest_date_in_month == 1")
