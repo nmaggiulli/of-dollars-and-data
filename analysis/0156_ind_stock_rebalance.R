@@ -13,7 +13,7 @@ library(lubridate)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "0155_ind_stock_rebalance"
+folder_name <- "0156_ind_stock_rebalance"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
