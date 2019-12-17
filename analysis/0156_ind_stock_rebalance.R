@@ -48,8 +48,11 @@ latest_date_in_qtr <- latest_date_in_month %>%
                         filter(month %in% c(1, 4, 7, 10)) %>%
                         rename(qtr_date = month_date)
 
+year_rebal_month <- 1
+year_rebal_month_string <- month.abb[year_rebal_month]
+
 latest_date_in_yr <- latest_date_in_month %>%
-  filter(month %in% c(7)) %>%
+  filter(month %in% c(year_rebal_month)) %>%
   rename(yr_date = month_date)
 
 all_stocks <- df %>%
@@ -72,8 +75,8 @@ df <- df %>%
                latest_date_in_month, latest_date_in_qtr, latest_date_in_yr)
 
 n_stocks_list <- c(5, 10, 25, 50, 100, 250)
-n_sims <- 10
-rebal_types <- c("weekly", "monthly", "quarterly", "yearly")
+n_sims <- 1000
+rebal_types <- c("Weekly", "Monthly", "Quarterly", paste0("Yearly (", year_rebal_month_string, ")"))
 
 stock_sims <- data.frame(n_stock = c(), simulation = c())
 stock_sim_counter <- 1
@@ -94,23 +97,23 @@ counter <- 1
 
 for(rebal_type in rebal_types){
   print(rebal_type)
-  if(rebal_type == "weekly"){
+  if(rebal_type == "Weekly"){
     filter_string <- paste0("day_of_week == 5")
     exponent <- 52
-  } else if (rebal_type == "monthly"){
+  } else if (rebal_type == "Monthly"){
     filter_string <- paste0("latest_date_in_month == 1")
     exponent <- 12
-  } else if (rebal_type == "quarterly"){
+  } else if (rebal_type == "Quarterly"){
     filter_string <- paste0("latest_date_in_qtr == 1")
     exponent <- 4
-  } else if (rebal_type == "yearly"){
+  } else if (grepl("Yearly", rebal_type)){
     filter_string <- paste0("latest_date_in_yr == 1")
     exponent <- 1
   } else{
     exponent <- 250
   }
   
-  if(rebal_type == "daily"){
+  if(rebal_type == "Daily"){
     rets <- df
   } else{
     rets <- df %>%
@@ -158,7 +161,7 @@ note_string <-  str_wrap(paste0("Note:  Shows ", formatC(n_sims, format = "f", d
                                 "Individual stocks are sampled from the S&P 500 from ", first_yr, "-", last_yr, " whether or not they existed in the index at the time of sampling."), 
                          width = 80)
 
-file_path <- paste0(out_path, "/rebal_freq.jpeg")
+file_path <- paste0(out_path, "/rebal_freq_", year_rebal_month, ".jpeg")
 
 plot <- ggplot(data = to_plot, aes(x=n_stocks, y = avg_ret_geo, col = factor(rebalance_freq, levels = rebal_types))) +
   geom_line() +
