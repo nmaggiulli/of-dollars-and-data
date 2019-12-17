@@ -29,13 +29,13 @@ to_plot <- df
 source_string <- str_wrap(paste0("Source: Simulated data (OfDollarsAndData.com)"), 
                           width = 85)
 
-file_path <- paste0(out_path, "/wealth_steps_plot.jpeg")
+file_path <- paste0(out_path, "/wealth_steps_plot_log_scale.jpeg")
 
 text_labels <- data.frame(wealth = w_levels,
                           level = seq(2, length(w_levels) + 1),
                           text = c("Grocery prices\nmatter less",
                                    "Restaurant prices\nmatter less",
-                                   "Vacation prices\nmattter less",
+                                   "Vacation prices\n  matter less",
                                    "Home prices\nmatter less",
                                    "What are prices?"))
 
