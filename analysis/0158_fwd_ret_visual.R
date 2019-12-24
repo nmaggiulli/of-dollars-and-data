@@ -39,40 +39,51 @@ for(i in 1:nrow(df)){
   }
 }
 
-years_seq <- seq(1, 20, 1)
 
-for(y in years_seq){
-  n_months <- y * 12
+lag_years <- c(1, 5, 10, 15, 20)
+years_seq <- seq(1, 10, 1)
+
+for(l in lag_years){
+  lag_months <- l * 12
+  for(y in years_seq){
+    fwd_months <- y * 12
+    
+  tmp <- df %>%
+    mutate(lag_ret = (index/lag(index, lag_months))^(1/l) - 1,
+           lead_ret = (lead(index, fwd_months)/index),
+           n_years_ret = y) %>%
+    filter(!is.na(lag_ret), !is.na(lead_ret)) 
   
-tmp <- df %>%
-  mutate(lag_ret_12m = index/lag(index, 12) - 1,
-         lead_ret = (lead(index, n_months)/index)^(1/y) - 1,
-         n_years_ret = y) %>%
-  filter(!is.na(lag_ret_12m), !is.na(lead_ret)) 
-
-  if(y == min(years_seq)){
-    final_results <- tmp
-  } else{
-    final_results <- bind_rows(final_results, tmp)
+    if(y == min(years_seq)){
+      final_results <- tmp
+    } else{
+      final_results <- bind_rows(final_results, tmp)
+    }
   }
+  
+  to_plot <- final_results %>%
+                select(lag_ret, lead_ret, n_years_ret)
+  
+  source_string <- str_wrap(paste0("Source: Returns 2.0 (OfDollarsAndData.com)"), 
+                            width = 80)
+  note_string <-  str_wrap(paste0("Note:  Performance shown includes dividends, but is not adjusted for inflation."), 
+                           width = 80)
+  
+  plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret)) +
+    geom_point() +
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    scale_x_continuous(label = percent) +
+    scale_y_continuous(label = dollar) +
+    of_dollars_and_data_theme +
+    ggtitle(paste0("S&P 500\n{closest_state}-Year Future Growth\nBased on ", l, "-Year Prior Return")) +
+    labs(x= paste0(l, "-Year Annualized Prior Return"), y = "Growth of $1",
+         caption = paste0(source_string, "\n", note_string)) +
+    transition_states(n_years_ret) +
+    ease_aes('linear')
+  
+  anim <- animate(plot, fps = 7)
+  
+  anim_save(filename = paste0("annual_fwd_ret_lag_", l, "_scatter.gif"), animation = anim, path = out_path)
 }
-
-to_plot <- final_results %>%
-              select(lag_ret_12m, lead_ret, n_years_ret)
-
-plot <- ggplot(to_plot, aes(x=lag_ret_12m, y=lead_ret)) +
-  geom_point() +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  scale_x_continuous(label = percent) +
-  scale_y_continuous(label = percent) +
-  of_dollars_and_data_theme +
-  ggtitle("{closest_state}-Year Forward Return\nBased on 1-Year Prior Return") +
-  labs(x= "1-Year Prior Return", y ="Annualized Forward Return") +
-  transition_states(n_years_ret) +
-  ease_aes('linear')
-
-anim <- animate(plot, fps = 7)
-
-anim_save(filename = paste0("annual_fwd_ret_scatter.gif"), animation = anim, path = out_path)
 
 # ############################  End  ################################## #
