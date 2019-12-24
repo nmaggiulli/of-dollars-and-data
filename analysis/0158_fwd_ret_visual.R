@@ -67,11 +67,11 @@ plot <- ggplot(to_plot, aes(x=lag_ret_12m, y=lead_ret)) +
   scale_y_continuous(label = percent) +
   of_dollars_and_data_theme +
   ggtitle("{closest_state}-Year Forward Return\nBased on 1-Year Prior Return") +
-  labs(x= "1-Year Prior Return", y ="Forward Return") +
-  transition_states(n_years_ret, 4, 8) +
+  labs(x= "1-Year Prior Return", y ="Annualized Forward Return") +
+  transition_states(n_years_ret) +
   ease_aes('linear')
 
-anim <- animate(plot)
+anim <- animate(plot, fps = 7)
 
 anim_save(filename = paste0("annual_fwd_ret_scatter.gif"), animation = anim, path = out_path)
 
