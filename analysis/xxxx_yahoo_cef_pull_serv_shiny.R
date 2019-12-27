@@ -2,7 +2,7 @@ cat("\014") # Clear your console
 rm(list = ls()) #clear your environment
 
 ########################## Load in header file ######################## #
-setwd("~/git/rwm_analytics")
+setwd("~/git/of_dollars_and_data")
 source(file.path(paste0(getwd(),"/header.R")))
 
 ########################## Load in Libraries ########################## #
@@ -11,10 +11,12 @@ library(rsconnect)
 
 ########################## Start Program Here ######################### #
 
+creds <- read.csv(paste0(importdir, "0000_credentials/shinyapps_io_secret.csv"))
+
 # Connect to Shiny Apps
 rsconnect::setAccountInfo(name='nmaggiulli',
                           token='13CDD50150436D65438B61CC5EB0F318',
-                          secret='XXX')
+                          secret=creds$secret)
 
 # Set paths
 shiny_path <- paste0("/Users/nickmaggiulli/git/of_dollars_and_data/analysis/_shiny_apps/0001_shiny_yahoo_cef_pull")
