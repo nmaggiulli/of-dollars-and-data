@@ -93,17 +93,24 @@ for(l in lag_years){
     n_future <- 10
     
     if(l == 10){
-      upper_flag <- 0.115
-      lower_flag <- 0.11
+      upper_flag <- 0.135
+      lower_flag <- 0.13
     } else if (l == 20){
-      upper_flag <- 0.085
-      lower_flag <- 0.08
+      upper_flag <- 0.065
+      lower_flag <- 0.06
     }
     
     to_plot <- final_results %>%
                 filter(n_years_ret == n_future) %>%
                 mutate(flagged = ifelse(lag_ret > lower_flag & lag_ret < upper_flag, 1, 0)) %>%
-                select(lag_ret, lead_ret, n_years_ret, flagged)
+                select(date, lag_ret, lead_ret, n_years_ret, flagged)
+    
+    flagged_points <- to_plot %>%
+                        filter(flagged == 1) %>%
+                        arrange(date)
+    
+    print(paste0("N year lookback = ", l))
+    print(flagged_points)
     
     source_string <- str_wrap(paste0("Source: Returns 2.0 (OfDollarsAndData.com)"), 
                               width = 80)
