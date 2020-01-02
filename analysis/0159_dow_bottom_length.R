@@ -103,6 +103,70 @@ plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+# Another one
+to_plot <- df %>%
+  select(date, index_dow, low_watermark) %>%
+  gather(-date, key=key, value=value)
+
+file_path <- paste0(out_path, "/dow_lower_watermark_buys.jpeg")
+source_string <- "Source:  StockCharts, 1970-2019 (OfDollarsAndData.com)"
+
+plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
+  geom_line() +
+  geom_point(data = select(bottoms, date, low_watermark), aes(x=date, y=low_watermark), col = "blue", size = 1) +
+  scale_y_continuous(label = comma, trans = log10_trans()) +
+  scale_color_manual(guide = FALSE, values = c("black", "red")) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Dow Index and Low Watermark")) +
+  labs(x="Date", y="Index Value",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Plot AB vs DCA
+to_plot <- df %>%
+  select(date, value_dca, value_ab) %>%
+  rename(`DCA` = value_dca,
+         `Absolute-Bottom` = value_ab) %>%
+  gather(-date, key=key, value=value)
+
+final_diff <- df[nrow(df), "value_ab"] - df[nrow(df), "value_dca"]
+final_diff_pct <- df[nrow(df), "value_ab"]/df[nrow(df), "value_dca"] - 1
+
+text_labels <- data.frame(date = c(as.Date("2014-07-01"), as.Date("2014-07-01")),
+                          value = c(df[nrow(df), "value_ab"] + 2000, 60000),
+                          key = c("Absolute-Bottom", "DCA"),
+                          label = c(paste0("Absolute Bottom\n+$", formatC(final_diff, digits = 0, format = "f", big.mark = ","), 
+                                         "\n(+",
+                                         round(100*final_diff_pct, 1), "%)"),
+                                    "DCA")
+)
+
+file_path <- paste0(out_path, "/dow_dca_vs_ab.jpeg")
+source_string <- "Source:  StockCharts, 1970-2019 (OfDollarsAndData.com)"
+
+plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
+  geom_line() +
+  geom_text_repel(data = text_labels,
+                  aes(x = date,
+                      y = value,
+                      col = key,
+                      label = text_labels$label,
+                      family = "my_font"),
+                  size = 3,
+                  segment.colour = "transparent",
+                  max.iter  = 1
+  ) +
+  scale_y_continuous(label = dollar) +
+  scale_color_manual(values = c("red", "blue"), guide = FALSE) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("DCA vs. Absolute-Bottom Buying Strategy")) +
+  labs(x="Date", y="Portfolio Value",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 print(paste0(round(100*mean(summary$lower_future), 1), "% of days will see a lower value in the future."))
 print(paste0("There are only ",
