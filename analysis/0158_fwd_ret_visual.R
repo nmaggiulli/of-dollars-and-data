@@ -105,11 +105,14 @@ for(l in lag_years){
                 mutate(flagged = ifelse(lag_ret > lower_flag & lag_ret < upper_flag, 1, 0)) %>%
                 select(date, lag_ret, lead_ret, n_years_ret, flagged)
     
+    print(paste0("N year lookback = ", l))
+    print(paste0("The correlation is: ", cor(to_plot$lag_ret, to_plot$lead_ret)))
+    
     flagged_points <- to_plot %>%
                         filter(flagged == 1) %>%
                         arrange(date)
     
-    print(paste0("N year lookback = ", l))
+
     print(flagged_points)
     
     source_string <- str_wrap(paste0("Source: Returns 2.0 (OfDollarsAndData.com)"), 
