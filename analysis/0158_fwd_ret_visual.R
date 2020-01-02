@@ -110,7 +110,7 @@ for(l in lag_years){
     note_string <-  str_wrap(paste0("Note:  Performance shown includes dividends, but is not adjusted for inflation."), 
                              width = 80)
     
-    file_path <- paste0(out_path, "/10_fwd_", l, "_prior_plot.jpeg")
+    file_path <- paste0(out_path, "/10_forward_", l, "_prior_plot.jpeg")
     
     plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, col = as.factor(flagged))) +
       geom_point() +
