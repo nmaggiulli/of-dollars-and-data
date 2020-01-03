@@ -55,8 +55,12 @@ for(i in 1:nrow(df)){
     df[i, "value_dca"] <- daily_cash
     df[i, "value_ab_cash"] <- daily_cash
     df[i, "value_ab_vest"] <- 0
+    df[i, "avg_dca"] <- NA
+    df[i, "avg_ab"] <- NA
   } else{
     ret <- df[i, "index_dow"]/df[(i-1), "index_dow"]
+    df[i, "avg_dca"] <- mean(df[1:i, "index_dow"], na.rm = TRUE)
+    df[i, "avg_ab"] <- mean(df[1:i, "low_watermark"], na.rm = TRUE)
     
     df[i, "value_dca"] <- (df[(i-1), "value_dca"] + daily_cash) * ret
     
@@ -64,6 +68,8 @@ for(i in 1:nrow(df)){
       df[i, "value_ab_cash"] <- df[(i-1), "value_ab_cash"] + daily_cash
       df[i, "value_ab_vest"] <- df[(i-1), "value_ab_vest"] * ret
     } else{
+      df[i, "ab_purchase"] <- 1
+      
       df[i, "value_ab_vest"] <- (df[(i-1), "value_ab_vest"] + df[(i-1), "value_ab_cash"] + daily_cash) * ret
       df[i, "value_ab_cash"] <- 0
     }
@@ -163,6 +169,30 @@ plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("DCA vs. Absolute-Bottom Buying Strategy")) +
   labs(x="Date", y="Portfolio Value",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Plot average prices for each strategy
+to_plot <- df %>%
+            select(date, avg_dca, avg_ab) %>%
+            rename(DCA = avg_dca,
+                   `Absolute-Bottom` = avg_ab) %>%
+            gather(-date, key=key, value=value)
+
+file_path <- paste0(out_path, "/avg_price_dca_vs_ab.jpeg")
+source_string <- "Source:  StockCharts, 1970-2019 (OfDollarsAndData.com)"
+
+plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
+  geom_line() +
+  scale_y_continuous(label = comma) +
+  scale_color_manual(values = c("red", "blue")) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("Average Purchase Prices\nDCA vs. Absolute-Bottom Buying Strategy")) +
+  labs(x="Date", y="Average Index Value",
        caption = paste0(source_string))
 
 # Save the plot
