@@ -186,7 +186,7 @@ source_string <- "Source:  StockCharts, 1970-2019 (OfDollarsAndData.com)"
 
 plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   geom_line() +
-  scale_y_continuous(label = comma) +
+  scale_y_continuous(label = comma, trans = log10_trans()) +
   scale_color_manual(values = c("red", "blue")) +
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
