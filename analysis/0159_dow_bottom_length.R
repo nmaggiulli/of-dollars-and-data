@@ -12,6 +12,7 @@ library(readxl)
 library(lubridate)
 library(ggrepel)
 library(gganimate)
+library(tidylog)
 library(tidyverse)
 
 folder_name <- "0159_bottom_length"
