@@ -120,17 +120,18 @@ for(l in lag_years){
     note_string <-  str_wrap(paste0("Note:  Performance shown includes dividends, but is not adjusted for inflation."), 
                              width = 80)
     
-    file_path <- paste0(out_path, "/10_forward_", l, "_prior_plot.jpeg")
+    file_path <- paste0(out_path, "/10_fwd_growth_", l, "_prior_plot.jpeg")
     
+    # Toggle the second 'black' value in the scale_color_manual() below to create annotated plots
     plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, col = as.factor(flagged))) +
       geom_point() +
-      scale_color_manual(values = c("black", "red"), guide = FALSE) +
+      scale_color_manual(values = c("black", "black"), guide = FALSE) +
       geom_hline(yintercept = 1, linetype = "dashed") +
       scale_x_continuous(label = percent) +
       scale_y_continuous(label = dollar, breaks = seq(0, 8, 1), limits = c(0, 8)) +
       of_dollars_and_data_theme +
       ggtitle(paste0("S&P 500\n", n_future, "-Year Future Growth\nBased on ", l, "-Year Prior Return")) +
-      labs(x= paste0(l, "-Year Annualized Prior Return"), y = "Growth of $1",
+      labs(x= paste0(l, "-Year Annualized Prior Return"), y = "Growth of $1\nOver Next Decade",
            caption = paste0(source_string, "\n", note_string))
     
     ggsave(file_path, plot, width = 15, height = 12, units = "cm")
