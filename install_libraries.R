@@ -12,7 +12,8 @@ pkgs <- c("dplyr", "ggplot2", "tidyr", "stringr", "lubridate",
           "RColorBrewer", "quadprog", "fTrading", "quantmod",
           "gtable", "reshape2", "MASS", "gdata", "readxl",
           "Quandl", "stats", "viridis", "jpeg", "httr",
-          "BenfordTests", "FinCal", "gganimate", "tidylog")
+          "BenfordTests", "FinCal", "gganimate", "tidylog",
+          "MLmetrics", "caret")
 
 install.packages(pkgs)
 
