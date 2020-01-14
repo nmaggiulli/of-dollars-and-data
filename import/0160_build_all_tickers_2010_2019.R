@@ -17,7 +17,7 @@ folder_name <- "0155_ind_stocks_rebalance"
 
 ########################## Start Program Here ######################### #
 
-years <- seq(2010, 2011, 1)
+years <- seq(2010, 2019, 1)
 for(y in years){
   print(y)
   
@@ -47,8 +47,6 @@ for(y in years){
           filter(!is.na(ret), ret != 0) %>%
           select(ticker) %>%
           arrange(ticker)
-  
-  print(head(tmp))
   
   if(y == min(years)){
     final <- tmp
