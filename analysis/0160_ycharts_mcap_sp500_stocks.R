@@ -36,16 +36,54 @@ raw <- read_excel(paste0(importdir, "0160_ycharts_mcap_sp500_stocks/Historical M
   rename(mcap_millions = value) %>%
   select(date, year, month, symbol, name, mcap_millions) %>%
   arrange(symbol, date) %>%
-  filter(year(date) >= 2010, year(date) < 2020) %>%
+  filter(year(date) >= 2010) %>%
   arrange(date, -mcap_millions) %>%
   group_by(date) %>%
   mutate(rank = row_number(),
          name = case_when(name == "International Business Machines" ~ "IBM",
                           name == "Alphabet" ~ "Alphabet (Google)",
-                          TRUE ~ name)) %>%
+                          TRUE ~ name),
+         faamg = ifelse(name %in% c("Facebook", "Apple", "Amazon.com", "Microsoft", "Alphabet (Google)"), 1, 0)) %>%
   ungroup()
 
+# Plot FAAMG market share over time
+all_mcap <- raw %>%
+              group_by(date) %>%
+              summarize(mcap_total = sum(mcap_millions)) %>%
+              ungroup()
 
+to_plot <- raw %>%
+                filter(faamg == 1) %>%
+                group_by(date) %>%
+                summarize(mcap_faamg = sum(mcap_millions)) %>%
+                ungroup() %>%
+                left_join(all_mcap) %>%
+                mutate(pct_faamg = mcap_faamg/mcap_total)
+
+file_path <- paste0(out_path, "/mcap_faamg.jpeg")
+source_string <- "Source:  YCharts, 2010-2019 (OfDollarsAndData.com)"
+
+number_labels <- to_plot %>%
+  filter(date == max(to_plot$date) | date == min(to_plot$date)) %>%
+  mutate(label = paste0(round(100*pct_faamg, 1), "%"))
+
+plot <- ggplot(to_plot, aes(x=date, y=pct_faamg)) +
+  geom_line() +
+  geom_text_repel(data = number_labels, aes(x=date, y = pct_faamg),
+                  label = number_labels$label,
+                  size = 3,
+                  nudge_y = 0.005,
+                  segment.color = "transparent") +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("FAAMG Stocks % Share of the S&P 500")) +
+  labs(x="Date", y="Percentage of S&P 500",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Do plot by top 2, 5, and 10 companies in S&P 500
 tops <- c(2, 5, 10)
 for(t in tops){
   top_n <- raw %>%
@@ -81,7 +119,7 @@ file_path <- paste0(out_path, "/mcap_tiers.jpeg")
 source_string <- "Source:  YCharts, 2010-2019 (OfDollarsAndData.com)"
 
 text_labels <- to_plot %>%
-                  filter(date == max(to_plot$date)) %>%
+                  filter(date == "2017-12-02") %>%
                   mutate(label = case_when(
                     grepl("_2", key) ~ "Top 2",
                     grepl("_5", key) ~ "Top 5",
@@ -89,14 +127,23 @@ text_labels <- to_plot %>%
                     TRUE ~ ""
                   ))
 
+number_labels <- to_plot %>%
+  filter(date == max(to_plot$date) | date == min(to_plot$date)) %>%
+  mutate(label = paste0(round(100*value, 1), "%"))
+
 plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   geom_line() +
   geom_text_repel(data = text_labels, aes(x=date, y = value, col = key),
                   label = text_labels$label,
-                  nudge_y = 0.01,
+                  nudge_y = 0.02,
+                  segment.color = "transparent") +
+  geom_text_repel(data = number_labels, aes(x=date, y = value, col = key),
+                  label = number_labels$label,
+                  size = 3,
+                  nudge_y = 0.005,
                   segment.color = "transparent") +
   scale_color_discrete(guide = FALSE) +
-  scale_y_continuous(label = percent) +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
@@ -154,7 +201,7 @@ plot <- ggplot(to_plot, aes(x=rank, y=mcap_billions, fill = as.factor(tech))) +
        caption = paste0(source_string)) +
   transition_states(year, transition_length = 4, state_length = 4)
 
-animate <- 1
+animate <- 0
 
 if(animate == 1){
   anim <- animate(plot, fps = 7)
