@@ -15,16 +15,18 @@ library(gganimate)
 library(tidylog)
 library(tidyverse)
 
-folder_name <- "0159_bottom_length"
+folder_name <- "0160_bottom_length"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-raw <- read.csv(paste0(importdir, "0159_dow_bottom_length/dow_stockcharts.csv"), skip = 1,
-                col.names = c("date", "open", "high", "low", "index_dow", "volume")) %>%
-  mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
-  select(date, index_dow)
+raw <- read.csv(paste0(importdir, "0160_dow_bottom_length/ycharts_dji_data.csv"), skip = 1,
+                col.names = c("date","index_dow")) %>%
+  mutate(date = as.Date(substr(date, 1, 10), format = "%Y-%m-%d")) %>%
+  select(date, index_dow) %>%
+  arrange(date) %>%
+  filter(date >= "1970-01-01", date <= "2019-12-31")
 
 first_year <- min(year(raw$date))
 
@@ -95,8 +97,8 @@ to_plot <- df %>%
             select(date, index_dow, low_watermark) %>%
             gather(-date, key=key, value=value)
 
-file_path <- paste0(out_path, "/dow_lower_watermark.jpeg")
-source_string <- "Source:  StockCharts, 1970-2019 (OfDollarsAndData.com)"
+file_path <- paste0(out_path, "/dow_lower_watermark_ycharts.jpeg")
+source_string <- "Source:  YCharts, 1970-2019 (OfDollarsAndData.com)"
 
 plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   geom_line() +
@@ -115,8 +117,8 @@ to_plot <- df %>%
   select(date, index_dow, low_watermark) %>%
   gather(-date, key=key, value=value)
 
-file_path <- paste0(out_path, "/dow_lower_watermark_buys.jpeg")
-source_string <- "Source:  StockCharts, 1970-2019 (OfDollarsAndData.com)"
+file_path <- paste0(out_path, "/dow_lower_watermark_buys_ycharts.jpeg")
+source_string <- "Source:  YCharts, 1970-2019 (OfDollarsAndData.com)"
 
 plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   geom_line() +
@@ -150,8 +152,8 @@ text_labels <- data.frame(date = c(as.Date("2014-07-01"), as.Date("2014-07-01"))
                                     "DCA")
 )
 
-file_path <- paste0(out_path, "/dow_dca_vs_ab.jpeg")
-source_string <- "Source:  StockCharts, 1970-2019 (OfDollarsAndData.com)"
+file_path <- paste0(out_path, "/dow_dca_vs_ab_ycharts.jpeg")
+source_string <- "Source:  YCharts, 1970-2019 (OfDollarsAndData.com)"
 
 plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   geom_line() +
@@ -182,8 +184,8 @@ to_plot <- df %>%
                    `Absolute-Bottom` = avg_ab) %>%
             gather(-date, key=key, value=value)
 
-file_path <- paste0(out_path, "/avg_price_dca_vs_ab.jpeg")
-source_string <- "Source:  StockCharts, 1970-2019 (OfDollarsAndData.com)"
+file_path <- paste0(out_path, "/avg_price_dca_vs_ab_ycharts.jpeg")
+source_string <- "Source:  YCharts, 1970-2019 (OfDollarsAndData.com)"
 
 plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   geom_line() +

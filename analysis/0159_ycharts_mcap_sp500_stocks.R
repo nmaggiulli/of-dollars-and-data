@@ -17,13 +17,13 @@ library(zoo)
 library(tidyverse)
 library(tidylog)
 
-folder_name <- "0160_ycharts_mcap_sp500_stocks"
+folder_name <- "0159_ycharts_mcap_sp500_stocks"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-raw <- read_excel(paste0(importdir, "0160_ycharts_mcap_sp500_stocks/Historical Market Cap Data.xlsx"), skip = 5) %>%
+raw <- read_excel(paste0(importdir, "0159_ycharts_mcap_sp500_stocks/Historical Market Cap Data.xlsx"), skip = 5) %>%
   rename(symbol = Symbol,
          name = Name) %>%
   select(-Metric) %>%
