@@ -15,9 +15,9 @@ library(dplyr)
 Quandl.api_key("PNidzaHfNknqXchLKsRT")
 
 # Import bitcoin price in USD (note that my API key is imported in the header.R file)
-bcoin       <- Quandl("BCHAIN/MKPRU")  %>%
-                  filter(Value > 0) %>%
-                  mutate(value = Value,
+bcoin       <- Quandl("BITFINEX/BTCUSD")  %>%
+                  filter(Last > 0) %>%
+                  mutate(value = Last,
                          date = Date) %>%
                   arrange(date) %>%
                   select(date, value) 

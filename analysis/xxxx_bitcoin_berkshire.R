@@ -39,7 +39,7 @@ bcoin <- readRDS(paste0(localdir, "0027_quandl_bitcoin.Rds")) %>%
 
 last_day <- Sys.Date() - 1
 
-getSymbols("BRK-A", from = paste0('2010-01-01'), to = paste0(last_day), 
+getSymbols("BRK-A", from = paste0('2014-04-15'), to = paste0(last_day), 
            src="yahoo", periodicity = "daily")
 
 brk <- data.frame(date = index(get("BRK-A")), 
@@ -52,8 +52,8 @@ first_bc <- bcoin[1, "Bitcoin"]
 first_brk <- brk[1, "BRK"]
 
 # Combine data
-to_plot <- brk %>%
-        left_join(bcoin) %>%
+to_plot <- bcoin %>%
+        left_join(brk) %>%
         gather(key=key, value=value, -date) %>%
         mutate(value = ifelse(key=="Bitcoin", value/first_bc, value/first_brk))
 
