@@ -61,11 +61,15 @@ for (i in 1:nrow(raw)){
 }
 
 # Grab only the index columns for the matrix
-raw_matrix <- as.matrix(raw[, grepl("index_", colnames(raw))])
+raw_matrix <- as.matrix(raw[, grepl("index_|ret_", colnames(raw))])
 
-sp_col_num <- grepl("sp500", colnames(raw_matrix))
-treasury_col_num <- grepl("treasury", colnames(raw_matrix))
-tbill_col_num <- grepl("tbill", colnames(raw_matrix))
+sp_col_num <- grepl("index_sp500", colnames(raw_matrix))
+treasury_col_num <- grepl("index_treasury", colnames(raw_matrix))
+tbill_col_num <- grepl("index_tbill", colnames(raw_matrix))
+
+sp_ret_col_num <- grepl("ret_sp500", colnames(raw_matrix))
+treasury_ret_col_num <- grepl("ret_treasury", colnames(raw_matrix))
+tbill_ret_col_num <- grepl("ret_tbill", colnames(raw_matrix))
 
 run_lump_sum_simulation <- function(n_month_dca, 
                                     pct_sp500, 
@@ -111,15 +115,26 @@ run_lump_sum_simulation <- function(n_month_dca,
     
     end_ls <- (end_sp500/beg_sp500 * weight_sp500_cons) + (end_treasury/beg_treasury * weight_treasury_cons)
     
+    # Calculate the monthly lump sum returns
+    ls_ret <- (raw_matrix[i:(end_row_num-1), sp_ret_col_num] * weight_sp500_cons) + 
+      (raw_matrix[i:(end_row_num-1), treasury_ret_col_num] * weight_treasury_cons)
+    
     # Calculate the growth of the money in cash, the S&P 500 return and the Treasury return
     if (invest_dca_cash == 1){
       tbill_growth <- raw_matrix[i:(end_row_num - 1), tbill_col_num]/beg_tbill
+      tbill_ret <- raw[i: (end_row_num- 1), tbill_ret_col_num]
     } else{
       tbill_growth <- 1
+      tbill_ret <- 0
     }
     
     sp500_growth    <- end_sp500/raw_matrix[i:(end_row_num-1), sp_col_num]
     treasury_growth <- end_treasury/raw_matrix[i:(end_row_num-1), treasury_col_num]
+    
+    # Calculate the monthly DCA returns
+    dca_ret <- (((raw_matrix[i:(end_row_num-1), sp_ret_col_num] * weight_sp500)  + 
+      (raw_matrix[i:(end_row_num-1), treasury_col_num] * weight_treasury)) * seq(1, n_month_dca)/n_month_dca) +
+      ((tbill_ret) * seq(n_month_dca-1, 0)/n_month_dca)
     
     # Combine for total nominal return for each section of portfolio
     dca_sp500 <- sum(sp500_growth * tbill_growth * (1/n_month_dca) * weight_sp500)
@@ -132,15 +147,88 @@ run_lump_sum_simulation <- function(n_month_dca,
     dca_col <- paste0("dca_", n_month_dca, "m")
     out_col <- paste0("dca_outperformance_", n_month_dca, "m")
     
+    ls_sharpe <- paste0("ls_sharpe_", n_month_dca, "m")
+    dca_sharpe <- paste0("dca_sharpe_", n_month_dca, "m")
+    
+    geo_ls_rate <- (prod(1 + ls_ret)^(1/n_month_dca)) - 1
+    geo_dca_rate <- (prod(1 + dca_ret)^(1/n_month_dca)) - 1
+  
     final_results[i, ls_col] <- end_ls - 1
     final_results[i, dca_col] <- end_dca - 1
     final_results[i, out_col] <- end_dca/end_ls - 1
+    final_results[i, ls_sharpe] <- (geo_ls_rate/sd(ls_ret))*100
+    final_results[i, dca_sharpe] <- (geo_dca_rate/sd(dca_ret))*100
   }
   
   # Define an out folder to delete and re-create
   out_folder <- paste0(out_path,"/time_sw_", pct_string)
   
   bw_string <- str_pad(pct_treasury_cons, width = 3, side = "left", pad = "0")
+  
+  # Plot Sharpes
+  file_path <- paste0(out_folder,"/dca_sharpe_time_sw_", pct_sp500, "_cons_bw_",bw_string , "_", n_month_string, "m.jpeg")
+  
+  to_plot <- final_results %>%
+    rename_(.dots = setNames(paste0(ls_sharpe), "Lump Sum")) %>%
+    rename_(.dots = setNames(paste0(dca_sharpe), "DCA")) %>%
+    select(date, `Lump Sum`, `DCA`) %>%
+    gather(-date, key=key, value=value)
+  
+  avg_ls_sharpe <- to_plot %>% filter(key == "Lump Sum") %>% summarize(value = mean(value)) %>% pull(value)
+  avg_dca_sharpe <- to_plot %>% filter(key == "DCA") %>% summarize(value = mean(value)) %>% pull(value)
+  
+  if(invest_dca_cash == 1){
+    additional_note <- paste0("For DCA, cash receives the nominal 1-month T-Bill return before being invested.")
+  } else{
+    additional_note <- ""
+  }
+  
+  source_string <- paste0("Source:  DFA, ", first_yr, "-", last_yr, " (OfDollarsAndData.com)")
+  note_string <- str_wrap(paste0("Note: 'Stocks' are represented by the S&P 500 and 'Bonds' are represented by 5-Year U.S. Treasuries.  ",
+                                 "The S&P 500 return includes dividends, but is not adjusted for inflation.  ",
+                                 "On average, the DCA strategy has a Sharpe Ratio of ", round(avg_dca_sharpe, 1), 
+                                 "  while Lump Sum has a Sharpe Ratio of ", round(avg_ls_sharpe, 1), " over the time period shown.  ",
+                                 additional_note), 
+                          width = 80)
+  
+  # Set the title
+  if(pct_sp500_cons != 0 & pct_sp500_cons != 100){
+    title_end <- paste0(pct_sp500_cons, "/", pct_treasury_cons, " LS")
+  } else if(pct_sp500_cons == 0) {
+    title_end <- paste0("All Bond LS")
+  } else if(pct_sp500_cons == 100) {
+    title_end <- paste0("All Stock LS")
+  }
+  
+  if(pct_sp500 != 100 & pct_sp500 != 0){
+    title_portfolio_string <- paste0(pct_sp500, "/", pct_treasury, " DCA vs. ",title_end)
+  } else if (pct_sp500 == 100){
+    title_portfolio_string <- paste0("All Stock DCA vs. ", title_end)
+  } else if (pct_sp500 == 0){
+    title_portfolio_string <- paste0("All Bond DCA vs. ", title_end)
+  }
+  
+  plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
+    geom_line() +
+    scale_color_discrete() +
+    scale_x_date(date_labels = "%Y", breaks = c(
+      as.Date("1960-01-01"),
+      as.Date("1970-01-01"),
+      as.Date("1980-01-01"),
+      as.Date("1990-01-01"),
+      as.Date("2000-01-01"),
+      as.Date("2010-01-01")
+    ), limits = c(as.Date("1960-01-01"), as.Date("2019-01-01"))) +
+    of_dollars_and_data_theme +
+    theme(legend.position = "bottom",
+          legend.title = element_blank()) +
+    ggtitle(paste0("Sharpe Ratio For ", n_month_dca, "-Month DCA\nvs. Lump Sum Investment\n",
+                   title_portfolio_string)) +
+    labs(x = "Date", y="Sharpe Ratio",
+         caption = paste0(source_string, "\n", note_string))
+  
+  # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
   # Plot the LS outperformance
   file_path <- paste0(out_folder,"/dca_perf_time_sw_", pct_sp500, "_cons_bw_",bw_string , "_", n_month_string, "m.jpeg")
@@ -158,13 +246,6 @@ run_lump_sum_simulation <- function(n_month_dca,
     avg_performance <- abs(avg_performance)
   }
   
-  if(invest_dca_cash == 1){
-    additional_note <- paste0("For DCA, cash receives the nominal 1-month T-Bill return before being invested.")
-  } else{
-    additional_note <- ""
-  }
-  
-  source_string <- paste0("Source:  DFA, ", first_yr, "-", last_yr, " (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note: 'Stocks' are represented by the S&P 500 and 'Bonds' are represented by 5-Year U.S. Treasuries.  ",
                                  "The S&P 500 return includes dividends, but is not adjusted for inflation.  ",
                                  "On average, DCA (over ", n_month_dca, " months) ", perf_string, " Lump Sum by ", round(100*avg_performance, 1), "% and ",
@@ -176,23 +257,6 @@ run_lump_sum_simulation <- function(n_month_dca,
     y_break <- 0.25
   } else{
     y_break <- 0.1
-  }
-  
-  # Set the title
-  if(pct_sp500_cons != 0 & pct_sp500_cons != 100){
-    title_end <- paste0(pct_sp500_cons, "/", pct_treasury_cons, " LS")
-  } else if(pct_sp500_cons == 0) {
-    title_end <- paste0("All Bond LS")
-  } else if(pct_sp500_cons == 100) {
-    title_end <- paste0("All Stock LS")
-  }
-  
-  if(pct_sp500 != 100 & pct_sp500 != 0){
-    title_portfolio_string <- paste0(pct_sp500, "/", pct_treasury, " DCA vs. ",title_end)
-  } else if (pct_sp500 == 100){
-    title_portfolio_string <- paste0("All Stock DCA vs. ", title_end)
-  } else if (pct_sp500 == 0){
-    title_portfolio_string <- paste0("All Bond DCA vs. ", title_end)
   }
   
   text_labels <- data.frame()
@@ -302,13 +366,19 @@ for (pct_sw in c(100)){
   }
   
   gif_ms <- 80
-  
+
+  create_gif(folder_time,
+             paste0("dca_sharpe_time_sw_", pct_sw,"_*.jpeg"),
+             gif_ms,
+             0,
+             paste0("_gif_dca_sharpe_time_sw_", pct_sw, ".gif"))
+    
   create_gif(folder_time,
              paste0("dca_perf_time_sw_", pct_sw,"_*.jpeg"),
              gif_ms,
              0,
              paste0("_gif_dca_perf_time_sw_", pct_sw, ".gif"))
-  
+
   create_gif(folder_dist,
              paste0("dca_dist_sw_", pct_sw,"_*.jpeg"),
              gif_ms,
