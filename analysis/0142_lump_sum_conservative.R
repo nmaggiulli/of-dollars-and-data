@@ -122,7 +122,7 @@ run_lump_sum_simulation <- function(n_month_dca,
     # Calculate the growth of the money in cash, the S&P 500 return and the Treasury return
     if (invest_dca_cash == 1){
       tbill_growth <- raw_matrix[i:(end_row_num - 1), tbill_col_num]/beg_tbill
-      tbill_ret <- raw[i: (end_row_num- 1), tbill_ret_col_num]
+      tbill_ret <- raw_matrix[i: (end_row_num- 1), tbill_ret_col_num]
     } else{
       tbill_growth <- 1
       tbill_ret <- 0
@@ -147,17 +147,31 @@ run_lump_sum_simulation <- function(n_month_dca,
     dca_col <- paste0("dca_", n_month_dca, "m")
     out_col <- paste0("dca_outperformance_", n_month_dca, "m")
     
+    ls_r <- paste0("ls_ret_", n_month_dca, "m")
+    dca_r <- paste0("dca_ret_", n_month_dca, "m")
+    
+    ls_sd <- paste0("ls_sd_", n_month_dca, "m")
+    dca_sd <- paste0("dca_sd_", n_month_dca, "m")
+
     ls_sharpe <- paste0("ls_sharpe_", n_month_dca, "m")
     dca_sharpe <- paste0("dca_sharpe_", n_month_dca, "m")
     
-    geo_ls_rate <- (prod(1 + ls_ret)^(1/n_month_dca)) - 1
-    geo_dca_rate <- (prod(1 + dca_ret)^(1/n_month_dca)) - 1
+    tbill_col <- paste0("tbill_ret")
   
     final_results[i, ls_col] <- end_ls - 1
     final_results[i, dca_col] <- end_dca - 1
     final_results[i, out_col] <- end_dca/end_ls - 1
-    final_results[i, ls_sharpe] <- (geo_ls_rate/sd(ls_ret))*100
-    final_results[i, dca_sharpe] <- (geo_dca_rate/sd(dca_ret))*100
+    
+    final_results[i, ls_r] <- (prod(1 + ls_ret)^(1/n_month_dca)) - 1
+    final_results[i, dca_r] <- (prod(1 + dca_ret)^(1/n_month_dca)) - 1
+    
+    final_results[i, tbill_col] <- (prod(1 + raw_matrix[i: (end_row_num- 1), tbill_ret_col_num])^(1/n_month_dca)) - 1
+    
+    final_results[i, ls_sd] <- sd(ls_ret)
+    final_results[i, dca_sd] <- sd(dca_ret)
+    
+    final_results[i, ls_sharpe] <- (final_results[i, ls_r] - final_results[i, tbill_col])/sd(ls_ret)
+    final_results[i, dca_sharpe] <- (final_results[i, dca_r] - final_results[i, tbill_col])/sd(dca_ret)
   }
   
   # Define an out folder to delete and re-create
@@ -174,8 +188,8 @@ run_lump_sum_simulation <- function(n_month_dca,
     select(date, `Lump Sum`, `DCA`) %>%
     gather(-date, key=key, value=value)
   
-  avg_ls_sharpe <- to_plot %>% filter(key == "Lump Sum") %>% summarize(value = mean(value)) %>% pull(value)
-  avg_dca_sharpe <- to_plot %>% filter(key == "DCA") %>% summarize(value = mean(value)) %>% pull(value)
+  avg_ls <- to_plot %>% filter(key == "Lump Sum") %>% summarize(value = mean(value)) %>% pull(value)
+  avg_dca <- to_plot %>% filter(key == "DCA") %>% summarize(value = mean(value)) %>% pull(value)
   
   if(invest_dca_cash == 1){
     additional_note <- paste0("For DCA, cash receives the nominal 1-month T-Bill return before being invested.")
@@ -186,8 +200,8 @@ run_lump_sum_simulation <- function(n_month_dca,
   source_string <- paste0("Source:  DFA, ", first_yr, "-", last_yr, " (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note: 'Stocks' are represented by the S&P 500 and 'Bonds' are represented by 5-Year U.S. Treasuries.  ",
                                  "The S&P 500 return includes dividends, but is not adjusted for inflation.  ",
-                                 "On average, the DCA strategy has a Sharpe Ratio of ", round(avg_dca_sharpe, 1), 
-                                 "  while Lump Sum has a Sharpe Ratio of ", round(avg_ls_sharpe, 1), " over the time period shown.  ",
+                                 "On average, the DCA strategy has a Sharpe Ratio of ", round(avg_dca, 2), 
+                                 "  while Lump Sum has a Sharpe Ratio of ", round(avg_ls, 2), " over the time period shown.  ",
                                  additional_note), 
                           width = 80)
   
@@ -210,7 +224,7 @@ run_lump_sum_simulation <- function(n_month_dca,
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
     geom_line() +
-    scale_color_discrete() +
+    scale_color_manual(values = c("black", "blue")) +
     scale_x_date(date_labels = "%Y", breaks = c(
       as.Date("1960-01-01"),
       as.Date("1970-01-01"),
@@ -220,11 +234,96 @@ run_lump_sum_simulation <- function(n_month_dca,
       as.Date("2010-01-01")
     ), limits = c(as.Date("1960-01-01"), as.Date("2019-01-01"))) +
     of_dollars_and_data_theme +
+    scale_y_continuous(limits = c(-0.75, 1)) +
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
     ggtitle(paste0("Sharpe Ratio For ", n_month_dca, "-Month DCA\nvs. Lump Sum Investment\n",
                    title_portfolio_string)) +
     labs(x = "Date", y="Sharpe Ratio",
+         caption = paste0(source_string, "\n", note_string))
+  
+  # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  # Plot SD
+  file_path <- paste0(out_folder,"/dca_sd_time_sw_", pct_sp500, "_cons_bw_",bw_string , "_", n_month_string, "m.jpeg")
+  
+  to_plot <- final_results %>%
+    rename_(.dots = setNames(paste0(ls_sd), "Lump Sum")) %>%
+    rename_(.dots = setNames(paste0(dca_sd), "DCA")) %>%
+    select(date, `Lump Sum`, `DCA`) %>%
+    gather(-date, key=key, value=value)
+  
+  avg_ls <- to_plot %>% filter(key == "Lump Sum") %>% summarize(value = mean(value)) %>% pull(value)
+  avg_dca <- to_plot %>% filter(key == "DCA") %>% summarize(value = mean(value)) %>% pull(value)
+  
+  note_string <- str_wrap(paste0("Note: 'Stocks' are represented by the S&P 500 and 'Bonds' are represented by 5-Year U.S. Treasuries.  ",
+                                 "The S&P 500 return includes dividends, but is not adjusted for inflation.  ",
+                                 "On average, the DCA strategy has a monthly standard deviation of ", 100*round(avg_dca, 3), 
+                                 "%  while Lump Sum has a monthly standard deviation of ", 100*round(avg_ls, 3), "% over the time period shown.  ",
+                                 additional_note), 
+                          width = 80)
+  
+  plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
+    geom_line() +
+    scale_color_manual(values = c("black", "blue")) +
+    scale_x_date(date_labels = "%Y", breaks = c(
+      as.Date("1960-01-01"),
+      as.Date("1970-01-01"),
+      as.Date("1980-01-01"),
+      as.Date("1990-01-01"),
+      as.Date("2000-01-01"),
+      as.Date("2010-01-01")
+    ), limits = c(as.Date("1960-01-01"), as.Date("2019-01-01"))) +
+    scale_y_continuous(label = percent, limits = c(0, 0.08)) +
+    of_dollars_and_data_theme +
+    theme(legend.position = "bottom",
+          legend.title = element_blank()) +
+    ggtitle(paste0("Standard Deviation For ", n_month_dca, "-Month DCA\nvs. Lump Sum Investment\n",
+                   title_portfolio_string)) +
+    labs(x = "Date", y="Standard Deviation",
+         caption = paste0(source_string, "\n", note_string))
+  
+  # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  # Plot ret
+  file_path <- paste0(out_folder,"/dca_ret_time_sw_", pct_sp500, "_cons_bw_",bw_string , "_", n_month_string, "m.jpeg")
+  
+  to_plot <- final_results %>%
+    rename_(.dots = setNames(paste0(ls_r), "Lump Sum")) %>%
+    rename_(.dots = setNames(paste0(dca_r), "DCA")) %>%
+    select(date, `Lump Sum`, `DCA`) %>%
+    gather(-date, key=key, value=value)
+  
+  avg_ls <- to_plot %>% filter(key == "Lump Sum") %>% summarize(value = mean(value)) %>% pull(value)
+  avg_dca <- to_plot %>% filter(key == "DCA") %>% summarize(value = mean(value)) %>% pull(value)
+  
+  note_string <- str_wrap(paste0("Note: 'Stocks' are represented by the S&P 500 and 'Bonds' are represented by 5-Year U.S. Treasuries.  ",
+                                 "The S&P 500 return includes dividends, but is not adjusted for inflation.  ",
+                                 "On average, the DCA strategy has a monthly return of ", 100*round(avg_dca, 3), 
+                                 "%  while Lump Sum has a monthly return of ", 100*round(avg_ls, 3), "% over the time period shown.  ",
+                                 additional_note), 
+                          width = 80)
+  
+  plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
+    geom_line() +
+    scale_color_manual(values = c("black", "blue")) +
+    scale_x_date(date_labels = "%Y", breaks = c(
+      as.Date("1960-01-01"),
+      as.Date("1970-01-01"),
+      as.Date("1980-01-01"),
+      as.Date("1990-01-01"),
+      as.Date("2000-01-01"),
+      as.Date("2010-01-01")
+    ), limits = c(as.Date("1960-01-01"), as.Date("2019-01-01"))) +
+    scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-0.03, 0.03)) +
+    of_dollars_and_data_theme +
+    theme(legend.position = "bottom",
+          legend.title = element_blank()) +
+    ggtitle(paste0("Average Monthly Return For ", n_month_dca, "-Month DCA\nvs. Lump Sum Investment\n",
+                   title_portfolio_string)) +
+    labs(x = "Date", y="Monthly Return",
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
@@ -372,6 +471,18 @@ for (pct_sw in c(100)){
              gif_ms,
              0,
              paste0("_gif_dca_sharpe_time_sw_", pct_sw, ".gif"))
+  
+  create_gif(folder_time,
+             paste0("dca_sd_time_sw_", pct_sw,"_*.jpeg"),
+             gif_ms,
+             0,
+             paste0("_gif_dca_sd_time_sw_", pct_sw, ".gif"))
+  
+  create_gif(folder_time,
+             paste0("dca_ret_time_sw_", pct_sw,"_*.jpeg"),
+             gif_ms,
+             0,
+             paste0("_gif_dca_ret_time_sw_", pct_sw, ".gif"))
     
   create_gif(folder_time,
              paste0("dca_perf_time_sw_", pct_sw,"_*.jpeg"),
