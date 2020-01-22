@@ -23,7 +23,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 set.seed(12345)
 
 # Import YCharts Data
-raw <- readRDS(paste0(localdir, "0155_ind_stocks_ycharts.Rds"))
+raw <- readRDS(paste0(localdir, "0157_ind_stocks_ycharts.Rds"))
 
 full_dates <- raw %>%
   group_by(date) %>%

@@ -13,7 +13,7 @@ library(readxl)
 library(slackr)
 library(tidyverse)
 
-folder_name <- "0155_ind_stocks_rebalance"
+folder_name <- "0157_ind_stocks_rebalance"
 
 ########################## Start Program Here ######################### #
 
@@ -59,7 +59,7 @@ df <- raw %>%
         rename(ret = value) %>%
         select(date, year, month, symbol, name, index, ret)
 
-saveRDS(df, paste0(localdir, "0155_ind_stocks_ycharts.Rds"))
+saveRDS(df, paste0(localdir, "0157_ind_stocks_ycharts.Rds"))
 
 
 # ############################  End  ################################## #
