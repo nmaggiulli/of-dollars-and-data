@@ -13,7 +13,7 @@ library(readxl)
 library(slackr)
 library(tidyverse)
 
-folder_name <- "0155_ind_stocks_rebalance"
+folder_name <- "0157_ind_stocks_rebalance"
 
 ########################## Start Program Here ######################### #
 
@@ -38,7 +38,7 @@ for(y in years){
   
   dt_string <- paste0("`", month, "/", day, "/", y, "`")
   
-  tmp <- read_excel(paste0(importdir, "0155_ind_stocks_rebalance/SP500_tickers.xlsx"), skip = 6) %>%
+  tmp <- read_excel(paste0(importdir, "0157_ind_stocks_rebalance/SP500_tickers.xlsx"), skip = 6) %>%
     select_(.dots = c("TICKER", dt_string)) 
   
   colnames(tmp) <- c("ticker", "ret")
