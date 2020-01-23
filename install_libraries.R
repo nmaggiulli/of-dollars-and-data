@@ -13,7 +13,7 @@ pkgs <- c("dplyr", "ggplot2", "tidyr", "stringr", "lubridate",
           "gtable", "reshape2", "MASS", "gdata", "readxl",
           "Quandl", "stats", "viridis", "jpeg", "httr",
           "BenfordTests", "FinCal", "gganimate", "tidylog",
-          "MLmetrics", "caret")
+          "MLmetrics", "caret", "PerformanceAnalytics")
 
 install.packages(pkgs)
 

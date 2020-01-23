@@ -12,6 +12,7 @@ library(readxl)
 library(lubridate)
 library(ggrepel)
 library(zoo)
+library(PerformanceAnalytics)
 library(tidyverse)
 
 folder_name <- "0162_ls_v_dca_multi_asset"
@@ -185,8 +186,14 @@ for(a in all_assets){
     ls_sd <- paste0("ls_sd_", n_month_dca, "m")
     dca_sd <- paste0("dca_sd_", n_month_dca, "m")
     
+    ls_downside <- paste0("ls_downside_", n_month_dca, "m")
+    dca_downside <- paste0("dca_downside_", n_month_dca, "m")
+    
     ls_sharpe <- paste0("ls_sharpe_", n_month_dca, "m")
     dca_sharpe <- paste0("dca_sharpe_", n_month_dca, "m")
+    
+    ls_sortino <- paste0("ls_sortino_", n_month_dca, "m")
+    dca_sortino <- paste0("dca_sortino_", n_month_dca, "m")
     
     asset_result[i, "asset"] <- a
     asset_result[i, ls_col] <- end_ls - 1
@@ -200,8 +207,14 @@ for(a in all_assets){
     asset_result[i, ls_sd] <- sd(ls_ret)
     asset_result[i, dca_sd] <- sd(dca_ret)
     
+    asset_result[i, ls_downside] <- DownsideDeviation(ls_ret)
+    asset_result[i, dca_downside] <- DownsideDeviation(dca_ret)
+    
     asset_result[i, ls_sharpe] <- asset_result[i, ls_r]/sd(ls_ret)
     asset_result[i, dca_sharpe] <- asset_result[i, dca_r]/sd(dca_ret)
+    
+    asset_result[i, ls_sortino] <- asset_result[i, ls_r]/DownsideDeviation(ls_ret)
+    asset_result[i, dca_sortino] <- asset_result[i, dca_r]/DownsideDeviation(dca_ret)
   }
   
   if(a == all_assets[1]){
@@ -217,7 +230,9 @@ for(a in all_assets){
   
   plot_ls_v_dca(a, out_folder, asset_result, "ret", "monthly return")
   plot_ls_v_dca(a, out_folder, asset_result, "sd", "standard deviation")
+  plot_ls_v_dca(a, out_folder, asset_result, "downside", "downside deviation")
   plot_ls_v_dca(a, out_folder, asset_result, "sharpe", "Sharpe Ratio")
+  plot_ls_v_dca(a, out_folder, asset_result, "sortino", "Sortino Ratio")
   plot_ls_v_dca(a, out_folder, asset_result, "outperformance", "DCA outperformance")
 }
 
