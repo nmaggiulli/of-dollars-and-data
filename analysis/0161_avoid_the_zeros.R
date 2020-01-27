@@ -58,7 +58,7 @@ plot_sim_periods <- function(n_periods){
   df <- mat %>%
               as.data.frame()
   
-  colnames(df) <- c("period", "Dynamic", "Static", "sim")
+  colnames(df) <- c("period", "Asset A", "Asset B", "sim")
   
   to_plot <- df %>%
                 gather(-period, -sim, key=key, value=value) %>%
@@ -68,9 +68,9 @@ plot_sim_periods <- function(n_periods){
   
   file_path <- paste0(out_path, "/static_v_dynamic_", n_periods, ".jpeg")
   source_string <- "Source:  Simulated data (OfDollarsAndData.com)"
-  note_string <-  str_wrap(paste0("Note:  Runs ", formatC(n_simulations, big.mark = ","), " simulations of each strategy for ", formatC(n_periods, big.mark = ","), " periods.  ",
-                                  "The 'Dynamic' strategy has a 99% chance of returning ", 100*ret_dynamic_pos, "% and a 1% chance of losing ", 100*abs(ret_dynamic_neg), "% in a given period, while ",
-                                  "the 'Static' strategy returns ", 100*ret_static, "% in all periods."), 
+  note_string <-  str_wrap(paste0("Note:  Runs ", formatC(n_simulations, big.mark = ","), " simulations of each asset for ", formatC(n_periods, big.mark = ","), " periods.  ",
+                                  "Asset A has a 99% chance of returning ", 100*ret_dynamic_pos, "% and a 1% chance of losing ", 100*abs(ret_dynamic_neg), "% in a given period, while ",
+                                  "Asset B returns ", 100*ret_static, "% in all periods."), 
                            width = 90)
   
   plot <- ggplot(to_plot, aes(x=period, y=value, col = key)) +
