@@ -140,11 +140,31 @@ raw <- read.csv(paste0(importdir, "0162_ycharts_multi_asset/timeseries_1-22-2020
   mutate(ret = ifelse(name == lag(name), value/lag(value) - 1, NA)) %>%
   filter(!is.na(ret))
 
-all_assets <- unique(raw$name)
+port_6040 <- raw %>%
+              filter(name %in% c("S&P 500 Total Return", "Bloomberg Barclays US Treasury")) %>%
+              mutate(ret = ifelse(name == "S&P 500 Total Return", 0.6*ret, 0.4*ret)) %>%
+              group_by(date) %>%
+              summarize(ret = sum(ret)) %>%
+              ungroup() %>%
+              mutate(name = "Portfolio 60-40")
+
+for(i in 1:nrow(port_6040)){
+  if(i == 1){
+    port_6040[i, "value"] <- 1
+  } else{
+    port_6040[i, "value"] <- port_6040[(i-1), "value"] * (1 + port_6040[i, "ret"])
+  }
+}
+
+df <- raw %>%
+        bind_rows(port_6040)
+
+all_assets <- unique(df$name)
 
 for(a in all_assets){
+  print(a)
   
-  filtered <- raw %>%
+  filtered <- df %>%
                   filter(name == a)
                   
   raw_matrix <- as.matrix(filtered[, grepl("value|ret", colnames(filtered))])
@@ -235,6 +255,50 @@ for(a in all_assets){
   plot_ls_v_dca(a, out_folder, asset_result, "sortino", "Sortino Ratio")
   plot_ls_v_dca(a, out_folder, asset_result, "outperformance", "DCA outperformance")
 }
+
+#Plot S&P 500 downside vs. 60/40 Downside
+to_plot <- final_results %>%
+            filter(asset %in% c("S&P 500 Total Return", "Portfolio 60-40")) %>%
+            select(date, asset, contains("downside")) %>%
+            mutate(value = ifelse(asset == "Portfolio 60-40", ls_downside_24m, dca_downside_24m)) %>%
+            select(date, asset, value)
+
+file_path <- paste0(out_path,"/sp500_dca_vs_6040_ls_downside_", n_month_dca, "m.jpeg")
+
+plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
+  geom_line() +
+  scale_color_manual(values = c("black", "blue")) +
+  scale_y_continuous(label = percent_format(accuracy = 0.1)) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("Downside Deviation For\n", n_month_dca, "-Month DCA into S&P 500 vs.\nLump Sum into 60/40")) +
+  labs(x = "Date", y=("Downside Deviation"),
+       caption = paste0("Source:  YCharts (OfDollarsAndData.com)"))
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+to_plot <- final_results %>%
+  filter(asset %in% c("S&P 500 Total Return", "Portfolio 60-40")) %>%
+  select(date, asset, contains("ret")) %>%
+  mutate(value = ifelse(asset == "Portfolio 60-40", ls_ret_24m, dca_ret_24m)) %>%
+  select(date, asset, value)
+
+file_path <- paste0(out_path,"/sp500_dca_vs_6040_ls_ret_", n_month_dca, "m.jpeg")
+
+plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
+  geom_line() +
+  scale_color_manual(values = c("black", "blue")) +
+  scale_y_continuous(label = percent_format(accuracy = 0.1)) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("Monthly Return For\n", n_month_dca, "-Month DCA into S&P 500 vs.\nLump Sum into 60/40")) +
+  labs(x = "Date", y=("Monthly Return"),
+       caption = paste0("Source:  YCharts (OfDollarsAndData.com)"))
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 
 final_summary <- final_results %>%
                     group_by(asset) %>%
