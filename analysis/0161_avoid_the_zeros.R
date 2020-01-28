@@ -28,8 +28,7 @@ ret_dynamic_neg <- -0.96
 ret_dynamic_pos <- 0.04
 ret_static <- 0.01
 
-
-plot_sim_periods <- function(n_periods){
+plot_sim_periods <- function(n_periods, median){
 
   n_simulations <- 1000
   sampled <- sample(nums, n_periods*n_simulations, replace = TRUE)
@@ -60,18 +59,28 @@ plot_sim_periods <- function(n_periods){
   
   colnames(df) <- c("period", "Asset A", "Asset B", "sim")
   
-  to_plot <- df %>%
-                gather(-period, -sim, key=key, value=value) %>%
-                group_by(period, key) %>%
-                summarize(value = quantile(value, probs = 0.5)) %>%
-                ungroup()
+  if(median == 1){
+    to_plot <- df %>%
+                  gather(-period, -sim, key=key, value=value) %>%
+                  group_by(period, key) %>%
+                  summarize(value = quantile(value, probs = 0.5)) %>%
+                  ungroup()
+    title_string <- "Median"
+  } else{
+    to_plot <- df %>%
+      gather(-period, -sim, key=key, value=value) %>%
+      group_by(period, key) %>%
+      summarize(value = mean(value)) %>%
+      ungroup()
+    title_string <- "Average"
+  }
   
-  file_path <- paste0(out_path, "/static_v_dynamic_", n_periods, ".jpeg")
+  file_path <- paste0(out_path, "/asset_simulation_comp_", n_periods, "_", title_string, ".jpeg")
   source_string <- "Source:  Simulated data (OfDollarsAndData.com)"
   note_string <-  str_wrap(paste0("Note:  Runs ", formatC(n_simulations, big.mark = ","), " simulations of each asset for ", formatC(n_periods, big.mark = ","), " periods.  ",
                                   "Asset A has a 99% chance of returning ", 100*ret_dynamic_pos, "% and a 1% chance of losing ", 100*abs(ret_dynamic_neg), "% in a given period, while ",
                                   "Asset B returns ", 100*ret_static, "% in all periods."), 
-                           width = 90)
+                           width = 85)
   
   plot <- ggplot(to_plot, aes(x=period, y=value, col = key)) +
     geom_line() +
@@ -80,16 +89,20 @@ plot_sim_periods <- function(n_periods){
     of_dollars_and_data_theme +
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
-    ggtitle(paste0("Dynamic vs. Static Strategy\nMedian Outcome by Period")) +
-    labs(x="Period", y="Median Portfolio Value",
+    ggtitle(paste0(title_string, " Outcome by Period")) +
+    labs(x="Period", y=paste0(title_string, " Portfolio Value"),
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-plot_sim_periods(50)
-plot_sim_periods(100)
-plot_sim_periods(1000)
+# Plot medians
+plot_sim_periods(50, 1)
+plot_sim_periods(100, 1)
+plot_sim_periods(1000, 1)
+
+# Plot averages
+plot_sim_periods(1000, 0)
 
 # ############################  End  ################################## #
