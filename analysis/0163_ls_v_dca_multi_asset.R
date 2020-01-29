@@ -15,7 +15,7 @@ library(zoo)
 library(PerformanceAnalytics)
 library(tidyverse)
 
-folder_name <- "0162_ls_v_dca_multi_asset"
+folder_name <- "0163_ls_v_dca_multi_asset"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
