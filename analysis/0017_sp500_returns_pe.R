@@ -18,6 +18,10 @@ library(stringr)
 library(ggrepel)
 library(dplyr)
 
+folder_name <- "0017_sp500_returns_pe"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+
 ########################## Start Program Here ######################### #
 
 # Create a custom palette with black using COlorBrewer
@@ -146,11 +150,10 @@ for (x in returns_to_calc){
 plot_ret_pe(5)
 plot_ret_pe(30)
 
-# Instead of creating these images as a GIF in R, do it in Bash
-# I use Git Bash + magick because this is way faster than creating the GIF in R
-# After navigating to the correct folder, use this command:
-#
-# magick convert -delay 25 loop -0 returns-*.jpeg all_plots.gif
+create_gif(out_path, 
+           paste0("returns-*.jpeg"), 
+           40, 
+           out_name = paste0("_gif_returns.gif"))
 
 
 # ############################  End  ################################## #
