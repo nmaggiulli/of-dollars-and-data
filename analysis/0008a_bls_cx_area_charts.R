@@ -89,7 +89,7 @@ for (i in 1:nrow(loop_list)){
   last$cumsum <- cumsum(last$share)
   
   # Set the file_path 
-  file_path = paste0(exportdir, "0008_bls_consumer_expenditures/", loop_list[i, 1], ".jpeg")
+  file_path = paste0(exportdir, "0008_bls_consumer_expenditures/", loop_list[i, 1], "_", last_year, ".jpeg")
   
   if(loop_list[i,1] == "Lowest 20 percent income quintile"){
     top_title <- "The Lowest 20 Percent of Earners\nSpend More Than They Earn\non Basic Necessities"
@@ -177,7 +177,7 @@ for (i in 1:nrow(loop_list)){
   last_year <- max(to_plot$year)
   
   # Set the file_path 
-  file_path = paste0(exportdir, "0008_bls_consumer_expenditures/income-minus-expenses.jpeg")
+  file_path = paste0(exportdir, "0008_bls_consumer_expenditures/income_minus_expenses_", last_year,".jpeg")
   
   # Plot the time trends
   plot <- ggplot(to_plot, aes(x = year, y = inc_minus_exp, col = characteristics_name))  +
