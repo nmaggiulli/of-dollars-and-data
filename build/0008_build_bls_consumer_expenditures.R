@@ -13,48 +13,21 @@ library(stringr)
 ########################## Start Program Here ######################### #
 
 # Load in raw BLS productivity data
-bls_cx <-readRDS(paste0(importdir, "08-bls-consumer-expenditures/bls_cx_data.1.AllData.Rds"))
+bls_cx <-readRDS(paste0(importdir, "0008_bls_consumer_expenditures/bls_cx_data.1.AllData.Rds"))
 
 # Load in other datasets and create a code based on their row number
 # Will use these datasets to merge to the main productivity dataset
-create_index <- function(string){
+read_file <- function(string){
   name            <- deparse(substitute(string))
-  temp            <- readRDS(paste0(importdir, "08-bls-consumer-expenditures/bls_cx_", name, ".Rds"))
-  if (name %in% c("category", "subcategory")){
-    new_col         <- paste0(name, "_name")
-    old_col         <- paste0(name, "_text")
-    code            <- paste0(name, "_code")
-    temp[, new_col] <- temp[, old_col]
-    if(name %in% (c("subcategory"))){
-    temp            <- temp[, c(code, new_col, "category_code")]
-    } else{
-    temp            <- temp[, c(code, new_col)]
-    }
-  } else if (name %in% (c("item", "demographics", "characteristics"))){
-    new_col         <- paste0(name, "_name")
-    old_col         <- paste0(name, "_code")
-    temp[, new_col] <- temp[, old_col]
-    if (name %in% (c("characteristics"))){
-      temp[, old_col] <- temp[, "demographics_code"]
-      temp[, "demographics_code"] <- temp[, "row.names"]
-      temp            <- temp[, c(old_col, new_col, "demographics_code")]
-    } else if (name %in% (c("item"))){
-      temp[, old_col] <- temp[, "subcategory_code"]
-      temp[, "subcategory_code"] <- temp[, "row.names"]
-      temp            <- temp[, c(old_col, new_col, "subcategory_code")]
-    } else {
-      temp[, old_col] <- temp[, "row.names"]
-      temp            <- temp[, c(old_col, new_col)]
-    }
-  }
-  return(temp)
+  temp            <- readRDS(paste0(importdir, "0008_bls_consumer_expenditures/bls_cx_", name, ".Rds")) %>%
+                        select(-display_level, -selectable, -sort_sequence)
 }
 
-item             <- create_index(item)
-demographics     <- create_index(demographics)
-characteristics  <- create_index(characteristics)
-subcategory      <- create_index(subcategory)
-category         <- create_index(category)
+item             <- read_file(item) 
+demographics     <- read_file(demographics)
+characteristics  <- read_file(characteristics)
+subcategory      <- read_file(subcategory)
+category         <- read_file(category)
 
 # Parse the series ID based on the "cx.txt" file here:  https://download.bls.gov/pub/time.series/cx/
 bls_cx <- mutate(bls_cx,
@@ -70,20 +43,25 @@ bls_cx <- bls_cx                     %>%
           left_join(characteristics) %>%
           left_join(subcategory)     %>%
           left_join(category)        %>%
-            select(series_id, year, value, footnote_codes, item_name,
-                   demographics_name, characteristics_name,
-                   subcategory_name, category_name, subcategory_code,
-                   item_code, characteristics_code, demographics_code)
+            select(series_id, year, value, footnote_codes, item_text,
+                   demographics_text, characteristics_text,
+                   subcategory_text, category_text, subcategory_code,
+                   item_code, characteristics_code, demographics_code) %>%
+            rename(demographics_name = demographics_text,
+                   item_name = item_text,
+                   characteristics_name = characteristics_text,
+                   subcategory_name = subcategory_text,
+                   category_name = category_text)
 
 # Save down final build before doing analysis
-saveRDS(bls_cx, paste0(localdir, "08-bls-cx.Rds"))
+saveRDS(bls_cx, paste0(localdir, "0008_bls_cx.Rds"))
 
 # Save down other built datasets for reference
-saveRDS(item,            paste0(localdir, "08-bls-cx-item.Rds"))
-saveRDS(demographics,    paste0(localdir, "08-bls-cx-demographics.Rds"))
-saveRDS(characteristics, paste0(localdir, "08-bls-cx-characteristics.Rds"))
-saveRDS(subcategory,     paste0(localdir, "08-bls-cx-subcategory.Rds"))
-saveRDS(category,        paste0(localdir, "08-bls-cx-category.Rds"))
+saveRDS(item,            paste0(localdir, "0008_bls_cx_item.Rds"))
+saveRDS(demographics,    paste0(localdir, "0008_bls_cx_demographics.Rds"))
+saveRDS(characteristics, paste0(localdir, "0008_bls_cx_characteristics.Rds"))
+saveRDS(subcategory,     paste0(localdir, "0008_bls_cx_subcategory.Rds"))
+saveRDS(category,        paste0(localdir, "0008_bls_cx_category.Rds"))
 
 
 # ############################  End  ################################## #
