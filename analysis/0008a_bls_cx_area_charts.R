@@ -179,21 +179,25 @@ for (i in 1:nrow(loop_list)){
   # Set the file_path 
   file_path = paste0(exportdir, "0008_bls_consumer_expenditures/income_minus_expenses_", last_year,".jpeg")
   
+  text_labels <- filter(to_plot, year == last_year, characteristics_name %in% c(
+    "Highest 20 percent income quintile",
+    "Lowest 20 percent income quintile"))
+  
   # Plot the time trends
   plot <- ggplot(to_plot, aes(x = year, y = inc_minus_exp, col = characteristics_name))  +
     geom_line() +
     geom_hline(yintercept = 0, col = "black") +
-    geom_text_repel(data = filter(to_plot, year == last_year, characteristics_name %in% c(
-                    "Highest 20 percent income quintile",
-                    "Lowest 20 percent income quintile")
-                    ),
+    geom_text_repel(data = text_labels,
                     aes(year, 
                         inc_minus_exp, 
                         label = characteristics_name, 
                         family = "my_font"), 
-                    nudge_y = -4000,
-                    segment.colour = "white",
-                    size = 3) +
+                    nudge_y = ifelse(text_labels$characteristics_name == "Lowest 20 percent income quintile", 
+                                     -3000, 
+                                     8000),
+                    segment.colour = "transparent",
+                    size = 3,
+                    max.iter = 1000) +
     scale_color_discrete(guide = FALSE) +
     scale_y_continuous(label = dollar, breaks = seq(-20000, 60000, 10000), limits=c(-20000, 60000)) +
     ggtitle(paste0("40% of U.S. Households Spent\nMore Than They Earned in ", last_year))  +
