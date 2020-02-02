@@ -200,7 +200,7 @@ for (i in 1:nrow(loop_list)){
                     max.iter = 1000) +
     scale_color_discrete(guide = FALSE) +
     scale_y_continuous(label = dollar, breaks = seq(-20000, 60000, 10000), limits=c(-20000, 60000)) +
-    ggtitle(paste0("40% of U.S. Households Spent\nMore Than They Earned in ", last_year))  +
+    ggtitle(paste0("Nearly Half of all U.S. Households Spent\nMore Than They Earned in ", last_year))  +
     of_dollars_and_data_theme +
     labs(x = "Year" , y = "After-Tax Income Minus Expenses")
   
