@@ -177,7 +177,7 @@ for (i in 1:nrow(loop_list)){
   last_year <- max(to_plot$year)
   
   # Set the file_path 
-  file_path = paste0(exportdir, "0008_bls_consumer_expenditures/income_minus_expenses_", last_year,".jpeg")
+  file_path = paste0(exportdir, "0008_bls_consumer_expenditures/income_minus_expenses_", last_year,"_final.jpeg")
   
   text_labels <- filter(to_plot, year == last_year, characteristics_name %in% c(
     "Highest 20 percent income quintile",
@@ -200,7 +200,7 @@ for (i in 1:nrow(loop_list)){
                     max.iter = 1000) +
     scale_color_discrete(guide = FALSE) +
     scale_y_continuous(label = dollar, breaks = seq(-20000, 60000, 10000), limits=c(-20000, 60000)) +
-    ggtitle(paste0("Nearly Half of all U.S. Households Spent\nMore Than They Earned in ", last_year))  +
+    ggtitle(paste0("Roughly Half of all U.S. Households Spent\nMore Than They Earned in ", last_year))  +
     of_dollars_and_data_theme +
     labs(x = "Year" , y = "After-Tax Income Minus Expenses")
   
