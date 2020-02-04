@@ -67,8 +67,15 @@ final_results <- df %>%
 
 by_show <- final_results %>%
             gather(-idea, key=key, value=value) %>%
-            filter(!is.na(idea)) %>%
             arrange(idea)
+
+empty_days <- by_show %>%
+                filter(is.na(idea)) %>%
+                select(-idea) %>%
+                arrange(value)
+
+by_show <- by_show %>%
+            filter(!is.na(idea))
 
 show_num <- 1
 for(i in 1:nrow(by_show)){
