@@ -15,7 +15,7 @@ library(gganimate)
 library(tidylog)
 library(tidyverse)
 
-folder_name <- "0162_avoid_the_zeros"
+folder_name <- "0163_avoid_the_zeros"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
