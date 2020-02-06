@@ -39,7 +39,7 @@ plot_fwd_ret <- function(n_days, flu_name, flu_title, flu_label, df_in, ret_data
     scale_x_continuous(label = comma) +
     of_dollars_and_data_theme +
     ggtitle(paste0(flu_title, " vs.\n", n_days, "-Day ", ret_data, " Forward Return")) +
-    labs(x=paste0(flu_label), y=paste0(n_days, "-Day", ret_data, " Forward Return"),
+    labs(x=paste0(flu_label), y=paste0(n_days, "-Day ", ret_data, " Forward Return"),
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
