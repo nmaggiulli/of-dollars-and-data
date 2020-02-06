@@ -22,10 +22,11 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-plot_fwd_ret <- function(n_days, flu_name, flu_title, flu_label, df_in, ret_data, source_in){
+plot_fwd_ret <- function(n_days, flu_name, flu_title, flu_label, df_in, ret_data, source_in1, source_in2){
   
   file_path <- paste0(out_path, "/", ret_data, "_", flu_name, "_", n_days, "_day_fwd_ret.jpeg")
-  source_string <- paste0("Source:  ", source_in, ", Wikimedia Commons (OfDollarsAndData.com)")
+  source_string <- str_wrap(paste0("Source:  ", source_in1, ", ", source_in2, " (OfDollarsAndData.com)"),
+                            width = 85)
   note_string <-  str_wrap(paste0("Note:  Days with missing data were filled using linear extrapolation."), 
                            width = 85)
   
@@ -46,7 +47,7 @@ plot_fwd_ret <- function(n_days, flu_name, flu_title, flu_label, df_in, ret_data
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-plot_flu_data <- function(flu_name, flu_title, flu_label, ret_data, source_in){
+plot_flu_data <- function(flu_name, flu_title, flu_label, ret_data, source_in1, source_in2){
 
   epi_data <- read.csv(paste0(importdir, "0162_epidemics_vs_dow_data/", flu_name, "_wiki_webplotdigi.csv"),
                        col.names = c("date", "epi_count")) %>%
@@ -102,7 +103,7 @@ plot_flu_data <- function(flu_name, flu_title, flu_label, ret_data, source_in){
   
   # Plot deaths per 1,000 over time
   file_path <- paste0(out_path, "/incidents_time_", flu_name, ".jpeg")
-  source_string <- "Source:  Wikimedia Commons (OfDollarsAndData.com)"
+  source_string <- paste0("Source:   ", source_in1, " (OfDollarsAndData.com)")
   note_string <-  str_wrap(paste0("Note:  Days with missing data were filled using linear extrapolation."), 
                            width = 85)
   
@@ -121,7 +122,7 @@ plot_flu_data <- function(flu_name, flu_title, flu_label, ret_data, source_in){
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
-  ret_days <- c(30, 60, 90, 180, 365)
+  ret_days <- c(7, 30, 60, 90, 180, 365)
   
   for(r in ret_days){
     
@@ -129,19 +130,42 @@ plot_flu_data <- function(flu_name, flu_title, flu_label, ret_data, source_in){
       mutate(fwd_ret = lead(index, r)/index - 1) %>%
       filter(date <= max_date) 
     
-    plot_fwd_ret(r, flu_name, flu_title, flu_label, filtered_df, ret_data, source_in)
+    plot_fwd_ret(r, flu_name, flu_title, flu_label, filtered_df, ret_data, source_in1, source_in2)
   }
 }
 
-plot_flu_data("spanish_flu", "Spanish Flu Per-Capita Deaths in UK", "Deaths Per 1,000 People", "Dow", "Bloomberg")
-plot_flu_data("swine_flu", "Swine Flu Cases in UK", "Number of Cases", "Dow", "Bloomberg")
-plot_flu_data("ebola", "Total Ebola Cases", "Number of Cases", "Dow", "Bloomberg")
+all_epidemics <- c("spanish_flu", "swine_flu", "ebola")
+for(epi in all_epidemics){
+  
+  if(epi == "spanish_flu"){
+    title <- "Spanish Flu Per-Capita Deaths in UK"
+    label <- "Deaths Per 1,000 People"
+    source_epi <- "Wikimedia Commons"
+  } else if(epi == "swine_flu"){
+    title <- "Swine Flu Cases in UK"
+    label <- "Number of Cases"
+    source_epi <- "Wikimedia Commons"
+  } else if(epi == "ebola"){
+    title <- "Total West Africa Ebola Cases"
+    label <- "Number of Cases"
+    source_epi <- "Shultz, James & Espinel, Zelde & Espinola, Maria & Rechkemmer, Andreas"
+  } 
+  
+  ret_data_source <- c("Dow", "EAFE", "EM")
+  
+  for(rds in ret_data_source){
+    if(rds == "Dow"){
+      source_ret <- "Bloomberg"
+      plot_flu_data(epi, title, label, rds, source_epi, source_ret)
+    } else{
+      source_ret <- "YCharts"
+      if(epi != "spanish_flu"){
+        plot_flu_data(epi, title, label, rds, source_epi, source_ret)
+      }
+    }
+  }
+}
 
-plot_flu_data("swine_flu", "Swine Flu Cases in UK", "Number of Cases", "EAFE", "YCharts")
-plot_flu_data("ebola", "Total Ebola Cases", "Number of Cases", "EAFE", "YCharts")
-
-plot_flu_data("swine_flu", "Swine Flu Cases in UK", "Number of Cases", "EM", "YCharts")
-plot_flu_data("ebola", "Total Ebola Cases", "Number of Cases", "EM", "YCharts")
 
 
 
