@@ -35,7 +35,7 @@ plot_fwd_ret <- function(n_days, flu_name, flu_title, flu_label, df_in, ret_data
   plot <- ggplot(to_plot, aes(x=epi_count, y=fwd_ret, col = pre_post)) +
     geom_point() +
     geom_hline(yintercept = 0, linetype = "dashed") +
-    scale_color_manual(values = c("green", "red")) +
+    scale_color_manual(values = c("red", "green")) +
     scale_y_continuous(label = percent) +
     scale_x_continuous(label = comma) +
     of_dollars_and_data_theme +
@@ -133,7 +133,7 @@ plot_flu_data <- function(flu_name, flu_title, flu_label, ret_data, source_in1, 
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
-  ret_days <- c(7, 30, 60, 90, 180, 365)
+  ret_days <- c(7, 30, 60, 90, 180)
   
   for(r in ret_days){
     
@@ -141,6 +141,8 @@ plot_flu_data <- function(flu_name, flu_title, flu_label, ret_data, source_in1, 
       mutate(fwd_ret = lead(index, r)/index - 1) %>%
       filter(date <= max_date) %>%
       mutate(pre_post = ifelse(date < epi_peak_date, "Pre-Peak", "Post-Peak"))
+    
+    filtered_df$pre_post <- factor(filtered_df$pre_post, levels = c("Pre-Peak", "Post-Peak"))
     
     plot_fwd_ret(r, flu_name, flu_title, flu_label, filtered_df, ret_data, source_in1, source_in2)
   }
@@ -159,7 +161,7 @@ for(epi in all_epidemics){
     label <- "Number of Reported Cases"
     source_epi <- "Center for Disease Control and Prevention"
   } else if(epi == "ebola"){
-    title <- "Total West Africa Ebola Cases"
+    title <- "Total Ebola Cases in West Africa"
     label <- "Number of Cases"
     source_epi <- "Shultz, James & Espinel, Zelde & Espinola, Maria & Rechkemmer, Andreas"
   } else if(epi == "sars"){
