@@ -32,13 +32,15 @@ plot_fwd_ret <- function(n_days, flu_name, flu_title, flu_label, df_in, ret_data
   
   to_plot <- df_in
   
-  plot <- ggplot(to_plot, aes(x=epi_count, y=fwd_ret)) +
+  plot <- ggplot(to_plot, aes(x=epi_count, y=fwd_ret, col = pre_post)) +
     geom_point() +
-    geom_smooth(method = "lm", se = FALSE) +
     geom_hline(yintercept = 0, linetype = "dashed") +
+    scale_color_manual(values = c("green", "red")) +
     scale_y_continuous(label = percent) +
     scale_x_continuous(label = comma) +
     of_dollars_and_data_theme +
+    theme(legend.position = "bottom",
+          legend.title = element_blank()) +
     ggtitle(paste0(flu_title, " vs.\n", n_days, "-Day ", ret_data, " Forward Return")) +
     labs(x=paste0(flu_label), y=paste0(n_days, "-Day ", ret_data, " Forward Return"),
          caption = paste0(source_string, "\n", note_string))
@@ -49,7 +51,7 @@ plot_fwd_ret <- function(n_days, flu_name, flu_title, flu_label, df_in, ret_data
 
 plot_flu_data <- function(flu_name, flu_title, flu_label, ret_data, source_in1, source_in2){
 
-  epi_data <- read.csv(paste0(importdir, "0162_epidemics_vs_dow_data/", flu_name, "_wiki_webplotdigi.csv"),
+  epi_data <- read.csv(paste0(importdir, "0162_epidemics_vs_dow_data/", flu_name, "_webplotdigi.csv"),
                        col.names = c("date", "epi_count")) %>%
                   mutate(date = as.Date(date, "%Y/%m/%d")) %>%
                   arrange(date) %>%
@@ -103,17 +105,26 @@ plot_flu_data <- function(flu_name, flu_title, flu_label, ret_data, source_in1, 
   
   # Plot deaths per 1,000 over time
   file_path <- paste0(out_path, "/incidents_time_", flu_name, ".jpeg")
-  source_string <- paste0("Source:   ", source_in1, " (OfDollarsAndData.com)")
-  note_string <-  str_wrap(paste0("Note:  Days with missing data were filled using linear extrapolation."), 
+  source_string <- str_wrap(paste0("Source:   ", source_in1, " (OfDollarsAndData.com)"),
+                            width = 85)
+  note_string <-  str_wrap(paste0("Note:  Days with missing data were filled using linear extrapolation.  ",
+                                  "Epidemic data starts on ", format.Date(min_date, "%m/%d/%Y"), 
+                                  " and ends on ", format.Date(max_date, "%m/%d/%Y"), "."), 
                            width = 85)
   
-  to_plot <- df %>%
-    filter(date <= max_date)
+  epi_peak_date <- df %>%
+                    filter(epi_count == max(df$epi_count, na.rm = TRUE)) %>%
+                    pull(date)
   
-  plot <- ggplot(to_plot, aes(x=date, y=epi_count)) +
+  to_plot <- df %>%
+    filter(date <= max_date) %>%
+    mutate(pre_post = ifelse(date < epi_peak_date, "Pre-Peak", "Post-Peak"))
+  
+  plot <- ggplot(to_plot, aes(x=date, y=epi_count, col = pre_post, group = 1)) +
     geom_line() +
     scale_y_continuous(label = comma) +
     scale_x_date(date_labels = "%m/%d/%Y") +
+    scale_color_manual(guide = FALSE, values = c("green", "red")) +
     of_dollars_and_data_theme +
     ggtitle(paste0(flu_title)) +
     labs(x=paste0("Date"), y=paste0(flu_label),
@@ -128,27 +139,33 @@ plot_flu_data <- function(flu_name, flu_title, flu_label, ret_data, source_in1, 
     
     filtered_df <- df %>%
       mutate(fwd_ret = lead(index, r)/index - 1) %>%
-      filter(date <= max_date) 
+      filter(date <= max_date) %>%
+      mutate(pre_post = ifelse(date < epi_peak_date, "Pre-Peak", "Post-Peak"))
     
     plot_fwd_ret(r, flu_name, flu_title, flu_label, filtered_df, ret_data, source_in1, source_in2)
   }
 }
 
-all_epidemics <- c("spanish_flu", "swine_flu", "ebola")
+all_epidemics <- c("spanish_flu", "swine_flu", "ebola", "sars")
 for(epi in all_epidemics){
+  print(epi)
   
   if(epi == "spanish_flu"){
     title <- "Spanish Flu Per-Capita Deaths in UK"
     label <- "Deaths Per 1,000 People"
     source_epi <- "Wikimedia Commons"
   } else if(epi == "swine_flu"){
-    title <- "Swine Flu Cases in UK"
-    label <- "Number of Cases"
-    source_epi <- "Wikimedia Commons"
+    title <- "Weekly Reported Swine Flu Cases"
+    label <- "Number of Reported Cases"
+    source_epi <- "Center for Disease Control and Prevention"
   } else if(epi == "ebola"){
     title <- "Total West Africa Ebola Cases"
     label <- "Number of Cases"
     source_epi <- "Shultz, James & Espinel, Zelde & Espinola, Maria & Rechkemmer, Andreas"
+  } else if(epi == "sars"){
+    title <- "Probable Worldwide SARS Cases"
+    label <- "Number of Cases"
+    source_epi <- "World Health Organization"
   } 
   
   ret_data_source <- c("Dow", "EAFE", "EM")
