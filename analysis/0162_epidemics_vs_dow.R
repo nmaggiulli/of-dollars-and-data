@@ -120,6 +120,10 @@ plot_flu_data <- function(flu_name, flu_title, flu_label, ret_data, source_in1, 
     filter(date <= max_date) %>%
     mutate(pre_post = ifelse(date < epi_peak_date, "Pre-Peak", "Post-Peak"))
   
+  if(flu_name == "spanish_flu" & ret_data == "Dow"){
+    assign("spanish_flu_df", to_plot, envir = .GlobalEnv)
+  }
+  
   plot <- ggplot(to_plot, aes(x=date, y=epi_count, col = pre_post, group = 1)) +
     geom_line() +
     scale_y_continuous(label = comma) +
@@ -199,7 +203,28 @@ for(epi in all_epidemics){
   }
 }
 
+# Plot Dow and Spanish Flu
+file_path <- paste0(out_path, "/_dow_spanish_flu_final.jpeg")
 
+to_plot <- spanish_flu_df
+
+source_string <- str_wrap(paste0("Source: Wikimedia Commons, Bloomberg (OfDollarsAndData.com)"),
+                          width = 85)
+note_string <-  str_wrap(paste0("Note:  Days with missing data were filled using linear extrapolation.  "),
+                         width = 85)
+
+plot <- ggplot(to_plot, aes(x=date, y=index, col = pre_post)) +
+  geom_line() +
+  scale_color_manual(guide = FALSE, values = c("green", "red")) +
+  scale_y_continuous(label = comma) +
+  scale_x_date(date_labels = "%m/%d/%Y") +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Dow Index During Spanish Flu")) +
+  labs(x=paste0("Date"), y=paste0("Index Value"),
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 
 
