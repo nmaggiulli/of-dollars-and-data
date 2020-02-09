@@ -191,3 +191,13 @@ round_to_nearest <- function(num, round_direction, unit){
   
   return(final)
 } 
+
+sent_case <- function(InputString){
+  InputString <-
+    paste(toupper(substring(InputString,1,1)),tolower(substring(InputString,2)),
+          sep="")
+}
+
+proper_case <- function(InputString){
+  sapply(lapply(strsplit(InputString," "), sent_case), paste, collapse=" ")
+}
