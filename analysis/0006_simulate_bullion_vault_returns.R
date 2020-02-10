@@ -56,7 +56,7 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
   plot <- ggplot(data = melted_returns, aes(x = year, y = value, col = asset, fill = asset)) +
     geom_bar(stat = "identity") +
     facet_wrap(~asset) +
-    ggtitle("Returns Vary by Asset Class\n1976 - 2015") +
+    ggtitle(paste0("Returns Vary by Asset Class\n", min_year, "-", max_year)) +
     scale_y_continuous(label = percent, limits = c(-0.5, 1.25)) +
     scale_x_date(date_breaks = "10 years", date_labels = "%y",
                  limits = c(min(full_bv_returns$year), max(full_bv_returns$year))) +
@@ -93,7 +93,7 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
   plot <- ggplot(data = melted_returns, aes(x = year, y = value, col = asset)) +
       #geom_bar(stat = "identity", position = "dodge") +
     geom_line() +
-    ggtitle("Asset Returns Are Hard to Predict\n1976 - 2015") +
+    ggtitle(paste0("Asset Returns Are Hard to Predict\n", min_year, "-", max_year)) +
       scale_y_continuous(label = percent, limits = c(-0.5, 1.25), breaks = seq(-0.5, 1.25, .25)) +
     scale_x_date(date_breaks = "10 years", date_labels = "%Y",
                  limits = c(min(full_bv_returns$year), max(full_bv_returns$year))) +
