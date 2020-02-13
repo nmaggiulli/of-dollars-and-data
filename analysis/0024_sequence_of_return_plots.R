@@ -102,14 +102,18 @@ for (i in 1:n_years){
                           y = value,
                           label = paste0("+", abs(scenario_1[i])*100, "%"),
                           family = "my_font"),
-                      col = "green"
+                      col = "green",
+                      nudge_y = 5000,
+                      max.iter = 1
       ) +
       geom_text_repel(data=filter(to_plot, year == i, scenario == "Negative Returns Later"),
                       aes(x = year,
                           y = value,
                           label = paste0("-", abs(scenario_2[i])*100, "%"),
                           family = "my_font"),
-                      col = "red"
+                      col = "red",
+                      nudge_y = 5000,
+                      max.iter = 1
       ) +
       geom_vline(xintercept = 10, linetype =  "dashed", col = "black") +
       facet_grid(~scenario) +
@@ -145,8 +149,8 @@ for (i in 1:n_years){
 
 create_gif(path = out_path,
            file_stub = paste0("*.jpeg"),
-           speed_milliseconds = 220,
-           out_name = paste0("_gif_all_sequence_plots.gif")
+           speed_milliseconds = 50,
+           out_name = paste0("_gif_all_sequence_plots24.gif")
 )
 
 # ############################  End  ################################## #
