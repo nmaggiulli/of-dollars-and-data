@@ -12,6 +12,7 @@ library(readxl)
 library(lubridate)
 library(ggrepel)
 library(zoo)
+library(lemon)
 library(tidyverse)
 
 folder_name <- "0164_ls_v_dca_multi_asset"
@@ -35,9 +36,15 @@ ProperCase <- function(InputString){
   sapply(lapply(strsplit(InputString," "), SentCase), paste, collapse=" ")
 }
 
-plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note){
+plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
   
   file_path <- paste0(f_out,"/ls_v_dca_", var, "_", n_month_dca, "m.jpeg")
+  
+  if(invest_dca_cash == 1){
+    additional_note <- paste0("For DCA, cash receives the return on the Bloomberg Barclays US 1-3 Month Treasury Bill Index before being invested.")
+  } else{
+    additional_note <- ""
+  }
   
   if(var != "outperformance"){
   to_plot <- in_df %>%
@@ -50,7 +57,8 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note){
     avg_dca <- to_plot %>% filter(key == "DCA") %>% summarize(value = mean(value)) %>% pull(value)
     
     note_string <- str_wrap(paste0("Note: On average, the DCA strategy has a ", var_note, " of ", 100*round(avg_dca, 3), 
-                                   "%  while Lump Sum has a ", var_note, " of ", 100*round(avg_ls, 3), "% over the time period shown."), 
+                                   "%  while Lump Sum has a ", var_note, " of ", 100*round(avg_ls, 3), "% over the time period shown.  ",
+                                   additional_note), 
                             width = 80)
   } else if (var == "outperformance"){
     to_plot <- in_df %>%
@@ -67,7 +75,8 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note){
     }
     
     note_string <- str_wrap(paste0("On average, DCA (over ", n_month_dca, " months) ", perf_string, " Lump Sum by ", round(100*avg_performance, 1), "% and ",
-                                   "underperforms Lump Sum in ", round(100*pct_underperformance, 1), "% of all months shown."), 
+                                   "underperforms Lump Sum in ", round(100*pct_underperformance, 1), "% of all months shown.  ",
+                                   additional_note), 
                             width = 80)
   }
   
@@ -139,6 +148,9 @@ raw <- read.csv(paste0(importdir, "0164_ycharts_multi_asset/timeseries_1-22-2020
   mutate(ret = ifelse(name == lag(name), value/lag(value) - 1, NA)) %>%
   filter(!is.na(ret))
 
+min_all <- min(raw$date)
+max_all <- max(raw$date)
+
 port_6040 <- raw %>%
               filter(name %in% c("S&P 500 Total Return", "Bloomberg Barclays US Treasury")) %>%
               mutate(ret = ifelse(name == "S&P 500 Total Return", 0.6*ret, 0.4*ret)) %>%
@@ -155,20 +167,41 @@ for(i in 1:nrow(port_6040)){
   }
 }
 
+# Bring in 1m-3m tbills
+tbill <- read.csv(paste0(importdir, "0164_ycharts_multi_asset/ycharts_1m_3m_treasury_rate.csv"), skip = 6) %>%
+  rename(symbol = Symbol,
+         name = Name) %>%
+  select(-Metric) %>%
+  gather(-symbol, -name, key=key, value=value) %>%
+  mutate(year = gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\1", key, perl = TRUE),
+         month =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\2", key, perl = TRUE),
+         day =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\3", key, perl = TRUE),
+         date = as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d")) %>%
+  filter(symbol != "", !is.na(value)) %>%
+  arrange(name, date) %>%
+  rename(value_tbill = value) %>%
+  mutate(ret_tbill = value_tbill/lag(value_tbill) - 1) %>%
+  filter(!is.na(ret_tbill)) %>%
+  select(date, value_tbill, ret_tbill)
+
+min_tbill <- min(tbill$date)
+max_tbill <- max(tbill$date)
+
+min_dt <- max(min_all, min_tbill)
+max_dt <- min(max_all, max_tbill)
+
 df <- raw %>%
-        bind_rows(port_6040)
+        bind_rows(port_6040) %>%
+        filter(date >= min_dt, date <= max_dt) %>%
+        left_join(tbill)
 
-all_assets <- unique(df$name)
-
-for(a in all_assets){
+run_asset <- function(a, invest_dca_cash){
   print(a)
   
   filtered <- df %>%
                   filter(name == a)
                   
-  raw_matrix <- as.matrix(filtered[, grepl("value|ret", colnames(filtered))])
-  
-  n_month_dca <- 24
+  raw_matrix <- as.matrix(filtered[, grepl("value|ret|value_tbill|ret_tbill", colnames(filtered))])
   
   asset_result <- data.frame(date = filtered[1:(nrow(filtered) - n_month_dca), "date"])
   
@@ -177,9 +210,10 @@ for(a in all_assets){
     end_row_num <- i + n_month_dca
     
     beg_asset    <- raw_matrix[i, 1]
+    beg_tbill    <- raw_matrix[i, 3]
     
     end_asset   <- raw_matrix[end_row_num, 1]
-    
+
     end_ls <- end_asset/beg_asset
     
     # Calculate the monthly lump sum returns
@@ -188,11 +222,21 @@ for(a in all_assets){
     # Now calculate DCA
     asset_growth  <- end_asset/raw_matrix[i:(end_row_num-1), 1]
     
+    # Calculate tbill info
+    if(invest_dca_cash == 1){
+      tbill_growth <- raw_matrix[i:(end_row_num - 1), 3]/beg_tbill
+      tbill_ret <- raw_matrix[i:(end_row_num-1), 4]
+    } else{
+      tbill_ret <- 0
+      tbill_growth <- 1
+    }
+
     # Get final DCA sum
-    end_dca <- sum(asset_growth * (1/n_month_dca))
+    end_dca <- sum(asset_growth * tbill_growth * (1/n_month_dca))
     
     # Calculate the monthly DCA returns
-    dca_ret <- raw_matrix[i:(end_row_num-1), 2] * (seq(1, n_month_dca)/n_month_dca)
+    dca_ret <- (raw_matrix[i:(end_row_num-1), 2] * (seq(1, n_month_dca)/n_month_dca)) + 
+                ((seq(n_month_dca-1, 0)/n_month_dca)) * tbill_ret
     
     ls_col  <- paste0("ls_", n_month_dca, "m")
     dca_col <- paste0("dca_", n_month_dca, "m")
@@ -226,8 +270,10 @@ for(a in all_assets){
   
   if(a == all_assets[1]){
    final_results <- asset_result 
+   assign("final_results", final_results, envir = .GlobalEnv)
   } else{
     final_results <- bind_rows(final_results, asset_result) 
+    assign("final_results", final_results, envir = .GlobalEnv)
   }
   
   # Define an out folder to delete and re-create
@@ -235,10 +281,17 @@ for(a in all_assets){
   
   remove_and_recreate_folder(out_folder)
   
-  plot_ls_v_dca(a, out_folder, asset_result, "ret", "monthly return")
-  plot_ls_v_dca(a, out_folder, asset_result, "sd", "standard deviation")
-  plot_ls_v_dca(a, out_folder, asset_result, "sharpe", "Sharpe Ratio")
-  plot_ls_v_dca(a, out_folder, asset_result, "outperformance", "DCA outperformance")
+  plot_ls_v_dca(a, out_folder, asset_result, "ret", "monthly return", invest_dca_cash)
+  plot_ls_v_dca(a, out_folder, asset_result, "sd", "standard deviation", invest_dca_cash)
+  plot_ls_v_dca(a, out_folder, asset_result, "sharpe", "Sharpe Ratio", invest_dca_cash)
+  plot_ls_v_dca(a, out_folder, asset_result, "outperformance", "DCA outperformance", invest_dca_cash)
+}
+
+all_assets <- unique(df$name)
+
+for(a in all_assets){
+  n_month_dca <- 24
+  run_asset(a, 1)
 }
 
 #Plot S&P 500 downside vs. 60/40 Downside
@@ -284,7 +337,6 @@ plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-
 final_summary <- final_results %>%
                     group_by(asset) %>%
                     summarize(dca_underperformance = -1*mean(dca_outperformance_24m),
@@ -298,7 +350,8 @@ export_to_excel(final_summary,
                 0)
 
 # Plot sample LS vs. DCA
-amount <- 24000
+amount <- 12000
+n_month_dca <- 12
 
 to_plot <- data.frame(period = rep(seq(1, n_month_dca), 2),
                       value = c(amount, rep(0, n_month_dca-1),
@@ -307,16 +360,19 @@ to_plot <- data.frame(period = rep(seq(1, n_month_dca), 2),
                               rep("Dollar Cost Averaging", n_month_dca))
 )
 
-file_path <- paste0(out_path,"/_ls_vs_dca_example.jpeg")
+to_plot$key <- factor(to_plot$key, levels = c("Lump Sum", "Dollar Cost Averaging"))
+
+file_path <- paste0(out_path,"/_ls_vs_dca_example_month.jpeg")
 
 plot <- ggplot(to_plot, aes(x=period, y=value)) +
   geom_bar(stat="identity", fill = "blue") +
-  facet_grid(key ~ .) +
+  facet_rep_grid(key ~ ., repeat.tick.labels = 'bottom') +
   scale_y_continuous(label = dollar) +
-  scale_x_continuous(limits = c(0, 25), breaks = seq(0, 24, 3)) +
+  scale_x_continuous(limits = c(0, n_month_dca+1), breaks = seq(0, n_month_dca, 3)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("The Difference Between LS and DCA")) +
-  labs(x = "Period", y=("Amount Invested per Period"),
+  theme(panel.border=element_blank(), axis.line=element_line()) +
+  ggtitle(paste0("Lump Sum vs. Dollar Cost Averaging")) +
+  labs(x = "Month", y=("Amount Invested Per Month"),
        caption = paste0("Source:  Simulated data (OfDollarsAndData.com)"))
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
