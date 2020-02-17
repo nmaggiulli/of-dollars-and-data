@@ -38,7 +38,7 @@ ProperCase <- function(InputString){
 
 plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
   
-  file_path <- paste0(f_out,"/ls_v_dca_", var, "_", n_month_dca, "m.jpeg")
+  file_path <- paste0(f_out,"/ls_v_dca_", var, "_", n_month_dca, "m_", asset, ".jpeg")
   
   if(invest_dca_cash == 1){
     additional_note <- paste0("For DCA, cash receives the return on the Bloomberg Barclays US 1-3 Month Treasury Bill Index before being invested.")
@@ -141,7 +141,7 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
   # Do CAPE chart for U.S. Stocks only
   if(asset == "U.S. Stocks" & var == "outperformance"){
     
-    file_path <- paste0(f_out,"/ls_v_dca_", var, "_", n_month_dca, "m_cape.jpeg")
+    file_path <- paste0(f_out,"/ls_v_dca_", var, "_", n_month_dca, "m_cape_", asset, ".jpeg")
     
     to_plot <- to_plot %>%
       left_join(select(sp500_ret_pe, date, cape))
@@ -263,7 +263,7 @@ sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                     rename(value = price_plus_div) %>%
                     mutate(ret = value/lag(value) - 1,
                            name = "U.S. Stocks") %>%
-                    filter(!is.na(ret), date >= "1970-01-01") %>%
+                    filter(!is.na(ret), date >= "1960-01-01") %>%
                     select(date, name, value, ret, cape)
 
 df <- raw %>%
