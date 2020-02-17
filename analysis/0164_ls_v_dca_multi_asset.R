@@ -157,7 +157,8 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
         cape < cape_pct_75 ~ paste0("CAPE ",  round(cape_pct_50, 0) , "-",  round(cape_pct_75, 0), " (50-75th percentile)"),
         cape >= cape_pct_75 ~ paste0("CAPE >",  round(cape_pct_75, 0), " (>75th percentile)"),
         TRUE ~ "Other"
-      ))
+      ),
+      cape_gt_30 = ifelse(cape > 30, 1, 0))
     
     to_plot$cape_group <- factor(to_plot$cape_group, levels = c(paste0("CAPE <", round(cape_pct_25, 0), " (<25th percentile)"),
                                                                 paste0("CAPE ",  round(cape_pct_25, 0) , "-",  round(cape_pct_50, 0), " (25-50th percentile)"),
@@ -172,7 +173,15 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
                                 avg_dca_sharpe = mean(dca_sharpe)) %>%
                       ungroup()
     
+    cape_gt_30 <- to_plot %>%
+      group_by(cape_gt_30) %>%
+      summarize(avg_dca_outperformance = mean(perf_col),
+                avg_ls_sharpe = mean(ls_sharpe),
+                avg_dca_sharpe = mean(dca_sharpe)) %>%
+      ungroup()
+  
     assign("cape_summary", cape_summary, envir = .GlobalEnv)
+    assign("cape_gt_30", cape_gt_30, envir = .GlobalEnv)
     
     export_to_excel(cape_summary, 
                     paste0(f_out, "/_cape_", n_month_dca, "m_summary.xlsx"),
