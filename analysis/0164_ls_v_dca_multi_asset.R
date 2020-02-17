@@ -167,7 +167,7 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
     
     cape_summary <- to_plot %>%
                       group_by(cape_group) %>%
-                      summarize(avg_outperformance = mean(perf_col),
+                      summarize(avg_dca_outperformance = mean(perf_col),
                                 avg_ls_sharpe = mean(ls_sharpe),
                                 avg_dca_sharpe = mean(dca_sharpe)) %>%
                       ungroup()
