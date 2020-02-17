@@ -263,7 +263,7 @@ sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                     rename(value = price_plus_div) %>%
                     mutate(ret = value/lag(value) - 1,
                            name = "U.S. Stocks") %>%
-                    filter(!is.na(ret), date >= "1926-01-01") %>%
+                    filter(!is.na(ret), date >= "1970-01-01") %>%
                     select(date, name, value, ret, cape)
 
 df <- raw %>%
