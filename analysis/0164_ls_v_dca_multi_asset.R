@@ -174,6 +174,12 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
     
     assign("cape_summary", cape_summary, envir = .GlobalEnv)
     
+    export_to_excel(cape_summary, 
+                    paste0(f_out, "/_cape_", n_month_dca, "m_summary.xlsx"),
+                    sheetname = "cape_summary",
+                    1,
+                    0)
+    
     plot <- ggplot(to_plot, aes(x=date, y=perf_col, col = cape_group, group = 1)) +
       geom_hline(yintercept = 0, col = "black") +
       geom_line() +
@@ -359,7 +365,7 @@ run_asset <- function(a, invest_dca_cash){
 }
 
 all_assets <- unique(df$name)
-invest_dca_cash <- 1
+invest_dca_cash <- 0
 
 if(invest_dca_cash == 1){
   out_path <- paste0(out_path, "/_invest_dca_cash")
@@ -454,35 +460,34 @@ if(invest_dca_cash == 0){
          caption = paste0("Source:  YCharts (OfDollarsAndData.com)\n", note_string))
   
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+  # Plot sample LS vs. DCA
+  amount <- 12000
+  n_month_dca <- 12
+  
+  to_plot <- data.frame(period = rep(seq(1, n_month_dca), 2),
+                        value = c(amount, rep(0, n_month_dca-1),
+                                       rep(amount/n_month_dca, n_month_dca)),
+                        key = c(rep("Lump Sum", n_month_dca),
+                                rep("Dollar Cost Averaging", n_month_dca))
+  )
+  
+  to_plot$key <- factor(to_plot$key, levels = c("Lump Sum", "Dollar Cost Averaging"))
+  
+  file_path <- paste0(out_path,"/_ls_vs_dca_example_month.jpeg")
+  
+  plot <- ggplot(to_plot, aes(x=period, y=value)) +
+    geom_bar(stat="identity", fill = "blue") +
+    facet_rep_grid(key ~ ., repeat.tick.labels = 'bottom') +
+    scale_y_continuous(label = dollar) +
+    scale_x_continuous(limits = c(0, n_month_dca+1), breaks = seq(0, n_month_dca, 3)) +
+    of_dollars_and_data_theme +
+    theme(panel.border=element_blank(), axis.line=element_line()) +
+    ggtitle(paste0("Lump Sum vs. Dollar Cost Averaging")) +
+    labs(x = "Month", y=("Amount Invested Per Month"),
+         caption = paste0("Source:  Simulated data (OfDollarsAndData.com)"))
+  
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
-
-# Plot sample LS vs. DCA
-amount <- 12000
-n_month_dca <- 12
-
-to_plot <- data.frame(period = rep(seq(1, n_month_dca), 2),
-                      value = c(amount, rep(0, n_month_dca-1),
-                                     rep(amount/n_month_dca, n_month_dca)),
-                      key = c(rep("Lump Sum", n_month_dca),
-                              rep("Dollar Cost Averaging", n_month_dca))
-)
-
-to_plot$key <- factor(to_plot$key, levels = c("Lump Sum", "Dollar Cost Averaging"))
-
-file_path <- paste0(out_path,"/_ls_vs_dca_example_month.jpeg")
-
-plot <- ggplot(to_plot, aes(x=period, y=value)) +
-  geom_bar(stat="identity", fill = "blue") +
-  facet_rep_grid(key ~ ., repeat.tick.labels = 'bottom') +
-  scale_y_continuous(label = dollar) +
-  scale_x_continuous(limits = c(0, n_month_dca+1), breaks = seq(0, n_month_dca, 3)) +
-  of_dollars_and_data_theme +
-  theme(panel.border=element_blank(), axis.line=element_line()) +
-  ggtitle(paste0("Lump Sum vs. Dollar Cost Averaging")) +
-  labs(x = "Month", y=("Amount Invested Per Month"),
-       caption = paste0("Source:  Simulated data (OfDollarsAndData.com)"))
-
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-
 
 # ############################  End  ################################## #
