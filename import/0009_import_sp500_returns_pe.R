@@ -20,7 +20,8 @@ sp500_ret_pe <- read_excel(paste0(importdir, "0009_sp500_returns_pe/ie_data.xls"
                           sheet = "Data") 
 
 colnames(sp500_ret_pe) <- c("date", "price", "div", "earnings", "cpi", "date_frac", 
-                            "long_irate", "real_price", "real_div", "real_earn", "cape")
+                            "long_irate", "real_price", "real_div", "real_tr",
+                            "real_earn", "real_earn_scaled", "cape", "blank", "cape_tr", "blank2")
 
 #Remove first 6 rows
 sp500_ret_pe <- sp500_ret_pe[7:nrow(sp500_ret_pe),]

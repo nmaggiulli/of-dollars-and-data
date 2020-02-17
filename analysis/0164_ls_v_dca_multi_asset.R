@@ -62,7 +62,9 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
                             width = 80)
   } else if (var == "outperformance"){
     to_plot <- in_df %>%
-      rename_(.dots = setNames(paste0("dca_outperformance_", n_month_dca, "m"), "perf_col"))
+      rename_(.dots = setNames(paste0("dca_outperformance_", n_month_dca, "m"), "perf_col")) %>%
+      rename_(.dots = setNames(paste0("ls_sharpe_", n_month_dca, "m"), "ls_sharpe")) %>%
+      rename_(.dots = setNames(paste0("dca_sharpe_", n_month_dca, "m"), "dca_sharpe"))
     
     avg_performance <- mean(to_plot$perf_col, na.rm = TRUE)
     pct_underperformance <- (to_plot %>% filter(perf_col < 0) %>% nrow())/nrow(to_plot)
@@ -83,7 +85,11 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
   first_yr <- min(year(to_plot$date))
   last_yr <- max(year(to_plot$date))
   
-  source_string <- paste0("Source:  YCharts, ", first_yr, "-", last_yr, " (OfDollarsAndData.com)")
+  if(asset != "U.S. Stocks"){
+    source_string <- paste0("Source:  YCharts, ", first_yr, "-", last_yr, " (OfDollarsAndData.com)")
+  } else{
+    source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, ", first_yr, "-", last_yr, " (OfDollarsAndData.com)")
+  }
   
   if(var != "outperformance"){
     plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
@@ -131,6 +137,62 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  # Do CAPE chart for U.S. Stocks only
+  if(asset == "U.S. Stocks" & var == "outperformance"){
+    
+    file_path <- paste0(f_out,"/ls_v_dca_", var, "_", n_month_dca, "m_cape.jpeg")
+    
+    to_plot <- to_plot %>%
+      left_join(select(sp500_ret_pe, date, cape))
+    
+    cape_pct_25 <- quantile(to_plot$cape, probs = 0.25)
+    cape_pct_50 <- quantile(to_plot$cape, probs = 0.5)
+    cape_pct_75 <- quantile(to_plot$cape, probs = 0.75)
+    
+    to_plot <- to_plot %>%
+      mutate(cape_group = case_when(
+        cape < cape_pct_25 ~ paste0("CAPE <", round(cape_pct_25, 0), " (<25th percentile)"),
+        cape < cape_pct_50 ~ paste0("CAPE ",  round(cape_pct_25, 0) , "-",  round(cape_pct_50, 0), " (25-50th percentile)"),
+        cape < cape_pct_75 ~ paste0("CAPE ",  round(cape_pct_50, 0) , "-",  round(cape_pct_75, 0), " (50-75th percentile)"),
+        cape >= cape_pct_75 ~ paste0("CAPE >",  round(cape_pct_75, 0), " (>75th percentile)"),
+        TRUE ~ "Other"
+      ))
+    
+    to_plot$cape_group <- factor(to_plot$cape_group, levels = c(paste0("CAPE <", round(cape_pct_25, 0), " (<25th percentile)"),
+                                                                paste0("CAPE ",  round(cape_pct_25, 0) , "-",  round(cape_pct_50, 0), " (25-50th percentile)"),
+                                                                paste0("CAPE ",  round(cape_pct_50, 0) , "-",  round(cape_pct_75, 0), " (50-75th percentile)"),
+                                                                paste0("CAPE >",  round(cape_pct_75, 0), " (>75th percentile)")
+                                                                ))
+    
+    cape_summary <- to_plot %>%
+                      group_by(cape_group) %>%
+                      summarize(avg_outperformance = mean(perf_col),
+                                avg_ls_sharpe = mean(ls_sharpe),
+                                avg_dca_sharpe = mean(dca_sharpe)) %>%
+                      ungroup()
+    
+    assign("cape_summary", cape_summary, envir = .GlobalEnv)
+    
+    plot <- ggplot(to_plot, aes(x=date, y=perf_col, col = cape_group, group = 1)) +
+      geom_hline(yintercept = 0, col = "black") +
+      geom_line() +
+      geom_text_repel(data=text_labels, aes(x=date, y=perf_col),
+                      color = "black",
+                      label = text_labels$label,
+                      family = "my_font",
+                      max.iter = 1) +
+      scale_color_manual(values = c("#fee5d9", "#fcae91", "#fb6a4a", "#cb181d")) +
+      scale_y_continuous(label = percent_format(accuracy = 1), limits = c(y_min*1.4, y_max*1.4)) +
+      of_dollars_and_data_theme +
+      guides(col=guide_legend(nrow=2, byrow=TRUE)) +
+      theme(legend.position = "bottom",
+            legend.title = element_blank()) +
+      ggtitle(paste0("DCA Performance Over ", n_month_dca, " Months\nvs. Lump Sum Investment with CAPE\n", asset)) +
+      labs(x = "Date", y="DCA Outperformance (%)",
+           caption = paste0(source_string, "\n", note_string))
+    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  }
 }
 
 raw <- read.csv(paste0(importdir, "0164_ycharts_multi_asset/timeseries_1-22-2020.csv"), skip = 6) %>%
@@ -190,10 +252,19 @@ max_tbill <- max(tbill$date)
 min_dt <- max(min_all, min_tbill)
 max_dt <- min(max_all, max_tbill)
 
+# Bring in S&P 500 data
+sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
+                    rename(value = price_plus_div) %>%
+                    mutate(ret = value/lag(value) - 1,
+                           name = "U.S. Stocks") %>%
+                    filter(!is.na(ret), date >= "1926-01-01") %>%
+                    select(date, name, value, ret, cape)
+
 df <- raw %>%
         bind_rows(port_6040) %>%
         filter(date >= min_dt, date <= max_dt) %>%
-        left_join(tbill)
+        left_join(tbill) %>%
+        bind_rows(select(sp500_ret_pe, -cape))
 
 run_asset <- function(a, invest_dca_cash){
   print(a)
@@ -210,7 +281,6 @@ run_asset <- function(a, invest_dca_cash){
     end_row_num <- i + n_month_dca
     
     beg_asset    <- raw_matrix[i, 1]
-    beg_tbill    <- raw_matrix[i, 3]
     
     end_asset   <- raw_matrix[end_row_num, 1]
 
@@ -224,6 +294,7 @@ run_asset <- function(a, invest_dca_cash){
     
     # Calculate tbill info
     if(invest_dca_cash == 1){
+      beg_tbill    <- raw_matrix[i, 3]
       tbill_growth <- raw_matrix[i:(end_row_num - 1), 3]/beg_tbill
       tbill_ret <- raw_matrix[i:(end_row_num-1), 4]
     } else{
@@ -277,7 +348,7 @@ run_asset <- function(a, invest_dca_cash){
   }
   
   # Define an out folder to delete and re-create
-  out_folder <- paste0(out_path,"/", a)
+  out_folder <- paste0(out_path, "/", a)
   
   remove_and_recreate_folder(out_folder)
   
@@ -288,66 +359,102 @@ run_asset <- function(a, invest_dca_cash){
 }
 
 all_assets <- unique(df$name)
+invest_dca_cash <- 1
 
-for(a in all_assets){
-  n_month_dca <- 24
-  run_asset(a, 1)
+if(invest_dca_cash == 1){
+  out_path <- paste0(out_path, "/_invest_dca_cash")
+  dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 }
 
-#Plot S&P 500 downside vs. 60/40 Downside
-to_plot <- final_results %>%
-            filter(asset %in% c("S&P 500 Total Return", "Portfolio 60-40")) %>%
-            select(date, asset, contains("_sd_")) %>%
-            mutate(value = ifelse(asset == "Portfolio 60-40", ls_sd_24m, dca_sd_24m)) %>%
-            select(date, asset, value)
-
-file_path <- paste0(out_path,"/sp500_dca_vs_6040_ls_sd_", n_month_dca, "m.jpeg")
-
-plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
-  geom_line() +
-  scale_color_manual(values = c("black", "blue")) +
-  scale_y_continuous(label = percent_format(accuracy = 0.1)) +
-  of_dollars_and_data_theme +
-  theme(legend.position = "bottom",
-        legend.title = element_blank()) +
-  ggtitle(paste0("Standard Deviation For\n", n_month_dca, "-Month DCA into S&P 500 vs.\nLump Sum into 60/40")) +
-  labs(x = "Date", y=("Standard Deviation"),
-       caption = paste0("Source:  YCharts (OfDollarsAndData.com)"))
-
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-
-to_plot <- final_results %>%
-  filter(asset %in% c("S&P 500 Total Return", "Portfolio 60-40")) %>%
-  select(date, asset, contains("ret")) %>%
-  mutate(value = ifelse(asset == "Portfolio 60-40", ls_ret_24m, dca_ret_24m)) %>%
-  select(date, asset, value)
-
-file_path <- paste0(out_path,"/sp500_dca_vs_6040_ls_ret_", n_month_dca, "m.jpeg")
-
-plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
-  geom_line() +
-  scale_color_manual(values = c("black", "blue")) +
-  scale_y_continuous(label = percent_format(accuracy = 0.1)) +
-  of_dollars_and_data_theme +
-  theme(legend.position = "bottom",
-        legend.title = element_blank()) +
-  ggtitle(paste0("Monthly Return For\n", n_month_dca, "-Month DCA into S&P 500 vs.\nLump Sum into 60/40")) +
-  labs(x = "Date", y=("Monthly Return"),
-       caption = paste0("Source:  YCharts (OfDollarsAndData.com)"))
-
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+for(a in all_assets){
+  if((invest_dca_cash == 1 & a != "U.S. Stocks") | invest_dca_cash == 0){
+    n_month_dca <- 24
+    run_asset(a, invest_dca_cash)
+  }
+}
 
 final_summary <- final_results %>%
-                    group_by(asset) %>%
-                    summarize(dca_underperformance = -1*mean(dca_outperformance_24m),
-                              dca_underperformed_months = mean(dca_underperformed_24m)) %>%
-                    ungroup()
+  group_by(asset) %>%
+  rename_(.dots = setNames(paste0("dca_outperformance_", n_month_dca, "m"), "dca_outperformance")) %>%
+  rename_(.dots = setNames(paste0("dca_underperformed_", n_month_dca, "m"), "dca_underperformed")) %>%
+  rename_(.dots = setNames(paste0("ls_sharpe_", n_month_dca, "m"), "ls_sharpe")) %>%
+  rename_(.dots = setNames(paste0("dca_sharpe_", n_month_dca, "m"), "dca_sharpe")) %>%
+  summarize(dca_underperformance = -1*mean(dca_outperformance),
+            dca_underperformed_months = mean(dca_underperformed),
+            ls_sharpe = mean(ls_sharpe),
+            dca_sharpe = mean(dca_sharpe)) %>%
+  ungroup()
 
 export_to_excel(final_summary, 
                 paste0(out_path, "/_final_dca_underperformance_summary.xlsx"),
                 sheetname = "final_summary",
                 1,
                 0)
+
+if(invest_dca_cash == 0){
+  #Plot S&P 500 downside vs. 60/40 SD
+  to_plot <- final_results %>%
+              filter(asset %in% c("S&P 500 Total Return", "Portfolio 60-40")) %>%
+              select(date, asset, contains("_sd_")) %>%
+              mutate(value = ifelse(asset == "Portfolio 60-40", ls_sd_24m, dca_sd_24m)) %>%
+              select(date, asset, value)
+  
+  avg_ls <- to_plot %>% filter(asset == "Portfolio 60-40") %>% summarize(value = mean(value)) %>% pull(value)
+  avg_dca <- to_plot %>% filter(asset == "S&P 500 Total Return") %>% summarize(value = mean(value)) %>% pull(value)
+  
+  note_string <- str_wrap(paste0("Note: On average, the DCA strategy has a standard deviation of ", 100*round(avg_dca, 3), 
+                                 "%  while Lump Sum has a standard deviation of ", 100*round(avg_ls, 3), "% over the time period shown.  "), 
+                          width = 80)
+  
+  to_plot <- to_plot %>%
+              mutate(asset = ifelse(asset == "Portfolio 60-40", "Lump Sum into 60-40", "DCA into S&P 500"))
+  
+  file_path <- paste0(out_path,"/_sp500_dca_vs_6040_ls_sd_", n_month_dca, "m.jpeg")
+  
+  plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
+    geom_line() +
+    scale_color_manual(values = c("black", "blue")) +
+    scale_y_continuous(label = percent_format(accuracy = 0.1)) +
+    of_dollars_and_data_theme +
+    theme(legend.position = "bottom",
+          legend.title = element_blank()) +
+    ggtitle(paste0("Standard Deviation For\n", n_month_dca, "-Month DCA into S&P 500 vs.\nLump Sum into 60/40")) +
+    labs(x = "Date", y=("Standard Deviation"),
+         caption = paste0("Source:  YCharts (OfDollarsAndData.com)\n", note_string))
+  
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  to_plot <- final_results %>%
+    filter(asset %in% c("S&P 500 Total Return", "Portfolio 60-40")) %>%
+    select(date, asset, contains("ret")) %>%
+    mutate(value = ifelse(asset == "Portfolio 60-40", ls_ret_24m, dca_ret_24m)) %>%
+    select(date, asset, value)
+  
+  avg_ls <- to_plot %>% filter(asset == "Portfolio 60-40") %>% summarize(value = mean(value)) %>% pull(value)
+  avg_dca <- to_plot %>% filter(asset == "S&P 500 Total Return") %>% summarize(value = mean(value)) %>% pull(value)
+  
+  note_string <- str_wrap(paste0("Note: On average, the DCA strategy has a monthly return of ", 100*round(avg_dca, 3), 
+                                 "%  while Lump Sum has a monthly return of ", 100*round(avg_ls, 3), "% over the time period shown.  "), 
+                          width = 80)
+  
+  to_plot <- to_plot %>%
+    mutate(asset = ifelse(asset == "Portfolio 60-40", "Lump Sum into 60-40", "DCA into S&P 500"))
+  
+  file_path <- paste0(out_path,"/_sp500_dca_vs_6040_ls_ret_", n_month_dca, "m.jpeg")
+  
+  plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
+    geom_line() +
+    scale_color_manual(values = c("black", "blue")) +
+    scale_y_continuous(label = percent_format(accuracy = 0.1)) +
+    of_dollars_and_data_theme +
+    theme(legend.position = "bottom",
+          legend.title = element_blank()) +
+    ggtitle(paste0("Monthly Return For\n", n_month_dca, "-Month DCA into S&P 500 vs.\nLump Sum into 60/40")) +
+    labs(x = "Date", y=("Monthly Return"),
+         caption = paste0("Source:  YCharts (OfDollarsAndData.com)\n", note_string))
+  
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+}
 
 # Plot sample LS vs. DCA
 amount <- 12000
@@ -376,5 +483,6 @@ plot <- ggplot(to_plot, aes(x=period, y=value)) +
        caption = paste0("Source:  Simulated data (OfDollarsAndData.com)"))
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 
 # ############################  End  ################################## #
