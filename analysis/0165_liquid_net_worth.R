@@ -11,6 +11,8 @@ library(scales)
 library(readxl)
 library(lubridate)
 library(ggrepel)
+library(survey)
+library(mitools)
 library(tidyverse)
 
 folder_name <- "0165_liquid_net_worth"
@@ -19,6 +21,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
+              filter(year == 2016)
 
 
 # ############################  End  ################################## #
