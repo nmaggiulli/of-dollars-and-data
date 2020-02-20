@@ -11,12 +11,14 @@ library(dplyr)
 
 ########################## Start Program Here ######################### #
 
+in_path <- paste0(importdir, "0003_scf_data/SCF")
+
 # Create a year list to loop through
-year_list <- c(1989, 1992, 1995, 1998, 2001, 2004, 2007, 2010, 2013)
+year_list <- seq(1989, 2016, 3)
 
 for (x in year_list){
   # Load SCF data into memory
-  load(paste0(importdir,"03-scf-data/scf", x, ".rda"))
+  t <- readRDS(paste0(in_path, "/scf ", x, ".rds"))
   
   # Subset to only the variables we care about in the data
   # Definitions are from here:
@@ -26,7 +28,9 @@ for (x in year_list){
   # networth = total networth (asset - debt)
   # asset = value of all assets
   # debt = value of all debt
+  # liq = all types of transactions accounts (liquid assets)
   # homeeq = value of home equity
+  # reteq = retirement equity
   # hdebt = dummy, 1 if has debt, 0 if no debt
   # fin = total finanical assets
   # resdbt = residential debt
@@ -40,7 +44,7 @@ for (x in year_list){
   # savres1-9 = reason for saving, 1 = cant save, 2 = education, 3 = family, 4 = home, 5 = purchases, 
   #   6 = retirement, 7 = liquidity/the future, 8 = investment, 9 = no particular reason
   
-  vars_to_keep <- c('networth', 'debt', 'asset', 
+  vars_to_keep <- c('networth', 'debt', 'asset', 'liq','reteq',
                     'homeeq', 'hdebt', 'fin', 'resdbt', 
                     'income', 'wageinc', 'intdivinc', 'bussefarminc', 'equitinc', 'ssretinc',
                     'agecl', 'hhsex', 'race', 'edcl', 'married', 'kids', 
@@ -57,12 +61,13 @@ for (x in year_list){
   
   # Loop through each of the imp datasets to subset them to relevant variables
   for (i in 1:5){
+    assign(paste0("imp", i), as.data.frame(t[i]), envir = .GlobalEnv)
     string <- paste0("imp", i)
     subset_data(string)
   }
   
   # Stack the datasets
-  if (x == 1989){
+  if (x == year_list[1]){
     scf_stack <- rbind(imp1, imp2, imp3, imp4, imp5)
   } else{
     scf_stack <- rbind(scf_stack, imp1, imp2, imp3, imp4, imp5)
@@ -100,6 +105,6 @@ scf_stack$agecl <- factor(scf_stack$agecl,levels = c("<35", "35-44", "45-54", "5
                                                    "65-74", "75+"))
 
 # Save down data to permanent file
-saveRDS(scf_stack, paste0(localdir, "03-scf-stack.Rds"))
+saveRDS(scf_stack, paste0(localdir, "0003_scf_stack.Rds"))
 
 # ############################  End  ################################## #

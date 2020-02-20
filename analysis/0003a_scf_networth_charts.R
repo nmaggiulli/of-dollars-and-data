@@ -15,9 +15,14 @@ library(grid)
 library(gridExtra)
 library(gtable)
 library(plotly)
+library(stringr)
 library(RColorBrewer)
 library(ggrepel)
 library(Hmisc)
+
+folder_name <- "0003_scf_networth_charts"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
@@ -83,7 +88,7 @@ plot_networth <- function(type){
     }
     
     # Define the y_unit for the y-axis
-    y_unit <- 10^ceiling(min(log10(abs(max(to_plot$value))), log10(abs(min(to_plot$value)))))
+    y_unit <- max(10^ceiling(min(log10(abs(max(to_plot$value))), log10(abs(min(to_plot$value))))), 1)
     
     # Function to find a rounded max/min based on the specifications of y_unit
     create_max_min <- function(x, unit, ceilfloor) {
@@ -107,7 +112,7 @@ plot_networth <- function(type){
                 
     if (type == 1){
       # Set the file_path based on the function input 
-      file_path = paste0(exportdir, "0003_scf_networth_charts/edc_", as.character(n), ".jpeg")
+      file_path = paste0(out_path, "/edc_", as.character(n), ".jpeg")
       
       # Create a dynamic title based upon the agecl and edcl
       top_title <- paste0("Education Level:  ", j, "\n", last_year)
@@ -126,12 +131,18 @@ plot_networth <- function(type){
         labs(x = "Age Group" , y = "Net Worth ($)")
     } else if (type == 2 || type == 3){
       if (type == 2){
-        file_path = paste0(exportdir, "0003_scf_networth_charts/edc_", as.character(n), "by_age_year", ".jpeg")
+        file_path = paste0(out_path, "/edc_", as.character(n), "by_age_year", ".jpeg")
       } else if (type == 3){
-        file_path = paste0(exportdir, "0003_scf_networth_charts/edc_", as.character(n), "by_age_year_90", ".jpeg")
+        file_path = paste0(out_path, "/edc_", as.character(n), "by_age_year_90", ".jpeg")
       }
       # Create a dynamic title based upon the agecl and edcl
       top_title <- paste0("Education Level:  ", j, "\nBy Age Group Over Time")
+      
+      # Add a source and note string for the plots
+      source_string <- str_wrap("Source:  Federal Reserve Board, Survey of Consumer Finances (OfDollarsAndData.com)",
+                                width = 85)
+      note_string   <- str_wrap("Note:  Net worth percentiles are shown at the household level.  Includes home equity.",
+                                width = 85)
       
       # Create plot with the correct theme and make it a facet to show multiple age groups
       plot <- ggplot(to_plot, aes(x = year, y = value, col = `Net Worth Percentile`)) +
@@ -143,28 +154,12 @@ plot_networth <- function(type){
         scale_x_continuous(breaks = seq(first_year, last_year, by = 9)) +
         scale_y_continuous(labels = dollar, limits = c(y_min, y_max), breaks = seq(y_min, y_max, by = y_unit)) +
         of_dollars_and_data_theme +
-        labs(x = "Year" , y = "Net Worth ($)")
+        labs(x = "Year" , y = "Net Worth ($)",
+             caption = paste0(source_string, "\n", note_string))
     }
     
-    # Add a source and note string for the plots
-    source_string <- "Source:  Federal Reserve Board, Survey of Consumer Finances (OfDollarsAndData.com)"
-    note_string   <- "Note:  Net worth percentiles are shown at the household level.  Includes home equity." 
-    
-    # Turn plot into a gtable for adding text grobs
-    my_gtable   <- ggplot_gtable(ggplot_build(plot))
-    
-    # Make the source and note text grobs
-    source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
-                            gp =gpar(fontfamily = "my_font", fontsize = 8))
-    note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
-                            gp =gpar(fontfamily = "my_font", fontsize = 8))
-    
-    # Add the text grobs to the bototm of the gtable
-    my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
-    my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
-    
     # Save the gtable
-    ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
       
     # Increment the counter
     n <- n + 1
