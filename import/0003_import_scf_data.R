@@ -21,11 +21,5 @@ download_data <- 0
 if(download_data == 1){
   lodown( "scf" , output_dir = file.path(in_path , "SCF" ) )
 }
-scf_cat <-
-  get_catalog( "scf" ,
-               output_dir = file.path(in_path, "SCF" ) )
-
-# 2016 only
-scf_cat <- subset( scf_cat , year == 2016 )
 
 # ############################  End  ################################## #
