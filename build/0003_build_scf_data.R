@@ -20,6 +20,7 @@ for (x in year_list){
   print(paste0("Now processing: ", x))
   # Load SCF data into memory
   t <- readRDS(paste0(in_path, "/scf ", x, ".rds"))
+  print("Data read in")
   
   # Subset to only the variables we care about in the data
   # Definitions are from here:
@@ -44,15 +45,11 @@ for (x in year_list){
   #   3 = some college, 4 = college degree
   # married = marital status, 1 = married/living with partner, 2 = neither married nor living with partner
   # kids = number of kids
-  # savres1-9 = reason for saving, 1 = cant save, 2 = education, 3 = family, 4 = home, 5 = purchases, 
-  #   6 = retirement, 7 = liquidity/the future, 8 = investment, 9 = no particular reason
   
   vars_to_keep <- c('networth', 'debt', 'asset', 'liq', 'reteq',
                     'homeeq', 'hdebt', 'fin', 'mrthel', 'resdbt', 'ccbal', 
                     'income', 'wageinc', 'intdivinc', 'bussefarminc', 'equitinc', 'ssretinc',
-                    'agecl', 'hhsex', 'race', 'edcl', 'married', 'kids', 
-                    'savres1', 'savres2', 'savres3', 'savres4', 'savres5',
-                    'savres6', 'savres7', 'savres8', 'savres9', 'wgt')
+                    'agecl', 'hhsex', 'race', 'edcl', 'married', 'kids', 'wgt')
   
   # Write a function to subset our data
   subset_data <- function(name){
