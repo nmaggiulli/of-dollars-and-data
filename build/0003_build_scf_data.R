@@ -17,6 +17,7 @@ in_path <- paste0(importdir, "0003_scf_data/SCF")
 year_list <- seq(1989, 2016, 3)
 
 for (x in year_list){
+  print(paste0("Now processing: ", x))
   # Load SCF data into memory
   t <- readRDS(paste0(in_path, "/scf ", x, ".rds"))
   
@@ -27,13 +28,15 @@ for (x in year_list){
   # 
   # networth = total networth (asset - debt)
   # asset = value of all assets
-  # debt = value of all debt
+  # debt = value of all debt // DEBT=MRTHEL+RESDBT+OTHLOC+CCBAL+INSTALL+ODEBT
   # liq = all types of transactions accounts (liquid assets)
   # homeeq = value of home equity
   # reteq = retirement equity
   # hdebt = dummy, 1 if has debt, 0 if no debt
   # fin = total finanical assets
-  # resdbt = residential debt
+  # mrthel = mortgage debt
+  # resdbt = other residential debt
+  # ccbal = credit card balance
   # agecl = age class, 1:<35, 2:35-44, 3:45-54, 4:55-64, 5:65-74, 6:>=75
   # hhsex = gender, 1 = male , 2 = female
   # race = race, 1 = white non-Hispanic, 2 = nonwhite or Hispanic
@@ -44,8 +47,8 @@ for (x in year_list){
   # savres1-9 = reason for saving, 1 = cant save, 2 = education, 3 = family, 4 = home, 5 = purchases, 
   #   6 = retirement, 7 = liquidity/the future, 8 = investment, 9 = no particular reason
   
-  vars_to_keep <- c('networth', 'debt', 'asset', 'liq','reteq',
-                    'homeeq', 'hdebt', 'fin', 'resdbt', 
+  vars_to_keep <- c('networth', 'debt', 'asset', 'liq', 'reteq',
+                    'homeeq', 'hdebt', 'fin', 'mrthel', 'resdbt', 'ccbal', 
                     'income', 'wageinc', 'intdivinc', 'bussefarminc', 'equitinc', 'ssretinc',
                     'agecl', 'hhsex', 'race', 'edcl', 'married', 'kids', 
                     'savres1', 'savres2', 'savres3', 'savres4', 'savres5',

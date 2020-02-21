@@ -24,5 +24,9 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
               filter(year == 2016)
 
+liquid_net_worth <- scf_stack %>%
+                      mutate(liquid_net_worth = fin - reteq - ccbal) %>%
+                      select(networth, debt, fin, reteq, ccbal, liquid_net_worth)
+
 
 # ############################  End  ################################## #
