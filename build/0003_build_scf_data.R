@@ -46,7 +46,7 @@ for (x in year_list){
   # married = marital status, 1 = married/living with partner, 2 = neither married nor living with partner
   # kids = number of kids
   
-  vars_to_keep <- c('networth', 'debt', 'asset', 'liq', 'reteq',
+  vars_to_keep <- c('y1', 'yy1', 'networth', 'debt', 'asset', 'liq', 'reteq',
                     'homeeq', 'hdebt', 'fin', 'mrthel', 'resdbt', 'ccbal', 
                     'income', 'wageinc', 'intdivinc', 'bussefarminc', 'equitinc', 'ssretinc',
                     'agecl', 'hhsex', 'race', 'edcl', 'married', 'kids', 'wgt')
@@ -103,6 +103,10 @@ scf_stack$edcl <- factor(scf_stack$edcl,levels = c("No High School Diploma/GED",
 # Make agecl into a factor
 scf_stack$agecl <- factor(scf_stack$agecl,levels = c("<35", "35-44", "45-54", "55-64",
                                                    "65-74", "75+"))
+
+scf_stack <- scf_stack %>%
+              rename(hh_id = yy1,
+                     imp_id = y1)
 
 # Save down data to permanent file
 saveRDS(scf_stack, paste0(localdir, "0003_scf_stack.Rds"))
