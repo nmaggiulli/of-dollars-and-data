@@ -36,7 +36,7 @@ liquid_net_worth <- scf_stack %>%
 n_hh <- length(unique(liquid_net_worth$hh_id))
 
 to_plot <- liquid_net_worth %>%
-                  group_by(agecl) %>%
+                  group_by(agecl, edcl) %>%
                   summarize(median_lnw =  wtd.quantile(liquid_net_worth, weights = wgt, probs=0.5))
 
 file_path <- paste0(out_path, "/liquid_net_worth_age_educ.jpeg")
@@ -48,9 +48,10 @@ note_string <-  str_wrap(paste0("Note:  Percentiles are calculated using data ba
 
 plot <- ggplot(to_plot, aes(x=agecl, y=median_lnw)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
+  facet_rep_wrap(edcl ~ ., scales = "free_y", repeat.tick.labels = "bottom") +
   scale_y_continuous(label = dollar) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Liquid Net Worth by Age")) +
+  ggtitle(paste0("Liquid Net Worth by Age & Education Level")) +
   labs(x="Age", y=paste0("Liquid Net Worth"),
        caption = paste0(source_string, "\n", note_string))
 
