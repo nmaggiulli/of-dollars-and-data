@@ -12,7 +12,9 @@ library(readxl)
 library(lubridate)
 library(ggrepel)
 library(survey)
+library(lemon)
 library(mitools)
+library(Hmisc)
 library(tidyverse)
 
 folder_name <- "0165_liquid_net_worth"
@@ -26,7 +28,33 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
 
 liquid_net_worth <- scf_stack %>%
                       mutate(liquid_net_worth = fin - reteq - ccbal) %>%
-                      select(networth, debt, fin, reteq, ccbal, liquid_net_worth)
+                      select(hh_id, imp_id, 
+                             networth, debt, fin, reteq, ccbal, liquid_net_worth, wgt, 
+                             agecl, edcl) %>%
+                      arrange(hh_id, imp_id)
 
+n_hh <- length(unique(liquid_net_worth$hh_id))
+
+to_plot <- liquid_net_worth %>%
+                  group_by(agecl) %>%
+                  summarize(median_lnw =  wtd.quantile(liquid_net_worth, weights = wgt, probs=0.5))
+
+file_path <- paste0(out_path, "/liquid_net_worth_age_educ.jpeg")
+source_string <- "Source:  Survey of Consumer Finances (OfDollarsAndData.com)"
+note_string <-  str_wrap(paste0("Note:  Percentiles are calculated using data based on ", 
+                                formatC(n_hh, digits = 0, format = "f", big.mark = ","), 
+                                " U.S. households.")
+                                , width = 85)
+
+plot <- ggplot(to_plot, aes(x=agecl, y=median_lnw)) +
+  geom_bar(stat = "identity", fill = chart_standard_color) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Liquid Net Worth by Age")) +
+  labs(x="Age", y=paste0("Liquid Net Worth"),
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #

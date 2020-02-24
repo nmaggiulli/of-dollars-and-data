@@ -89,14 +89,14 @@ scf_stack$agecl <- ifelse(scf_stack[,"agecl"] == 1, "<35",
                                                       ifelse(scf_stack[,"agecl"] == 6, "75+", "99"))))))
 
 # Define strings for education class
-scf_stack$edcl <- ifelse(scf_stack[,"edcl"]  == 1, "No High School Diploma/GED", 
-                         ifelse(scf_stack[,"edcl"] == 2, "High School Diploma/GED",
+scf_stack$edcl <- ifelse(scf_stack[,"edcl"]  == 1, "No High School", 
+                         ifelse(scf_stack[,"edcl"] == 2, "High School",
                                 ifelse(scf_stack[,"edcl"] == 3, "Some College",   
                                        ifelse(scf_stack[,"edcl"] == 4, "College Degree", "99"))))
 
 # Make edcl into a factor
-scf_stack$edcl <- factor(scf_stack$edcl,levels = c("No High School Diploma/GED", 
-                                                   "High School Diploma/GED", 
+scf_stack$edcl <- factor(scf_stack$edcl,levels = c("No High School", 
+                                                   "High School", 
                                                    "Some College", 
                                                    "College Degree"))
 
