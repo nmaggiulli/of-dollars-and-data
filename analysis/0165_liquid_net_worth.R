@@ -119,8 +119,18 @@ create_percentile_chart <- function(var, var_title){
     labs(x="Age", y=paste0("Median ", var_title),
          caption = paste0(source_string, "\n", note_string))
   } else{
+    text_labels <- to_plot %>%
+      mutate(label = paste0(round(100*value, 0), "%"))
+    
+    nudge_y_calc <- max(text_labels$value)*0.02
+    
     plot <- ggplot(to_plot, aes(x=agecl, y=value)) +
       geom_bar(stat = "identity", fill = chart_standard_color) +
+      geom_text_repel(data=text_labels, aes(x=agecl, y=value, label = label),
+                      col = chart_standard_color,
+                      size = 3,
+                      max.iter = 1,
+                      nudge_y = nudge_y_calc) +
       scale_color_discrete(guide = FALSE) +
       scale_y_continuous(label = percent_format(accuracy = 1)) +
       of_dollars_and_data_theme +
