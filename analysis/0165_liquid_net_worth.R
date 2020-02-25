@@ -59,7 +59,6 @@ create_percentile_chart <- function(var, var_title){
   } else{
     print(paste0("The median value for ", var_title, " is: ", round(100*median_var, 1), "%."))
   }
-
   
   file_path <- paste0(out_path, "/", var, "_age_educ_median.jpeg")
   source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
