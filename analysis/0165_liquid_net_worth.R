@@ -49,6 +49,18 @@ create_percentile_chart <- function(var, var_title){
                     ungroup() %>%
                   gather(-agecl, -edcl, key=key, value=value)
   
+  median_var <- df %>%
+    rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
+    summarize(median = wtd.quantile(var_for_qtile, weights = wgt, probs=0.5)) %>%
+    pull(median)
+  
+  if(var != "homeeq_pct"){
+    print(paste0("The median value for ", var_title, " is: $", formatC(median_var, digits = 0, format = "f", big.mark = ",")))
+  } else{
+    print(paste0("The median value for ", var_title, " is: ", 100*median_var, "%."))
+  }
+
+  
   file_path <- paste0(out_path, "/", var, "_age_educ_median.jpeg")
   source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
   note_string <-  str_wrap(paste0("Note:  Percentiles are calculated using data from ", 
