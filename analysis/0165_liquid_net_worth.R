@@ -38,41 +38,6 @@ df <- scf_stack %>%
 
 n_hh <- length(unique(df$hh_id))
 
-median_nw <- df %>% 
-  summarize(median_nw  = wtd.quantile(networth, weights = wgt, probs=0.5)) %>%
-  pull(median_nw)
-
-by_age <- df %>% 
-          group_by(agecl) %>%
-          summarize(median_nw  = wtd.quantile(networth, weights = wgt, probs=0.5)) %>%
-          ungroup()
-
-file_path <- paste0(out_path, "/age_median_nw_text.jpeg")
-source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
-note_string <-  str_wrap(paste0("Note:  Percentiles are calculated using data based on ", 
-                                formatC(n_hh, digits = 0, format = "f", big.mark = ","), 
-                                " U.S. households.")
-                         , width = 85)
-
-text_labels <- by_age %>%
-                mutate(label = paste0("$", round(median_nw/1000, 0), "k"))
-
-plot <- ggplot(by_age, aes(x=agecl, y=median_nw)) +
-  geom_bar(stat = "identity", fill = chart_standard_color) +
-  geom_text_repel(data=text_labels, aes(x=agecl, y=median_nw, label = label),
-                  col = chart_standard_color,
-                  max.iter = 1,
-                  nudge_y = 6000) +
-  scale_color_discrete(guide = FALSE) +
-  scale_y_continuous(label = dollar) +
-  of_dollars_and_data_theme +
-  ggtitle(paste0("Median Net Worth by Age")) +
-  labs(x="Age", y=paste0("Median Net Worth"),
-       caption = paste0(source_string, "\n", note_string))
-
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-
-
 create_percentile_chart <- function(var, var_title){
 
   to_plot <- df %>%
@@ -84,7 +49,7 @@ create_percentile_chart <- function(var, var_title){
                     ungroup() %>%
                   gather(-agecl, -edcl, key=key, value=value)
   
-  file_path <- paste0(out_path, "/", var, "_age_educ.jpeg")
+  file_path <- paste0(out_path, "/", var, "_age_educ_median.jpeg")
   source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
   note_string <-  str_wrap(paste0("Note:  Percentiles are calculated using data from ", 
                                   formatC(n_hh, digits = 0, format = "f", big.mark = ","), 
@@ -98,8 +63,8 @@ create_percentile_chart <- function(var, var_title){
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    ggtitle(paste0(var_title, "\nby Age & Education Level")) +
-    labs(x="Education", y=paste0(var_title),
+    ggtitle(paste0("Median ", var_title, "\nby Age & Education Level")) +
+    labs(x="Education", y=paste0("Median ", var_title),
          caption = paste0(source_string, "\n", note_string))
   } else{
     plot <- ggplot(to_plot, aes(x=edcl, y=value)) +
@@ -108,12 +73,62 @@ create_percentile_chart <- function(var, var_title){
       scale_y_continuous(label = percent_format(accuracy = 1)) +
       of_dollars_and_data_theme +
       theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-      ggtitle(paste0(var_title, "\nby Age & Education Level")) +
-      labs(x="Education", y=paste0(var_title),
+      ggtitle(paste0("Median ", var_title, "\nby Age & Education Level")) +
+      labs(x="Education", y=paste0("Median ", var_title),
            caption = paste0(source_string, "\n", note_string))
   }
   
   # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  # Now do age only
+  to_plot <- df %>%
+              rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
+              group_by(agecl) %>%
+              summarize(
+                `50th Percentile` = wtd.quantile(var_for_qtile, weights = wgt, probs=0.5)
+              ) %>%
+              ungroup() %>%
+              gather(-agecl, key=key, value=value)
+  
+  file_path <- paste0(out_path, "/", var, "_age_median.jpeg")
+  source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
+  note_string <-  str_wrap(paste0("Note:  Percentiles are calculated using data based on ", 
+                                  formatC(n_hh, digits = 0, format = "f", big.mark = ","), 
+                                  " U.S. households.")
+                           , width = 85)
+  
+  text_labels <- to_plot %>%
+    mutate(label = ifelse(value > 0, paste0("$", round(value/1000, 0), "k"),
+                          paste0("$0")))
+  
+  nudge_y_calc <- max(text_labels$value)*0.02
+  
+  if(var != "homeeq_pct"){
+  plot <- ggplot(to_plot, aes(x=agecl, y=value)) +
+    geom_bar(stat = "identity", fill = chart_standard_color) +
+    geom_text_repel(data=text_labels, aes(x=agecl, y=value, label = label),
+                    col = chart_standard_color,
+                    size = 3,
+                    max.iter = 1,
+                    nudge_y = nudge_y_calc) +
+    scale_color_discrete(guide = FALSE) +
+    scale_y_continuous(label = dollar) +
+    of_dollars_and_data_theme +
+    ggtitle(paste0("Median ", var_title, "\nby Age")) +
+    labs(x="Age", y=paste0("Median ", var_title),
+         caption = paste0(source_string, "\n", note_string))
+  } else{
+    plot <- ggplot(to_plot, aes(x=agecl, y=value)) +
+      geom_bar(stat = "identity", fill = chart_standard_color) +
+      scale_color_discrete(guide = FALSE) +
+      scale_y_continuous(label = percent_format(accuracy = 1)) +
+      of_dollars_and_data_theme +
+      ggtitle(paste0("Median ", var_title, "\nby Age")) +
+      labs(x="Age", y=paste0("Median ", var_title),
+           caption = paste0(source_string, "\n", note_string))
+  }
+  
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
