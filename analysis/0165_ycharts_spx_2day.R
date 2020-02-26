@@ -95,7 +95,7 @@ run_fwd_rets <- function(n_days_fwd){
                         " sessions, the market was ", up_down, " by ", 
                         round(100*final_avg, 1),
                         "% on average."),
-                        width = 90)
+                        width = 85)
   
   plot <- ggplot(to_plot, aes(x=day, y=index_sp500, col = as.factor(start_date))) + 
     geom_line() +
