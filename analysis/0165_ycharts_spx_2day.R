@@ -95,6 +95,13 @@ run_fwd_rets <- function(n_days_fwd){
                   filter(day == n_days_fwd) %>%
                   mutate(label = "Average")
   
+  last_day <- to_plot %>%
+                filter(day == n_days_fwd)
+  
+  print(paste0("N-days = ", n_days_fwd))
+  print(max(last_day$index_sp500) - 1)
+  print(min(last_day$index_sp500) - 1)
+  
   file_path <- paste0(out_path, "/fwd_ret_", n_days_fwd_string, "_sessions.jpeg")
   source_string <- paste0("Source:  YCharts, ", first_year, "-", last_year, " (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note:  There were ", n_days-1, " trading days where the S&P 500 dropped by 6% or more over the prior 2 sessions.  ",
@@ -122,10 +129,32 @@ run_fwd_rets <- function(n_days_fwd){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-n_fwd_days <- c(5, 10, 20, 60, 120, 250, 500)
+n_fwd_days <- c(5, 10, 20, 60, 120, 250, 500, 1250)
 
 for(n in n_fwd_days){
   run_fwd_rets(n)
 }
+
+# Plot all 6% drop dates
+file_path <- paste0(out_path, "/index_w_drop_days_dots.jpeg")
+source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
+
+to_plot <- raw
+
+points <- to_plot %>%
+            inner_join(less_than_6pct) %>%
+            select(date, index_sp500)
+
+plot <- ggplot(to_plot, aes(x=date, y=index_sp500)) + 
+  geom_line(col = "black") +
+  geom_point(data = points, aes(x=date, y=index_sp500), col = "red", size = 1.5, alpha = 0.5) +
+  scale_y_continuous(label = comma, trans = log10_trans()) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("S&P 500 with 6%+\n2-Session Drops Highlighted")) +
+  labs(x = "Date" , y = "S&P 500 Index",
+       caption = paste0("\n", source_string))  
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #
