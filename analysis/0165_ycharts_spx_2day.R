@@ -23,26 +23,29 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+n_days_back <- 2
+
 raw <- read.csv(paste0(importdir, "/0165_ycharts_spx/SPX_data.csv"),
                 col.names = c("date","index_sp500")) %>%
   mutate(date = as.Date(date)) %>%
-  arrange(date) 
+  arrange(date) %>%
+  mutate(ret_lag = index_sp500/lag(index_sp500, n_days_back) - 1)
 
 first_year <- year(min(raw$date))
 last_year <- year(max(raw$date))
 
-n_days_back <- 2
-
 run_fwd_rets <- function(n_days_fwd){
 
   df <- raw %>%
-    mutate(ret_lag = index_sp500/lag(index_sp500, n_days_back) - 1,
-           ret_fwd = lead(index_sp500, n_days_fwd)/index_sp500 - 1,
-           lead_date = lead(date, n_days_fwd))
-  
+    mutate(lead_date = lead(date, n_days_fwd))
+
   less_than_6pct_dates <- df %>%
-              filter(ret_lag < -0.06) %>%
-              select(date, lead_date)
+                          filter(ret_lag < -0.06) %>%
+                          select(date, lead_date)
+  
+  if(n_days_fwd == 5){
+    assign("less_than_6pct", less_than_6pct_dates, envir = .GlobalEnv)
+  }
   
   for(d in 1:nrow(less_than_6pct_dates)){
     
@@ -88,7 +91,11 @@ run_fwd_rets <- function(n_days_fwd){
   
   n_days <- length(unique(to_plot$start_date))
   
-  file_path <- paste0(out_path, "/fwd_ret_", n_days_fwd_string, "_days.jpeg")
+  text_labels <- avg %>%
+                  filter(day == n_days_fwd) %>%
+                  mutate(label = "Average")
+  
+  file_path <- paste0(out_path, "/fwd_ret_", n_days_fwd_string, "_sessions.jpeg")
   source_string <- paste0("Source:  YCharts, ", first_year, "-", last_year, " (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note:  There were ", n_days-1, " trading days where the S&P 500 dropped by 6% or more over the prior 2 sessions.  ",
                         "Over the next ", n_days_fwd, 
@@ -100,11 +107,15 @@ run_fwd_rets <- function(n_days_fwd){
   plot <- ggplot(to_plot, aes(x=day, y=index_sp500, col = as.factor(start_date))) + 
     geom_line() +
     geom_hline(yintercept = 1, linetype = "dashed") +
+    geom_text_repel(data=text_labels, aes(x=day, y=index_sp500, label=label),
+                    col = "red",
+                    nudge_y = 0.02,
+                    segment.colour = "transparent") +
     scale_color_manual(guide = FALSE, values = c(rep("gray", n_days-1), "red")) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
     ggtitle(paste0("S&P 500 Over Next ", n_days_fwd, " Sessions\nFollowing 6%+ Drop")) +
-    labs(x = "Day" , y = "Growth of $1",
+    labs(x = "Session" , y = "Growth of $1",
          caption = paste0("\n", source_string, "\n", note_string))  
   
   # Save the plot
