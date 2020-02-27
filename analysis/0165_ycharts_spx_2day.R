@@ -23,7 +23,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-n_days_back <- 2
+n_days_back <- 4
+drop_cutoff <- -0.095
 
 raw <- read.csv(paste0(importdir, "/0165_ycharts_spx/SPX_data.csv"),
                 col.names = c("date","index_sp500")) %>%
@@ -39,18 +40,18 @@ run_fwd_rets <- function(n_days_fwd){
   df <- raw %>%
     mutate(lead_date = lead(date, n_days_fwd))
 
-  less_than_6pct_dates <- df %>%
-                          filter(ret_lag < -0.06) %>%
+  less_than_xpct_dates <- df %>%
+                          filter(ret_lag < drop_cutoff) %>%
                           select(date, lead_date)
   
   if(n_days_fwd == 5){
-    assign("less_than_6pct", less_than_6pct_dates, envir = .GlobalEnv)
+    assign("less_than_xpct", less_than_xpct_dates, envir = .GlobalEnv)
   }
   
-  for(d in 1:nrow(less_than_6pct_dates)){
+  for(d in 1:nrow(less_than_xpct_dates)){
     
-    my_date <- less_than_6pct_dates[d, "date"]
-    future_date <- less_than_6pct_dates[d, "lead_date"]
+    my_date <- less_than_xpct_dates[d, "date"]
+    future_date <- less_than_xpct_dates[d, "lead_date"]
     
     tmp <- df %>%
             filter(date > my_date, date <= future_date) %>%
@@ -63,7 +64,7 @@ run_fwd_rets <- function(n_days_fwd){
             mutate(index_sp500 = index_sp500/first_value,
                    day = row_number())
     
-    if(my_date == min(less_than_6pct_dates$date)){
+    if(my_date == min(less_than_xpct_dates$date)){
       to_plot <- tmp
     } else{
       to_plot <- bind_rows(to_plot, tmp)
@@ -104,7 +105,10 @@ run_fwd_rets <- function(n_days_fwd){
   
   file_path <- paste0(out_path, "/fwd_ret_", n_days_fwd_string, "_sessions.jpeg")
   source_string <- paste0("Source:  YCharts, ", first_year, "-", last_year, " (OfDollarsAndData.com)")
-  note_string <- str_wrap(paste0("Note:  There were ", n_days-1, " trading days where the S&P 500 dropped by 6% or more over the prior 2 sessions.  ",
+  note_string <- str_wrap(paste0("Note:  There were ", n_days-1, " trading days where the S&P 500 dropped by ", 
+                                 100*drop_cutoff, 
+                                 "% or more over the prior ",
+                          n_days_back, " sessions.  ",
                         "Over the next ", n_days_fwd, 
                         " sessions, the market was ", up_down, " by ", 
                         round(100*final_avg, 1),
@@ -121,7 +125,7 @@ run_fwd_rets <- function(n_days_fwd){
     scale_color_manual(guide = FALSE, values = c(rep("gray", n_days-1), "red")) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("S&P 500 Over Next ", n_days_fwd, " Sessions\nFollowing 6%+ Drop")) +
+    ggtitle(paste0("S&P 500 Over Next ", n_days_fwd, " Sessions\nFollowing ", 100*drop_cutoff,"%+ Drop")) +
     labs(x = "Session" , y = "Growth of $1",
          caption = paste0("\n", source_string, "\n", note_string))  
   
@@ -142,7 +146,7 @@ source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
 to_plot <- raw
 
 points <- to_plot %>%
-            inner_join(less_than_6pct) %>%
+            inner_join(less_than_xpct) %>%
             select(date, index_sp500)
 
 plot <- ggplot(to_plot, aes(x=date, y=index_sp500)) + 
@@ -150,7 +154,7 @@ plot <- ggplot(to_plot, aes(x=date, y=index_sp500)) +
   geom_point(data = points, aes(x=date, y=index_sp500), col = "red", size = 1.5, alpha = 0.5) +
   scale_y_continuous(label = comma, trans = log10_trans()) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("S&P 500 with 6%+\n2-Session Drops Highlighted")) +
+  ggtitle(paste0("S&P 500 with ", 100*drop_cutoff, "%+\n", n_days_back, "-Session Drops Highlighted")) +
   labs(x = "Date" , y = "S&P 500 Index",
        caption = paste0("\n", source_string))  
 
