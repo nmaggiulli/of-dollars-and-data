@@ -17,7 +17,7 @@ library(mitools)
 library(Hmisc)
 library(tidyverse)
 
-folder_name <- "0166_liquid_net_worth"
+folder_name <- "0166_net_worth_by_age_edc"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
