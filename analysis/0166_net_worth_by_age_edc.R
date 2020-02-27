@@ -42,12 +42,12 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   if(quantile_prob != 0){
     to_plot <- df %>%
                       rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
-                      group_by(agecl, edcl) %>%
+                      group_by(edcl, agecl) %>%
                       summarize(
                          percentile = wtd.quantile(var_for_qtile, weights = wgt, probs=quantile_prob)
                         ) %>%
                       ungroup() %>%
-                    gather(-agecl, -edcl, key=key, value=value)
+                    gather(-edcl, -agecl, key=key, value=value)
     
     percentile_var <- df %>%
       rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
@@ -58,12 +58,12 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   } else{
     to_plot <- df %>%
       rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
-      group_by(agecl, edcl) %>%
+      group_by(edcl, agecl) %>%
       summarize(
         percentile = wtd.mean(var_for_qtile, weights = wgt)
       ) %>%
       ungroup() %>%
-      gather(-agecl, -edcl, key=key, value=value)
+      gather(-edcl, -agecl, key=key, value=value)
     
     percentile_var <- df %>%
       rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
@@ -75,7 +75,6 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   
   print(paste0("Overall ", var_title, " is: $", formatC(percentile_var, digits = 0, format = "f", big.mark = ",")))
   
-  
   file_path <- paste0(out_path, "/", var, "_", quantile_prob_string, "_age_edc.jpeg")
   source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
   note_string <-  str_wrap(paste0("Note:  Calculations based on weighted data from ", 
@@ -83,14 +82,26 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
                                   " U.S. households.")
                                   , width = 85)
   
-  plot <- ggplot(to_plot, aes(x=edcl, y=value)) +
+  assign(paste0("age_edc_", var, "_", quantile_prob_string), to_plot, envir = .GlobalEnv)
+  
+  export_to_excel(to_plot, 
+                  paste0(out_path, "/all_var_summaries.xlsx"), 
+                  paste0("age_edc_", var, "_", quantile_prob_string),
+                  create_new_file,
+                  0)
+  
+  if (create_new_file == 1){
+    assign("create_new_file", 0, envir = .GlobalEnv)
+  } 
+  
+  plot <- ggplot(to_plot, aes(x=agecl, y=value)) +
     geom_bar(stat = "identity", position = "dodge", fill = chart_standard_color) +
-    facet_rep_wrap(agecl ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
+    facet_rep_wrap(edcl ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     ggtitle(paste0(var_title, "\nby Age & Education Level")) +
-    labs(x="Education", y=paste0(var_title),
+    labs(x="Age", y=paste0(var_title),
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
@@ -138,7 +149,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
                              , width = 85)
     
     text_labels <- to_plot %>%
-      mutate(label = ifelse(value > 0, paste0("$", round(value/1000, 0), "k"),
+      mutate(label = ifelse(value > 0, paste0("$", formatC(round(value/1000, 0), big.mark=",", format="f", digits=0), "k"),
                             paste0("$0")))
     
     nudge_y_calc <- max(text_labels$value)*0.02
@@ -161,6 +172,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   }
 }
 
+create_new_file <- 1
 create_percentile_chart("networth", "Average Net Worth", 0)
 create_percentile_chart("networth", "Median Net Worth", 0.5)
 create_percentile_chart("networth", "75th Percentile Net Worth", 0.75)
