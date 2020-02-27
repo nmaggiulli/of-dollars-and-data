@@ -84,7 +84,8 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   
   assign(paste0("age_edc_", var, "_", quantile_prob_string), to_plot, envir = .GlobalEnv)
   
-  export_to_excel(to_plot, 
+  export_to_excel(to_plot %>%
+                    mutate(value = paste0("$", formatC(value, big.mark = ",", format="f", digits = 0))), 
                   paste0(out_path, "/all_var_summaries.xlsx"), 
                   paste0("age_edc_", var, "_", quantile_prob_string),
                   create_new_file,
