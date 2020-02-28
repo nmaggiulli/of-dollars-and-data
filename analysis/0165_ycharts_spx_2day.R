@@ -23,8 +23,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-n_days_back <- 4
-drop_cutoff <- -0.095
+n_days_back <- 5
+drop_cutoff <- -0.135
 
 raw <- read.csv(paste0(importdir, "/0165_ycharts_spx/SPX_data.csv"),
                 col.names = c("date","index_sp500")) %>%
@@ -73,7 +73,7 @@ run_fwd_rets <- function(n_days_fwd){
   
   avg <- to_plot %>%
           group_by(day) %>%
-          summarize(index_sp500 = mean(index_sp500)) %>%
+          summarize(index_sp500 = mean(index_sp500, na.rm = TRUE)) %>%
           ungroup() %>%
           mutate(start_date = "2100-01-01")
   
