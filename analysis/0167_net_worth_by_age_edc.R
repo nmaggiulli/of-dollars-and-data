@@ -75,7 +75,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   
   print(paste0("Overall ", var_title, " is: $", formatC(percentile_var, digits = 0, format = "f", big.mark = ",")))
   
-  file_path <- paste0(out_path, "/", var, "_", quantile_prob_string, "_age_edcl.jpeg")
+  file_path <- paste0(out_path, "/", var, "_", quantile_prob_string, "_age_edc_comb.jpeg")
   source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
   note_string <-  str_wrap(paste0("Note:  Calculations based on weighted data from ", 
                                   formatC(n_hh, digits = 0, format = "f", big.mark = ","), 
@@ -96,7 +96,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   } 
   
   text_labels <- to_plot %>%
-    mutate(label = ifelse(value > 0, paste0("$", formatC(round(value/1000, 0), big.mark=",", format="f", digits=0), "k"),
+    mutate(label = ifelse(abs(value) > 100, paste0("$", formatC(round(value/1000, 0), big.mark=",", format="f", digits=0), "k"),
                           paste0("$0")))
   
   plot <- ggplot(to_plot, aes(x=agecl, y=value)) +
@@ -104,8 +104,8 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
     facet_rep_wrap(edcl ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
     geom_text(data = text_labels, aes(x=agecl, y=value, label = label),
                     col = chart_standard_color,
-                    size = 1.5,
-                    vjust= 0) +
+                    size = 1.8,
+                    vjust= ifelse(text_labels$value >0, 0, 1)) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
