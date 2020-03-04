@@ -303,5 +303,78 @@ plot <- ggplot(to_plot, aes(x=date, y=real_gdp_change)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+#Lastly plot all the cut days and what happened afterwards
+all_cut_dates <- spx %>%
+            mutate(lead_date = lead(date, 250)) %>%
+            filter(cut == 1) %>%
+            filter(!is.na(lead_date)) %>%
+            select(date, lead_date)
+
+for(d in 1:nrow(all_cut_dates)){
+  
+  my_date <- all_cut_dates[d, "date"]
+  future_date <- all_cut_dates[d, "lead_date"]
+  
+  tmp <- spx %>%
+    filter(date > my_date, date <= future_date) %>%
+    mutate(start_date = as.character(my_date)) %>%
+    select(date, index_sp500, start_date)
+  
+  first_value <- tmp[1, "index_sp500"]
+  
+  tmp <- tmp %>%
+    mutate(index_sp500 = index_sp500/first_value,
+           day = row_number())
+  
+  if(my_date == min(all_cut_dates$date)){
+    to_plot <- tmp
+  } else{
+    to_plot <- bind_rows(to_plot, tmp)
+  }
+}
+
+avg <- to_plot %>%
+  group_by(day) %>%
+  summarize(index_sp500 = mean(index_sp500, na.rm = TRUE)) %>%
+  ungroup() %>%
+  mutate(start_date = "2100-01-01")
+
+final_avg <- avg[nrow(avg), "index_sp500"] - 1
+
+to_plot <- to_plot %>%
+  bind_rows(avg)
+
+n_days <- length(unique(to_plot$start_date))
+
+text_labels <- avg %>%
+  filter(day == 250) %>%
+  mutate(label = "Average")
+
+last_day <- to_plot %>%
+  filter(day == 250)
+
+file_path <- paste0(out_path, "/fwd_ret_1_year.jpeg")
+source_string <- paste0("Source:  YCharts, ", first_year, "-", last_year, " (OfDollarsAndData.com)")
+note_string <- str_wrap(paste0("Note:  There were ", 
+                               nrow(all_cut_dates), 
+                               " rate cuts to the federal funds rate since 1994 (with available data)."), 
+                        width = 85)
+
+plot <- ggplot(to_plot, aes(x=day, y=index_sp500, col = as.factor(start_date))) + 
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  geom_text_repel(data=text_labels, aes(x=day, y=index_sp500, label=label),
+                  col = "red",
+                  nudge_y = 0.02,
+                  segment.colour = "transparent") +
+  scale_color_manual(guide = FALSE, values = c(rep("gray", n_days-1), "red")) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("S&P 500 Over Next Year\nFollowing Fed Rate Cut")) +
+  labs(x = "Session" , y = "Growth of $1",
+       caption = paste0("\n", source_string, "\n", note_string))  
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #
