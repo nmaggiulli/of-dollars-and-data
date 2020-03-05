@@ -76,83 +76,43 @@ flip_results <- flips_df %>%
 #Create fake data
 set.seed(12345)
 
-rands <- data.frame(rand = runif(10^4, 0, 1))
+rands <- data.frame(rand = runif(10^6, 0, 1))
 
-df <- rands %>%
+mat <- rands %>%
           mutate(pos = ifelse(rand > 0.5, 1, 0)) %>%
-          select(pos)
+          select(pos) %>%
+          as.matrix()
 
+streaks <- seq(2, 10)
+final_results <- data.frame(streak = streaks)
 
-for (i in 1:nrow(df)){
-  print(i)
-  pos <- df[i, "pos"]
+results_counter <- 1
+for(s in streaks){
+  print(s)
+  bag_pos <- c()
+  counter_pos <- 1
   
-  if(i == 1){
-    df[i, "pos_streak"] <- pos
-    df[i, "neg_streak"] <- (1 - pos)
-  } else {
-    prior_pos <- df[(i-1), "pos"]
-    prior_pos_streak <- df[(i-1), "pos_streak"]
-    prior_neg_streak <- df[(i-1), "neg_streak"]
-    
-    if(prior_pos == 1 & pos == 1){
-      df[i, "pos_streak"] <- prior_pos_streak + 1
-      df[i, "neg_streak"] <- 0
-    } else if (prior_pos == 1 & pos == 0){
-      df[i, "pos_streak"] <- 0
-      df[i, "neg_streak"] <- 1
-    } else if (prior_pos == 0 & pos == 0){
-      df[i, "pos_streak"] <- 0
-      df[i, "neg_streak"] <- prior_neg_streak + 1
-    } else if (prior_pos == 0 & pos == 1){
-      df[i, "pos_streak"] <- 1
-      df[i, "neg_streak"] <- 0
+  bag_neg <- c()
+  counter_neg <- 1
+  for(i in 1:nrow(mat)-1){
+    if(i >= s){
+      streak_sum <- sum(mat[(i-s+1):i, 1])
+      if(streak_sum == s){
+        bag_pos[counter_pos] <- mat[i+1]
+        counter_pos <- counter_pos + 1
+      } else if(streak_sum == 0){
+        bag_neg[counter_neg] <- mat[i+1]
+        counter_neg <- counter_neg + 1
+      }
     }
   }
+  final_results[results_counter, "p_next_pos"] <- mean(bag_pos)
+  final_results[results_counter, "p_next_neg"] <- mean(bag_neg)
+  results_counter <- results_counter + 1
 }
 
-df <- df %>%
-  mutate(pos_next = lead(pos)) %>%
-  filter(!is.na(pos_next))
 
-final_results <- data.frame(pos_neg = c(), streak_length = c(),
-                            pct_next_day_same = c(),
-                            t_pval = c(), n_days = c())
 
-counter <- 1
-for (i in 1:max(df$pos_streak, df$neg_streak)){
-  tmp_s <- df %>%
-    filter(pos_streak >= i)
-  
-  final_results[counter, "pos_neg"]             <- "Positive"
-  final_results[counter, "streak_length"]       <- i
-  final_results[counter, "pct_next_day_same"]   <- mean(tmp_s$pos_next)
-  
-  final_results[counter, "n_days"]              <- nrow(tmp_s)
-  
-  if (final_results[counter, "n_days"] >= 100){
-    final_results[counter, "t_pval"]  <- t.test(df$pos, tmp_s$pos_next)$p.value
-  } else {
-    final_results[counter, "t_pval"]  <- NA
-  }
-  counter <- counter + 1
-  
-  tmp_s <- df %>%
-    filter(neg_streak >= i)
-  
-  final_results[counter, "pos_neg"]             <- "Negative"
-  final_results[counter, "streak_length"]       <- i
-  final_results[counter, "pct_next_day_same"]   <- 1-mean(tmp_s$pos_next)
-  final_results[counter, "n_days"]              <- nrow(tmp_s)
-  
-  if (final_results[counter, "n_days"] >= 100){
-    final_results[counter, "t_pval"]  <- t.test(df$pos, tmp_s$pos_next)$p.value
-  } else {
-    final_results[counter, "t_pval"]  <- NA
-  }
-  
-  counter <- counter + 1
-}
               
 
 
