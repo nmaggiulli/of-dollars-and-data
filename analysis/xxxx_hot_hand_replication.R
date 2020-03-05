@@ -98,10 +98,10 @@ for(s in streaks){
     if(i >= s){
       streak_sum <- sum(mat[(i-s+1):i, 1])
       if(streak_sum == s){
-        bag_pos[counter_pos] <- mat[i+1]
+        bag_pos[counter_pos] <- mat[i+1, 1]
         counter_pos <- counter_pos + 1
       } else if(streak_sum == 0){
-        bag_neg[counter_neg] <- mat[i+1]
+        bag_neg[counter_neg] <- mat[i+1, 1]
         counter_neg <- counter_neg + 1
       }
     }
