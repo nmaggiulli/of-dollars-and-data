@@ -22,14 +22,14 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 initial_strings <- c("H", "T")
 
-df <- data.frame(streak = c(1, 1),
+flips_df <- data.frame(streak = c(1, 1),
                 flip_string = initial_strings,
                  flip_num = seq(1, length(initial_strings)))
 
-streaks <- seq(2, 4)
+streaks <- seq(2, 10)
 
 for(s in streaks){
-  tmp <- df %>%
+  tmp <- flips_df %>%
           filter(streak == (s - 1)) 
   
   tmp <- tmp %>%
@@ -48,7 +48,7 @@ for(s in streaks){
     tmp[i, "flip_num"] <- i
   }
   
-  df <- df %>%
+  flips_df <- flips_df %>%
           bind_rows(tmp)
 }
 
@@ -62,15 +62,98 @@ count_all_occurences <- function(input_string, find_string){
   return(count)
 }
 
-df <- df %>%
-                  mutate(n_heads_after_first_flip = str_count(substr(flip_string, 2, streak), "H"),
-                         n_heads_after_heads = sapply(X = flip_string, FUN = count_all_occurences,
-                                                        find_string = "HH"),
-                         final_pct = n_heads_after_heads/n_heads_after_first_flip)
+flips_df <- flips_df %>%
+      mutate(n_heads_after_first_flip = str_count(substr(flip_string, 2, streak), "H"),
+             n_heads_after_heads = sapply(X = flip_string, FUN = count_all_occurences,
+                                            find_string = "HH"),
+             final_pct = n_heads_after_heads/n_heads_after_first_flip)
 
-final_results <- df %>%
+flip_results <- flips_df %>%
                   filter(!is.na(final_pct)) %>%
                   group_by(streak) %>%
                   summarize(prob_h = sum(final_pct, na.rm = TRUE)/n())
+
+#Create fake data
+set.seed(12345)
+
+rands <- data.frame(rand = runif(10^4, 0, 1))
+
+df <- rands %>%
+          mutate(pos = ifelse(rand > 0.5, 1, 0)) %>%
+          select(pos)
+
+
+for (i in 1:nrow(df)){
+  print(i)
+  pos <- df[i, "pos"]
+  
+  if(i == 1){
+    df[i, "pos_streak"] <- pos
+    df[i, "neg_streak"] <- (1 - pos)
+  } else {
+    prior_pos <- df[(i-1), "pos"]
+    prior_pos_streak <- df[(i-1), "pos_streak"]
+    prior_neg_streak <- df[(i-1), "neg_streak"]
+    
+    if(prior_pos == 1 & pos == 1){
+      df[i, "pos_streak"] <- prior_pos_streak + 1
+      df[i, "neg_streak"] <- 0
+    } else if (prior_pos == 1 & pos == 0){
+      df[i, "pos_streak"] <- 0
+      df[i, "neg_streak"] <- 1
+    } else if (prior_pos == 0 & pos == 0){
+      df[i, "pos_streak"] <- 0
+      df[i, "neg_streak"] <- prior_neg_streak + 1
+    } else if (prior_pos == 0 & pos == 1){
+      df[i, "pos_streak"] <- 1
+      df[i, "neg_streak"] <- 0
+    }
+  }
+}
+
+df <- df %>%
+  mutate(pos_next = lead(pos)) %>%
+  filter(!is.na(pos_next))
+
+final_results <- data.frame(pos_neg = c(), streak_length = c(),
+                            pct_next_day_same = c(),
+                            t_pval = c(), n_days = c())
+
+counter <- 1
+for (i in 1:max(df$pos_streak, df$neg_streak)){
+  tmp_s <- df %>%
+    filter(pos_streak >= i)
+  
+  final_results[counter, "pos_neg"]             <- "Positive"
+  final_results[counter, "streak_length"]       <- i
+  final_results[counter, "pct_next_day_same"]   <- mean(tmp_s$pos_next)
+  
+  final_results[counter, "n_days"]              <- nrow(tmp_s)
+  
+  if (final_results[counter, "n_days"] >= 100){
+    final_results[counter, "t_pval"]  <- t.test(df$pos, tmp_s$pos_next)$p.value
+  } else {
+    final_results[counter, "t_pval"]  <- NA
+  }
+  counter <- counter + 1
+  
+  tmp_s <- df %>%
+    filter(neg_streak >= i)
+  
+  final_results[counter, "pos_neg"]             <- "Negative"
+  final_results[counter, "streak_length"]       <- i
+  final_results[counter, "pct_next_day_same"]   <- 1-mean(tmp_s$pos_next)
+  final_results[counter, "n_days"]              <- nrow(tmp_s)
+  
+  if (final_results[counter, "n_days"] >= 100){
+    final_results[counter, "t_pval"]  <- t.test(df$pos, tmp_s$pos_next)$p.value
+  } else {
+    final_results[counter, "t_pval"]  <- NA
+  }
+  
+  counter <- counter + 1
+}
+              
+
 
 # ############################  End  ################################## #
