@@ -111,9 +111,4 @@ for(s in streaks){
   results_counter <- results_counter + 1
 }
 
-
-
-              
-
-
 # ############################  End  ################################## #
