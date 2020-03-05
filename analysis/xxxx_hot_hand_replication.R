@@ -63,10 +63,10 @@ count_all_occurences <- function(input_string, find_string){
 }
 
 flips_df <- flips_df %>%
-      mutate(n_heads_after_first_flip = str_count(substr(flip_string, 2, streak), "H"),
+      mutate(n_flips_after_heads = str_count(substr(flip_string, 1, streak-1), "H"),
              n_heads_after_heads = sapply(X = flip_string, FUN = count_all_occurences,
                                             find_string = "HH"),
-             final_pct = n_heads_after_heads/n_heads_after_first_flip)
+             final_pct = n_heads_after_heads/n_flips_after_heads)
 
 flip_results <- flips_df %>%
                   filter(!is.na(final_pct)) %>%
