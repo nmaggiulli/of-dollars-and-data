@@ -15,7 +15,7 @@ library(readr)
 # http://banners.bullionvault.com/en/us-annual-asset-performance-comparison-1976-2015.pdf
 #
 
-bv_returns <- read_csv(paste0(importdir, "0006_bullion_vault_asset_returns/asset-returns-bullion-vault-1976-2016.csv"))
+bv_returns <- read_csv(paste0(importdir, "0006_bullion_vault_asset_returns/asset-returns-bullion-vault-1976.csv"))
 
 # Make all of the returns into real returns
 # Create a function
