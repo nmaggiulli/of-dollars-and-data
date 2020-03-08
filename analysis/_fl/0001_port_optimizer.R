@@ -22,10 +22,14 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+set.seed(12345)
+
 # Load in BV returns
 full_bv_returns <- readRDS(paste0(localdir, "0006_bv_returns.Rds")) %>%
                       mutate(year = as.Date(year, "%d/%m/%y")) %>%
-                      rename(`TBill 3m` = `Tbill 3m`)
+                      rename(`TBill 3m` = `Tbill 3m`,
+                             `U.S. REIT` = REIT,
+                             `U.S. Housing` = `U.S. Home Price`)
 
 min_year <- min(year(full_bv_returns$year))
 max_year <- max(year(full_bv_returns$year))
@@ -82,7 +86,10 @@ melted_returns <- full_bv_returns %>%
   plot <- ggplot(data=to_plot, aes(x = sd, y = ret, col = asset)) +
           geom_point() +
           geom_hline(yintercept = 0, linetype = "dashed") +
-          geom_text(data=to_plot, aes(x=sd, y=ret, col=asset, label=asset), vjust = -1) +
+          geom_text(data=to_plot, 
+                    aes(x=sd, y=ret, col=asset, label=asset), 
+                    family = "my_font",
+                    vjust = ifelse(to_plot$asset == "Treasury 10yr" | to_plot$asset == "S&P 500", 1.4, -1)) +
           scale_color_discrete(guide = FALSE) +
           scale_x_continuous(label = percent, limits = c(0, 0.25), breaks = seq(0, 0.25, 0.05)) +
           scale_y_continuous(label = percent, limits = c(-0.05, .10), breaks = seq(-0.05, 0.10, 0.05)) +
@@ -215,7 +222,7 @@ melted_returns <- full_bv_returns %>%
     }
   }  
   
-  # All REIT  
+  # All 10yr
   for (j in colnames(eff[1:n_assets])){
     if (j == "Treasury 10yr"){
       all_10yr[j] <- 1
@@ -224,9 +231,9 @@ melted_returns <- full_bv_returns %>%
     }
   }  
   
-  # All 10yr  
+  # All US REIT 
   for (j in colnames(eff[1:n_assets])){
-    if (j == "REIT"){
+    if (j == "U.S. REIT"){
       all_reit[j] <- 1
     } else{
       all_reit[j] <- 0
