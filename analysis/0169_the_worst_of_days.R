@@ -30,7 +30,8 @@ spx <- read.csv(paste0(importdir, "/0169_worst_days/SPX_data.csv"),
   mutate(date = as.Date(date),
          date_qtr = as.Date(as.yearqtr(date) - 1/4, frac = 1) + days(1)) %>%
   arrange(date) %>%
-  mutate(ret = index_sp500/lag(index_sp500) - 1)
+  mutate(index_sp500 = ifelse(date == "2020-03-09", 2746.56, index_sp500),
+          ret = index_sp500/lag(index_sp500) - 1)
 
 first_year <- year(min(spx$date))
 last_year <- year(max(spx$date))
@@ -41,10 +42,11 @@ to_plot <- spx %>%
                   filter(ret < ret_cutoff) %>%
                   arrange(-ret) %>%
                   mutate(date = as.character(date),
-                         label = paste0(round(100*ret, 1), "%"))
+                         label = paste0(round(100*ret, 1), "%"),
+                         flag = ifelse(date == "2020-03-09", 1, 0))
 
 text_labels <- to_plot %>%
-                filter(ret == max(to_plot$ret) | ret == min(to_plot$ret))
+                filter(ret == max(to_plot$ret) | ret == min(to_plot$ret) | date == "2020-03-09")
 
 file_path <- paste0(out_path, "/spx_worst_days_bar.jpeg")
 source_string <- paste0("Source:  YCharts, ", first_year, "-", last_year, " (OfDollarsAndData.com)")
@@ -53,13 +55,14 @@ note_string <- str_wrap(paste0("Note:  There were ",
                                " trading days with a ", -100*ret_cutoff, "%+ decline since ", first_year, "."), 
                         width = 85)
 
-plot <- ggplot(to_plot, aes(x=reorder(date, ret), y=ret)) + 
-  geom_bar(stat = "identity", fill = chart_standard_color) +
+plot <- ggplot(to_plot, aes(x=reorder(date, ret), y=ret, fill = as.factor(flag))) + 
+  geom_bar(stat = "identity") +
   geom_text(data=text_labels, aes(x=reorder(date, ret), y=ret, label = label), 
-            col = chart_standard_color, 
+            col = ifelse(text_labels$date == as.Date("2020-03-09"), "red", chart_standard_color), 
             vjust = 1.3, 
             hjust = 0.38, 
             size = 2.3) +
+  scale_fill_manual(values = c(chart_standard_color, "red"), guide = FALSE) +
   scale_y_continuous(label = percent) +
   of_dollars_and_data_theme +
   theme(axis.text.x = element_text(angle = 45, vjust = 0.5)) +
