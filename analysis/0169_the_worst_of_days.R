@@ -30,8 +30,7 @@ spx <- read.csv(paste0(importdir, "/0169_worst_days/SPX_data.csv"),
   mutate(date = as.Date(date),
          date_qtr = as.Date(as.yearqtr(date) - 1/4, frac = 1) + days(1)) %>%
   arrange(date) %>%
-  mutate(index_sp500 = ifelse(date == "2020-03-09", 2746.56, index_sp500),
-          ret = index_sp500/lag(index_sp500) - 1)
+  mutate(ret = index_sp500/lag(index_sp500) - 1)
 
 first_year <- year(min(spx$date))
 last_year <- year(max(spx$date))
