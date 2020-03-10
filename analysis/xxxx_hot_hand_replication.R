@@ -68,7 +68,7 @@ flips_df <- flips_df %>%
                                             find_string = "HH"),
              final_pct = n_heads_after_heads/n_flips_after_heads)
 
-flip_results <- flips_df %>%
+flip_theory <- flips_df %>%
                   filter(!is.na(final_pct)) %>%
                   group_by(streak) %>%
                   summarize(prob_h = sum(final_pct, na.rm = TRUE)/n())
@@ -83,8 +83,8 @@ mat <- rands %>%
           select(pos) %>%
           as.matrix()
 
-streaks <- seq(2, 10)
-final_results <- data.frame(streak = streaks)
+streaks <- seq(2, 6)
+flip_actual <- data.frame(streak = streaks)
 
 results_counter <- 1
 for(s in streaks){
@@ -92,22 +92,16 @@ for(s in streaks){
   bag_pos <- c()
   counter_pos <- 1
   
-  bag_neg <- c()
-  counter_neg <- 1
-  for(i in 1:nrow(mat)-1){
-    if(i >= s){
-      streak_sum <- sum(mat[(i-s+1):i, 1])
-      if(streak_sum == s){
-        bag_pos[counter_pos] <- mat[i+1, 1]
-        counter_pos <- counter_pos + 1
-      } else if(streak_sum == 0){
-        bag_neg[counter_neg] <- mat[i+1, 1]
-        counter_neg <- counter_neg + 1
-      }
+  n_loops <- floor(nrow(mat)/(s+1))
+  for(i in 1:n_loops){
+    streak_sum <- sum(mat[((s+1)*(i-1)+1):((s+1)*(i-1)+s), 1])
+    if(streak_sum == s){
+      bag_pos[counter_pos] <- mat[((s+1)*(i-1)+(s+1)), 1]
+      counter_pos <- counter_pos + 1
     }
   }
-  final_results[results_counter, "p_next_pos"] <- mean(bag_pos)
-  final_results[results_counter, "p_next_neg"] <- mean(bag_neg)
+  
+  flip_actual[results_counter, "p_next_pos"] <- mean(bag_pos)
   results_counter <- results_counter + 1
 }
 
