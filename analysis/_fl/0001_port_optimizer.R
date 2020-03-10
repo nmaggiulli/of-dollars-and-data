@@ -42,7 +42,7 @@ melted_returns <- full_bv_returns %>%
 
 ############################### First Returns Plot ###############################  
   # Set the file_path for the output
-  file_path = paste0(out_path, "/bv_asset_returns.jpeg")
+  file_path <- paste0(out_path, "/bv_asset_returns.jpeg")
 
   # Add a source and note string for the plots
   source_string <- str_wrap(paste0("Source:  BullionVault, ", min_year, "-", max_year," (OfDollarsAndData.com)"),
@@ -92,7 +92,7 @@ melted_returns <- full_bv_returns %>%
                     vjust = ifelse(to_plot$asset == "Treasury 10yr" | to_plot$asset == "S&P 500", 1.4, -1)) +
           scale_color_discrete(guide = FALSE) +
           scale_x_continuous(label = percent, limits = c(0, 0.25), breaks = seq(0, 0.25, 0.05)) +
-          scale_y_continuous(label = percent, limits = c(-0.05, .10), breaks = seq(-0.05, 0.10, 0.05)) +
+          scale_y_continuous(label = percent, limits = c(-0.05, .11), breaks = seq(-0.05, 0.10, 0.05)) +
           of_dollars_and_data_theme +
           ggtitle(paste0("Risk vs. Return")) + 
           labs(x = "Risk (standard deviation)", y ="Annual Real Return",
@@ -265,7 +265,7 @@ melted_returns <- full_bv_returns %>%
   optimal <- eff[eff$sharpe == max(eff$sharpe),]
   
   # Set the file_path based on the function input 
-  file_path = paste0(out_path, "/bv_efficient_frontier.jpeg")
+  file_path <- paste0(out_path, "/bv_efficient_frontier.jpeg")
   
   # Add a source and note string for the plots
   source_string <- str_wrap(paste0("Source:  BullionVault, ", min_year, "-", max_year," (OfDollarsAndData.com)"),
@@ -314,7 +314,68 @@ melted_returns <- full_bv_returns %>%
   
   # Save the gtable
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+############################### Real Estate vs. Optimal ###############################   
+    
+to_plot <- full_bv_returns %>%
+            select(year, `U.S. REIT`, `S&P 500`) %>%
+            gather(-year, key=key, value=value)
+
+sp500_reit_corr <- cor(full_bv_returns$`S&P 500`, full_bv_returns$`U.S. REIT`)  
   
+file_path <- paste0(out_path, "/bv_reits_vs_no_reit_optimal.jpeg")
+
+source_string <- str_wrap(paste0("Source:  BullionVault, ", min_year, "-", max_year," (OfDollarsAndData.com)"),
+                          width = 85)
+note_string   <- str_wrap(paste0("Note:  Returns are adjusted using the U.S. Consumer Price Index.  ",
+                                 "The annual return correlation is ", round(sp500_reit_corr, 2), "."),
+                          width = 85)
+
+text_labels <- data.frame(year = c(as.Date("2000-01-01"), as.Date("2000-01-01")),
+                          value = c(-0.3, 0.42),
+                          key = c("S&P 500", "U.S. REIT"))
+   
+plot <- ggplot(to_plot, aes(x = year, y = value, fill = key)) +
+          geom_bar(stat = "identity", position = "dodge", width = 250) +
+          geom_text(data=text_labels, aes(x=year, y=value, col = key, label = key), 
+                    family = "my_font") +
+          scale_fill_manual(values = c(color_sp500, color_reit), guide = FALSE) +
+          scale_color_manual(values = c(color_sp500, color_reit), guide = FALSE) +
+          scale_y_continuous(label = percent) +
+          of_dollars_and_data_theme +
+          ggtitle("Annual Real Returns for\nThe S&P 500 and U.S. REITs") +
+          labs(x= "Year", y= "Annual Real Return",
+               caption = paste0(source_string, "\n", note_string))
+
+# Save the gtable
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+print_corr <- function(asset1, asset2){
+  tmp <- full_bv_returns %>%
+    rename_(.dots = setNames(paste0("`", asset1, "`"), "asset1")) %>%
+    rename_(.dots = setNames(paste0("`", asset2, "`"), "asset2")) 
+  
+  print(paste0("The correlation between ", asset1, " and ", asset2, " is: ", 
+               round(cor(tmp$asset1, tmp$asset2), 2), 
+               "."))
+}
+
+print_corr("S&P 500", "U.S. REIT")
+print_corr("S&P 500", "Int. Stocks")
+print_corr("Int. Stocks", "U.S. REIT")
+print_corr("Gold", "U.S. REIT")
+print_corr("Treasury 10yr", "U.S. REIT")
+
+rets_2014 <- full_bv_returns %>%
+              select(year, `U.S. REIT`, `S&P 500`, `Treasury 10yr`, `Gold`) %>%
+              filter(year >= "2014-01-01") %>%
+              mutate(ret_f = c(.1225, .1242, .0876, .1144, .0911, .0947))
+
+cor(rets_2014$`U.S. REIT`, rets_2014$ret_f)
+cor(rets_2014$`S&P 500`, rets_2014$ret_f)
+cor(rets_2014$`Treasury 10yr`, rets_2014$ret_f)
+cor(rets_2014$`Gold`, rets_2014$ret_f)
+
 # ############################  End  ################################## #
 
   

@@ -19,13 +19,13 @@ library(zoo)
 library(Hmisc)
 library(tidyverse)
 
-folder_name <- "0169_the_worst_of_days"
+folder_name <- "0168_the_worst_of_days"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-spx <- read.csv(paste0(importdir, "/0169_worst_days/SPX_data.csv"),
+spx <- read.csv(paste0(importdir, "/0168_worst_days/SPX_data.csv"),
                        col.names = c("date","index_sp500")) %>%
   mutate(date = as.Date(date),
          date_qtr = as.Date(as.yearqtr(date) - 1/4, frac = 1) + days(1)) %>%
