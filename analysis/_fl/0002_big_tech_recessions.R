@@ -18,7 +18,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-last_date <- "2020-03-09"
+last_date <- "2020-03-11"
 
 mcap_dow_biggest <- read.csv(paste0(importdir, folder_name, "/dow_stock_market_cap_2001.csv"), skip = 5) %>%
           rename(symbol = Symbol,
@@ -48,8 +48,12 @@ r_3000 <- read.csv(paste0(importdir, folder_name, "/RUATR_data.csv"),
                    col.names = c("date", "value")) %>%
   mutate(date = as.Date(date)) %>%
   arrange(date) %>%
-  mutate(name = "Russell 3000")  %>%
   filter(date <= last_date)
+
+r_3000 <- r_3000 %>%
+            bind_rows(data.frame(date = as.Date("2020-03-11"),
+                     value = r_3000[nrow(r_3000), "value"]*(1-.0508))) %>%
+            mutate(name = "Russell 3000") 
 
 plot_vs_r_3000 <- function(start_date, end_date, dow_5, time_period_title){
   if(dow_5 == 1){
@@ -85,6 +89,7 @@ plot_vs_r_3000 <- function(start_date, end_date, dow_5, time_period_title){
       rename(first_mcap = value)
     
     big_5_index <- mcap_faamg %>%
+      drop_na() %>%
       filter(date >= start_date, date <= end_date) %>%
       inner_join(big_5) %>%
       mutate(value = value/first_mcap) %>%
@@ -133,11 +138,18 @@ plot_vs_r_3000 <- function(start_date, end_date, dow_5, time_period_title){
                         additional_note),
                         width = 85)
   
+  if(time_period_title == "2020 YTD"){
+    vjust_val <- 1
+  } else{
+    vjust_val <- -1
+  }
+  
+  
   plot <- ggplot(to_plot, aes(x=date, y=(value-1), col = name)) +
             geom_line() +
             geom_text(data=text_labels, aes(x=date, y=(value-1), 
                                             col = name, label = label),
-                            vjust = -1,
+                            vjust = vjust_val,
                       show.legend = FALSE) +
             scale_color_manual(values = c("red", chart_standard_color)) +
             scale_y_continuous(label = percent) +
@@ -163,7 +175,7 @@ plot_vs_r_3000("2007-11-30", "2009-06-30", 1, "2008 Recession")
 plot_vs_r_3000("2007-11-30", "2009-06-30", 0, "2008 Recession")
 
 ### Plot FAAMG vs. Russell 3000 (YTD)
-plot_vs_r_3000("2019-12-31", "2020-03-09", 0, "2020 YTD")
+plot_vs_r_3000("2019-12-31", "2020-03-11", 0, "2020 YTD")
 
 
 # ############################  End  ################################## #
