@@ -18,7 +18,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-last_date <- "2020-03-11"
+last_date <- "2020-03-12"
 
 mcap_dow_biggest <- read.csv(paste0(importdir, folder_name, "/dow_stock_market_cap_2001.csv"), skip = 5) %>%
           rename(symbol = Symbol,
@@ -48,12 +48,8 @@ r_3000 <- read.csv(paste0(importdir, folder_name, "/RUATR_data.csv"),
                    col.names = c("date", "value")) %>%
   mutate(date = as.Date(date)) %>%
   arrange(date) %>%
-  filter(date <= last_date)
-
-r_3000 <- r_3000 %>%
-            bind_rows(data.frame(date = as.Date("2020-03-11"),
-                     value = r_3000[nrow(r_3000), "value"]*(1-.0508))) %>%
-            mutate(name = "Russell 3000") 
+  filter(date <= last_date) %>%
+  mutate(name = "Russell 3000") 
 
 plot_vs_r_3000 <- function(start_date, end_date, dow_5, time_period_title){
   if(dow_5 == 1){
