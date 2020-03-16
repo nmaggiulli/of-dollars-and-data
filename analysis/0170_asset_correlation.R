@@ -128,7 +128,7 @@ network_plot <- function(start_date, end_date){
   end_date_string <- date_to_string(end_date)
   
   # Create PDF
-  pdf(paste0(out_path, "/correlation_network_", start_date_string, "_", end_date_string, ".pdf"))
+  pdf(paste0(out_path, "/correlation_net_", start_date_string, "_", end_date_string, ".pdf"))
   
   asset_subset <- filter(df, 
                       date >= start_date,
@@ -196,34 +196,34 @@ network_plot <- function(start_date, end_date){
   # Set the layout manually (this will take a while)
   # Treasuries
   l[1, 1] <- 1
-  l[1, 2] <- 1
+  l[1, 2] <- -1
   
   #EM
-  l[2, 1] <- 0
-  l[2, 2] <- -1.5
+  l[2, 1] <- -1.5
+  l[2, 2] <- 0
   
   # Gold
-  l[3, 1] <- -1
+  l[3, 1] <- 1
   l[3, 2] <- 1
   
   #Int. Stocks
   l[4, 1] <- -1
-  l[4, 2] <- -1
+  l[4, 2] <- 1
   
   # Munis
-  l[5, 1] <- 0
-  l[5, 2] <- 1.5
+  l[5, 1] <- 1.5
+  l[5, 2] <- 0
   
   #S&P 500
-  l[6, 1] <- -1.5
-  l[6, 2] <- 0
+  l[6, 1] <- 0
+  l[6, 2] <- 1.5
   
   # Corp Bond
-  l[7, 1] <- 1.5
-  l[7, 2] <- 0
+  l[7, 1] <- 0
+  l[7, 2] <- -1.5
   
   # REITs
-  l[8, 1] <- 1
+  l[8, 1] <- -1
   l[8, 2] <- -1
   
   # Plot the network
