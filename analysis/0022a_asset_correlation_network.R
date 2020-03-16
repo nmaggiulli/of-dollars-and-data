@@ -12,10 +12,15 @@ library(ggplot2)
 library(tidyr)
 library(igraph)
 
+folder_name <- "0022_bv_network_and_rank_plots"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+
 ########################## Start Program Here ######################### #
 
 # Read in BV data
-bv <- readRDS(paste0(localdir, "0006_bv_returns.Rds"))
+bv <- readRDS(paste0(localdir, "0006_bv_returns.Rds")) %>%
+        mutate(year = as.Date(year, format = "%m/%d/%y"))
 
 ## Reproduce colors from ggplot
 gg_color_hue <- function(n) {
@@ -29,7 +34,7 @@ years_list <- seq(as.numeric(substr(min(unique(bv$year)), 1, 4)) + 4,
                   1)
 
 # Create PDF
-pdf(paste0(exportdir, "0022_bv_network_and_rank_plots/5-yr-correlations-1980-2015.pdf"))
+pdf(paste0(out_path, "/5-yr-correlations-1980-2015.pdf"))
 
 # Loop through years
 for (y in years_list){
