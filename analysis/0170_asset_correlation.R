@@ -241,7 +241,7 @@ network_plot <- function(start_date, end_date){
   dev.off()
 }
 
-plot_all_cor("2016-01-01", "2020-03-13")
+plot_all_cor("2018-01-01", "2020-03-13")
 plot_all_cor("2008-09-01", "2009-06-30")
 
 network_plot("2014-01-01", "2017-12-31")
