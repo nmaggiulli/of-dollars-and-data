@@ -152,7 +152,7 @@ create_gif <- function(path, file_stub, speed_milliseconds, n_loops = 0, out_nam
 }
 
 # Create function to calculate the drawdowns over time
-drawdown_path <- function(vp){
+drawdown_path <- function(vp, dd_counts = 0){
   
   vp <- as.data.frame(vp)
   
@@ -172,7 +172,18 @@ drawdown_path <- function(vp){
   }
   
   dd <- data.frame(date = dd_dates, pct = dd_pct)
-  return(dd)
+  if(dd_counts == 0){
+    return(dd)
+  } else{
+    dd_counter_ <- 0
+    for(d in 1:nrow(dd)){
+      if(dd[d, "pct"] == 0){
+        dd_counter_ <- dd_counter_ + 1
+      }
+      dd[d, "dd_count"] <- dd_counter_
+    }
+    return(dd)
+  }
 }
 
 date_to_string <- function(x){
