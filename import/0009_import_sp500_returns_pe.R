@@ -62,7 +62,8 @@ sp500_ret_pe <- sp500_ret_pe %>%
     "-", 
     ifelse(substring(as.character(date), 6, 7) == "1", "10", substring(as.character(date), 6, 7)),
     "-01", 
-    "%Y-%m-%d")))
+    "%Y-%m-%d"))) %>%
+  filter(real_div > 0)
 
 # Save down the data
 saveRDS(sp500_ret_pe, paste0(localdir, "0009_sp500_ret_pe.Rds"))
