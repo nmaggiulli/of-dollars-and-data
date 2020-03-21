@@ -199,13 +199,17 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Percent recovery plot
 percent_loss_gain <- data.frame(loss = seq(0.01, 0.5, 0.01)) %>%
-                      mutate(gain = 1/(1-loss) - 1)
+                      mutate(gain = 1/(1-loss) - 1) 
+
+vert_line <- data.frame(loss = c(0.33, 0.33),
+                        gain = c(0, 0.5))
 
 file_path <- paste0(out_path, "/gain_to_recover_loss.jpeg")
 source_string <- "Source:  Simulated Data (OfDollarsAndData.com)" 
 
-plot <- ggplot(percent_loss_gain, aes(x=loss, y=gain)) + 
+plot <- ggplot(percent_loss_gain, aes(x = loss, y = gain)) + 
   geom_smooth(se = FALSE) +
+  geom_line(data=vert_line, aes(x = loss, y = gain), linetype ="dashed", col = "black") +
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 1)) +
   scale_x_continuous(label = percent_format(accuracy = 1), limits = c(0, 1)) +
   of_dollars_and_data_theme +
