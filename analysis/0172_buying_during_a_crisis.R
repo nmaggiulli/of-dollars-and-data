@@ -18,7 +18,7 @@ library(lemon)
 library(readxl)
 library(tidyverse)
 
-folder_name <- "0172_dip_buyers_now"
+folder_name <- "0172_buying_during_a_crisis"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -113,10 +113,14 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 file_path <- paste0(out_path, "/all_dow_dd_panel_", dd_cutoff_string, "_pct_subset.jpeg")
 
+text_labels <- data.frame(day = 500, pct = -0.55, text_label = "We Are\n Here",
+                          label = to_plot[nrow(to_plot), "label"])
+
 plot <- ggplot(to_plot, aes(x=day, y=pct)) +
   geom_line() +
   geom_hline(yintercept = -0.3, linetype="dashed") +
   geom_point(data=points, aes(x=day, y=pct), color = "red", alpha = 0.5) +
+  geom_text(data=text_labels, aes(x=day, y=pct, label=text_label), col = "red", size = 3.5) +
   facet_wrap(~label) +
   scale_color_discrete(guide = FALSE) +
   scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(-.7, -0.1, 0.2), 
@@ -201,21 +205,44 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 percent_loss_gain <- data.frame(loss = seq(0.01, 0.5, 0.01)) %>%
                       mutate(gain = 1/(1-loss) - 1) 
 
-vert_line <- data.frame(loss = c(0.33, 0.33),
-                        gain = c(0, 0.5))
-
-file_path <- paste0(out_path, "/gain_to_recover_loss.jpeg")
 source_string <- "Source:  Simulated Data (OfDollarsAndData.com)" 
+file_path <- paste0(out_path, "/gain_to_recover_loss.jpeg")
 
 plot <- ggplot(percent_loss_gain, aes(x = loss, y = gain)) + 
   geom_smooth(se = FALSE) +
-  geom_line(data=vert_line, aes(x = loss, y = gain), linetype ="dashed", col = "black") +
-  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 1)) +
-  scale_x_continuous(label = percent_format(accuracy = 1), limits = c(0, 1)) +
+  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
+  scale_x_continuous(label = percent_format(accuracy = 1), limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("% Gain Needed to Fully Recover From % Loss")) +
   labs(x = "Loss" , y = "Gain Needed",
-       caption = paste0("\n", source_string, "\n", note_string))  
+       caption = paste0("\n", source_string))  
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+file_path <- paste0(out_path, "/gain_to_recover_loss_33pct.jpeg")
+
+v_line <- data.frame(loss = c(0.33, 0.33),
+                     gain = c(0, 0.5))
+
+h_line <- data.frame(loss = c(0, 0.33),
+                     gain = c(0.5, 0.5))
+
+point <- data.frame(loss = 0.33, gain = 0.5)
+text <- data.frame(loss = 0.33, gain = 0.5, label = "We Are\n   Here") 
+
+plot <- ggplot(percent_loss_gain, aes(x = loss, y = gain)) + 
+  geom_smooth(se = FALSE) +
+  geom_line(data=v_line, aes(x = loss, y = gain), linetype ="dashed", col = "black") +
+  geom_line(data=h_line, aes(x = loss, y = gain), linetype ="dashed", col = "black") +
+  geom_point(data=point, aes(x=loss, y= gain), col = "red", size = 2.3) +
+  geom_text(data=text, aes(x=loss, y= gain, label = label), col = "red", hjust = -0.5) +
+  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
+  scale_x_continuous(label = percent_format(accuracy = 1), limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("% Gain Needed to Fully Recover From % Loss")) +
+  labs(x = "Loss" , y = "Gain Needed",
+       caption = paste0("\n", source_string))  
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
