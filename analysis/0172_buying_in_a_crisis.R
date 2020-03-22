@@ -206,7 +206,7 @@ percent_loss_gain <- data.frame(loss = seq(0.01, 0.5, 0.01)) %>%
                       mutate(gain = 1/(1-loss) - 1) 
 
 source_string <- "Source:  Simulated Data (OfDollarsAndData.com)" 
-file_path <- paste0(out_path, "/gain_to_recover_loss.jpeg")
+file_path <- paste0(out_path, "/gain_needed_to_recover_loss.jpeg")
 
 plot <- ggplot(percent_loss_gain, aes(x = loss, y = gain)) + 
   geom_smooth(se = FALSE) +
@@ -214,13 +214,13 @@ plot <- ggplot(percent_loss_gain, aes(x = loss, y = gain)) +
   scale_x_continuous(label = percent_format(accuracy = 1), limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("% Gain Needed to Fully Recover From % Loss")) +
-  labs(x = "Loss" , y = "Gain Needed",
+  labs(x = "Loss" , y = "Gain Needed to Recover",
        caption = paste0("\n", source_string))  
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-file_path <- paste0(out_path, "/gain_to_recover_loss_33pct.jpeg")
+file_path <- paste0(out_path, "/gain_needed_to_recover_loss_33pct.jpeg")
 
 v_line <- data.frame(loss = c(0.33, 0.33),
                      gain = c(0, 0.5))
@@ -241,7 +241,7 @@ plot <- ggplot(percent_loss_gain, aes(x = loss, y = gain)) +
   scale_x_continuous(label = percent_format(accuracy = 1), limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("% Gain Needed to Fully Recover From % Loss")) +
-  labs(x = "Loss" , y = "Gain Needed",
+  labs(x = "Loss" , y = "Gain Needed to Recover",
        caption = paste0("\n", source_string))  
 
 # Save the plot
