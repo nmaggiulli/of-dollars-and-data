@@ -12,6 +12,7 @@ library(lubridate)
 library(stringr)
 library(ggrepel)
 library(zoo)
+library(lemon)
 library(Hmisc)
 library(readxl)
 library(tidyverse)
@@ -114,19 +115,26 @@ plot <- ggplot(to_plot, aes(x=date, y=ret)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-to_plot <- dow %>%
-  filter(yr == 2020, mt == 1)
+#Do a side by side comparison with Jan 2020
+jan_2020 <- dow %>%
+  filter(yr == 2020, mt == 1) %>%
+  mutate(label = "Jan 2020")
 
-file_path <- paste0(out_path, "/dow_2020_01_breaks.jpeg")
+to_plot <- to_plot %>%
+            mutate(label = "Mar 2020") %>%
+            bind_rows(jan_2020)
+
+file_path <- paste0(out_path, "/dow_2020_01_compare.jpeg")
 note_string <- str_wrap(paste0("Note:  Dow price data does not include dividends.  "),
                         width = 85)
 
 plot <- ggplot(to_plot, aes(x=date, y=ret)) +
   geom_bar(stat = "identity", width = 1, fill = chart_standard_color) +
+  facet_rep_wrap(label ~ ., scales = "free_x", repeat.tick.labels = c("left", "bottom")) +
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-0.15, 0.15),
                      breaks = seq(-0.15, 0.15, 0.05)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Dow Daily Percentage Change\nJanuary 2020")) +
+  ggtitle(paste0("Dow Daily Percentage Change")) +
   labs(x = "Date" , y = "Daily Percentage Change",
        caption = paste0("\n", source_string, "\n", note_string))
 
