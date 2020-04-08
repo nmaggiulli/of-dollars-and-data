@@ -32,9 +32,6 @@ raw <- read_excel(paste0(importdir, "0172_daily_dow/Dow daily 2020.xlsx"),
   arrange(date) %>%
   mutate(ret_lag = index/lag(index, n_days_back) - 1)
 
-first_year <- year(min(raw$date))
-last_year <- year(max(raw$date))
-
 run_fwd_rets <- function(n_days_fwd){
 
   df <- raw %>%
@@ -104,7 +101,7 @@ run_fwd_rets <- function(n_days_fwd){
   print(min(last_day$index) - 1)
   
   file_path <- paste0(out_path, "/fwd_ret_", n_days_fwd_string, "_sessions.jpeg")
-  source_string <- paste0("Source:  YCharts, ", first_year, "-", last_year, " (OfDollarsAndData.com)")
+  source_string <- paste0("Source:  Bloomberg (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note:  There were ", n_days-1, " trading days where the Dow rose by ", 
                                  100*rise_cutoff, 
                                  "% or more over the prior ",
