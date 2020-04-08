@@ -72,6 +72,16 @@ to_plot <- summary %>%
               )
             ))
 
+excel_out <- to_plot %>%
+                arrange(date) %>%
+                select(date, avg_abs_ret)
+
+export_to_excel(excel_out,
+                outfile = paste0(out_path, "/avg_abs_monthly_change_dow.xlsx"),
+                sheetname = "dow_avg_month",
+                new_file = 1,
+                fancy_formatting = 0)
+
 mean_ret <- mean(summary$abs_ret)
 
 # Set note and source string
