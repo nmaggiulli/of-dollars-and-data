@@ -14,7 +14,7 @@ library(ggrepel)
 library(readxl)
 library(tidyverse)
 
-folder_name <- "0178_portfolio_comparisons"
+folder_name <- "0179_portfolio_comparisons"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
