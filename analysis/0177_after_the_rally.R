@@ -132,9 +132,12 @@ run_fwd_rets <- function(n_days_fwd, dca){
   last_day <- to_plot %>%
                 filter(day == n_days_fwd)
   
-  print(paste0("N-days = ", n_days_fwd))
-  print(max(last_day$index) - 1)
-  print(min(last_day$index) - 1)
+  print(paste0("N-days = ", n_days_fwd, ", DCA = ", dca))
+  if(dca == 0){
+    print(paste0("Positive % = ", 100*nrow(filter(last_day, index > 1))/nrow(last_day)))
+  } else{
+    print(paste0("Positive % = ", 100*nrow(filter(last_day, index > n_days_fwd))/nrow(last_day)))
+  }
   
   if(dca == 1){
     f_string <- "dca_"
