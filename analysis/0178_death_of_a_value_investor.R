@@ -109,4 +109,49 @@ final_hyp_ff <- ff %>% filter(year>= 1979) %>% bind_rows(bubble_pop_ff)
 
 print(t.test(final_hyp_ff$hml, var.equal = FALSE, mu = 0, alternative = "greater"))
 
+# Create 30-year total return diff
+calculate_hml_over_time <- function(start_year, end_year){
+  n_yr <- end_year - start_year + 1
+  
+  prod <- ff %>%
+            filter(year >= start_year, year <= end_year) %>%
+            mutate(hml = hml + 1) %>%
+            summarize(prod = prod(hml)^(1/n_yr) - 1) %>%
+            pull(prod)
+  return(prod)
+}
+
+n_years <- 30
+yrs <- sort(unique(ff$year))
+
+yrs <- yrs[1:(length(yrs)-n_years)]
+
+full_df <- data.frame()
+
+counter <- 1
+for(y in yrs){
+  full_df[counter, "hml"] <- calculate_hml_over_time(y, y+n_years)
+  full_df[counter, "start_year"] <- y
+  full_df[counter, "end_year"] <- y + n_years
+  counter <- counter + 1
+}
+
+to_plot <- full_df
+
+file_path <- paste0(out_path, "/rolling_hml_", n_years, ".jpeg")
+source_string <- str_wrap(paste0("Source:  Fama-French Data Library, https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html (OfDollarsAndData.com)"),
+                          width = 85)
+
+plot <- ggplot(to_plot, aes(x=start_year, y=hml)) + 
+  geom_line() +
+  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 0.07)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Value Minus Growth Rolling Outperformance\nOver ", n_years, " Years")) +
+  labs(x = "Starting Year" , y = "Rolling Annualized Outperformance",
+       caption = paste0("\n", source_string))  
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+
 # ############################  End  ################################## #
