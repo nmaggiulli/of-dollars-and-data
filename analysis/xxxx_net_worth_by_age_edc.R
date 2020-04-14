@@ -184,6 +184,7 @@ create_percentile_chart("networth", "Median Net Worth", 0.5)
 create_percentile_chart("networth", "75th Percentile Net Worth", 0.75)
 create_percentile_chart("networth", "25th Percentile Net Worth", 0.25)
 create_percentile_chart("networth", "90th Percentile Net Worth", 0.9)
+create_percentile_chart("networth", "99th Percentile Net Worth", 0.99)
 
 
 # ############################  End  ################################## #
