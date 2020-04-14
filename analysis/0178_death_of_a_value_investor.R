@@ -121,7 +121,7 @@ calculate_hml_over_time <- function(start_year, end_year){
   return(prod)
 }
 
-n_years <- 30
+n_years <- 5
 yrs <- sort(unique(ff$year))
 
 yrs <- yrs[1:(length(yrs)-n_years)]
@@ -144,7 +144,8 @@ source_string <- str_wrap(paste0("Source:  Fama-French Data Library, https://mba
 
 plot <- ggplot(to_plot, aes(x=start_year, y=hml)) + 
   geom_line() +
-  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 0.07)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Value Minus Growth Rolling Outperformance\nOver ", n_years, " Years")) +
   labs(x = "Starting Year" , y = "Rolling Annualized Outperformance",
