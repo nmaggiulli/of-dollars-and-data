@@ -155,7 +155,7 @@ run_all_life_cycles <- function(working_years, spending_years,
 
 # Set savings rates, working years, and spending years
 min_sr       <- 0.05
-max_sr       <- 0.3
+max_sr       <- 0.2
 working_yrs  <- 40
 spending_yrs <- 25
 sp500_weights <- c(0, 0.6, 1)
@@ -166,7 +166,7 @@ run_all_life_cycles(working_yrs,
                     "1926-01-01")
 
 for (sr in seq(min_sr, max_sr, 0.01)){
-  
+  print(sr)
   if(sr < 0.1){
     sr_string <- paste0("0", 100*sr)
   } else{
@@ -242,7 +242,7 @@ create_gif(out_path,
            paste0("survival_yrs_*.jpeg"),
            40,
            0,
-           paste0("_gif_survival_yrs.gif"))
+           paste0("_gif_survival_yrs_retirement.gif"))
 
 # Returns by year (for checking)
 dfa_data_by_year <- dfa_data %>%
