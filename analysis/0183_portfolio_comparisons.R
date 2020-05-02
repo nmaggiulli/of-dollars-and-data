@@ -249,7 +249,7 @@ plot_perf <- function(df, start_date, end_date, rebal_limit, rebal_period){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-plot_perf(ycharts, "2020-01-01", "2020-04-28", 120, "session")
+plot_perf(ycharts, "2020-01-01", "2020-04-28", 120, "sessions")
 plot_perf(ycharts, "2005-01-01", "2020-04-28", 120, "sessions")
 plot_perf(returns_2, "1970-01-31", "2020-03-31", 6, "months")
 
