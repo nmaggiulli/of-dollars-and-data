@@ -40,13 +40,14 @@ returns_2 <- read.csv(paste0(importdir, "0183_which_portfolio_for_you/Returns_20
 returns_2[, 2:ncol(returns_2)] <- sapply( returns_2[, 2:ncol(returns_2)], as.numeric )
 
 create_portfolio_data <- function(df, start_dt, end_dt,
-   w_gld, w_sp500, w_bond_st, w_bond_lt, lbl, rebalance_limit){
+   w_gld, w_sp500, w_bond_st, w_bond_lt, lbl, clr, rebalance_limit){
   if(w_gld + w_bond_lt + w_bond_st + w_sp500 != 1){
     break
   }
   tmp <- df %>%
           filter(date >= start_dt, date <= end_dt) %>%
-          mutate(label = lbl) 
+          mutate(label = lbl,
+                 color = clr) 
   
   month_counter <- 1
   for(i in 1:nrow(tmp)){
@@ -85,7 +86,7 @@ create_portfolio_data <- function(df, start_dt, end_dt,
   
   tmp <- tmp %>%
             mutate(port = port/first_value) %>%
-            select(date, port, label)
+            select(date, port, label, color)
   return(tmp)
 }
 
@@ -97,10 +98,10 @@ plot_perf <- function(df, start_date, end_date, rebal_limit, rebal_period){
     source_name <- "Returns 2.0"
   }
   
-  port_perm <- create_portfolio_data(df, start_date, end_date, 0.25, 0.25, 0.25, 0.25, "Permanent Portfolio", rebal_limit)
-  port_6040 <- create_portfolio_data(df, start_date, end_date, 0, 0.6, 0, 0.4, "60/40 Stock/Bond", rebal_limit)
-  port_8020 <- create_portfolio_data(df, start_date, end_date, 0, 0.8, 0, 0.2, "80/20 Stock/Bond", rebal_limit)
-  port_sp500 <- create_portfolio_data(df, start_date, end_date,0, 1, 0, 0, "S&P 500", rebal_limit)
+  port_perm <- create_portfolio_data(df, start_date, end_date, 0.25, 0.25, 0.25, 0.25, "Permanent Portfolio", "#984ea3", rebal_limit)
+  port_6040 <- create_portfolio_data(df, start_date, end_date, 0, 0.6, 0, 0.4, "60/40 Stock/Bond", "#4daf4a", rebal_limit)
+  port_8020 <- create_portfolio_data(df, start_date, end_date, 0, 0.8, 0, 0.2, "80/20 Stock/Bond", "#377eb8", rebal_limit)
+  port_sp500 <- create_portfolio_data(df, start_date, end_date,0, 1, 0, 0, "S&P 500", "#e41a1c", rebal_limit)
 
   
   all_ports <- port_perm %>% bind_rows(port_6040, port_8020, port_sp500)
@@ -111,6 +112,11 @@ plot_perf <- function(df, start_date, end_date, rebal_limit, rebal_period){
     filter(date == max(to_plot$date)) %>%
     arrange(-port) %>%
     pull(label)
+  
+  color_order <- to_plot %>%
+    filter(date == max(to_plot$date)) %>%
+    arrange(-port) %>%
+    pull(color)
   
   to_plot$label <- factor(to_plot$label, levels = legend_order)
   
@@ -126,7 +132,7 @@ plot_perf <- function(df, start_date, end_date, rebal_limit, rebal_period){
   
   plot <- ggplot(to_plot, aes(x=date, y=port, col = label)) +
     geom_line() +
-    scale_color_discrete() +
+    scale_color_manual(values = color_order) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
     theme(legend.title = element_blank(),
@@ -198,7 +204,7 @@ plot_perf <- function(df, start_date, end_date, rebal_limit, rebal_period){
     
     plot <- ggplot(to_plot, aes(x=date, y=port, col = label)) +
       geom_line() +
-      scale_color_discrete() +
+      scale_color_manual(values = color_order) +
       scale_y_continuous(label = dollar) +
       scale_x_date(limits = c(as.Date("2019-12-31"), as.Date("2020-04-06"))) + 
       of_dollars_and_data_theme +
@@ -214,26 +220,42 @@ plot_perf <- function(df, start_date, end_date, rebal_limit, rebal_period){
     # Save the plot
     ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   }
-  
-  # Do Drawdowns as well
+  # Do Drawdowns for monthly data only
   dd_6040 <- drawdown_path(select(port_6040, date, port)) %>%
-                mutate(label = unique(port_6040$label))
+                mutate(label = unique(port_6040$label),
+                       color = unique(port_6040$color))
   dd_sp500 <- drawdown_path(select(port_sp500, date, port)) %>%
-    mutate(label = unique(port_sp500$label))
+    mutate(label = unique(port_sp500$label),
+           color = unique(port_sp500$color))
   dd_perm <- drawdown_path(select(port_perm, date, port)) %>%
-    mutate(label = unique(port_perm$label))
+    mutate(label = unique(port_perm$label),
+           color = unique(port_perm$color))
+  
+  max_dd_6040 <- min(dd_6040$pct)
+  max_dd_sp500 <- min(dd_sp500$pct)
+  max_dd_perm <- min(dd_perm$pct)
   
   to_plot <- dd_sp500 %>% bind_rows(dd_6040, dd_perm)
+  
+  legend_order <- to_plot %>%
+    filter(date == max(to_plot$date)) %>%
+    arrange(-pct) %>%
+    pull(label)
+  
+  to_plot$label <- factor(to_plot$label, levels = legend_order)
   
   file_path <- paste0(out_path, "/dd_port_", start_date_string, "_", end_date_string, ".jpeg")
   source_string <- str_wrap(paste0("Source:  ", source_name," (OfDollarsAndData.com)"),
                             width = 85)
   note_string <- str_wrap(paste0("Note: Returns include dividends, but not adjusted for inflation.  ",
-                                 "Portfolios are rebalanced every ", rebal_limit, " ", rebal_period, "."),
+                                 "Portfolios are rebalanced every ", rebal_limit, " ", rebal_period, ".  ",
+                                 "The maximum drawdown was ", round(100*max_dd_sp500, 0), "% for the S&P 500, ",
+                                 round(100*max_dd_6040, 0), "% for the 60/40 Portfolio, and ",
+                                 round(100*max_dd_perm, 0), "% for the Permanent Portfolio over the time period shown."),
                           width = 85)
   
   plot <- ggplot(to_plot, aes(x=date, y=pct, fill = label)) +
-    geom_area(position = "identity", alpha = 0.4) +
+    geom_area(position = "identity", alpha = 0.3) +
     scale_y_continuous(label = percent_format(accuracy = 1)) +
     of_dollars_and_data_theme +
     theme(legend.title = element_blank(),
