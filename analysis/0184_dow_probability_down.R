@@ -83,11 +83,15 @@ plot_all_by_date <- function(start_date){
   to_plot <- df
 
   median_max_loss <- quantile(to_plot$max_loss, probs = 0.5)
+  pct25_max_loss <- quantile(to_plot$max_loss, probs = 0.25)
+  pct75_max_loss <- quantile(to_plot$max_loss, probs = 0.75)
   
   file_path <- paste0(out_path, "/dow_max_loss_", start_date_string, ".jpeg")
   source_string <- "Source:  Bloomberg (OfDollarsAndData.com)"
   note_string <- str_wrap(paste0("Note:  The median maximum loss over this time period is ",
-                                 round(100*median_max_loss, 1), "%."),
+                                 round(100*median_max_loss, 1), "%, while the 75th percentile maximum loss is ",
+                                 round(100*pct25_max_loss, 1),"%, and the 25th percentile maximum loss is ",
+                                 round(100*pct75_max_loss, 1), "%."),
                           width = 85)
   
   min_date <- min(to_plot$date)
