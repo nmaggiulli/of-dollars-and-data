@@ -21,8 +21,10 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+# Bring in Dow and filter to local bottom on 3/23/2020
 raw <- read_excel(paste0(importdir, "0172_daily_dow/Dow daily 2020.xlsx"), 
-                  col_names = c("date", "index_dow"))
+                  col_names = c("date", "index_dow")) %>%
+          filter(date <= "2020-03-23")
 
 first_year <- min(year(raw$date))
 
@@ -88,9 +90,9 @@ plot_all_by_date <- function(start_date){
   
   file_path <- paste0(out_path, "/dow_max_loss_", start_date_string, ".jpeg")
   source_string <- "Source:  Bloomberg (OfDollarsAndData.com)"
-  note_string <- str_wrap(paste0("Note:  The median maximum loss over this time period is ",
-                                 round(100*median_max_loss, 1), "%, while the 75th percentile maximum loss is ",
-                                 round(100*pct25_max_loss, 1),"%, and the 25th percentile maximum loss is ",
+  note_string <- str_wrap(paste0("Note:  The median maximum future loss over this time period is ",
+                                 round(100*median_max_loss, 1), "%, while the 75th percentile maximum future loss is ",
+                                 round(100*pct25_max_loss, 1),"%, and the 25th percentile maximum future loss is ",
                                  round(100*pct75_max_loss, 1), "%."),
                           width = 85)
   
@@ -105,7 +107,7 @@ plot_all_by_date <- function(start_date){
                    format.Date(min_date, "%m/%d/%Y"),
                    "-",
                    format.Date(max_date, "%m/%d/%Y"))) +
-    labs(x="Date", y="Maximum Loss",
+    labs(x="Date", y="Maximum Future Loss",
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
