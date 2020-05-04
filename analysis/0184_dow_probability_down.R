@@ -110,6 +110,42 @@ plot_all_by_date <- function(start_date){
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  # Find probability of being down X% in the future
+  probs <- seq(-0.05, -0.5, -0.05)
+  
+  
+  for(p in probs){
+    tmp_p <- to_plot %>%
+                mutate(p_down = ifelse(max_loss < p, 1, 0)) %>%
+                summarize(mean_p_down = mean(p_down)) %>%
+                mutate(p_down = -1*p) %>%
+                select(p_down, mean_p_down)
+    
+    if(p == max(probs)){
+      final_probs <- tmp_p
+    } else{
+      final_probs <- bind_rows(final_probs, tmp_p)
+    }
+  }
+  
+  file_path <- paste0(out_path, "/dow_p_down_", start_date_string, ".jpeg")
+  source_string <- "Source:  Bloomberg (OfDollarsAndData.com)"
+  
+  plot <- ggplot(final_probs, aes(x=p_down, y=mean_p_down)) +
+    geom_line(col = "black") +
+    scale_y_continuous(label = percent_format(accuracy = 1)) +
+    scale_x_continuous(label = percent_format(accuracy = 1)) +
+    of_dollars_and_data_theme +
+    ggtitle(paste0("Dow Probability of Being Down in Future\n",
+                   format.Date(min_date, "%m/%d/%Y"),
+                   "-",
+                   format.Date(max_date, "%m/%d/%Y"))) +
+    labs(x="Percentage Decline", y="Probability of Being Down",
+         caption = paste0(source_string))
+  
+  # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
 plot_all_by_date("1915-01-05")
