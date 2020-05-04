@@ -116,7 +116,6 @@ plot_all_by_date <- function(start_date){
   # Find probability of being down X% in the future
   probs <- seq(-0.05, -0.5, -0.05)
   
-  
   for(p in probs){
     tmp_p <- to_plot %>%
                 mutate(p_down = ifelse(max_loss < p, 1, 0)) %>%
@@ -131,7 +130,7 @@ plot_all_by_date <- function(start_date){
     }
   }
   
-  file_path <- paste0(out_path, "/dow_p_down_", start_date_string, ".jpeg")
+  file_path <- paste0(out_path, "/dow_prob_down_", start_date_string, ".jpeg")
   source_string <- "Source:  Bloomberg (OfDollarsAndData.com)"
   
   plot <- ggplot(final_probs, aes(x=p_down, y=mean_p_down)) +
@@ -143,7 +142,7 @@ plot_all_by_date <- function(start_date){
                    format.Date(min_date, "%m/%d/%Y"),
                    "-",
                    format.Date(max_date, "%m/%d/%Y"))) +
-    labs(x="Percentage Decline", y="Probability of Being Down",
+    labs(x="Future Percentage Decline", y="Probability",
          caption = paste0(source_string))
   
   # Save the plot
