@@ -28,13 +28,18 @@ for (x in year_list){
   # https://www.federalreserve.gov/econresdata/scf/files/bulletin.macro.txt
   # 
   # networth = total networth (asset - debt)
-  # asset = value of all assets
+  # asset = value of all assets (fin + nfin)
   # debt = value of all debt // DEBT=MRTHEL+RESDBT+OTHLOC+CCBAL+INSTALL+ODEBT
   # liq = all types of transactions accounts (liquid assets)
   # homeeq = value of home equity
   # reteq = retirement equity
   # hdebt = dummy, 1 if has debt, 0 if no debt
-  # fin = total finanical assets
+  # fin = total finanical assets (LIQ+CDS+NMMF+STOCKS+BOND+RETQLIQ+SAVBND+CASHLI+OTHMA+OTHFIN)
+  # nfin = total non-financial assets (VEHIC+HOUSES+ORESRE+NNRESRE+BUS+OTHNFIN)
+  # vehic = value of all vehicles
+  # bus = business value
+  # ORESRE = other residential real estate
+  # OTHNFIN = other non-financial assets (jewelry)
   # mrthel = mortgage debt
   # resdbt = other residential debt
   # ccbal = credit card balance
@@ -47,7 +52,7 @@ for (x in year_list){
   # kids = number of kids
   
   vars_to_keep <- c('y1', 'yy1', 'networth', 'debt', 'asset', 'liq', 'reteq',
-                    'homeeq', 'hdebt', 'fin', 'mrthel', 'resdbt', 'ccbal', 
+                    'homeeq', 'hdebt', 'fin', 'nfin', 'vehic', 'bus', 'oresre', 'othnfin', 'mrthel', 'resdbt', 'ccbal', 
                     'income', 'wageinc', 'intdivinc', 'bussefarminc', 'equitinc', 'ssretinc',
                     'agecl', 'hhsex', 'race', 'edcl', 'married', 'kids', 'wgt')
   
