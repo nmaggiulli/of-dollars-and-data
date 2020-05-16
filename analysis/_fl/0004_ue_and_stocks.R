@@ -86,27 +86,31 @@ for(j in 1:2){
     dot_color <- "green"
   }
   
-  file_path <- paste0(out_path, "/ue_and_", peak_bottom_filename, ".jpeg")
-  source_string <- paste0("Source:  FRED (OfDollarsAndData.com)")
-  note_string <- str_wrap(paste0("Note:  The unemployment rate represents the number of unemployed as a percentage of the labor force.  ",
-                                 "The data has been seasonally adjusted.  ",
-                                 peak_bottom_note),
-                          width = 75)
-  
-  to_plot <- df
-  
-  plot <- ggplot(to_plot, aes(x=date, y=ue_rate)) +
-    geom_line() +
-    geom_point(data=filtered_df, aes(x=date, y=ue_rate), color = dot_color, alpha = 0.7) +
-    scale_y_continuous(label = percent_format(accuracy = 1)) +
-    of_dollars_and_data_theme +
-    theme(legend.position = "bottom",
-          legend.title = element_blank()) +
-    ggtitle(paste0("U.S. Unemployment and\nAll ", title_string, " ", 100*limit, "%")) +
-    labs(x = "Date", y = "Unemployment Rate",
-         caption = paste0(source_string, "\n", note_string))
-  
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm")  
+  if(j == 1){
+    file_path <- paste0(out_path, "/ue_peaks_bottoms.jpeg")
+    source_string <- paste0("Source:  FRED (OfDollarsAndData.com)")
+    note_string <- str_wrap(paste0("Note:  The unemployment rate represents the number of unemployed as a percentage of the labor force.  ",
+                                   "The data has been seasonally adjusted.  ",
+                                   peak_bottom_note),
+                            width = 75)
+    
+    to_plot <- df
+    filtered_bottom <- df %>% filter(ue_bottom == 1)
+    
+    plot <- ggplot(to_plot, aes(x=date, y=ue_rate)) +
+      geom_line() +
+      geom_point(data=filtered_df, aes(x=date, y=ue_rate), color = dot_color, alpha = 0.7) +
+      geom_point(data=filtered_bottom, aes(x=date, y=ue_rate), color = "blue", alpha = 0.7) +
+      scale_y_continuous(label = percent_format(accuracy = 1)) +
+      of_dollars_and_data_theme +
+      theme(legend.position = "bottom",
+            legend.title = element_blank()) +
+      ggtitle(paste0("U.S. Unemployment and\nAll Unemployement Peaks and Bottoms")) +
+      labs(x = "Date", y = "Unemployment Rate",
+           caption = paste0(source_string, "\n", note_string))
+    
+    ggsave(file_path, plot, width = 15, height = 12, units = "cm")  
+  }
   
   file_path <- paste0(out_path, "/sp500_and_", peak_bottom_filename, ".jpeg")
   source_string <- str_wrap(paste0("Source:  FRED, http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"),
