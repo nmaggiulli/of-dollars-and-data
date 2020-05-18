@@ -27,11 +27,14 @@ ue <- read.csv(paste0(importdir, folder_name, "/UNRATE_FRED.csv"),
                    TRUE~ ue_rate/100)
           )
 
+min_date <- min(ue$date)
+
 shiller <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
   rename(index = price_plus_div) %>%
+  filter(date >= min_date) %>%
   select(date, index) 
 
-first_index <- shiller[1, "index"]
+first_index <- pull(shiller[1, "index"])
 
 shiller <- shiller %>%
               mutate(index = index/first_index)
@@ -83,7 +86,7 @@ for(j in 1:2){
     peak_bottom_note <- paste0("There have been ", sum(df$ue_peak, na.rm = TRUE), " times where unemployment bottomed below ", 100*limit, "% over the time period shown.")
     title_string <- "Unemployment Bottoms <"
     filtered_df <- df %>% filter(ue_bottom == 1)
-    dot_color <- "green"
+    dot_color <- "blue"
   }
   
   if(j == 1){
@@ -105,7 +108,7 @@ for(j in 1:2){
       of_dollars_and_data_theme +
       theme(legend.position = "bottom",
             legend.title = element_blank()) +
-      ggtitle(paste0("U.S. Unemployment and\nAll Unemployement Peaks and Bottoms")) +
+      ggtitle(paste0("U.S. Unemployment Peaks and Bottoms")) +
       labs(x = "Date", y = "Unemployment Rate",
            caption = paste0(source_string, "\n", note_string))
     
@@ -234,7 +237,7 @@ run_fwd_rets <- function(n_months_fwd, peak_bottom){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-ret_years <- c(1, 5, 10)
+ret_years <- c(1, 3, 5)
 
 for(r in ret_years){
   run_fwd_rets(r*12, "peak")
