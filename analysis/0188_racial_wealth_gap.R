@@ -18,7 +18,7 @@ library(Hmisc)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "0188_net_worth_by_race"
+folder_name <- "0188_racial_wealth_gap"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
