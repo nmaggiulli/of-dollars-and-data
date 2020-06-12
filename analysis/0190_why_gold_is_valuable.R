@@ -32,25 +32,32 @@ raw <- read.csv(paste0(importdir, "0190_ycharts_gold_spx/SPX_IGPUSD_data.csv"),
          ret_sp500 = index_sp500/lag(index_sp500, 1) - 1) %>%
   filter(!is.na(ret_sp500),!is.na(ret_gold)) %>%
   mutate(up_down_group = case_when(
-    ret_gold > 0 & ret_sp500 > 0 ~ "Both Up",
+    ret_gold >= 0 & ret_sp500 >= 0 ~ "Both Up",
     ret_gold < 0 & ret_sp500 > 0 ~ "Stocks Up",
     ret_gold > 0 & ret_sp500 < 0 ~ "Gold Up",
-    ret_gold < 0 & ret_sp500 < 0 ~ "Both Down",
-    TRUE ~ "Error"
-  ))
+    ret_gold <= 0 & ret_sp500 <= 0 ~ "Both Down",
+    TRUE ~ "Error")
+  )
 
-raw$up_down_group <- factor(raw$up_down_group, levels = c("Both Down", "Gold Up", "Stocks Up", "Both Up"))
+raw$up_down_group <- factor(raw$up_down_group, levels = c("Both Up", "Stocks Up", "Gold Up", "Both Down"))
 
 to_plot <- raw
 
-plot <- ggplot(to_plot, aes(x=date, y=ret, fill = in_out_group)) + 
+file_path <- paste0(out_path, "/gold_perf_by_up_down_status.jpeg")
+
+source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
+note_string <-  str_wrap(paste0("Note:  Does not include dividends and is not adjusted for inflation.")
+                         , width = 85)
+
+plot <- ggplot(to_plot, aes(x=date, y=ret_gold, fill = up_down_group)) + 
   geom_bar(stat="identity") +
-  facet_rep_grid(in_out_group ~ ., repeat.tick.labels = 'bottom') +
+  facet_rep_grid(up_down_group ~ ., repeat.tick.labels = 'bottom') +
   scale_fill_manual(values = c("green", "blue", "yellow", "red"), guide = FALSE) +
-  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-max_size, max_size)) +
-  rwm_theme +
-  ggtitle(paste0(perf_title, " Performance Based on When\nStocks + Gold Are In vs. Out")) +
-  labs(x = "Date" , y = "1M Return")  
+  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-.15, .15)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Gold Performance Based on When\nStocks + Gold Are Up vs. Down")) +
+  labs(x = "Date" , y = "Daily Return",
+       caption = paste0(source_string, "\n", note_string))  
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
