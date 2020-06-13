@@ -23,18 +23,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 set.seed(12345)
 n_sims <- 1000
 
-raw <- read.csv(paste0(importdir, "0190_ycharts_russell_3000_ind/timeseries_6-13-2020.csv"), skip = 5) %>%
-  rename(symbol = Symbol,
-         name = Name) %>%
-  select(-Metric) %>%
-  gather(-symbol, -name, key=key, value=value) %>%
-  mutate(year = gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\1", key, perl = TRUE),
-         month =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\2", key, perl = TRUE),
-         day =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\3", key, perl = TRUE),
-         date = as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d")) %>%
-  arrange(symbol, date) %>%
-  select(date, symbol, value) %>%
-  filter(!is.na(value))
+raw <- readRDS(paste0(localdir, "0190_russell_3000_stocks_ycharts.Rds"))
 
 stocks_full_data <- raw %>%
                 group_by(symbol) %>%
@@ -97,20 +86,27 @@ for(n_stocks in n_stocks_list){
   }
 }
 
+stock_sims[1001, "n_stock"] <- 2
+stock_sims[1001, "simulation"] <- 1001
+stock_sims[1001, "sim_stocks"] <- "733;1383"
+
+
 for(n_stocks in n_stocks_list){
   print(paste0("new number of stocks = ", n_stocks))
-  for(i in 1:n_sims){
-    print(i)
+  for(i in 1:nrow(stock_sims)){
+    if(i %% 50 == 0){
+      print(i)
+    }
     
     sim_stocks <- as.numeric(unlist(strsplit(filter(stock_sims, n_stock == n_stocks & simulation == i) %>% select(sim_stocks) %>% as.character(), split = ";")))
     
     rets <- df %>%
               filter(stock_num %in% sim_stocks) %>%
               group_by(date) %>%
-              summarize(port = sum(value)/n_stocks) %>%
-              ungroup() %>%
-              mutate(sim = i)
-          
+              summarize(port = sum(value)/n_stocks,
+                        sim = i) %>%
+              ungroup()
+    
     if(i == 1){
       final_results <- rets
     } else{
@@ -144,6 +140,9 @@ final_date <- to_plot %>%
   filter(date == max(to_plot$date)) %>%
   rename(simulation = sim) %>%
   left_join(stock_sims)
+
+pct_50 <- quantile(final_date$net_ret, probs = 0.5)
+pct_75 <- quantile(final_date$net_ret, probs = 0.75)
 
 file_path <- paste0(out_path, "/outperf_dist_final.jpeg")
 source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
