@@ -18,7 +18,7 @@ library(Hmisc)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "0190_why_is_gold_valuable"
+folder_name <- "xxxx_why_is_gold_valuable"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
