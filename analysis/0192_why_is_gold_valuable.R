@@ -131,4 +131,31 @@ plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+# Get gold returns by decade (average by year)
+to_plot <- df %>%
+            filter(month(date) == 1) %>%
+            mutate(ret_gld_real = index_gld_real/lag(index_gld_real, 1) - 1,
+                   ret_sp500_real = index_sp500/lag(index_sp500, 1) - 1,
+                   decade =  paste0(as.character(year(floor_date(date, years(10)))))) %>%
+            group_by(decade) %>%
+            summarize(mean_ret_gld_real = mean(ret_gld_real, na.rm = TRUE),
+                      mean_ret_sp500_real = mean(ret_sp500_real, na.rm= TRUE)) %>%
+            ungroup() %>%
+            filter(decade != 2020)
+
+file_path <- paste0(out_path, "/gld_real_return_by_decade_ex2020.jpeg")
+source_string <- paste0("Source:  FRED, Stockcharts (OfDollarsAndData.com)")
+note_string <- str_wrap(paste0("Note: 1970 decade data starts in 1975."))
+
+plot <- ggplot(to_plot, aes(x=decade, y=mean_ret_gld_real)) +
+  geom_bar(stat = "identity", fill = "gold") +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Real Gold Average Return by Decade")) +
+  labs(x="Decade", y="Average Annual Return",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 # ############################  End  ################################## #
