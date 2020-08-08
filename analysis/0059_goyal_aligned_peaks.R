@@ -44,8 +44,8 @@ plot_aligned_crash <- function(n_years_after_peak){
         df[i, "stock_index"] <- 100
         df[i, "bond_index"]  <- 100
       } else {
-        df[i, "stock_index"] <- df[(i-1), "stock_index"] * (1 + (df[(i-1), "stock"]))
-        df[i, "bond_index"] <- df[(i-1), "bond_index"] * (1 + (df[(i-1), "lt_bond"]))
+        df[i, "stock_index"] <- df[(i-1), "stock_index"] * (1 + (df[(i-1), "stock_real"]))
+        df[i, "bond_index"] <- df[(i-1), "bond_index"] * (1 + (df[(i-1), "lt_bond_real"]))
       }
     }
     
@@ -162,10 +162,10 @@ create_gif(out_path,
 decade <- df_full %>%
             filter(date > "1929-12-31") %>%
             mutate(decade = paste0(as.character(year(floor_date(date, years(10))))),
-                   stock = 1 + stock) %>%
+                   stock_real = 1 + stock_real) %>%
             group_by(decade) %>%
-            summarize(stock = (prod(stock)^(1/10) - 1)) %>%
-            select(decade, stock)
+            summarize(stock_real = (prod(stock_real)^(1/10) - 1)) %>%
+            select(decade, stock_real)
 
 # Set the file_path based on the function input 
 file_path <- paste0(exportdir, "0059_goyal_aligned_peaks/stock_returns_by_decade.jpeg")
