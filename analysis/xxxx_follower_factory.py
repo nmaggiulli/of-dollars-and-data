@@ -29,10 +29,10 @@ import matplotlib.pyplot as plt
 
 USER_TO_ANALYZE = 'dollarsanddata'
 
-OAUTH_TOKEN = 'x1'
-OAUTH_SECRET = 'x2'
-CONSUMER_KEY = 'y1'
-CONSUMER_SECRET = 'y2'
+OAUTH_TOKEN = '814964403284115457-JqQlRFXsLZqfzKu1CsFJNlZhhL6A0iz'
+OAUTH_SECRET = 'zSfIWIX7K762Mg4OL57NNn3dnv8X4PoWFbuyfXZ9YPoSK'
+CONSUMER_KEY = 'TMRoCTZ2Eis1O7ELovhs8ni9X'
+CONSUMER_SECRET = 'trdbfmbVNG5BOiJyvX4pUDmtccN0KV5Y5AWNcz2zKUbzhwus27'
 
 # Directory to write images too
 OUT_DIR = '/Volumes/GoogleDrive/My Drive/of_dollars_and_data/export/xxxx_follower_factory/'
@@ -114,11 +114,11 @@ days_since_2006 = [(x.year - 2006) * 365 + x.dayofyear for x in pd.to_datetime(f
 
 mpl_style_url = 'https://gist.githubusercontent.com/rhiever/d0a7332fe0beebfdc3d5/raw/1b807615235ff6f4c919b5b70b01a609619e1e9c/tableau10.mplstyle'
 with plt.style.context(mpl_style_url):
-    plt.figure(figsize=(9, 12))
-    plt.scatter(x=range(len(days_since_2006)), y=days_since_2006[::-1], s=2, alpha=0.5)
-    plt.yticks(range(0, 365 * (datetime.today().year + 1 - 2006), 365), range(2006, datetime.today().year + 1))
-    plt.xlabel('Follower count for @{}'.format(USER_TO_ANALYZE))
-    plt.ylabel('Date follower joined Twitter')
+    plt.figure(figsize=(12, 9))
+    plt.scatter(y=range(len(days_since_2006)), x=days_since_2006[::-1], s=2, alpha=0.5)
+    plt.xticks(range(0, 365 * (datetime.today().year + 1 - 2006), 365), range(2006, datetime.today().year + 1))
+    plt.ylabel('Follower count for @{}'.format(USER_TO_ANALYZE))
+    plt.xlabel('Date follower joined Twitter')
     plt.savefig(OUT_DIR + '{}-follower-factory.png'.format(USER_TO_ANALYZE))
 
 print('Follower Factory visualization saved to directory.')
