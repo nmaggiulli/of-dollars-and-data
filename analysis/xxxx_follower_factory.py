@@ -29,10 +29,14 @@ import matplotlib.pyplot as plt
 
 USER_TO_ANALYZE = 'dollarsanddata'
 
-OAUTH_TOKEN = '814964403284115457-JqQlRFXsLZqfzKu1CsFJNlZhhL6A0iz'
-OAUTH_SECRET = 'zSfIWIX7K762Mg4OL57NNn3dnv8X4PoWFbuyfXZ9YPoSK'
-CONSUMER_KEY = 'TMRoCTZ2Eis1O7ELovhs8ni9X'
-CONSUMER_SECRET = 'trdbfmbVNG5BOiJyvX4pUDmtccN0KV5Y5AWNcz2zKUbzhwus27'
+twitter_creds = pd.read_csv("/Volumes/GoogleDrive/My Drive/of_dollars_and_data/import/0000_credentials/twitter_creds.csv", dtype=str) 
+
+OAUTH_TOKEN = twitter_creds["access_token"].iloc[0]
+OAUTH_SECRET = twitter_creds["access_secret"].iloc[0]
+CONSUMER_KEY = twitter_creds["consumer_key"].iloc[0]
+CONSUMER_SECRET = twitter_creds["consumer_secret"].iloc[0]
+
+print(OAUTH_TOKEN)
 
 # Directory to write images too
 OUT_DIR = '/Volumes/GoogleDrive/My Drive/of_dollars_and_data/export/xxxx_follower_factory/'
