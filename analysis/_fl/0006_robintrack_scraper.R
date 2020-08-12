@@ -88,13 +88,15 @@ if(download_data == 1){
 
 corr_summary <- final_df %>%
                 left_join(top_200) %>%
+                mutate(lag_ret = lag(ret),
+                       lag_pop = lag(pop_diff))
+  
+to_plot <- corr_summary %>%
                 group_by(symbol, name, pop_rank) %>%
                 summarize(correlation = cor(pop_diff, ret)) %>%
                 ungroup() %>%
-                arrange(desc(correlation)) %>%
-                left_join(ycharts_comp)
-
-to_plot <- corr_summary
+                arrange(correlation) %>%
+                mutate(cor_rank = row_number())
 
 # Plot rank vs. corr
 file_path <- paste0(out_path, "/rank_vs_cor.jpeg")
@@ -115,10 +117,6 @@ plot <- ggplot(to_plot, aes(x = pop_rank, y = correlation)) +
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-
-to_plot <- corr_summary %>%
-            arrange(correlation) %>%
-            mutate(cor_rank = row_number())
 
 # Plot rank vs. corr
 file_path <- paste0(out_path, "/rank_vs_cor_ordered.jpeg")
@@ -161,17 +159,16 @@ plot <- ggplot(to_plot, aes(x = cor_rank, y = correlation)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Look at a sector summary
-by_sector <- corr_summary %>%
+by_sector <- to_plot %>%
                 drop_na() %>%
+                 left_join(ycharts_comp) %>%
                 group_by(sector) %>%
                 summarize(n_companies = n(),
                   mean_cor = mean(correlation)) %>%
                 ungroup()
 
 # Do a one-day lag correlation
-to_plot <- final_df %>%
-  left_join(top_200) %>%
-  mutate(lag_ret = lag(ret)) %>%
+to_plot <- corr_summary %>%
   drop_na() %>%
   group_by(symbol, name, pop_rank) %>%
   summarize(correlation = cor(pop_diff, lag_ret)) %>%
