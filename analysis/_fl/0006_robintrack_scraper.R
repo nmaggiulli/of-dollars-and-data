@@ -98,9 +98,9 @@ to_plot <- corr_summary
 
 # Plot rank vs. corr
 file_path <- paste0(out_path, "/rank_vs_cor.jpeg")
-source_string <- paste0("Source:  Robintrack, YCharts (OfDollarsAndData.com)")
+source_string <- paste0("Source:  Robintrack (OfDollarsAndData.com)")
 note_string <- str_wrap(paste0("Note: Only shows Robintrack data for top 200 stocks as of 08/11/2020.  ",
-                               "Correlation shown is between 1-day change in number of Robinhood users holding and the 1-day price return."),
+                               "Correlation shown is between 1-day change in number of Robinhood users holding and the 1-day price return starting as of 02/19/2020."),
                         width =85)
 
 # Plot the results
@@ -127,13 +127,16 @@ text_labels <- to_plot %>%
                 filter(symbol %in% c("KODK", "NKLA", "MRNA", "HTZ", "AMZN", "TSLA", "AAPL", "GOOG", "SBUX")) %>%
                 mutate(label = ifelse(name == "Alphabet Class C", "Google", name),
                        hjust = case_when(
-                         symbol %in% c("KODK", "NKLA", "SBUX", "HTZ", "TSLA")  ~ 1.5,
+                         symbol %in% c("KODK", "NKLA", "HTZ", "TSLA")  ~ 1.5,
+                         symbol %in% c("SBUX") ~ 1.0,
                          symbol %in% c("MRNA", "GOOG") ~ -0.4,
                          TRUE ~ 0
                        ),
                        vjust = case_when(
                          symbol %in% c("AMZN") ~ -2.5,
                          symbol %in% c("AAPL") ~ -1.5,
+                         symbol %in% c("SBUX") ~ -0.9,
+                         symbol %in% c("GOOG") ~ 0.4,
                          TRUE ~ 0
                        ))
                 
@@ -180,7 +183,7 @@ to_plot <- final_df %>%
 file_path <- paste0(out_path, "/rank_vs_lagged_cor.jpeg")
 source_string <- paste0("Source:  Robintrack, YCharts (OfDollarsAndData.com)")
 note_string <- str_wrap(paste0("Note: Only shows Robintrack data for top 200 stocks as of 08/11/2020.  ",
-                               "Correlation shown is between 1-day change in number of Robinhood users holding and the prior day's price return."),
+                               "Correlation shown is between 1-day change in number of Robinhood users holding and the prior day's price return starting as of 02/19/2020."),
                         width =85)
 
 # Plot the results
