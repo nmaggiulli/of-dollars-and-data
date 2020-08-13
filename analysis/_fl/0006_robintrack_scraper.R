@@ -100,7 +100,7 @@ to_plot <- corr_summary %>%
 
 # Plot rank vs. corr
 file_path <- paste0(out_path, "/rank_vs_cor.jpeg")
-source_string <- paste0("Source:  Robintrack (OfDollarsAndData.com)")
+source_string <- paste0("Source:  Robintrack, YahooFinance (OfDollarsAndData.com)")
 note_string <- str_wrap(paste0("Note: Only shows Robintrack data for top 200 stocks as of 08/11/2020.  ",
                                "Correlation shown is between 1-day change in number of Robinhood users holding and the 1-day price return starting as of 02/19/2020."),
                         width =85)
@@ -173,12 +173,10 @@ to_plot <- corr_summary %>%
   group_by(symbol, name, pop_rank) %>%
   summarize(correlation = cor(pop_diff, lag_ret)) %>%
   ungroup() %>%
-  arrange(desc(correlation)) %>%
-  left_join(ycharts_comp)
+  arrange(desc(correlation))
 
 # Plot rank vs. lagged_corr
-file_path <- paste0(out_path, "/rank_vs_lagged_cor.jpeg")
-source_string <- paste0("Source:  Robintrack, YCharts (OfDollarsAndData.com)")
+file_path <- paste0(out_path, "/rank_vs_cor_lag_ret.jpeg")
 note_string <- str_wrap(paste0("Note: Only shows Robintrack data for top 200 stocks as of 08/11/2020.  ",
                                "Correlation shown is between 1-day change in number of Robinhood users holding and the prior day's price return starting as of 02/19/2020."),
                         width =85)
@@ -189,7 +187,34 @@ plot <- ggplot(to_plot, aes(x = pop_rank, y = correlation)) +
   geom_smooth(method = "lm", se = FALSE) +
   scale_y_continuous(limits = c(-1, 1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Robinhood Popularity Rank vs.\nPrior-Day Correlation")) +
+  ggtitle(paste0("Robinhood Popularity Rank vs.\nCorrelation with Prior-Day's Return")) +
+  labs(x = "Popularity Rank" , y = "Correlation",
+       caption = paste0("\n", source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Do a one-day lag correlation
+to_plot <- corr_summary %>%
+  drop_na() %>%
+  group_by(symbol, name, pop_rank) %>%
+  summarize(correlation = cor(lag_pop, ret)) %>%
+  ungroup() %>%
+  arrange(desc(correlation))
+
+# Plot rank vs. lagged_corr
+file_path <- paste0(out_path, "/rank_vs_cor_lag_pop.jpeg")
+note_string <- str_wrap(paste0("Note: Only shows Robintrack data for top 200 stocks as of 08/11/2020.  ",
+                               "Correlation shown is between 1-day change in number of Robinhood users holding from prior day and the current day's price return starting as of 02/19/2020."),
+                        width =85)
+
+# Plot the results
+plot <- ggplot(to_plot, aes(x = pop_rank, y = correlation)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_y_continuous(limits = c(-1, 1)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Robinhood Popularity Rank vs.\nCorrelation with Prior-Day's Popularity Change")) +
   labs(x = "Popularity Rank" , y = "Correlation",
        caption = paste0("\n", source_string, "\n", note_string))
 
