@@ -152,7 +152,7 @@ plot <- ggplot(to_plot, aes(x = cor_rank, y = correlation)) +
   scale_y_continuous(limits = c(-1, 1)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Least to Most Correlated Stocks\nBased on Robinhood Activity")) +
-  labs(x = "Correlation Rank" , y = "Correlation",
+  labs(x = "Rank" , y = "Correlation",
        caption = paste0("\n", source_string, "\n", note_string))
 
 # Save the plot
