@@ -14,13 +14,13 @@ library(zoo)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "0201_spx_elections"
+folder_name <- "xxxx_spx_elections"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-election_years <- seq(1952, 2016, 4)
+election_years <- seq(1952, 2020, 4)
 
 election_years_df <- data.frame(yr = election_years,
                                 election_year = rep(1, length(election_years)))
@@ -98,8 +98,33 @@ plot <- ggplot(to_plot, aes(x=day, y=mean_sd, col = election_year)) +
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
-  ggtitle(paste0("S&P 500 30-Day Standard Deviation\nin Election and Non-Election Years")) +
+  ggtitle(paste0("S&P 500 30-Day Average Standard Deviation\nin Election and Non-Election Years")) +
   labs(x = "Day" , y = "Standard Deviation",
+       caption = paste0("\n", source_string))  
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+
+file_path <- paste0(out_path, "/spx_growth_dollar_election_year.jpeg")
+source_string <- "Source:  YCharts" 
+
+plot <- ggplot(to_plot, aes(x=day, y=mean_dollar_growth, col = election_year)) + 
+  geom_line() +
+  geom_vline(xintercept = election_day, linetype = "dashed") +
+  geom_text(mapping = aes(x = election_day,
+                          y = max(to_plot$mean_dollar_growth),
+                          label = "Election Day"),
+            col = "blue",
+            size = 2.5,
+            show.legend = FALSE) +
+  scale_y_continuous(label = dollar) +
+  scale_color_manual(values = c("blue", "grey")) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("S&P 500 Growth of $1\nin Election and Non-Election Years")) +
+  labs(x = "Day" , y = "Growth of $1",
        caption = paste0("\n", source_string))  
 
 # Save the plot
