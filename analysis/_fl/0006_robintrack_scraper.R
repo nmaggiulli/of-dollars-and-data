@@ -98,6 +98,12 @@ to_plot <- corr_summary %>%
                 arrange(correlation) %>%
                 mutate(cor_rank = row_number())
 
+export_to_excel(to_plot, 
+                outfile = paste0(out_path, "/robintrack_correlations.xlsx"),
+                sheet = "raw_corr",
+                new_file = 1,
+                fancy_formatting = 0)
+
 # Plot rank vs. corr
 file_path <- paste0(out_path, "/rank_vs_cor.jpeg")
 source_string <- paste0("Source:  Robintrack, YahooFinance (OfDollarsAndData.com)")
