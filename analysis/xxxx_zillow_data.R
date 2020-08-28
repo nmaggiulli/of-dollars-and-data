@@ -22,7 +22,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 start_date <- "2020-01-01"
 
-rents <- read.csv(paste0(importdir, "/0202_zillow_data/Metro_ZORI_AllHomesPlusMultifamily_SSA.csv")) %>%
+rents <- read.csv(paste0(importdir, "/xxxx_zillow_data/Metro_ZORI_AllHomesPlusMultifamily_SSA.csv")) %>%
           clean_cols() %>%
           rename(region_id = regionid,
                  region = regionname) %>%
@@ -36,7 +36,7 @@ rents <- read.csv(paste0(importdir, "/0202_zillow_data/Metro_ZORI_AllHomesPlusMu
           filter(date >= start_date)
 
 import_zillow <- function(filename){
-  tmp <- read.csv(paste0(importdir, "/0202_zillow_data/", filename, ".csv")) %>%
+  tmp <- read.csv(paste0(importdir, "/xxxx_zillow_data/", filename, ".csv")) %>%
     clean_cols() %>%
     rename(region_id = regionid,
            region = regionname) %>%
@@ -53,8 +53,8 @@ import_zillow <- function(filename){
 }
 
 msp <- import_zillow("Metro_median_sale_price_uc_SFR_sm_sa_month")
-npl <- import_zillow("Metro_new_pending_uc_sfrcondo_smoothed_monthly")
 fsi <- import_zillow("Metro_invt_fs_uc_sfr_smoothed_month")
+spc <- import_zillow("Metro_perc_listings_price_cut_uc_sfr_smoothed_month")
 
 calc_pct <- function(df){
   first_df <- df %>%
@@ -73,7 +73,7 @@ calc_pct <- function(df){
 
 rents_pct <- calc_pct(rents)
 msp_pct <- calc_pct(msp)
-npl_pct <- calc_pct(npl)
 fsi_pct <- calc_pct(fsi)
+spc_pct <- calc_pct(spc)
 
 # ############################  End  ################################## #
