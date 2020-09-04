@@ -21,7 +21,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 download_data <- 0
-start_dt <- as.Date("2020-02-19")
+start_dt <- as.Date("2020-06-08")
 
 ycharts_comp <- read.csv(paste0(importdir, folder_name, "/ycharts_comp_table_8-12-2020.csv")) %>%
                 clean_cols() %>%
@@ -83,7 +83,8 @@ if(download_data == 1){
   }
   saveRDS(final_df, paste0(localdir, "0006_robintrack_data.Rds"))
 } else{
-  final_df <- readRDS(paste0(localdir, "0006_robintrack_data.Rds"))
+  final_df <- readRDS(paste0(localdir, "0006_robintrack_data.Rds")) %>%
+                filter(date >= start_dt)
 }
 
 corr_summary <- final_df %>%
