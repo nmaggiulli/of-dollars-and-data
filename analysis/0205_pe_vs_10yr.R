@@ -48,9 +48,17 @@ to_plot <- monthly_10yr %>%
 file_path <- paste0(out_path, "/equity_earnings_premium.jpeg")
 source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, FRED (OfDollarsAndData.com)")
 
+text_labels <- data.frame(date = c(as.Date("1993-01-01"), as.Date("1993-01-01")),
+                          equity_premium = c(0.05, -0.05),
+                          label = c("Stocks Are More Attractive",
+                                    "Stocks Are Less Attractive"))
+
 # Plot the results
 plot <- ggplot(to_plot, aes(x = date, y = equity_premium)) +
   geom_line() +
+  geom_text(data = text_labels, aes(x=date, y=equity_premium, label = label),
+            family = "my_font",
+            size = 3.2) +
   geom_hline(yintercept = 0, linetype = "dashed", col = "black") +
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-0.05, 0.05), breaks = seq(-0.05, 0.05, 0.01)) +
   of_dollars_and_data_theme +
@@ -67,10 +75,10 @@ source_string <- paste0("Source:  FRED (OfDollarsAndData.com)")
 # Plot the results
 plot <- ggplot(to_plot, aes(x = date, y = rate_10yr)) +
   geom_line() +
-  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 0.16), breaks = seq(0, 0.16, 0.02)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("10-Year Treasury Rate")) +
-  labs(x = "Date" , y = "Rate",
+  labs(x = "Date" , y = "Yield",
        caption = paste0("\n", source_string))
 
 # Save the plot
@@ -82,7 +90,7 @@ source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm (Of
 # Plot the results
 plot <- ggplot(to_plot, aes(x = date, y = earnings_yield)) +
   geom_line() +
-  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 0.16), breaks = seq(0, 0.16, 0.02)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("U.S. Stock Earnings Yield")) +
   labs(x = "Date" , y = "Earnings Yield",
