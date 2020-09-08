@@ -25,7 +25,7 @@ election_years <- seq(1952, 2020, 4)
 election_years_df <- data.frame(yr = election_years,
                                 election_year = rep(1, length(election_years)))
 
-spx <- read.csv(paste0(importdir, "0201_spx_elections/SPX_data.csv"),
+spx <- read.csv(paste0(importdir, "xxxx_spx_elections/SPX_data.csv"),
                 col.names = c("date","index_sp500")) %>%
   mutate(date = as.Date(date),
          yr = year(date),
@@ -64,7 +64,7 @@ df <- spx %>%
 
 to_plot <- df %>%
   group_by(election_year, day) %>%
-  summarize(mean_sd = mean(sd, na.rm = TRUE),
+  summarize(mean_sd = quantile(sd, na.rm = TRUE, prob = 0.5),
             mean_dollar_growth = mean(growth_of_dollar, na.rm = TRUE),
             n_years = n()) %>%
   ungroup() %>%
@@ -98,7 +98,7 @@ plot <- ggplot(to_plot, aes(x=day, y=mean_sd, col = election_year)) +
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
-  ggtitle(paste0("S&P 500 30-Day Average Standard Deviation\nin Election and Non-Election Years")) +
+  ggtitle(paste0("S&P 500 30-Day Median Standard Deviation\nin Election and Non-Election Years")) +
   labs(x = "Day" , y = "Standard Deviation",
        caption = paste0("\n", source_string))  
 
