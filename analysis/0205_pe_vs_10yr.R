@@ -40,10 +40,12 @@ sp500_pe <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
               mutate(earnings_yield = 1/cape) %>%
               select(date, earnings_yield)
 
-to_plot <- monthly_10yr %>%
+df <- monthly_10yr %>%
         left_join(sp500_pe) %>%
         mutate(equity_premium = earnings_yield - rate_10yr) %>%
         drop_na()
+
+to_plot <- df
 
 file_path <- paste0(out_path, "/equity_earnings_premium.jpeg")
 source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm, FRED (OfDollarsAndData.com)")
@@ -69,31 +71,24 @@ plot <- ggplot(to_plot, aes(x = date, y = equity_premium)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-file_path <- paste0(out_path, "/rate_10yr.jpeg")
-source_string <- paste0("Source:  FRED (OfDollarsAndData.com)")
+to_plot <- df %>%
+            select(date, rate_10yr, earnings_yield) %>%
+            rename(`10-Year Treasuries` = rate_10yr,
+                   `Earnings Yield` = earnings_yield) %>%
+            gather(-date, key=key, value=value)
+
+file_path <- paste0(out_path, "/rate_10yr_and_earnings_yield.jpeg")
 
 # Plot the results
-plot <- ggplot(to_plot, aes(x = date, y = rate_10yr)) +
+plot <- ggplot(to_plot, aes(x = date, y = value, col = key)) +
   geom_line() +
+  scale_color_manual(values = c("black", "blue")) +
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 0.16), breaks = seq(0, 0.16, 0.02)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("10-Year Treasury Rate")) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("10-Year Treasury Rate and\nU.S. Stock Earnings Yield")) +
   labs(x = "Date" , y = "Yield",
-       caption = paste0("\n", source_string))
-
-# Save the plot
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-
-file_path <- paste0(out_path, "/earnings_yield.jpeg")
-source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)")
-
-# Plot the results
-plot <- ggplot(to_plot, aes(x = date, y = earnings_yield)) +
-  geom_line() +
-  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 0.16), breaks = seq(0, 0.16, 0.02)) +
-  of_dollars_and_data_theme +
-  ggtitle(paste0("U.S. Stock Earnings Yield")) +
-  labs(x = "Date" , y = "Earnings Yield",
        caption = paste0("\n", source_string))
 
 # Save the plot
