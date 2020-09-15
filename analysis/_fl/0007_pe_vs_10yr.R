@@ -14,13 +14,13 @@ library(zoo)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "0205_pe_vs_10yr"
+folder_name <- "/_fl/0007_pe_vs_10yr"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-raw_fred <- read.csv(paste0(importdir, "/0205_fred_10yr/fred_DGS10.csv")) %>%
+raw_fred <- read.csv(paste0(importdir, "/_fl/0007_fred_10yr/fred_DGS10.csv")) %>%
               clean_cols() %>%
               mutate(date = as.Date(date),
                      rate_10yr = as.numeric(dgs10)/100,
