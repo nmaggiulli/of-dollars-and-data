@@ -21,15 +21,13 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 inc <- 100000
-initial_savings_rate <- 0.01
 withdrawal_pct <- 0.04
-inc_growths <- seq(0.02, 0.05, 0.01)
-annual_ret <- 0.05
+inc_growth <- 0.03
+annual_ret <- 0.04
 
-savings_rates <- seq(0.05, 0.4, 0.05)
+savings_rates <- seq(0.1, 0.6, 0.1)
 
 for(initial_savings_rate in savings_rates){
-  for(inc_growth in inc_growths){
       annual_savings <- inc*initial_savings_rate
       annual_expenditure <- inc*(1-initial_savings_rate)
       retirement_target <- annual_expenditure/withdrawal_pct
@@ -44,7 +42,7 @@ for(initial_savings_rate in savings_rates){
                        income = c(),
                        pct_total_retirement = c())
       
-      raise_saved_pcts <- seq(0.4, 0.95, 0.01)
+      raise_saved_pcts <- seq((initial_savings_rate + 0.25), 0.95, 0.01)
       
       tmp <- data.frame(
         annual_ret = rep(annual_ret, length(raise_saved_pcts)),
@@ -57,7 +55,7 @@ for(initial_savings_rate in savings_rates){
         print(r)
         counter <- 1
         retire_pct <- 0
-        while(retire_pct <= 1){
+        while(retire_pct < 1){
           if(counter == 1){
             df[counter, "year"] <- counter
             df[counter, "saving_amount"] <- annual_savings
@@ -85,20 +83,14 @@ for(initial_savings_rate in savings_rates){
       tmp <- tmp %>%
                 filter(better_than_baseline == 1) %>%
                 head(1) %>%
-                select(-better_than_baseline)
-      
-    if(inc_growth == inc_growths[1]){
-      tmp2 <- tmp
-    } else{
-      tmp2 <- tmp2 %>% bind_rows(tmp)
-    }
-  }
-  tmp2 <- tmp2 %>% mutate(savings_rate = initial_savings_rate)
+                select(-better_than_baseline) %>% 
+        mutate(savings_rate = initial_savings_rate)
   
   if(initial_savings_rate == savings_rates[1]){
-    final_results <- tmp2 
+    final_results <- tmp
   } else{
-    final_results <- final_results %>% bind_rows(tmp2)
+    final_results <- final_results %>% bind_rows(tmp) %>%
+                      select(savings_rate, raise_saved_pct, n_periods)
   }
 }
 
