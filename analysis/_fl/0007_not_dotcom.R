@@ -14,13 +14,13 @@ library(zoo)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "/_fl/0007_pe_vs_10yr"
+folder_name <- "/_fl/0007_not_dotcom"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-raw_fred <- read.csv(paste0(importdir, "/_fl/0007_fred_10yr/fred_DGS10.csv")) %>%
+raw_fred <- read.csv(paste0(importdir, "/_fl/0007_not_dotcom/fred_DGS10.csv")) %>%
               clean_cols() %>%
               mutate(date = as.Date(date),
                      rate_10yr = as.numeric(dgs10)/100,
@@ -28,6 +28,27 @@ raw_fred <- read.csv(paste0(importdir, "/_fl/0007_fred_10yr/fred_DGS10.csv")) %>
                      yr = year(date)) %>%
               drop_na()
 
+#Do nasdaq
+nq <- read.csv(paste0(importdir, "_fl/0007_not_dotcom/ycharts_IXIC_data.csv")) %>%
+  rename(index = `NASDAQ.Composite.Level`) %>%
+  mutate(date = as.Date(Period)) %>%
+  arrange(date) %>%
+  select(date, index) %>%
+  filter(date >= as.Date("1990-01-01"))
+
+# Dates of interest for NASDAQ
+bubble_high <- as.Date("2000-03-10")
+bubble_low <- as.Date("2002-10-09")
+
+highest_nq <- filter(nq, date == bubble_high) %>%
+  pull(index)
+
+highest_nq_mcap <- 6600
+
+nq <- nq %>%
+  mutate(mcap_billions = highest_nq_mcap*index/highest_nq)
+
+# 10 year
 monthly_10yr <- raw_fred %>%
                   group_by(yr, mt) %>%
                   summarize(rate_10yr = mean(rate_10yr)) %>%
