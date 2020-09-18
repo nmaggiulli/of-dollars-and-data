@@ -59,7 +59,7 @@ monthly_10yr <- raw_fred %>%
 sp500_pe <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
               drop_na() %>%
               mutate(earnings_yield = 1/cape) %>%
-              select(date, earnings_yield)
+              select(date, earnings_yield, cape)
 
 df <- monthly_10yr %>%
         left_join(sp500_pe) %>%
@@ -103,7 +103,7 @@ file_path <- paste0(out_path, "/rate_10yr_and_earnings_yield.jpeg")
 # Plot the results
 plot <- ggplot(to_plot, aes(x = date, y = value, col = key)) +
   geom_line() +
-  scale_color_manual(values = c("black", "blue")) +
+  scale_color_manual(values = c("blue", "black")) +
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 0.16), breaks = seq(0, 0.16, 0.02)) +
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
@@ -114,5 +114,78 @@ plot <- ggplot(to_plot, aes(x = date, y = value, col = key)) +
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+file_path <- paste0(out_path, "/cape.jpeg")
+
+to_plot <- df
+
+text_labels <- to_plot %>% tail(1)
+
+# Plot the results
+plot <- ggplot(to_plot, aes(x = date, y = cape)) +
+  geom_line(col = "black") +
+  geom_point(data = text_labels, aes(x=date, y=cape), col = "red") +
+  geom_text_repel(data = text_labels, aes(x=date, y = cape, label = round(cape, 1)), col = "red",
+                  family = "my_font",
+                  nudge_y = 5,
+                  segment.colour = "transparent") +
+  scale_y_continuous() +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("U.S. Price-to-Earnings Ratio")) +
+  labs(x = "Date" , y = "P/E",
+       caption = paste0("\n", source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Do Nasdaq
+create_nq_index <- function(start_date, end_date, key){
+  
+  first <- nq %>%filter(date == start_date) %>% pull(index)
+  print(first)
+  
+  tmp <- nq %>%
+    filter(date >= start_date, date <= end_date) %>%
+    mutate(pct_change = index/first - 1,
+           day = row_number()/250,
+           key = key) %>%
+    select(day, pct_change, mcap_billions, key)
+  
+  return(tmp)
+}
+
+nq_2015 <- create_nq_index("2015-09-15", "2020-09-14", "2015-2020")
+nq_1995 <-  create_nq_index("1995-01-03", "2000-01-03", "1995-2000")
+
+to_plot <- nq_1995 %>%
+              bind_rows(nq_2015)
+
+file_path <- paste0(out_path, "/nasdaq_pct_change.jpeg")
+source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
+
+text_labels <- to_plot %>%
+                filter(day == max(to_plot$day)) %>%
+                mutate(label = paste0(key, "\n+", round(100*pct_change, 0), "%"))
+
+# Plot the results
+plot <- ggplot(to_plot, aes(x = day, y = pct_change, col = key)) +
+  geom_line() +
+  geom_text_repel(data = text_labels, aes(x=day, y = pct_change, col = key, label = label)) +
+  scale_color_manual(values = c("black", "blue"), guide = FALSE) +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("NASDAQ Composite 5-Year Growth")) +
+  labs(x = "Year" , y = "Cumulative Percentage Change",
+       caption = paste0("\n", source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+
+
+
+
+
+
 
 # ############################  End  ################################## #
