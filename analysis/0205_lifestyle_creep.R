@@ -22,10 +22,10 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 inc <- 100000
 withdrawal_pct <- 0.04
-inc_growth <- 0.05
+inc_growth <- 0.03
 annual_ret <- 0.04
 
-savings_rates <- seq(0.1, 0.6, 0.05)
+savings_rates <- seq(0.05, 0.6, 0.05)
 
 for(initial_savings_rate in savings_rates){
       annual_savings <- inc*initial_savings_rate
@@ -35,7 +35,7 @@ for(initial_savings_rate in savings_rates){
       n_periods_baseline <- log(1 + (retirement_target/annual_savings)*annual_ret)/log(1 + annual_ret)
       print(n_periods_baseline)
       
-      raise_saved_pcts <- seq(initial_savings_rate , 0.95, 0.01)
+      raise_saved_pcts <- seq(initial_savings_rate + 0.1, 0.95, 0.01)
       
       tmp <- data.frame(
         annual_ret = rep(annual_ret, length(raise_saved_pcts)),
@@ -97,7 +97,32 @@ for(initial_savings_rate in savings_rates){
   }
 }
 
+file_path <- paste0(out_path, "/savings_rate_vs_raise_saved_pct.jpeg")
+source_string <- paste0("Source:  Simulated data (OfDollarsAndData.com)")
+note_string <- str_wrap(paste0("Note: Assumes annual real income growth of ", 100*inc_growth, "% and ",
+                               "annual real returns of ", 100*annual_ret, "%.")
+  , width = 85)
 
+to_plot <- final_results
 
+# Plot the results
+plot <- ggplot(to_plot, aes(x = savings_rate, y = raise_saved_pct)) +
+  geom_line() +
+  scale_x_continuous(label = percent_format(accuracy = 1), breaks = savings_rates) +
+  scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0.25, 0.8, 0.05)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("How Much of Your Raise You Need to Save\nBased on Initial Savings Rate")) +
+  labs(x = "Initial Savings Rate" , y = "Raise Savings Percentage",
+       caption = paste0("\n", source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+export_to_excel(df = final_results,
+                outfile = paste0(out_path, "/savings_rate_raise_pcts.xlsx"),
+                sheet="raw",
+                new_file = 1,
+                fancy_formatting = 1
+)
 
 # ############################  End  ################################## #
