@@ -212,3 +212,7 @@ sent_case <- function(InputString){
 proper_case <- function(InputString){
   sapply(lapply(strsplit(InputString," "), sent_case), paste, collapse=" ")
 }
+
+format_as_dollar <- function(NumberInput, Digits){
+  return(paste0("$", formatC(NumberInput, digits = Digits, format = "f", big.mark = ",")))
+}
