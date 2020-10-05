@@ -63,8 +63,10 @@ df <- spx %>%
   mutate(election_year = ifelse(is.na(election_year), "Non-Election Year", "Election Year"))
 
 to_plot <- df %>%
+  filter(date < "2020-01-01") %>%
   group_by(election_year, day) %>%
-  summarize(mean_sd = quantile(sd, na.rm = TRUE, prob = 0.5),
+  summarize(mean_sd = mean(sd, na.rm = TRUE),
+              median_sd = quantile(sd, na.rm = TRUE, prob = 0.5),
             mean_dollar_growth = mean(growth_of_dollar, na.rm = TRUE),
             n_years = n()) %>%
   ungroup() %>%
@@ -83,12 +85,12 @@ last_day <- df %>% filter(date == max(df$date)) %>% pull(day)
 point <- to_plot %>%
           filter(election_year == "Election Year", day == last_day)
 
-plot <- ggplot(to_plot, aes(x=day, y=mean_sd, col = election_year)) + 
+plot <- ggplot(to_plot, aes(x=day, y=median_sd, col = election_year)) + 
   geom_line() +
-  geom_point(data=point, aes(x=day, y=mean_sd), col = "red") +
+  geom_point(data=point, aes(x=day, y=median_sd), col = "red") +
   geom_vline(xintercept = election_day, linetype = "dashed") +
   geom_text(mapping = aes(x = election_day,
-                          y = min(to_plot$mean_sd),
+                          y = min(median_sd),
                           label = "Election Day"),
             col = "blue",
             size = 2.5,
@@ -113,7 +115,7 @@ plot <- ggplot(to_plot, aes(x=day, y=mean_dollar_growth, col = election_year)) +
   geom_line() +
   geom_vline(xintercept = election_day, linetype = "dashed") +
   geom_text(mapping = aes(x = election_day,
-                          y = max(to_plot$mean_dollar_growth),
+                          y = max(mean_dollar_growth),
                           label = "Election Day"),
             col = "blue",
             size = 2.5,
