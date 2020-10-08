@@ -107,7 +107,6 @@ plot <- ggplot(to_plot, aes(x=day, y=median_sd, col = election_year)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-
 file_path <- paste0(out_path, "/spx_growth_dollar_election_year.jpeg")
 source_string <- "Source:  YCharts" 
 
@@ -131,5 +130,29 @@ plot <- ggplot(to_plot, aes(x=day, y=mean_dollar_growth, col = election_year)) +
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Plot all elections, 30 days out
+to_plot <- df %>%
+  filter(date < "2020-01-01", election_year == "Election Year",
+         day <= election_day, day >= (election_day - 60))
+
+file_path <- paste0(out_path, "/election_year_60_days_out.jpeg")
+source_string <- "Source:  YCharts" 
+
+plot <- ggplot(to_plot, aes(x=day, y=sd, col = as.factor(yr))) + 
+  geom_line() +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("60-Day Standard Deviation of All Election Years")) +
+  labs(x = "Day" , y = "Standard Deviation",
+       caption = paste0("\n", source_string))  
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+
+
 
 # ############################  End  ################################## #
