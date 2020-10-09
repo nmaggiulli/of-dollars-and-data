@@ -32,6 +32,7 @@ sp500_ret_pe$real_div <- as.numeric(sp500_ret_pe$real_div)
 sp500_ret_pe$date <- as.numeric(sp500_ret_pe$date)
 sp500_ret_pe$cpi <- as.numeric(sp500_ret_pe$cpi)
 sp500_ret_pe$cape <- as.numeric(sp500_ret_pe$cape)
+sp500_ret_pe$long_irate <- as.numeric(sp500_ret_pe$long_irate)
 
 # Create a numeric end date based on the closest start of month to today's date
 end_date <- year(Sys.Date()) + month(Sys.Date())/100
@@ -40,7 +41,7 @@ end_date <- year(Sys.Date()) + month(Sys.Date())/100
 sp500_ret_pe <- sp500_ret_pe %>%
                   filter(!is.na(date), date < end_date) %>%
                   mutate(real_div = ifelse(is.na(real_div), 0, real_div)) %>%
-                  select(date, real_price, real_div, cape, cpi)
+                  select(date, real_price, real_div, long_irate, cape, cpi)
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){
@@ -62,7 +63,8 @@ sp500_ret_pe <- sp500_ret_pe %>%
     "-", 
     ifelse(substring(as.character(date), 6, 7) == "1", "10", substring(as.character(date), 6, 7)),
     "-01", 
-    "%Y-%m-%d"))) %>%
+    "%Y-%m-%d")),
+    long_irate = long_irate/100) %>%
   filter(real_div > 0)
 
 # Save down the data
