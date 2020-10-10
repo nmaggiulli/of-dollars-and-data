@@ -42,38 +42,24 @@ df <- bond_ret %>%
 to_plot <- df %>%
   drop_na()
 
+min_year <- year(min(df$date))
+max_year <- year(max(df$date))
 
-file_path <- paste0(out_path, "/yield_vs_ret.jpeg")
-source_string <- paste0("Source:  Returns 2.0, Shiller data (OfDollarsAndData.com)")
+file_path <- paste0(out_path, "/yield_vs_ret_next_decade_bond.jpeg")
+source_string <- paste0("Source:  Returns 2.0, Shiller Data, ", min_year,
+                        "-", max_year, " (OfDollarsAndData.com)")
 
 # Plot the results
 plot <- ggplot(to_plot, aes(x = long_irate, y = ret)) +
   geom_point(col = "black") +
   geom_smooth(method = "lm", se = FALSE) +
-  geom_vline(xintercept = 0.0068, linetype = "dashed") +
+  geom_vline(xintercept = 0.0079, linetype = "dashed") +
   scale_x_continuous(label = percent_format(accuracy = 1), limits = c(0, 0.16), breaks = seq(0, 0.16, 0.04)) +
   scale_y_continuous(label = percent_format(accuracy = 1)) +
   of_dollars_and_data_theme +
   theme(legend.title = element_blank()) +
-  ggtitle(paste0("Starting Yield vs. Future 10-Year Real Bond Return\nBy Decade")) +
-  labs(x = "Starting Bond Yield" , y = "Future 10-Year Real Bond Return",
-       caption = paste0("\n", source_string))
-
-# Save the plot
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-
-file_path <- paste0(out_path, "/yield_vs_ret_colored.jpeg")
-source_string <- paste0("Source:  Returns 2.0, Shiller data (OfDollarsAndData.com)")
-
-# Plot the results
-plot <- ggplot(to_plot, aes(x = long_irate, y = ret)) +
-  geom_point(aes(col = decade)) +
-  scale_x_continuous(label = percent_format(accuracy = 1), limits = c(0, 0.16), breaks = seq(0, 0.16, 0.04)) +
-  scale_y_continuous(label = percent_format(accuracy = 1)) +
-  of_dollars_and_data_theme +
-  theme(legend.title = element_blank()) +
-  ggtitle(paste0("Starting Yield vs. Future 10-Year Real Bond Return\nBy Decade")) +
-  labs(x = "Starting Bond Yield" , y = "Future 10-Year Real Bond Return",
+  ggtitle(paste0("Starting Yield vs.\nReal Bond Return Over Next Decade")) +
+  labs(x = "Starting Bond Yield" , y = "Annualized Real Return Over Next Decade",
        caption = paste0("\n", source_string))
 
 # Save the plot
