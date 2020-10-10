@@ -21,10 +21,12 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 bond_ret <- read.csv(paste0(importdir, "/0209_bond_rets/treasury_5yr.csv"), skip = 7,
-                     col.names = c("date", "index_bond")) %>%
+                     col.names = c("date", "index_cpi", "index_bond")) %>%
             drop_na() %>%
             mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
-            mutate(date = as.Date(paste0(year(date), "-", month(date), "-01")))
+            mutate(date = as.Date(paste0(year(date), "-", month(date), "-01")),
+                   index_bond_real = index_bond/index_cpi,
+                   decade = paste0(as.character(year(floor_date(date, years(10))))))
 
 shiller <- readRDS(paste0(localdir, "0009_sp500_ret_pe.RDS")) %>%
             select(date, long_irate)
@@ -33,24 +35,49 @@ n_months_ret <- 120
 
 df <- bond_ret %>%
         left_join(shiller) %>%
-        mutate(ret = (lead(index_bond, n_months_ret)/index_bond)^(1/(n_months_ret/12)) - 1)
+        mutate(ret = (lead(index_bond_real, n_months_ret)/index_bond_real)^(1/(n_months_ret/12)) - 1) %>%
+        select(date, decade, long_irate, ret)
 
-file_path <- paste0(out_path, "/yield_v_return.jpeg")
+# Plot
+to_plot <- df %>%
+  drop_na()
+
+
+file_path <- paste0(out_path, "/yield_vs_ret.jpeg")
 source_string <- paste0("Source:  Returns 2.0, Shiller data (OfDollarsAndData.com)")
-
-to_plot <- df 
 
 # Plot the results
 plot <- ggplot(to_plot, aes(x = long_irate, y = ret)) +
-  geom_point() +
-  scale_x_continuous(label = percent_format(accuracy = 1)) +
+  geom_point(col = "black") +
+  geom_smooth(method = "lm", se = FALSE) +
+  geom_vline(xintercept = 0.0068, linetype = "dashed") +
+  scale_x_continuous(label = percent_format(accuracy = 1), limits = c(0, 0.16), breaks = seq(0, 0.16, 0.04)) +
   scale_y_continuous(label = percent_format(accuracy = 1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Starting Yield vs. Future 10-Year Return")) +
-  labs(x = "Starting Yield" , y = "Forward 10-Year Return",
+  theme(legend.title = element_blank()) +
+  ggtitle(paste0("Starting Yield vs. Future 10-Year Real Bond Return\nBy Decade")) +
+  labs(x = "Starting Bond Yield" , y = "Future 10-Year Real Bond Return",
        caption = paste0("\n", source_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+file_path <- paste0(out_path, "/yield_vs_ret_colored.jpeg")
+source_string <- paste0("Source:  Returns 2.0, Shiller data (OfDollarsAndData.com)")
+
+# Plot the results
+plot <- ggplot(to_plot, aes(x = long_irate, y = ret)) +
+  geom_point(aes(col = decade)) +
+  scale_x_continuous(label = percent_format(accuracy = 1), limits = c(0, 0.16), breaks = seq(0, 0.16, 0.04)) +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  of_dollars_and_data_theme +
+  theme(legend.title = element_blank()) +
+  ggtitle(paste0("Starting Yield vs. Future 10-Year Real Bond Return\nBy Decade")) +
+  labs(x = "Starting Bond Yield" , y = "Future 10-Year Real Bond Return",
+       caption = paste0("\n", source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 
 # ############################  End  ################################## #
