@@ -14,7 +14,7 @@ library(zoo)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "0211_buying_dips_revisited"
+folder_name <- "xxxx_buying_dips_revisited"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
