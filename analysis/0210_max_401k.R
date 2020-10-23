@@ -27,7 +27,7 @@ annual_growth <- 0.03
 inc_tax <- 0.24
 
 final_results <- data.frame()
-tax_rates <- seq(0, 0.30, 0.01)
+tax_rates <- seq(0, 0.34, 0.01)
 
 # Pretax parameters
 counter <- 1
@@ -49,7 +49,7 @@ for(tax_rate_retire in tax_rates){
     } else{
       df[i, "post_tax_dividend"] <- (df[(i-1), "value_taxable"] * annual_dividend) * (1 - cap_gains)
       df[i, "unrealized_gains"] <- df[(i-1), "value_taxable"] * annual_growth
-      df[i, "cum_unrealized_gains"] <- df[(i-1), "unrealized_gains"] + df[i, "unrealized_gains"]
+      df[i, "cum_unrealized_gains"] <- df[(i-1), "cum_unrealized_gains"] + df[i, "unrealized_gains"]
       df[i, "value_taxable"] <- df[(i-1), "value_taxable"] + df[i, "unrealized_gains"] + df[i, "post_tax_dividend"] + annual_savings
       df[i, "liquid_taxable"] <- df[i, "value_taxable"] - (cap_gains*df[i, "cum_unrealized_gains"]) 
       
@@ -72,7 +72,7 @@ for(tax_rate_retire in tax_rates){
   counter <- counter + 1
 }
 
-file_path <- paste0(out_path, "/roth_vs_taxable_balance.jpeg")
+file_path <- paste0(out_path, "/roth_vs_taxable_balance_40yr.jpeg")
 source_string <- paste0("Source:  Simulated data (OfDollarsAndData.com)")
 note_string <- str_wrap(paste0("Note: Assumes a ", 100*(annual_growth+annual_dividend), 
                                "% annual growth rate, a ", 100*cap_gains, "% tax rate on capital gains, ",
@@ -125,7 +125,7 @@ plot <- ggplot(to_plot, aes(x = tax_rate, y = trad401k_ann_premium)) +
   geom_vline(xintercept = inc_tax, linetype = "dashed") +
   geom_point(data=point, aes(x=tax_rate, y=trad401k_ann_premium), col = "red", size = 2) +
   scale_color_manual(values = c("black")) +
-  scale_y_continuous(label = percent_format(accuracy = 0.1), limits = c(-0.0001, 0.01), breaks = seq(0, 0.01, 0.0025)) +
+  scale_y_continuous(label = percent_format(accuracy = 0.01), limits = c(-0.0002, 0.0105), breaks = seq(0, 0.01, 0.0025)) +
   scale_x_continuous(label = percent_format(accuracy = 1)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Annualized Traditional 401(k) Premium\nBased on Tax Rate in Retirement")) +
