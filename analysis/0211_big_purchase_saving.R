@@ -161,7 +161,8 @@ for(expected_months in months_to_test){
              expected_months,
              " months, that capital gains taxes are paid at the long term rate of ", 
              100*cap_gains, 
-             "%, and that all returns are adjusted for inflation."),
+             "%, and that all returns are adjusted for inflation. ",
+             "It takes ", round(mean(final_results$n_months_to_goal, na.rm = TRUE),0), " months on average to reach your savings goal when investing in ", tolower(i_name), "."),
       width = 85)
     
     plot <- ggplot(to_plot, aes(x = time_bucket, y = pct)) +
@@ -194,6 +195,7 @@ for(expected_months in months_to_test){
     
     plot <- ggplot(final_results, aes(x = start_date, y = n_months_to_goal)) +
       geom_bar(stat = "identity", fill = chart_standard_color, width = 92) +
+      geom_hline(yintercept = expected_months, linetype = "dashed", col = "black") +
       scale_x_date(date_labels = "%Y",
                    limits = c(as.Date("1926-01-01"), as.Date("2016-10-01")),
                    breaks = seq.Date(from = as.Date("1920-01-01"),
@@ -234,7 +236,8 @@ for(expected_months in months_to_test){
            " months, that capital gains taxes are paid at the long term rate of ", 
            100*cap_gains, 
            "%, and that all returns are adjusted for inflation.  ",
-           "Differences greater than 12 months have been capped at 12 months for simplicity."),
+           "Differences greater than 12 months have been capped at 12 months for simplicity.  ",
+           "Bonds outperform cash in ", round(100*mean(final_results_all$bonds_win, na.rm = TRUE), 1), "% of periods."),
     width = 85)
   
   plot <- ggplot(final_results_all, aes(x = start_date, y = net_bonds)) +
@@ -244,7 +247,7 @@ for(expected_months in months_to_test){
                  breaks = seq.Date(from = as.Date("1920-01-01"),
                                    to = as.Date("2010-01-01"),
                                    by = "10 years")) +
-    scale_y_continuous(limits = c(-12, 12), breaks = seq(-12, 12, 6)) +
+    scale_y_continuous(limits = c(-3, 12), breaks = seq(-3, 12, 3)) +
     of_dollars_and_data_theme +
     ggtitle(paste0("Additional Months for Cash to Reach Savings Goal\nCompared to Investing in Bonds\nOver ", expected_months, " Months")) +
     labs(x = "Start Date" , y = paste0("Additional Months"),
@@ -255,6 +258,16 @@ for(expected_months in months_to_test){
   
   # Do stocks
   file_path <- paste0(out_path, "/net_stocks_", expected_months, "m_.jpeg")
+  note_string <- str_wrap(
+    paste0("Note: Assumes you save ", format_as_dollar(monthly_payment), 
+           " per month for ", 
+           expected_months,
+           " months, that capital gains taxes are paid at the long term rate of ", 
+           100*cap_gains, 
+           "%, and that all returns are adjusted for inflation.  ",
+           "Differences greater than 12 months have been capped at 12 months for simplicity.  ",
+           "Stocks outperform cash in ", round(100*mean(final_results_all$stocks_win, na.rm = TRUE), 1), "% of periods."),
+    width = 85)
   
   plot <- ggplot(final_results_all, aes(x = start_date, y = net_stocks)) +
     geom_bar(stat = "identity", fill = chart_standard_color, width = 92) +
