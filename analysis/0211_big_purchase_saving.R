@@ -218,13 +218,13 @@ for(expected_months in months_to_test){
     left_join(final_results_Cash %>% rename(n_months_cash = n_months_to_goal)) %>%
     left_join(final_results_Stocks %>% rename(n_months_stocks = n_months_to_goal)) %>%
     mutate(bonds_win = ifelse(n_months_bonds < n_months_cash, 1, 0),
-           stocks_win = ifelse(n_months_stocks < n_months_cash, 1, 0),
+           stocks_win = ifelse(n_months_stocks < n_months_bonds, 1, 0),
            net_bonds =  case_when(n_months_cash - n_months_bonds > 12 ~ 12,
                                   n_months_cash - n_months_bonds < -12 ~ -12,
                                   TRUE ~ n_months_cash - n_months_bonds),
-           net_stocks = case_when(n_months_cash - n_months_stocks >12 ~ 12,
-                                  n_months_cash - n_months_stocks < -12 ~ -12,
-                                  TRUE ~ n_months_cash - n_months_stocks))
+           net_stocks = case_when(n_months_bonds - n_months_stocks >12 ~ 12,
+                                  n_months_bonds - n_months_stocks < -12 ~ -12,
+                                  TRUE ~ n_months_bonds - n_months_stocks))
   
   
   file_path <- paste0(out_path, "/net_bonds_", expected_months, "m_.jpeg")
@@ -266,7 +266,7 @@ for(expected_months in months_to_test){
            100*cap_gains, 
            "%, and that all returns are adjusted for inflation.  ",
            "Differences greater than 12 months have been capped at 12 months for simplicity.  ",
-           "Stocks outperform cash in ", round(100*mean(final_results_all$stocks_win, na.rm = TRUE), 1), "% of periods."),
+           "Stocks outperform bonds in ", round(100*mean(final_results_all$stocks_win, na.rm = TRUE), 1), "% of periods."),
     width = 85)
   
   plot <- ggplot(final_results_all, aes(x = start_date, y = net_stocks)) +
@@ -278,7 +278,7 @@ for(expected_months in months_to_test){
                                    by = "10 years")) +
     scale_y_continuous(limits = c(-12, 12), breaks = seq(-12, 12, 6)) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Additional Months for Cash to Reach Savings Goal\nCompared to Investing in Stocks\nOver ", expected_months, " Months")) +
+    ggtitle(paste0("Additional Months for Bonds to Reach Savings Goal\nCompared to Investing in Stocks\nOver ", expected_months, " Months")) +
     labs(x = "Start Date" , y = paste0("Additional Months"),
          caption = paste0(source_string, "\n", note_string))
   
