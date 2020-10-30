@@ -14,7 +14,7 @@ library(zoo)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "0211_big_purchase_saving"
+folder_name <- "0212_big_purchase_saving"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -54,7 +54,7 @@ dates_to_run <- stock_bond %>%
                   pull(date)
 
 # Find months to test
-months_to_test <- seq(24, 60, 6)
+months_to_test <- seq(24, 72, 6)
 
 for(expected_months in months_to_test){
   # Sim paramaters
@@ -213,6 +213,7 @@ for(expected_months in months_to_test){
   run_saving_sim(1, 0, 0, "all_stock", "Stocks")
   run_saving_sim(0, 1, 0, "all_bond", "Bonds")
   run_saving_sim(0, 0, 1, "all_cash", "Cash")
+  run_saving_sim(0.6, 0.4, 1, "port_6040", "60/40 Portfolio")
   
   final_results_all <- final_results_Bonds %>% rename(n_months_bonds = n_months_to_goal) %>%
     left_join(final_results_Cash %>% rename(n_months_cash = n_months_to_goal)) %>%
@@ -286,15 +287,15 @@ for(expected_months in months_to_test){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-create_gif(path = paste0(out_path), 
-           file_stub = "net_bonds_*.jpeg",
-           speed_milliseconds = 100,
-           out_name = paste0("/_net_bonds_all_months.gif"))
-
-create_gif(path = paste0(out_path), 
-           file_stub = "net_stocks_*.jpeg",
-           speed_milliseconds = 100,
-           out_name = paste0("/_net_stocks_all_months.gif"))
+# create_gif(path = paste0(out_path), 
+#            file_stub = "net_bonds_*.jpeg",
+#            speed_milliseconds = 100,
+#            out_name = paste0("/_net_bonds_all_months.gif"))
+# 
+# create_gif(path = paste0(out_path), 
+#            file_stub = "net_stocks_*.jpeg",
+#            speed_milliseconds = 100,
+#            out_name = paste0("/_net_stocks_all_months.gif"))
 
 
 # ############################  End  ################################## #
