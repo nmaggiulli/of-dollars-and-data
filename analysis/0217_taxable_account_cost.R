@@ -20,8 +20,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-ret_high <- 0.07
-ret_low <- 0.02
+ret_high <- 0.1
+ret_low <- 0.06
 cap_gains <- 0.15
 inc_tax <- 0.30
 starting_amount <- 10000
