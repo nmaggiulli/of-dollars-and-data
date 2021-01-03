@@ -21,7 +21,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 start_dt <- "1974-08-01"
-end_dt <- "2020-05-31"
+end_dt <- "2020-12-31"
 
 sp500 <-  readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
   rename(index_sp500 = price_plus_div) %>%
@@ -31,7 +31,7 @@ sp500 <-  readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
   select(mt, yr, index_sp500)
 
 gld <- read.csv(paste0(importdir, "0192_why_is_gold_valuable/gld.csv"), skip = 1) %>%
-  mutate(date = as.Date(Date, format = "%m/%d/%Y"),
+  mutate(date = as.Date(Date, format = "%m/%d/%y"),
          mt = month(date),
          yr = year(date),
          index_gld = Close) %>%
@@ -39,7 +39,7 @@ gld <- read.csv(paste0(importdir, "0192_why_is_gold_valuable/gld.csv"), skip = 1
     select(mt, yr, index_gld)
 
 cpi <- read.csv(paste0(importdir, "0192_why_is_gold_valuable/fred_cpi.csv")) %>%
-        mutate(date = as.Date(DATE, format = "%Y-%m-%d"),
+        mutate(date = as.Date(DATE, format = "%m/%d/%y"),
                mt = month(date),
                yr = year(date),
                index_cpi = CPIAUCSL) %>%
@@ -86,6 +86,7 @@ plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
                       col = key, 
                       label = paste0(key, "\n$", round(value, 2))), 
                   size = 2.5,
+                  nudge_x = -100,
                   segment.color = "transparent") + 
   scale_color_manual(guide = FALSE, values = c("blue", "gold")) +
   scale_y_continuous(label = dollar) +
