@@ -21,7 +21,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 download_data <- 0
-start_dt <- as.Date("2020-06-08")
+start_dt <- as.Date("2020-02-19")
 
 ycharts_comp <- read.csv(paste0(importdir, folder_name, "/ycharts_comp_table_8-12-2020.csv")) %>%
                 clean_cols() %>%
