@@ -17,10 +17,10 @@ Quandl.api_key("PNidzaHfNknqXchLKsRT")
 # Import bitcoin price in USD (note that my API key is imported in the header.R file)
 bcoin       <- Quandl("BITFINEX/BTCUSD")  %>%
                   filter(Last > 0) %>%
-                  mutate(value = Last,
+                  mutate(index_btc = Last,
                          date = Date) %>%
                   arrange(date) %>%
-                  select(date, value) 
+                  select(date, index_btc) 
 
 saveRDS(bcoin, paste0(localdir, "0027_quandl_bitcoin.Rds"))
 
