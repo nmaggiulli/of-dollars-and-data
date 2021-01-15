@@ -30,7 +30,7 @@ raw_fred <- read.csv(paste0(importdir, "/_fl/0007_not_dotcom/fred_DGS10.csv")) %
 
 #Do nasdaq
 nq <- read.csv(paste0(importdir, "_fl/0007_not_dotcom/ycharts_IXIC_data.csv")) %>%
-  rename(index = `NASDAQ.Composite.Level`) %>%
+  rename(index = `Nasdaq.Composite.Level`) %>%
   mutate(date = as.Date(Period)) %>%
   arrange(date) %>%
   select(date, index) %>%
@@ -154,13 +154,13 @@ create_nq_index <- function(start_date, end_date, key){
   return(tmp)
 }
 
-nq_2015 <- create_nq_index("2015-09-15", "2020-09-14", "2015-2020")
-nq_1995 <-  create_nq_index("1995-01-03", "2000-01-03", "1995-2000")
+nq_2015 <- create_nq_index("2016-01-04", "2020-12-31", "2016-2020")
+nq_1995 <-  create_nq_index("1995-01-03", "2000-01-03", "1995-1999")
 
 to_plot <- nq_1995 %>%
               bind_rows(nq_2015)
 
-file_path <- paste0(out_path, "/nasdaq_pct_change.jpeg")
+file_path <- paste0(out_path, "/nasdaq_pct_change_end_1999_2020.jpeg")
 source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
 
 text_labels <- to_plot %>%
