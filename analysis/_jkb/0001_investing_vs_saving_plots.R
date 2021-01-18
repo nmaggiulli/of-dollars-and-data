@@ -30,8 +30,7 @@ n_simulations       <- 1
 
 # Create a custom palette with black using COlorBrewer
 # From here:  http://colorbrewer2.org/#type=qualitative&scheme=Set1&n=7
-my_palette <- c("#E41A1C", "#4DAF4A", "#000000", "#377EB8", "#984EA3", "#FF7F00", "#A65628")
-
+my_palette <- c("black", "blue")
 
 # This seed allows us to have reproducible random sampling
 set.seed(12345)         
@@ -88,7 +87,7 @@ to_plot <- bind_rows(savings_df, returns_df)
                                   col = type,
                                   label = str_wrap("Savings Matter Early in Life", width = 10),
                                   family = "my_font"),
-                              nudge_y = 120000,
+                              nudge_y = 20000,
                               nudge_x = 2) +
               geom_text_repel(data = 
                                 filter(to_plot, 
@@ -106,39 +105,17 @@ to_plot <- bind_rows(savings_df, returns_df)
               scale_y_continuous(labels = dollar, limits = c(0, 80000), breaks = seq(0, 80000, 10000)) +
               scale_x_continuous(breaks = seq(0, n_years_working, 5)) +
               of_dollars_and_data_theme +
-              labs(x = "Years" , y = "Change in Value") +
+              labs(x = "Years" , y = "Annual Change in Value") +
               ggtitle(paste0("Savings and Investment Returns Have\nVarying Impact Over Time"))
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
  
-## Create additional plot to show percentage of total assets attributable to savings vs investment
+## Create additional dataset to show percentage of total assets attributable to savings vs investment
 assets_df  <- convert_to_df(asset_matrix, "total_assets")
 
 assets_df$pct   <-  1 - ((seq(1, n_years_working + 1) * (income * savings_rate)) / assets_df$value)
 assets_df$type  <- "investment_pct"
 
-## Create 2nd plot
-  
-  # Get the maximum percentage for the data frame
-  ymax <- max(assets_df$pct)
-  
-  # Set the file path
-  file_path <- paste0(out_path, "/pct-of-total-assets.jpeg")
-  
-  # Create plot 
-  plot <- ggplot(data = assets_df, aes(x = year, y = pct, fill = type)) +
-    geom_area() +
-    geom_hline(yintercept = ymax, col = my_palette[1], linetype = 2) +
-    scale_color_manual(values = my_palette, guide = FALSE) +
-    scale_fill_manual(values = my_palette, guide = FALSE) +
-    scale_y_continuous(labels = percent, limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
-    scale_x_continuous(breaks = seq(0, n_years_working, 5)) +
-    of_dollars_and_data_theme +
-    labs(x = "Years" , y = "Percentage of Total Assets") +
-    ggtitle(paste0("Percentage of Total Assets That\nCome From Investment Gains"))
-
-  # Save the plot
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #
