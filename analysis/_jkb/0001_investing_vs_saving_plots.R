@@ -30,7 +30,7 @@ n_simulations       <- 1
 
 # Create a custom palette with black using COlorBrewer
 # From here:  http://colorbrewer2.org/#type=qualitative&scheme=Set1&n=7
-my_palette <- c("black", "blue")
+my_palette <- c("#969696", "#525252")
 
 # This seed allows us to have reproducible random sampling
 set.seed(12345)         
