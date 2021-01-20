@@ -44,6 +44,7 @@ for (x in year_list){
   # resdbt = other residential debt
   # ccbal = credit card balance
   # agecl = age class, 1:<35, 2:35-44, 3:45-54, 4:55-64, 5:65-74, 6:>=75
+  # age = age,
   # hhsex = gender, 1 = male , 2 = female
   # race = race, 1 = white non-Hispanic, 2 = nonwhite or Hispanic
   # racelcl4 = 1=white non-Hispanic, 2=black, 3=Hispanic or Latino, 4=Other or Multiple race;
@@ -55,7 +56,7 @@ for (x in year_list){
   vars_to_keep <- c('y1', 'yy1', 'networth', 'debt', 'asset', 'liq', 'reteq',
                     'homeeq', 'hdebt', 'fin', 'nfin', 'vehic', 'bus', 'oresre', 'othnfin', 'mrthel', 'resdbt', 'ccbal', 
                     'income', 'wageinc', 'intdivinc', 'bussefarminc', 'equitinc', 'ssretinc',
-                    'agecl', 'hhsex', 'race', 'racecl4', 'edcl', 'married', 'kids', 'wgt')
+                    'agecl', 'age', 'hhsex', 'race', 'racecl4', 'edcl', 'married', 'kids', 'wgt')
   
   # Write a function to subset our data
   subset_data <- function(name){
