@@ -11,6 +11,7 @@ library(dplyr)
 library(ggplot2)
 library(reshape2)
 library(scales)
+library(lubridate)
 library(grid)
 library(gridExtra)
 library(gtable)
@@ -26,7 +27,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 # Read in data for individual stocks and sp500 Shiller data
 sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-                    filter(date >= "1972-11-01")
+                    filter(date >= "1972-11-01",
+                           date <= "2013-12-31")
 
 
 # Purchases for the world's market timer
@@ -38,14 +40,24 @@ purchases <- data.frame(date = c("1972-12-01", "1987-08-01", "1999-12-01", "2007
 df <- select(sp500_ret_pe, date, price_plus_div) %>%
                   left_join(purchases) %>%
                   mutate(amount = ifelse(is.na(amount), 0, amount),
-                         ret_sp500 = price_plus_div/lag(price_plus_div, 1) - 1) %>%
+                         ret_sp500 = price_plus_div/lag(price_plus_div, 1) - 1,
+                         decade = year(date) - (year(date) %% 10),
+                         dca_amount = case_when(
+                           decade == 1970 ~ 2000/12,
+                           decade == 1980 ~ 4000/12,
+                           decade == 1990 ~ 6000/12,
+                           decade == 2000 ~ 8000/12,
+                           TRUE ~ 0
+                         )) %>%
                   filter(!is.na(ret_sp500))
               
 for(i in 1:nrow(df)){
   if(i == 1){
     df[i, "value"] <- df[i, "amount"] * (1 + df[i, "ret_sp500"])
-  } else {
+    df[i, "value_dca"] <- df[i, "amount"] * (1 + df[i, "ret_sp500"])
+  } else { 
     df[i, "value"] <- (df[(i-1), "value"] + df[i, "amount"]) * (1 + df[i, "ret_sp500"])
+    df[i, "value_dca"] <- (df[(i-1), "value_dca"] + df[i, "dca_amount"]) * (1 + df[i, "ret_sp500"])
   }
 }
 
@@ -85,34 +97,32 @@ total_purchases <- sum(purchases$amount)
 
 note_string <- str_wrap(paste0("Note: Assumes 4 purchases totaling $", formatC(total_purchases, format="f", big.mark=",", digits=0), ".  Real returns include reinvested dividends for the S&P 500."),
                           width = 85)
+col_plot <- "green"
 
 plot <- ggplot(df, aes(x=date, y=value)) +
           geom_line() +
-          geom_point(data=filter(df, amount > 0 | row_number() == nrow(df)), col = "red") +
+          geom_point(data=filter(df, amount > 0 | row_number() == nrow(df)), col = col_plot) +
           geom_text_repel(data = filter(df, amount > 0),
                           aes(x=date, y=value),
-                          col = "red",
+                          col = col_plot,
                           label = paste0("+$", formatC(purchases$amount, format="f", big.mark=",", digits=0)),
                           nudge_y = 3000,
                           max.iter= 3000) +
           geom_text_repel(data = df[nrow(df), ],
                           aes(x=date, y=value),
-                          col = "red",
-                          label = paste0("Final Value\n$", formatC(as.numeric(df[nrow(df), "value"]), format="f", big.mark=",", digits=0)),
+                          col = col_plot,
+                          label = paste0("$", formatC(as.numeric(df[nrow(df), "value"]), format="f", big.mark=",", digits=0)),
                           nudge_x = -1500,
-                          nudge_y = 2000,
+                          nudge_y = 3000,
                           max.iter= 3000) +
           scale_y_continuous(label = dollar) +
           of_dollars_and_data_theme +
           ggtitle("Even the World's Worst Market Timer\nCan Be A Successful Investor") +
           labs(x = "Date" , y = "Portfolio Value ($)",
             caption = paste0("\n", source_string, "\n", note_string))
-  
-# Turn plot into a gtable for adding text grobs
-my_gtable   <- ggplot_gtable(ggplot_build(plot))
 
 # Save the plot
-ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #
 
