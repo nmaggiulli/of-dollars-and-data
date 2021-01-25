@@ -23,26 +23,16 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 # Bring in DFA data
 raw <- read.csv(paste0(importdir, "/0112_dfa_sp500_treasury_5yr/DFA_PeriodicReturns_20190210111032.csv"),
                skip = 7) %>%
-        select(-4)
+        select(-5)
 
-colnames(raw) <- c("date", "ret_sp500", "ret_treasury_5yr")
-
-tbills_cpi <- read_excel(paste0(importdir, "0112_dfa_sp500_treasury_5yr/dfa_tbill_sp500.xlsx"), skip = 4) %>%
-                filter(!is.na(Date)) %>%
-                mutate(Date = as.Date(Date)) %>%
-                select(1, 2, 3)
-
-colnames(tbills_cpi) <- c("date", "cpi", "ret_tbill")
+colnames(raw) <- c("date", "ret_sp500", "ret_treasury_5yr", "ret_tbill")
 
 # Filter out bad rows from import
 raw <- raw %>%
           filter(!is.na(ret_sp500)) %>%
           mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
           mutate(date = as.Date(paste0(year(date), "-", month(date), "-01"))) %>%
-          left_join(tbills_cpi) %>%
-          filter(date >= "1960-01-01") %>%
-          mutate(ret_tbill = ret_tbill + cpi) %>%
-          select(-cpi)
+          filter(date >= "1960-01-01") 
 
 first_yr <- min(year(raw$date))
 last_yr <- max(year(raw$date))
