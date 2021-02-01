@@ -98,10 +98,6 @@ for(initial_savings_rate in savings_rates){
 }
 
 file_path <- paste0(out_path, "/savings_rate_vs_raise_saved_pct.jpeg")
-source_string <- paste0("Source:  Simulated data (OfDollarsAndData.com)")
-note_string <- str_wrap(paste0("Note: Assumes annual real income growth of ", 100*inc_growth, "% and ",
-                               "annual real returns of ", 100*annual_ret, "%.")
-  , width = 85)
 
 to_plot <- final_results
 
@@ -112,8 +108,7 @@ plot <- ggplot(to_plot, aes(x = savings_rate, y = raise_saved_pct)) +
   scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0.25, 0.8, 0.05)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("How Much of Your Raise You Need to Save\nBased on Initial Savings Rate")) +
-  labs(x = "Initial Savings Rate" , y = "Raise Savings Percentage",
-       caption = paste0("\n", source_string, "\n", note_string))
+  labs(x = "Initial Savings Rate" , y = "Raise Savings Percentage")
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
