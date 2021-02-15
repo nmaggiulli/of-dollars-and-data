@@ -32,7 +32,7 @@ raw_iei <- read.csv(paste0(importdir, folder_name, "/IEI_data.csv")) %>%
 file_path <- paste0(out_path, "/iei_over_time.jpeg")
 
 plot <- ggplot(raw_iei, aes(x = date, y = dd)) +
-  geom_area() +
+  geom_area(fill = my_color) +
   scale_y_continuous(label = percent_format(accuracy = 1)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("The Decline in Intermediate Term\nU.S. Treasury Bonds")) +
@@ -206,7 +206,6 @@ for(expected_months in months_to_test){
     
     plot <- ggplot(final_results, aes(x = start_date, y = n_months_to_goal)) +
       geom_bar(stat = "identity", fill = my_color, width = 92) +
-      geom_hline(yintercept = expected_months, linetype = "dashed", col = "black") +
       scale_x_date(date_labels = "%Y",
                    limits = c(as.Date("1926-01-01"), as.Date("2016-10-01")),
                    breaks = seq.Date(from = as.Date("1920-01-01"),
@@ -214,7 +213,7 @@ for(expected_months in months_to_test){
                                      by = "10 years")) +
       scale_y_continuous(limits = c(0, max_y), breaks = seq(0, max_y, 12)) +
       of_dollars_and_data_theme +
-      ggtitle(paste0("Number of Months to Reach Goal\nWhen Fully Invested in ", i_name)) +
+      ggtitle(paste0("Number of Months to Reach ", format_as_dollar(expected_months*1000, 0) ,"\nWhen Saving $1,000 Per Month And\nFully Invested in ", i_name)) +
       labs(x = "Start Date" , y = paste0("Number of Months"))
     
     # Save the plot
@@ -231,15 +230,20 @@ for(expected_months in months_to_test){
     left_join(final_results_Stocks %>% rename(n_months_stocks = n_months_to_goal)) %>%
     mutate(bonds_win = ifelse(n_months_bonds < n_months_cash, 1, 0),
            stocks_win = ifelse(n_months_stocks < n_months_bonds, 1, 0),
-           net_bonds =  case_when(n_months_cash - n_months_bonds > 12 ~ 12,
-                                  n_months_cash - n_months_bonds < -12 ~ -12,
-                                  TRUE ~ n_months_cash - n_months_bonds),
-           net_stocks = case_when(n_months_bonds - n_months_stocks >12 ~ 12,
-                                  n_months_bonds - n_months_stocks < -12 ~ -12,
-                                  TRUE ~ n_months_bonds - n_months_stocks))
+           net_bonds =  n_months_cash - n_months_bonds)
   
   
   file_path <- paste0(out_path, "/net_bonds_", expected_months, "m_.jpeg")
+  
+  if(expected_months > 36){
+    y_max <- 24
+    y_unit <- 6
+    y_min <- 0
+  } else{
+    y_max <- 12
+    y_unit <- 3
+    y_min <- -3
+  }
   
   plot <- ggplot(final_results_all, aes(x = start_date, y = net_bonds)) +
     geom_bar(stat = "identity", fill = my_color, width = 92) +
@@ -248,28 +252,9 @@ for(expected_months in months_to_test){
                  breaks = seq.Date(from = as.Date("1920-01-01"),
                                    to = as.Date("2010-01-01"),
                                    by = "10 years")) +
-    scale_y_continuous(limits = c(-3, 12), breaks = seq(-3, 12, 3)) +
+    scale_y_continuous(limits = c(y_min, y_max), breaks = seq(y_min, y_max, y_unit)) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Additional Months for Cash to Reach Savings Goal\nCompared to Investing in Bonds\nOver ", expected_months, " Months")) +
-    labs(x = "Start Date" , y = paste0("Additional Months"))
-  
-  # Save the plot
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-  
-  # Do stocks
-  file_path <- paste0(out_path, "/net_stocks_", expected_months, "m_.jpeg")
-  
-  
-  plot <- ggplot(final_results_all, aes(x = start_date, y = net_stocks)) +
-    geom_bar(stat = "identity", fill = my_color, width = 92) +
-    scale_x_date(date_labels = "%Y",
-                 limits = c(as.Date("1926-01-01"), as.Date("2016-10-01")),
-                 breaks = seq.Date(from = as.Date("1920-01-01"),
-                                   to = as.Date("2010-01-01"),
-                                   by = "10 years")) +
-    scale_y_continuous(limits = c(-12, 12), breaks = seq(-12, 12, 6)) +
-    of_dollars_and_data_theme +
-    ggtitle(paste0("Additional Months for Bonds to Reach Savings Goal\nCompared to Investing in Stocks\nOver ", expected_months, " Months")) +
+    ggtitle(paste0("Additional Months for Cash to Reach ", format_as_dollar(1000*expected_months, 0), "\nWhen Saving $1,000 Per Month\nCompared to Investing in Bonds")) +
     labs(x = "Start Date" , y = paste0("Additional Months"))
   
   # Save the plot
