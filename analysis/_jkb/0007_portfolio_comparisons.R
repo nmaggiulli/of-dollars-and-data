@@ -125,7 +125,7 @@ plot_perf <- function(df, start_date, end_date, rebal_limit, rebal_period){
     of_dollars_and_data_theme +
     theme(legend.title = element_blank(),
           legend.position = "bottom") +
-    ggtitle(paste0("Portfolio Performances\n",
+    ggtitle(paste0("Portfolios with More Bonds Crash Less\n",
                    format.Date(start_date, "%m/%d/%y"),
                    "-",
                    format.Date(end_date, "%m/%d/%y"))) +
