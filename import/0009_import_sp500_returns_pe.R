@@ -9,7 +9,7 @@ source(file.path(paste0(getwd(),"/header.R")))
 
 library(readxl)
 library(lubridate)
-library(dplyr)
+library(tidyverse)
 
 ########################## Start Program Here ######################### #
 
@@ -39,9 +39,9 @@ end_date <- year(Sys.Date()) + month(Sys.Date())/100
 
 # Filter out missing dividends
 sp500_ret_pe <- sp500_ret_pe %>%
+                  select(date, real_price, real_div, long_irate, cape, cpi) %>%
                   filter(!is.na(date), date < end_date) %>%
-                  mutate(real_div = ifelse(is.na(real_div), 0, real_div)) %>%
-                  select(date, real_price, real_div, long_irate, cape, cpi)
+                  mutate(real_div = ifelse(is.na(real_div), 0, real_div))
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){
