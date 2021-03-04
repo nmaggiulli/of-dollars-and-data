@@ -26,7 +26,7 @@ raw <- read.csv(paste0(importdir, "0160_dow_bottom_length/ycharts_dji_data.csv")
   mutate(date = as.Date(substr(date, 1, 10), format = "%Y-%m-%d")) %>%
   select(date, index_dow) %>%
   arrange(date) %>%
-  filter(date >= "1970-01-01", date <= "2019-12-31")
+  filter(date <= "2020-12-31")
 
 first_year <- min(year(raw$date))
 
