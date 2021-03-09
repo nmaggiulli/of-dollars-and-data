@@ -15,7 +15,7 @@ library(zoo)
 library(lemon)
 library(tidyverse)
 
-folder_name <- "_jkb/0009_ls_v_dca_multi_asset"
+folder_name <- "_jkb/0008_ls_v_dca_multi_asset"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -53,8 +53,8 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
     select(date, `Buy Now`, `Average-In`) %>%
     gather(-date, key=key, value=value)
   
-    avg_ls <- to_plot %>% filter(key == "Buy Now") %>% summarize(value = mean(value)) %>% pull(value)
-    avg_dca <- to_plot %>% filter(key == "Average-In") %>% summarize(value = mean(value)) %>% pull(value)
+    avg_ls <- to_plot %>% filter(key == "Buy Now") %>% summarise(value = mean(value)) %>% pull(value)
+    avg_dca <- to_plot %>% filter(key == "Average-In") %>% summarise(value = mean(value)) %>% pull(value)
     
     note_string <- str_wrap(paste0("Note: On average, the Average-In strategy has a ", var_note, " of ", 100*round(avg_dca, 3), 
                                    "%  while Buy Now has a ", var_note, " of ", 100*round(avg_ls, 3), "% over the time period shown.  ",
@@ -168,14 +168,14 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
     
     cape_summary <- to_plot %>%
                       group_by(cape_group) %>%
-                      summarize(avg_dca_outperformance = mean(perf_col),
+                      summarise(avg_dca_outperformance = mean(perf_col),
                                 avg_ls_sharpe = mean(ls_sharpe),
                                 avg_dca_sharpe = mean(dca_sharpe)) %>%
                       ungroup()
     
     cape_gt_30 <- to_plot %>%
       group_by(cape_gt_30) %>%
-      summarize(avg_dca_outperformance = mean(perf_col),
+      summarise(avg_dca_outperformance = mean(perf_col),
                 avg_ls_sharpe = mean(ls_sharpe),
                 avg_dca_sharpe = mean(dca_sharpe)) %>%
       ungroup()
@@ -232,7 +232,7 @@ port_6040 <- raw %>%
               filter(name %in% c("S&P 500 Total Return", "Bloomberg Barclays US Treasury")) %>%
               mutate(ret = ifelse(name == "S&P 500 Total Return", 0.6*ret, 0.4*ret)) %>%
               group_by(date) %>%
-              summarize(ret = sum(ret)) %>%
+              summarise(ret = sum(ret)) %>%
               ungroup() %>%
               mutate(name = "Portfolio 60-40")
 
@@ -394,7 +394,7 @@ final_summary <- final_results %>%
   rename_(.dots = setNames(paste0("dca_underperformed_", n_month_dca, "m"), "dca_underperformed")) %>%
   rename_(.dots = setNames(paste0("ls_sharpe_", n_month_dca, "m"), "ls_sharpe")) %>%
   rename_(.dots = setNames(paste0("dca_sharpe_", n_month_dca, "m"), "dca_sharpe")) %>%
-  summarize(dca_underperformance = -1*mean(dca_outperformance),
+  summarise(dca_underperformance = -1*mean(dca_outperformance),
             dca_underperformed_months = mean(dca_underperformed),
             ls_sharpe = mean(ls_sharpe),
             dca_sharpe = mean(dca_sharpe)) %>%
@@ -414,8 +414,8 @@ if(invest_dca_cash == 0){
               mutate(value = ifelse(asset == "Portfolio 60-40", ls_sd_12m, dca_sd_12m)) %>%
               select(date, asset, value)
   
-  avg_ls <- to_plot %>% filter(asset == "Portfolio 60-40") %>% summarize(value = mean(value)) %>% pull(value)
-  avg_dca <- to_plot %>% filter(asset == "S&P 500 Total Return") %>% summarize(value = mean(value)) %>% pull(value)
+  avg_ls <- to_plot %>% filter(asset == "Portfolio 60-40") %>% summarise(value = mean(value)) %>% pull(value)
+  avg_dca <- to_plot %>% filter(asset == "S&P 500 Total Return") %>% summarise(value = mean(value)) %>% pull(value)
   
   note_string <- str_wrap(paste0("Note: On average, the Average-In strategy has a standard deviation of ", 100*round(avg_dca, 3), 
                                  "%  while Buy Now has a standard deviation of ", 100*round(avg_ls, 3), "% over the time period shown.  "), 
@@ -445,8 +445,8 @@ if(invest_dca_cash == 0){
     mutate(value = ifelse(asset == "Portfolio 60-40", ls_ret_12m, dca_ret_12m)) %>%
     select(date, asset, value)
   
-  avg_ls <- to_plot %>% filter(asset == "Portfolio 60-40") %>% summarize(value = mean(value)) %>% pull(value)
-  avg_dca <- to_plot %>% filter(asset == "S&P 500 Total Return") %>% summarize(value = mean(value)) %>% pull(value)
+  avg_ls <- to_plot %>% filter(asset == "Portfolio 60-40") %>% summarise(value = mean(value)) %>% pull(value)
+  avg_dca <- to_plot %>% filter(asset == "S&P 500 Total Return") %>% summarise(value = mean(value)) %>% pull(value)
   
   note_string <- str_wrap(paste0("Note: On average, the Average-In strategy has a monthly return of ", 100*round(avg_dca, 3), 
                                  "%  while Buy Now has a monthly return of ", 100*round(avg_ls, 3), "% over the time period shown.  "), 

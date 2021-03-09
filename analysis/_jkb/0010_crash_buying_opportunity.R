@@ -18,7 +18,7 @@ library(lemon)
 library(readxl)
 library(tidyverse)
 
-folder_name <- "_jkb/0011_crash_buying_opportunity"
+folder_name <- "_jkb/0010_crash_buying_opportunity"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 

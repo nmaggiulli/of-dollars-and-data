@@ -13,7 +13,7 @@ library(lubridate)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "_jkb/0008_even_god_couldnt_beat_dca"
+folder_name <- "_jkb/0009_buy_the_dip_vs_dca"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -185,7 +185,6 @@ plot_ath_dips <- function(lag_length, start_date, end_date){
             gather(key=key, value=value, -date)
   
   # Set general parameters before plotting
-  note_string <- paste0("Note:  Real return includes reinvested dividends.") 
 
   start_date_string <- str_replace_all(paste0(start_date), "-", "_")
   
@@ -201,8 +200,7 @@ plot_ath_dips <- function(lag_length, start_date, end_date){
     scale_x_date(date_labels = "%Y") +
     of_dollars_and_data_theme +
     ggtitle("All-Time Highs for the S&P 500") +
-    labs(x = "Date", y = "Growth of $1",
-         caption = paste0(source_string, "\n", note_string))
+    labs(x = "Date", y = "Growth of $1")
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -218,8 +216,7 @@ plot_ath_dips <- function(lag_length, start_date, end_date){
     scale_x_date(date_labels = "%Y") +
     of_dollars_and_data_theme +
     ggtitle("All-Time Highs & 'Dips'\nfor the S&P 500") +
-    labs(x = "Date", y = "Growth of $1",
-         caption = paste0(source_string, "\n", note_string))
+    labs(x = "Date", y = "Growth of $1")
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -262,10 +259,6 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   # New plot
   file_path <- paste0(out_path, "/", start_date_string, "/dip_cash_lag_", lag_length, "_", start_date_string, ".jpeg")
   
-  note_string <- str_wrap(paste0("Note: The Buy the Dip strategy accumulates cash and buys at 'dips' in the S&P 500.  ",
-                                 "Real return includes reinvested dividends."), 
-                          width = 80)
-  
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
     geom_bar(data=cash, aes(x=date, y=value), col = "green", stat="identity") +
     geom_line(col = "black") +
@@ -280,8 +273,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
                     max.iter = 3000) +
     of_dollars_and_data_theme +
     ggtitle(paste0("Buy the Dip", end_title)) +
-    labs(x = "Date", y = "Amount",
-         caption = paste0(source_string, "\n", note_string))
+    labs(x = "Date", y = "Amount")
 
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -305,10 +297,6 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   # New plot
   file_path <- paste0(out_path, "/", start_date_string, "/dca_vs_dip_lag_", lag_length, "_", start_date_string, ".jpeg")
   
-  note_string <- str_wrap(paste0("Note: The Buy the Dip strategy accumulates cash and buys at 'dips' in the S&P 500.  ",
-                                 "Real return includes reinvested dividends."), 
-                          width = 80)
-  
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
     geom_line() +
     geom_point(data=bottom, aes(x=date, y=value), col = "red", size = dot_size, alpha = 0.7) +
@@ -321,8 +309,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
                     segment.color = "transparent") +
     of_dollars_and_data_theme +
     ggtitle(paste0("Buy the Dip", end_title, "\nvs. DCA")) +
-    labs(x = "Date", y = "Amount",
-         caption = paste0(source_string, "\n", note_string))
+    labs(x = "Date", y = "Amount")
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -342,10 +329,6 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   # Plot Cumululative growth
   file_path <- paste0(out_path, "/", start_date_string, "/cumulative_growth_lag_", lag_length, "_", start_date_string, ".jpeg")
   
-  note_string <- str_wrap(paste0("Note: The Buy the Dip strategy accumulates cash and buys at 'dips' in the S&P 500.  ",
-                                 "Real return includes reinvested dividends."), 
-                          width = 80)
-  
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
     geom_line() +
     scale_y_continuous(label = dollar) +
@@ -357,8 +340,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
                     segment.color = "transparent") +
     of_dollars_and_data_theme +
     ggtitle(paste0("Cumulative Growth of DCA and\nBuy the Dip", end_title)) +
-    labs(x = "Date", y = "Amount",
-         caption = paste0(source_string, "\n", note_string))
+    labs(x = "Date", y = "Amount")
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -375,21 +357,14 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   
   file_path <- paste0(out_path, "/", start_date_string, "/dca_final_growth_lag_", lag_length, "_", start_date_string, ".jpeg")
   
-  note_string <- str_wrap(paste0("Note: Real return includes reinvested dividends.  ",  
-                                 "Assumes a monthly payment of $", formatC(monthly_buy, digits=0, big.mark = ",", format = "f"),".  ",
-                                 "Red dots represent when the Buy the Dip strategy makes purchases."), 
-                          width = 80)
-  
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
     geom_bar(stat="identity", position="dodge", col = "black") +
     geom_point(data=bottom, aes(x=date, y=value), col = "red", alpha = 0.7)+
-    geom_hline(yintercept = monthly_buy, linetype = "dashed", col="red") +
     scale_y_continuous(label = dollar) +
     scale_color_manual(values = c("#3182bd", "black"), guide = FALSE) +
     of_dollars_and_data_theme +
     ggtitle(paste0("Final Growth of Each DCA Payment\nAnd Buy the Dip Purchases")) +
-    labs(x = "Date", y = "Amount",
-         caption = paste0(source_string, "\n", note_string))
+    labs(x = "Date", y = "Amount")
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -483,11 +458,6 @@ if (run_all_years == 1){
               mutate(key = factor(key, levels = c("No Lag")))
   
   file_path <- paste0(out_path, "/dip_buying_outperformance.jpeg")
-  note_string <- str_wrap(paste0("Note:  The DCA strategy buys the S&P 500 every month and stays fully invested.  ",
-                                 "The Buy the Dip strategy accumulates cash and buys at 'dips' in the S&P 500.  ",
-                                 "The outperformance percentage is defined as how much more (or less) money that the Buy the Dip strategy has compared to",
-                                  " the DCA strategy in the final period."), 
-                          width = 85)
   
   text_labels <- data.frame(date = c(as.Date("1950-01-01"), as.Date("1950-01-01")),
                             value = c(0.15, -0.15),
@@ -515,8 +485,7 @@ if (run_all_years == 1){
                  )) +
     of_dollars_and_data_theme +
     ggtitle(paste0("Buy the Dip vs. DCA\nAll ", n_years, "-Year Periods")) +
-    labs(x = "Date", y = "Buy the Dip Outperformance (%)",
-         caption = paste0(source_string, "\n", note_string))
+    labs(x = "Date", y = "Buy the Dip Outperformance (%)")
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
