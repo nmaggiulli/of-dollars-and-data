@@ -55,7 +55,7 @@ raw <- read.csv(paste0(importdir, "0139_sp500_individual_stocks/ycharts_tr.csv")
 
 first_last <- raw %>%
                 group_by(symbol) %>%
-                summarize(min_year = min(year),
+                summarise(min_year = min(year),
                           max_year = max(year),
                           n_years_data = n()) %>%
                 ungroup()
@@ -93,7 +93,7 @@ for(p in portfolio_sizes){
     tmp <- full_data %>%
             filter(symbol %in% s) %>%
             group_by(year) %>%
-            summarize(mean_ret = mean(ret),
+            summarise(mean_ret = mean(ret),
                       spx_ret = mean(spx_ret)) %>%
             ungroup() %>%
             mutate(binned_ret = case_when(
@@ -106,7 +106,7 @@ for(p in portfolio_sizes){
                    )
     
     fnl <- tmp %>%
-            summarize(p_ret = prod(1+mean_ret)^(1/nrow(tmp)) - 1,
+            summarise(p_ret = prod(1+mean_ret)^(1/nrow(tmp)) - 1,
                       spx_ret = prod(1+spx_ret)^(1/nrow(tmp)) - 1)
     
     tmp <- tmp %>%
@@ -124,7 +124,7 @@ for(p in portfolio_sizes){
 # Summarize above market stats
 above_market_stats_year <- full_data %>%
                               group_by(year) %>%
-                              summarize(above_market = mean(above_market)) %>%
+                              summarise(above_market = mean(above_market)) %>%
                               ungroup()
 
 # Loop by start year
@@ -141,11 +141,11 @@ for(y in all_years){
   ind <- full_data %>%
     filter(year >= y) %>%
     group_by(symbol) %>%
-    summarize(p_ret = prod(1+ret)- 1,
+    summarise(p_ret = prod(1+ret)- 1,
               spx_ret = prod(1+spx_ret) - 1) %>%
     ungroup() %>%
     mutate(above_market = ifelse(p_ret>spx_ret, 1, 0)) %>%
-    summarize(market_outperformance_2018 = mean(above_market)) %>%
+    summarise(market_outperformance_2018 = mean(above_market)) %>%
     mutate(start_year = y) %>%
     select(start_year, market_outperformance_2018)
   
@@ -154,14 +154,14 @@ for(y in all_years){
   port <- final_results %>%
     filter(year >= y) %>%
     group_by(portfolio_size, simulation) %>%
-    summarize(p_ret = prod(1+mean_ret)^(1/n_years) - 1,
+    summarise(p_ret = prod(1+mean_ret)^(1/n_years) - 1,
               spx_ret = prod(1+spx_ret)^(1/n_years) - 1) %>%
     ungroup() %>%
     mutate(above_market = ifelse(p_ret>spx_ret, 1, 0),
            market_outperformance_2018 = p_ret - spx_ret,
            start_year = y) %>%
     group_by(start_year, portfolio_size) %>%
-    summarize(above_market = mean(above_market),
+    summarise(above_market = mean(above_market),
               market_outperformance_2018 = mean(market_outperformance_2018)) %>%
     ungroup() %>%
     select(start_year, portfolio_size, above_market, market_outperformance_2018)
@@ -177,7 +177,7 @@ for(y in all_years){
 
 overall_summary <- final_results %>%
                       group_by(year, portfolio_size) %>%
-                      summarize(avg_ret = mean(mean_ret),
+                      summarise(avg_ret = mean(mean_ret),
                                 sd_ret = sd(mean_ret)) %>%
                       ungroup() %>%
                       left_join(spx)

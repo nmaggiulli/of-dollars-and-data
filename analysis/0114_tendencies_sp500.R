@@ -30,7 +30,7 @@ ret_yr <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                   filter(!is.na(ret), yr > 1940)
 
 avg_ret <- ret_yr %>%
-            summarize(mean_ret = mean(ret)) %>%
+            summarise(mean_ret = mean(ret)) %>%
             pull()
 
 print(avg_ret)

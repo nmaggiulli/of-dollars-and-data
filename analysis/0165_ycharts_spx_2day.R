@@ -73,7 +73,7 @@ run_fwd_rets <- function(n_days_fwd){
   
   avg <- to_plot %>%
           group_by(day) %>%
-          summarize(index_sp500 = mean(index_sp500, na.rm = TRUE)) %>%
+          summarise(index_sp500 = mean(index_sp500, na.rm = TRUE)) %>%
           ungroup() %>%
           mutate(start_date = "2100-01-01")
   

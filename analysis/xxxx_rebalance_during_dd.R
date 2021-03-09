@@ -140,7 +140,7 @@ to_plot <- final_results_10yr %>%
 
 dd_limit_results <- to_plot %>%
                       group_by(n_years, dd_limit) %>%
-                      summarize(n_obs = n(),
+                      summarise(n_obs = n(),
                                 mean_dd_premium = mean(final_dd_premium),
                                 mean_rebals = mean(n_dd_rebals)) %>%
                       ungroup()

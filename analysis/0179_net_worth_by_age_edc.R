@@ -43,7 +43,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
     to_plot <- df %>%
                       rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
                       group_by(edcl, agecl) %>%
-                      summarize(
+                      summarise(
                          percentile = wtd.quantile(var_for_qtile, weights = wgt, probs=quantile_prob)
                         ) %>%
                       ungroup() %>%
@@ -51,7 +51,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
     
     percentile_var <- df %>%
       rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
-      summarize(percentile = wtd.quantile(var_for_qtile, weights = wgt, probs=quantile_prob)) %>%
+      summarise(percentile = wtd.quantile(var_for_qtile, weights = wgt, probs=quantile_prob)) %>%
       pull(percentile)
     
     quantile_prob_string <- str_pad(100*quantile_prob, side = "left", width = 3, pad = "0")
@@ -59,7 +59,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
     to_plot <- df %>%
       rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
       group_by(edcl, agecl) %>%
-      summarize(
+      summarise(
         percentile = wtd.mean(var_for_qtile, weights = wgt)
       ) %>%
       ungroup() %>%
@@ -67,7 +67,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
     
     percentile_var <- df %>%
       rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
-      summarize(percentile = wtd.mean(var_for_qtile, weights = wgt)) %>%
+      summarise(percentile = wtd.mean(var_for_qtile, weights = wgt)) %>%
       pull(percentile)
     
     quantile_prob_string <- "avg"
@@ -133,7 +133,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
                   rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
                   rename_(.dots = setNames(paste0(group_var), "group_var")) %>%
                   group_by(group_var) %>%
-                  summarize(
+                  summarise(
                     percentile = wtd.quantile(var_for_qtile, weights = wgt, probs=quantile_prob)
                   ) %>%
                   ungroup() %>%
@@ -143,7 +143,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
         rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
         rename_(.dots = setNames(paste0(group_var), "group_var")) %>%
         group_by(group_var) %>%
-        summarize(
+        summarise(
           percentile = wtd.mean(var_for_qtile, weights = wgt)
         ) %>%
         ungroup() %>%

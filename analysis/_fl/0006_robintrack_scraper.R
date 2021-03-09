@@ -49,7 +49,7 @@ if(download_data == 1){
     rt <- download_robintrack(sym) %>%
             mutate(date = as.Date(dt, format = "%Y-%m-%d")) %>%
             group_by(date) %>%
-            summarize(pop = max(pop)) %>%
+            summarise(pop = max(pop)) %>%
             ungroup() %>%
             select(date, pop)
     
@@ -94,7 +94,7 @@ corr_summary <- final_df %>%
   
 to_plot <- corr_summary %>%
                 group_by(symbol, name, pop_rank) %>%
-                summarize(correlation = cor(pop_diff, ret)) %>%
+                summarise(correlation = cor(pop_diff, ret)) %>%
                 ungroup() %>%
                 arrange(correlation) %>%
                 mutate(cor_rank = row_number())
@@ -170,7 +170,7 @@ by_sector <- to_plot %>%
                 drop_na() %>%
                  left_join(ycharts_comp) %>%
                 group_by(sector) %>%
-                summarize(n_companies = n(),
+                summarise(n_companies = n(),
                   mean_cor = mean(correlation)) %>%
                 ungroup()
 
@@ -178,7 +178,7 @@ by_sector <- to_plot %>%
 to_plot <- corr_summary %>%
   drop_na() %>%
   group_by(symbol, name, pop_rank) %>%
-  summarize(correlation = cor(pop_diff, lag_ret)) %>%
+  summarise(correlation = cor(pop_diff, lag_ret)) %>%
   ungroup() %>%
   arrange(desc(correlation))
 
@@ -205,7 +205,7 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 to_plot <- corr_summary %>%
   drop_na() %>%
   group_by(symbol, name, pop_rank) %>%
-  summarize(correlation = cor(lag_pop, ret)) %>%
+  summarise(correlation = cor(lag_pop, ret)) %>%
   ungroup() %>%
   arrange(desc(correlation))
 

@@ -100,7 +100,7 @@ if (grab_data == 1){
   final_df <- df %>%
                 filter(!is.na(ret)) %>%
                 group_by(date) %>%
-                summarize(ret = sum(ret/n())) %>%
+                summarise(ret = sum(ret/n())) %>%
                 ungroup() %>%
                 mutate(trading_day = row_number())
   

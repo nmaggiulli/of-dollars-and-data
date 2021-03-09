@@ -125,7 +125,7 @@ for(expected_months in months_to_test){
         TRUE ~ "12m+\nlate"
       )) %>%
       group_by(time_bucket) %>%
-      summarize(n_quarters = n(),
+      summarise(n_quarters = n(),
                 pct = n()/ nrow(final_results)) %>%
       ungroup()
     

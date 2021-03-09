@@ -29,7 +29,7 @@ raw <- readRDS(paste0(localdir, "0059_goyal_stock_bond_data.Rds")) %>%
 
 raw_by_year <- raw %>%
                 group_by(yr) %>%
-                summarize(ret_sp500 = prod(1+ret_sp500)-1,
+                summarise(ret_sp500 = prod(1+ret_sp500)-1,
                           ret_bond = prod(1+ret_bond)-1,
                           cpi = prod(1+cpi)-1) %>%
                 ungroup()

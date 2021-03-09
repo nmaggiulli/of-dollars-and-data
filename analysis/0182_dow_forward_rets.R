@@ -85,13 +85,13 @@ plot_fwd_rets <- function(df, outname, sourcename){
     
     pos <- tmp %>%
             group_by(label) %>%
-            summarize(pct_pos = mean(fwd_pos, na.rm = TRUE)) %>%
+            summarise(pct_pos = mean(fwd_pos, na.rm = TRUE)) %>%
             ungroup()
     
     pos_neg <- tmp %>%
       filter(!is.na(fwd_pos)) %>%
       group_by(label, fwd_pos) %>%
-      summarize(ret = mean(fwd_ret, na.rm = TRUE)) %>%
+      summarise(ret = mean(fwd_ret, na.rm = TRUE)) %>%
       ungroup()
             
     if(f == 1){

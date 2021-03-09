@@ -51,7 +51,7 @@ plot_global <- function(start_date, end_date){
   first_date <- gr_long %>%
             filter(!is.na(value)) %>%
             group_by(date) %>%
-            summarize(n_countries = n()) %>%
+            summarise(n_countries = n()) %>%
             filter(n_countries == (ncol(gr) - 1)) %>%
             head(1)
   
@@ -73,7 +73,7 @@ plot_global <- function(start_date, end_date){
                 mutate(yr = year(date),
                        mt = month(date)) %>%
                 group_by(yr, mt, key) %>%
-                summarize(value = mean(value)) %>%
+                summarise(value = mean(value)) %>%
                 ungroup() %>%
                 mutate(date = as.Date(paste0(yr,"-", mt, "-01"))) %>%
                 left_join(gr_1) %>%

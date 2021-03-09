@@ -34,7 +34,7 @@ dd_cutoff <- -0.30
 dd_groups <- dd %>%
               filter(pct < dd_cutoff) %>%
               group_by(dd_count) %>%
-              summarize(below_pct_date = min(date),
+              summarise(below_pct_date = min(date),
                         min_dd = min(pct)) %>%
               ungroup() %>%
               select(dd_count, below_pct_date, min_dd) %>%
@@ -42,7 +42,7 @@ dd_groups <- dd %>%
 
 dd_starts <- dd %>%
               group_by(dd_count) %>%
-              summarize(start_date = min(date),
+              summarise(start_date = min(date),
                         end_date = max(date)) %>%
               ungroup() %>%
               select(dd_count, start_date, end_date) %>%

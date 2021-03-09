@@ -101,14 +101,14 @@ server <- function(input, output) {
     }
     
     all <- filtered() %>%
-      summarize(count = n(),
+      summarise(count = n(),
                 sumproduct = prod(next_day_ret, na.rm = TRUE),
                 ret_ann = sumproduct^(252/count)-1) %>%
       mutate(bucket = "All")
     
     final_results <-  filtered() %>%
       group_by(bucket, bucket_order) %>%
-      summarize(count = n(),
+      summarise(count = n(),
                 sumproduct = prod(next_day_ret, na.rm = TRUE),
                 ret_ann = sumproduct^(252/count)-1) %>%
       ungroup() %>%

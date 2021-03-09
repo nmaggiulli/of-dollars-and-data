@@ -35,7 +35,7 @@ dow <- read_excel(paste0(importdir, "0172_daily_dow/Dow daily 2020.xlsx"),
 
 min_dates <- dow %>%
                 group_by(yr, mt) %>%
-                summarize(min_date = min(date)) %>%
+                summarise(min_date = min(date)) %>%
                 ungroup() %>%
                 rename(date = min_date) %>%
                 inner_join(dow) %>%
@@ -44,7 +44,7 @@ min_dates <- dow %>%
 
 min_max <- dow %>%
   group_by(yr, mt) %>%
-  summarize(max_date = max(date)) %>%
+  summarise(max_date = max(date)) %>%
   ungroup() %>%
   rename(date = max_date) %>%
   inner_join(dow) %>%
@@ -56,7 +56,7 @@ min_max <- dow %>%
 
 summary <- dow %>%
             group_by(yr, mt) %>%
-            summarize(abs_ret = sum(abs(ret), na.rm = TRUE),
+            summarise(abs_ret = sum(abs(ret), na.rm = TRUE),
                       n_days = n(),
                       avg_abs_ret = abs_ret/n_days) %>%
             ungroup() %>%

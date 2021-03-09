@@ -54,7 +54,7 @@ to_plot <- select(full_bv_returns, `S&P 500`, `All Stocks`,
                   `Equal Wt`, `U.S. 60-40`,`U.S. 80-20`) %>%
             gather(key = key, value = value) %>%
             group_by(key) %>%
-            summarize(value = mean(value))
+            summarise(value = mean(value))
 
 order_vec <- to_plot[order(to_plot$value), "key"] %>% collect %>% .[["key"]]
 to_plot$key <- factor(to_plot$key, levels = order_vec)

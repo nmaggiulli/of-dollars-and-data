@@ -28,7 +28,7 @@ sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
 
 avg_by_decade <- sp500_ret_pe %>%
                   group_by(decade, first_month) %>%
-                  summarize(ret = mean(ret)) %>%
+                  summarise(ret = mean(ret)) %>%
                   ungroup()
 
 # Find the min and max decade for x-axis ticks
@@ -122,7 +122,7 @@ compare_months <- function(start_date, end_date){
   # Find the monthly average returns
   monthly_avg <- to_plot %>%
                   group_by(month) %>%
-                  summarize(ret = mean(ret)) %>%
+                  summarise(ret = mean(ret)) %>%
                   ungroup()
   
   assign("monthly_avg", monthly_avg, envir = .GlobalEnv)

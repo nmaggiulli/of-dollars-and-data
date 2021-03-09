@@ -42,13 +42,13 @@ dd_final <- dd %>%
 dd_tops <- dd_final %>%
             filter(pct == 0) %>%
             group_by(dd_num) %>%
-            summarize(recovery_price = max(price_plus_div),
+            summarise(recovery_price = max(price_plus_div),
                       recovery_date = date) %>%
             ungroup()
 
 dd_lengths <- dd %>%
                 group_by(dd_num) %>%
-                summarize(n_months = n(),
+                summarise(n_months = n(),
                           min_dd = min(pct)) %>%
                 ungroup() %>%
                 filter(min_dd < -0.2) %>%
@@ -74,7 +74,7 @@ plot_dd_pct <- function(dd_pct){
   
   tmp <- dd_w_recovery %>%
               group_by(recovery_bucket) %>%
-              summarize(pct = n()/nrow(dd_w_recovery)) %>%
+              summarise(pct = n()/nrow(dd_w_recovery)) %>%
               ungroup()
   
   recovery_buckets <- c("0%-5%", "5%-10%","10%-15%", "15%-20%", "20%-25%", "25%-30%", ">30%")

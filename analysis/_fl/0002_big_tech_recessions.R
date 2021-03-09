@@ -68,7 +68,7 @@ plot_vs_r_3000 <- function(start_date, end_date, dow_5, time_period_title){
                     inner_join(big_5) %>%
                     mutate(value = value/first_mcap) %>%
                     group_by(date) %>%
-                    summarize(value = mean(value, na.rm = TRUE)) %>%
+                    summarise(value = mean(value, na.rm = TRUE)) %>%
                     ungroup() %>%
                     mutate(name = "Dow Top 5 Stocks")
     
@@ -90,7 +90,7 @@ plot_vs_r_3000 <- function(start_date, end_date, dow_5, time_period_title){
       inner_join(big_5) %>%
       mutate(value = value/first_mcap) %>%
       group_by(date) %>%
-      summarize(value = mean(value, na.rm = TRUE)) %>%
+      summarise(value = mean(value, na.rm = TRUE)) %>%
       ungroup() %>%
       mutate(name = "FAAMG Index")
     

@@ -88,7 +88,7 @@ df <- read.csv(paste0(importdir, "0132_spx/dfa_sp500_5yr.csv"), skip = 7,
 
 yearly_rets <- df %>%
                 group_by(year, min_dd) %>%
-                summarize(year_ret_sp500 = prod(1+ret_sp500) - 1,
+                summarise(year_ret_sp500 = prod(1+ret_sp500) - 1,
                           year_ret_5yr = prod(1+ret_5yr) - 1) %>%
                 ungroup() %>%
                 left_join(df) %>%

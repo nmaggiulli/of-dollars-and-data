@@ -26,7 +26,7 @@ df <- read.csv(paste0(importdir, folder_name, "/", filename)) %>%
         ) %>%
         filter(!is.na(value)) %>%
         group_by(year, company, measure) %>%
-        summarize(value = mean(value, na.rm = TRUE)) %>%
+        summarise(value = mean(value, na.rm = TRUE)) %>%
         spread(key=measure, value=value) %>%
         ungroup()
   return(df)

@@ -164,7 +164,7 @@ decade <- df_full %>%
             mutate(decade = paste0(as.character(year(floor_date(date, years(10))))),
                    stock_real = 1 + stock_real) %>%
             group_by(decade) %>%
-            summarize(stock_real = (prod(stock_real)^(1/10) - 1)) %>%
+            summarise(stock_real = (prod(stock_real)^(1/10) - 1)) %>%
             select(decade, stock_real)
 
 # Set the file_path based on the function input 

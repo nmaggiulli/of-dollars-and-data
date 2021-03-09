@@ -103,7 +103,7 @@ for(d in 1:nrow(all_worst_dates)){
 
 avg <- to_plot %>%
   group_by(day) %>%
-  summarize(index_sp500 = mean(index_sp500, na.rm = TRUE)) %>%
+  summarise(index_sp500 = mean(index_sp500, na.rm = TRUE)) %>%
   ungroup() %>%
   mutate(start_date = "2100-01-01")
 

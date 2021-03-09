@@ -32,7 +32,7 @@ df <- readRDS(paste0(localdir, "0063_sp500_sector_returns.Rds")) %>%
          sector = case_when(sector == "S&P 500" ~ "*S&P 500*",
                             TRUE ~ sector)) %>%
   group_by(year, sector) %>%
-  summarize(value = prod(ret) - 1) %>%
+  summarise(value = prod(ret) - 1) %>%
   left_join(cpi) %>%
   mutate(value = value - rate_cpi,
          overall = case_when (sector == "*S&P 500*" ~ 1,
@@ -106,13 +106,13 @@ perf_chase_min_year <- min(perf_chase$year)
   df %>%
     filter(year >= perf_chase_min_year) %>%
     group_by(sector) %>%
-    summarize(avg_ret = mean(value),
+    summarise(avg_ret = mean(value),
               stdev = sd(value))
   
   perf_chase %>%
     filter(year >= perf_chase_min_year) %>%
     group_by(sector) %>%
-    summarize(avg_ret = mean(value),
+    summarise(avg_ret = mean(value),
               stdev = sd(value))
 
 

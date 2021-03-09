@@ -188,8 +188,8 @@ run_lump_sum_simulation <- function(n_month_dca,
     select(date, `Lump Sum`, `DCA`) %>%
     gather(-date, key=key, value=value)
   
-  avg_ls <- to_plot %>% filter(key == "Lump Sum") %>% summarize(value = mean(value)) %>% pull(value)
-  avg_dca <- to_plot %>% filter(key == "DCA") %>% summarize(value = mean(value)) %>% pull(value)
+  avg_ls <- to_plot %>% filter(key == "Lump Sum") %>% summarise(value = mean(value)) %>% pull(value)
+  avg_dca <- to_plot %>% filter(key == "DCA") %>% summarise(value = mean(value)) %>% pull(value)
   
   if(invest_dca_cash == 1){
     additional_note <- paste0("For DCA, cash receives the nominal 1-month T-Bill return before being invested.")
@@ -254,8 +254,8 @@ run_lump_sum_simulation <- function(n_month_dca,
     select(date, `Lump Sum`, `DCA`) %>%
     gather(-date, key=key, value=value)
   
-  avg_ls <- to_plot %>% filter(key == "Lump Sum") %>% summarize(value = mean(value)) %>% pull(value)
-  avg_dca <- to_plot %>% filter(key == "DCA") %>% summarize(value = mean(value)) %>% pull(value)
+  avg_ls <- to_plot %>% filter(key == "Lump Sum") %>% summarise(value = mean(value)) %>% pull(value)
+  avg_dca <- to_plot %>% filter(key == "DCA") %>% summarise(value = mean(value)) %>% pull(value)
   
   note_string <- str_wrap(paste0("Note: 'Stocks' are represented by the S&P 500 and 'Bonds' are represented by 5-Year U.S. Treasuries.  ",
                                  "The S&P 500 return includes dividends, but is not adjusted for inflation.  ",
@@ -296,8 +296,8 @@ run_lump_sum_simulation <- function(n_month_dca,
     select(date, `Lump Sum`, `DCA`) %>%
     gather(-date, key=key, value=value)
   
-  avg_ls <- to_plot %>% filter(key == "Lump Sum") %>% summarize(value = mean(value)) %>% pull(value)
-  avg_dca <- to_plot %>% filter(key == "DCA") %>% summarize(value = mean(value)) %>% pull(value)
+  avg_ls <- to_plot %>% filter(key == "Lump Sum") %>% summarise(value = mean(value)) %>% pull(value)
+  avg_dca <- to_plot %>% filter(key == "DCA") %>% summarise(value = mean(value)) %>% pull(value)
   
   note_string <- str_wrap(paste0("Note: 'Stocks' are represented by the S&P 500 and 'Bonds' are represented by 5-Year U.S. Treasuries.  ",
                                  "The S&P 500 return includes dividends, but is not adjusted for inflation.  ",

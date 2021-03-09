@@ -69,7 +69,7 @@ run_bar_plot <- function(n_session_fwd, cut, lower_limit, upper_limit){
           filter(!is.na(ret))
   
   avg_all <- df %>%
-              summarize(median_ret = quantile(ret, probs = 0.5),
+              summarise(median_ret = quantile(ret, probs = 0.5),
                         median_gdp = quantile(gdp_growth, probs = 0.5, na.rm = TRUE)) %>%
               mutate(key = "All Days")
   
@@ -79,7 +79,7 @@ run_bar_plot <- function(n_session_fwd, cut, lower_limit, upper_limit){
       filter(!is.na(emergency_cut))
     
     avg_fed <- filtered_fed %>%
-      summarize(median_ret = quantile(ret, probs = 0.5),
+      summarise(median_ret = quantile(ret, probs = 0.5),
                 median_gdp = quantile(gdp_growth, probs = 0.5, na.rm = TRUE)) %>%
       mutate(key = cut_title)
     
@@ -90,7 +90,7 @@ run_bar_plot <- function(n_session_fwd, cut, lower_limit, upper_limit){
                     filter(cut == 1)
     
     avg_fed <- filtered_fed %>%
-      summarize(median_ret = quantile(ret, probs = 0.5),
+      summarise(median_ret = quantile(ret, probs = 0.5),
                 median_gdp = quantile(gdp_growth, probs = 0.5, na.rm = TRUE)) %>%
       mutate(key = cut_title)
     
@@ -101,7 +101,7 @@ run_bar_plot <- function(n_session_fwd, cut, lower_limit, upper_limit){
       filter(emergency_cut == 1)
     
     avg_fed <- filtered_fed %>%
-      summarize(median_ret = quantile(ret, probs = 0.5),
+      summarise(median_ret = quantile(ret, probs = 0.5),
                 median_gdp = quantile(gdp_growth, probs = 0.5, na.rm = TRUE)) %>%
       mutate(key = cut_title)
     
@@ -112,7 +112,7 @@ run_bar_plot <- function(n_session_fwd, cut, lower_limit, upper_limit){
       filter(cut == 0)
     
     avg_fed <- filtered_fed %>%
-      summarize(median_ret = quantile(ret, probs = 0.5),
+      summarise(median_ret = quantile(ret, probs = 0.5),
                 median_gdp = quantile(gdp_growth, probs = 0.5, na.rm = TRUE)) %>%
       mutate(key = cut_title)
     
@@ -335,7 +335,7 @@ for(d in 1:nrow(all_cut_dates)){
 
 avg <- to_plot %>%
   group_by(day) %>%
-  summarize(index_sp500 = mean(index_sp500, na.rm = TRUE)) %>%
+  summarise(index_sp500 = mean(index_sp500, na.rm = TRUE)) %>%
   ungroup() %>%
   mutate(start_date = "2100-01-01")
 

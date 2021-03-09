@@ -205,12 +205,12 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
   #Calculate upside downside capture
   upside_trend <- final_df %>%
     filter(ret_bh > 0) %>%
-    summarize(up_down_ratio = sum(ret_trend, na.rm = TRUE)/sum(ret_bh, na.rm = TRUE)) %>%
+    summarise(up_down_ratio = sum(ret_trend, na.rm = TRUE)/sum(ret_bh, na.rm = TRUE)) %>%
     pull()
   
   downside_trend <- final_df %>%
     filter(ret_bh < 0) %>%
-    summarize(up_down_ratio = sum(ret_trend, na.rm = TRUE)/sum(ret_bh, na.rm = TRUE)) %>%
+    summarise(up_down_ratio = sum(ret_trend, na.rm = TRUE)/sum(ret_bh, na.rm = TRUE)) %>%
     pull()
   
   # Plot worst monthly returns for Trend and Buy and Hold
@@ -455,7 +455,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
   trend_low_dd <- dd %>%
     filter(key == "AvgEquityShare") %>%
     group_by(key, group) %>%
-    summarize(min_dd = min(pct)) %>%
+    summarise(min_dd = min(pct)) %>%
     ungroup() %>%
     arrange(key, min_dd) %>%
     head(3)
@@ -463,7 +463,7 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
   bh_low_dd <- dd %>%
     filter(key == "Buy and Hold") %>%
     group_by(key, group) %>%
-    summarize(min_dd = min(pct)) %>%
+    summarise(min_dd = min(pct)) %>%
     ungroup() %>%
     arrange(key, min_dd) %>%
     head(3)

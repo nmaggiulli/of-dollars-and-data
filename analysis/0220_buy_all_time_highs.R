@@ -73,12 +73,12 @@ stack <- spx %>%
 
 stack_counts <- stack %>%
                   group_by(symbol) %>%
-                  summarize(total_obs = n()) %>%
+                  summarise(total_obs = n()) %>%
                   ungroup()
 
 stats_by_dd_group <- stack %>%
                       group_by(symbol, dd_group) %>%
-                      summarize(n_obs = n(),
+                      summarise(n_obs = n(),
                                 mean_fwd_ret_1yr = mean(fwd_ret_1yr, na.rm= TRUE),
                                 mean_fwd_ret_3yr = mean(fwd_ret_3yr, na.rm= TRUE)
                                 ) %>%
@@ -96,12 +96,12 @@ plot_symbol_ret <- function(sym, name, num){
   
   avg_near <- to_plot %>%
                 filter(dd_group == "Near ATH") %>%
-                summarize(ret = mean(fwd_ret, na.rm = TRUE)) %>%
+                summarise(ret = mean(fwd_ret, na.rm = TRUE)) %>%
                 pull(ret)
   
   avg_off <- to_plot %>%
                 filter(dd_group == "Off ATH") %>%
-                summarize(ret = mean(fwd_ret, na.rm = TRUE)) %>%
+                summarise(ret = mean(fwd_ret, na.rm = TRUE)) %>%
                 pull(ret)
   
   file_path <- paste0(out_path, "/fwd_ret_", sym, "_", num, "yr_.jpeg")

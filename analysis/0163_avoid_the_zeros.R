@@ -63,14 +63,14 @@ plot_sim_periods <- function(n_periods, median){
     to_plot <- df %>%
                   gather(-period, -sim, key=key, value=value) %>%
                   group_by(period, key) %>%
-                  summarize(value = quantile(value, probs = 0.5)) %>%
+                  summarise(value = quantile(value, probs = 0.5)) %>%
                   ungroup()
     title_string <- "Median"
   } else{
     to_plot <- df %>%
       gather(-period, -sim, key=key, value=value) %>%
       group_by(period, key) %>%
-      summarize(value = mean(value)) %>%
+      summarise(value = mean(value)) %>%
       ungroup()
     title_string <- "Average"
   }

@@ -116,7 +116,7 @@ calculate_hml_over_time <- function(start_year, end_year){
   prod <- ff %>%
             filter(year >= start_year, year <= end_year) %>%
             mutate(hml = hml + 1) %>%
-            summarize(prod = prod(hml)^(1/n_yr) - 1) %>%
+            summarise(prod = prod(hml)^(1/n_yr) - 1) %>%
             pull(prod)
   return(prod)
 }

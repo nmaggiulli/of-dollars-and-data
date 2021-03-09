@@ -43,7 +43,7 @@ plot_sp <- function(from_year, to_year, title, counter){
                     filter(year >= from_year, year <= to_year) %>%
                     select(year, cape) %>%
                     group_by(year) %>%
-                    summarize(cape_by_year = mean(cape)) %>%
+                    summarise(cape_by_year = mean(cape)) %>%
                     ungroup()
   
   to_plot <- sp500_ret_pe %>%

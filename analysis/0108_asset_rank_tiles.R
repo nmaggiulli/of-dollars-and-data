@@ -69,7 +69,7 @@ create_tiles <- function(file_in, color_list, file_out, size_small, size_large, 
   
   avg <- rets %>%
     group_by(asset) %>%
-    summarize(ret = round((prod((ret/100 + 1))^(1/n_years) - 1) * 100, 1)) %>%
+    summarise(ret = round((prod((ret/100 + 1))^(1/n_years) - 1) * 100, 1)) %>%
     ungroup() %>%
     mutate(year = "Ann.") %>%
     arrange(ret) %>%

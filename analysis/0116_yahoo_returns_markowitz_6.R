@@ -71,7 +71,7 @@ for(t in 1:nrow(tickers)){
   } else if(t == 7){
     to_plot <- to_plot %>%
                   group_by(date) %>%
-                  summarize(value = sum(value)/6) %>%
+                  summarise(value = sum(value)/6) %>%
                   ungroup() %>%
                   mutate(full_name = "6 Stock\nPortfolio") %>%
                   bind_rows(temp)

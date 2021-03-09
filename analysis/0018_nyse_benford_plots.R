@@ -64,7 +64,7 @@ create_bedford_counts <- function(df, name_df){
   
   temp <- temp %>%
           group_by(leading_digit) %>%
-          summarize(count = n()) %>%
+          summarise(count = n()) %>%
           mutate(benford_count = nrow(temp) * log10(1 + 1/(as.numeric(leading_digit))),
                  n_obs = nrow(temp)) %>%
                  select(leading_digit, n_obs, count, benford_count)

@@ -84,7 +84,7 @@ calc_decade_rets <- function(df){
   months_per_decade <- df %>%
     filter(!is.na(ret_port)) %>%
     group_by(decade) %>%
-    summarize(n_months = n()) %>%
+    summarise(n_months = n()) %>%
     ungroup()
   
   tmp <- df %>%
@@ -92,7 +92,7 @@ calc_decade_rets <- function(df){
     left_join(months_per_decade) %>%
     mutate(ret_port = ret_port + 1) %>%
     group_by(decade, name, n_months) %>%
-    summarize(cumulative_ret = (prod(ret_port))) %>%
+    summarise(cumulative_ret = (prod(ret_port))) %>%
     ungroup() %>%
     mutate(ret_annualized = cumulative_ret^(1/(n_months/12)) - 1) %>%
     select(decade, name, ret_annualized)

@@ -248,7 +248,7 @@ create_gif(out_path,
 dfa_data_by_year <- dfa_data %>%
                       mutate(yr = year(date)) %>%
                       group_by(yr) %>%
-                      summarize(ret_sp500 = prod(1+ret_sp500) - 1,
+                      summarise(ret_sp500 = prod(1+ret_sp500) - 1,
                                 ret_treasury_5yr = prod(1+ret_treasury_5yr) - 1) %>%
                       ungroup()
 
@@ -257,7 +257,7 @@ to_plot <- dfa_data %>%
                   filter(date >= "1930-01-01", date < "2000-01-01") %>%
                   mutate(decade = year(floor_date(date, years(10)))) %>%
                   group_by(decade) %>%
-                  summarize(`Stocks` = prod(1+ret_sp500 - cpi)^(1/10) - 1,
+                  summarise(`Stocks` = prod(1+ret_sp500 - cpi)^(1/10) - 1,
                             `Bonds` = prod(1+ret_treasury_5yr - cpi)^(1/10) - 1) %>%
                   ungroup() %>%
                   gather(-decade, key=key, value=value)

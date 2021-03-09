@@ -27,7 +27,7 @@ raw <- readRDS(paste0(localdir, "0190_russell_3000_stocks_ycharts.Rds"))
 
 stocks_full_data <- raw %>%
                 group_by(symbol) %>%
-                summarize(n_dates = n()) %>%
+                summarise(n_dates = n()) %>%
                 ungroup()
 
 stocks_full_data <- stocks_full_data %>%
@@ -103,7 +103,7 @@ for(n_stocks in n_stocks_list){
     rets <- df %>%
               filter(stock_num %in% sim_stocks) %>%
               group_by(date) %>%
-              summarize(port = sum(value)/n_stocks,
+              summarise(port = sum(value)/n_stocks,
                         sim = i) %>%
               ungroup()
     

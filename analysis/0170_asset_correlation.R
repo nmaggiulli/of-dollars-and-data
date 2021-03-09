@@ -37,7 +37,7 @@ raw <- read.csv(paste0(importdir, "0170_ycharts_daily_ret/timeseries_3-15-2020.c
 
 full_dates <- raw %>%
                 group_by(date) %>%
-                summarize(n_assets = n()) %>%
+                summarise(n_assets = n()) %>%
                 ungroup() %>%
                 filter(n_assets == 10) %>%
                 select(date)

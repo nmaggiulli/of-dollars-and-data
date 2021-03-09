@@ -106,7 +106,7 @@ run_fwd_rets <- function(n_days_fwd, dca){
   
   avg <- to_plot %>%
           group_by(day) %>%
-          summarize(index = mean(index, na.rm = TRUE)) %>%
+          summarise(index = mean(index, na.rm = TRUE)) %>%
           ungroup() %>%
           mutate(start_date = "2100-01-01")
   

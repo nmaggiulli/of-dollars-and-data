@@ -71,7 +71,7 @@ flips_df <- flips_df %>%
 flip_theory <- flips_df %>%
                   filter(!is.na(final_pct)) %>%
                   group_by(streak) %>%
-                  summarize(prob_h = sum(final_pct, na.rm = TRUE)/n())
+                  summarise(prob_h = sum(final_pct, na.rm = TRUE)/n())
 
 #Create fake data
 set.seed(12345)

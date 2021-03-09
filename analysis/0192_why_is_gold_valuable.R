@@ -139,7 +139,7 @@ to_plot <- df %>%
                    ret_sp500_real = index_sp500/lag(index_sp500, 1) - 1,
                    decade =  paste0(as.character(year(floor_date(date, years(10)))))) %>%
             group_by(decade) %>%
-            summarize(mean_ret_gld_real = mean(ret_gld_real, na.rm = TRUE),
+            summarise(mean_ret_gld_real = mean(ret_gld_real, na.rm = TRUE),
                       mean_ret_sp500_real = mean(ret_sp500_real, na.rm= TRUE)) %>%
             ungroup() %>%
             filter(decade != 2020)

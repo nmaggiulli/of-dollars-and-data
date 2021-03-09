@@ -127,7 +127,7 @@ for(i in 1:length(fwd_ret_days)){
     mutate(fwd_ret = (lead(index_sp500_tr, fwd)/index_sp500_tr)^(exponent) - 1) %>%
     filter(!is.na(fwd_ret)) %>%
     group_by(vix_bucket) %>%
-    summarize(min_fwd_ret = min(fwd_ret),
+    summarise(min_fwd_ret = min(fwd_ret),
               mean_fwd_ret = mean(fwd_ret),
               pct25_fwd_ret = quantile(fwd_ret, probs = 0.25),
               pct50_fwd_ret = quantile(fwd_ret, probs = 0.5),

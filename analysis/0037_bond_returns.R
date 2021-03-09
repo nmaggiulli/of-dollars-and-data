@@ -88,7 +88,7 @@ file_path = paste0(exportdir, "0037_bond_returns/bond-stock-by-decade.jpeg")
 to_plot <- hist_bond_stock %>%
             select(decade, ret_10yr_bond) %>%
             group_by(decade) %>%
-              summarize(count = n(),
+              summarise(count = n(),
                         `U.S. 10-Year Bond` = prod(1 + ret_10yr_bond)^(1/count) - 1) %>%
               select(-count) %>%
               gather(key=key, value=value, -decade)

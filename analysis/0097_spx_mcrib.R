@@ -90,7 +90,7 @@ file_path <- paste0(out_path, "/mcrib_days.jpeg")
 
 to_plot <- spx_mcrib %>%
             group_by(mcrib) %>%
-            summarize(ret = mean(ret, na.rm = TRUE)) %>%
+            summarise(ret = mean(ret, na.rm = TRUE)) %>%
             ungroup()
 
 plot <- ggplot(to_plot, aes(x=mcrib, y=ret, fill = mcrib)) +
@@ -146,7 +146,7 @@ for (i in 1:n_simulations){
     left_join(all_sim_dates) %>%
     mutate(mcrib = ifelse(is.na(mcrib), "Without McRib", "With McRib")) %>%
     group_by(mcrib) %>%
-      summarize(ret = mean(ret, na.rm = TRUE)) %>%
+      summarise(ret = mean(ret, na.rm = TRUE)) %>%
       ungroup()
   
   final_results[i, 1] <- pull(sim_mcrib[1, 2]) - pull(sim_mcrib[2, 2])

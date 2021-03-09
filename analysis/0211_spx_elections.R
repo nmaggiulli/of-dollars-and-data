@@ -78,7 +78,7 @@ plot_vol_chart <- function(name, filter_string, title, var){
   to_plot <- stacked %>%
     filter_(filter_string) %>%
     group_by(days_until, election_year) %>%
-    summarize(mean_sd_20 = mean(sd_20, na.rm = TRUE),
+    summarise(mean_sd_20 = mean(sd_20, na.rm = TRUE),
               median_ret_5day = quantile(ret_5day, na.rm = TRUE, probs = 0.5),
               median_sd_20 = quantile(sd_20, na.rm = TRUE, probs = 0.5),
               median_sd_5 = quantile(sd_5, na.rm = TRUE, probs = 0.5),
@@ -166,7 +166,7 @@ to_plot <- stacked %>%
             filter(days_until >= 0,
                    days_until <= 5) %>%
             group_by(days_until, election_year) %>%
-            summarize(mean_sd_5 = quantile(sd_5, na.rm = TRUE, probs = 0.5)) %>%
+            summarise(mean_sd_5 = quantile(sd_5, na.rm = TRUE, probs = 0.5)) %>%
             ungroup()
 
 file_path <- paste0(out_path, "/spx_vol_median_5day_pre_post.jpeg")

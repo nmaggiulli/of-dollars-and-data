@@ -119,7 +119,7 @@ plot_all_by_date <- function(start_date){
   for(p in probs){
     tmp_p <- to_plot %>%
                 mutate(p_down = ifelse(max_loss < p, 1, 0)) %>%
-                summarize(mean_p_down = mean(p_down)) %>%
+                summarise(mean_p_down = mean(p_down)) %>%
                 mutate(p_down = -1*p) %>%
                 select(p_down, mean_p_down)
     

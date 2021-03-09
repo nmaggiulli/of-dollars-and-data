@@ -73,7 +73,7 @@ bond_stock <- bond_ret %>%
 
 rebal_dates <- bond_stock %>%
   group_by(year, month) %>%
-  summarize(min_date = min(date),
+  summarise(min_date = min(date),
             rebal = 1) %>%
   ungroup() %>%
   filter(month == 1 | month == 7)

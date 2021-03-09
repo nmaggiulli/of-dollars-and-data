@@ -84,7 +84,7 @@ for(dd_pct in dd_percentages){
   dd_mins <- df %>%
                 filter(dd_number != 0) %>%
                 group_by(dd_number) %>%
-                summarize(pct = min(pct),
+                summarise(pct = min(pct),
                           bottom = 1) %>%
                 ungroup() %>%
                 select(dd_number, pct, bottom)

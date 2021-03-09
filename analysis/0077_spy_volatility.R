@@ -27,7 +27,7 @@ plot_avg_return <- function(volatility_bucket, num){
   to_plot <- spy %>%
     filter(vol_bucket == volatility_bucket) %>%
     group_by(ret_pos) %>%
-    summarize(`25th` = quantile(ret_spy, p = 0.25),
+    summarise(`25th` = quantile(ret_spy, p = 0.25),
               `50th` = quantile(ret_spy, p = 0.5),
               `75th` = quantile(ret_spy, p = 0.75)) %>%
     ungroup() %>%

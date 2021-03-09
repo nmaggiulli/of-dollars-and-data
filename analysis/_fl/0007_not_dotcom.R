@@ -51,7 +51,7 @@ nq <- nq %>%
 # 10 year
 monthly_10yr <- raw_fred %>%
                   group_by(yr, mt) %>%
-                  summarize(rate_10yr = mean(rate_10yr)) %>%
+                  summarise(rate_10yr = mean(rate_10yr)) %>%
                   ungroup() %>%
                   mutate(date = as.Date(paste0(yr, "-", mt, "-01"))) %>%
                   select(date, rate_10yr)

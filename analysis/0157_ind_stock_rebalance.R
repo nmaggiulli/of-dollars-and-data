@@ -27,7 +27,7 @@ raw <- readRDS(paste0(localdir, "0157_ind_stocks_ycharts.Rds"))
 
 full_dates <- raw %>%
   group_by(date) %>%
-  summarize(n_stocks = n()) %>%
+  summarise(n_stocks = n()) %>%
   ungroup() %>%
   filter(n_stocks > 500) %>%
   select(date)
@@ -41,7 +41,7 @@ df <- raw %>%
 
 latest_date_in_month <- df %>%
                         group_by(year, month) %>%
-                        summarize(month_date = max(date)) %>%
+                        summarise(month_date = max(date)) %>%
                         ungroup()
 
 latest_date_in_qtr <- latest_date_in_month %>%
@@ -132,9 +132,9 @@ for(rebal_type in rebal_types){
       rets_filtered <- rets %>%
               filter(stock_num %in% sim_stocks) %>%
               group_by(date) %>%
-              summarize(mean_ret = mean(ret) + 1) %>%
+              summarise(mean_ret = mean(ret) + 1) %>%
               ungroup() %>%
-              summarize(ret_geo = prod(mean_ret)^(1/(length(unique(rets$date))/exponent)) - 1)
+              summarise(ret_geo = prod(mean_ret)^(1/(length(unique(rets$date))/exponent)) - 1)
       
       final_results[counter, "simulation"] <- i
       final_results[counter, "n_stocks"] <- n_stocks
@@ -148,7 +148,7 @@ for(rebal_type in rebal_types){
 
 final_results_summarized <- final_results %>%
                               group_by(n_stocks, rebalance_freq, exp) %>%
-                              summarize(avg_ret_geo = mean(ret_geo)) %>%
+                              summarise(avg_ret_geo = mean(ret_geo)) %>%
                               ungroup() %>%
                               arrange(n_stocks, -exp) %>%
                               select(n_stocks, rebalance_freq, avg_ret_geo)

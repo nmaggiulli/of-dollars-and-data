@@ -63,7 +63,7 @@ print(sum(sp500_cutoff_years$pct_below_cutoff))
 
 cutoff_summary <- sp500_cutoff_years %>%
                     group_by(pct_below_cutoff) %>%
-                    summarize(ret_fwd_6m = mean(ret_fwd_6m, na.rm = TRUE),
+                    summarise(ret_fwd_6m = mean(ret_fwd_6m, na.rm = TRUE),
                               ret_fwd_12m = mean(ret_fwd_12m, na.rm = TRUE))
 
 # Create a date list for the bottoms

@@ -103,7 +103,7 @@ for(fwd in fwd_days){
 # Get earliest date in each month
 rebal_dates <- raw %>%
                         group_by(year, month) %>%
-                        summarize(min_date = min(date),
+                        summarise(min_date = min(date),
                                   rebal = 1) %>%
                         ungroup() %>%
                         filter(month == 1 | month == 7)

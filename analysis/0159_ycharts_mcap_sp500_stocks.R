@@ -49,13 +49,13 @@ raw <- read_excel(paste0(importdir, "0159_ycharts_mcap_sp500_stocks/Historical M
 # Plot FAAMG market share over time
 all_mcap <- raw %>%
               group_by(date) %>%
-              summarize(mcap_total = sum(mcap_millions)) %>%
+              summarise(mcap_total = sum(mcap_millions)) %>%
               ungroup()
 
 to_plot <- raw %>%
                 filter(faamg == 1) %>%
                 group_by(date) %>%
-                summarize(mcap_faamg = sum(mcap_millions)) %>%
+                summarise(mcap_faamg = sum(mcap_millions)) %>%
                 ungroup() %>%
                 left_join(all_mcap) %>%
                 mutate(pct_faamg = mcap_faamg/mcap_total)
@@ -91,13 +91,13 @@ for(t in tops){
   
   top_n_sum <- top_n %>%
     group_by(date) %>%
-    summarize(mcap_top_n = sum(mcap_millions)) %>%
+    summarise(mcap_top_n = sum(mcap_millions)) %>%
     ungroup() %>%
     select(date, mcap_top_n) 
   
   tmp <- raw %>%
     group_by(date) %>%
-    summarize(mcap_year = sum(mcap_millions)) %>%
+    summarise(mcap_year = sum(mcap_millions)) %>%
     ungroup() %>%
     left_join(top_n_sum) %>%
     mutate(pct_top_n = mcap_top_n/mcap_year) %>%

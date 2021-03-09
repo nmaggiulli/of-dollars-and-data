@@ -79,7 +79,7 @@ melted_returns <- full_bv_returns %>%
   
   to_plot <- melted_returns %>%
               group_by(asset) %>%
-              summarize(ret = mean(value),
+              summarise(ret = mean(value),
                         sd = sd(value)) %>%
               ungroup()
   
