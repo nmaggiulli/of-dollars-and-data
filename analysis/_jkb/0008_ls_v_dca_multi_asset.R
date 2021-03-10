@@ -21,6 +21,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+bw_colors <- c("#969696", "#000000")
+
 remove_and_recreate_folder <- function(path){
   unlink(path)
   dir.create(file.path(paste0(path)), showWarnings = FALSE)
@@ -94,7 +96,7 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
   if(var != "outperformance"){
     plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
       geom_line() +
-      scale_color_manual(values = c("black", "gray")) +
+      scale_color_manual(values = bw_colors) +
       scale_y_continuous(label = percent_format(accuracy = 0.1)) +
       of_dollars_and_data_theme +
       theme(legend.position = "bottom",
@@ -188,25 +190,6 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
                     sheetname = "cape_summary",
                     1,
                     0)
-    
-    plot <- ggplot(to_plot, aes(x=date, y=perf_col, col = cape_group, group = 1)) +
-      geom_hline(yintercept = 0, col = "black") +
-      geom_line() +
-      geom_text_repel(data=text_labels, aes(x=date, y=perf_col),
-                      color = "black",
-                      label = text_labels$label,
-                      family = "my_font",
-                      max.iter = 1) +
-      scale_color_manual(values = c("#fee5d9", "#fcae91", "#fb6a4a", "#cb181d")) +
-      scale_y_continuous(label = percent_format(accuracy = 1), limits = c(y_min*1.4, y_max*1.4)) +
-      of_dollars_and_data_theme +
-      guides(col=guide_legend(nrow=2, byrow=TRUE)) +
-      theme(legend.position = "bottom",
-            legend.title = element_blank()) +
-      ggtitle(paste0("Average-In vs. Buying Now\nOver ", n_month_dca, " Months\nWith CAPE\n", asset)) +
-      labs(x = "Date", y="Average-In Outperformance (%)",
-           caption = paste0(source_string, "\n", note_string))
-    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   }
 }
 
@@ -428,7 +411,7 @@ if(invest_dca_cash == 0){
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
     geom_line() +
-    scale_color_manual(values = c("black", "gray")) +
+    scale_color_manual(values = bw_colors) +
     scale_y_continuous(label = percent_format(accuracy = 0.1)) +
     of_dollars_and_data_theme +
     theme(legend.position = "bottom",
@@ -459,7 +442,7 @@ if(invest_dca_cash == 0){
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
     geom_line() +
-    scale_color_manual(values = c("black", "gray")) +
+    scale_color_manual(values = bw_colors) +
     scale_y_continuous(label = percent_format(accuracy = 0.1)) +
     of_dollars_and_data_theme +
     theme(legend.position = "bottom",
@@ -486,7 +469,7 @@ if(invest_dca_cash == 0){
   file_path <- paste0(out_path,"/_ls_vs_dca_example_month.jpeg")
   
   plot <- ggplot(to_plot, aes(x=period, y=value)) +
-    geom_bar(stat="identity", fill = "gray") +
+    geom_bar(stat="identity", fill = bw_colors[2]) +
     facet_rep_grid(key ~ ., repeat.tick.labels = 'bottom') +
     scale_y_continuous(label = dollar) +
     scale_x_continuous(limits = c(0, n_month_dca+1), breaks = seq(0, n_month_dca, 3)) +

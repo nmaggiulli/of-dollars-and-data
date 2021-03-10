@@ -23,7 +23,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-bw_colors <- c("#969696", "#252525")
+bw_colors <- c("#969696", "#000000")
 
 n_years_working           <- 40
 starting_income           <- 50000

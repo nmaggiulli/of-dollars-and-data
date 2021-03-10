@@ -19,6 +19,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+bw_colors <- c("#cccccc", "#969696", "#000000")
+
 ######## Define all functions first ########
 
 create_full_dd <- function(start_date, end_date){
@@ -260,11 +262,11 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   file_path <- paste0(out_path, "/", start_date_string, "/dip_cash_lag_", lag_length, "_", start_date_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
-    geom_bar(data=cash, aes(x=date, y=value), col = "green", stat="identity") +
-    geom_line(col = "black") +
+    geom_bar(data=cash, aes(x=date, y=value), bw_colors[1], stat="identity") +
+    geom_line(col = bw_colors[2]) +
     geom_point(data=bottom, aes(x=date, y=value), col = "red", size = dot_size, alpha = 0.7) +
     scale_y_continuous(label = dollar) +
-    scale_color_manual(values = c("green", "black"), guide = FALSE) +
+    scale_color_manual(values = bw_colors, guide = FALSE) +
     geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
                     label = text_labels$key,
                     family = "my_font",
