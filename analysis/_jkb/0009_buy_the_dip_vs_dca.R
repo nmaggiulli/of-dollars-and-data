@@ -196,8 +196,8 @@ plot_ath_dips <- function(lag_length, start_date, end_date){
   file_path <- paste0(out_path, "/", start_date_string, "/ath_sp500_", start_date_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
-    geom_line() +
-    geom_point(data=ath, aes(x=date, y=value), col = "green", size = dot_size, alpha = 0.7) +
+    geom_line(col = bw_colors[3]) +
+    geom_point(data=ath, aes(x=date, y=value), col = bw_colors[1], size = dot_size, alpha = 0.7) +
     scale_y_continuous(label = dollar) +
     scale_x_date(date_labels = "%Y") +
     of_dollars_and_data_theme +
@@ -211,9 +211,9 @@ plot_ath_dips <- function(lag_length, start_date, end_date){
   file_path <- paste0(out_path, "/", start_date_string,"/ath_dip_sp500_", start_date_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
-    geom_line() +
-    geom_point(data=ath, aes(x=date, y=value), col = "green", size = dot_size, alpha = 0.7) +
-    geom_point(data=bottom, aes(x=date, y=value), col = "red", size = dot_size, alpha = 0.7) +
+    geom_line(col = bw_colors[3]) +
+    geom_point(data=ath, aes(x=date, y=value), col = bw_colors[1], size = dot_size) +
+    geom_point(data=bottom, aes(x=date, y=value), col = bw_colors[3], size = dot_size) +
     scale_y_continuous(label = dollar) +
     scale_x_date(date_labels = "%Y") +
     of_dollars_and_data_theme +
@@ -262,11 +262,11 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   file_path <- paste0(out_path, "/", start_date_string, "/dip_cash_lag_", lag_length, "_", start_date_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
-    geom_bar(data=cash, aes(x=date, y=value), bw_colors[1], stat="identity") +
-    geom_line(col = bw_colors[2]) +
-    geom_point(data=bottom, aes(x=date, y=value), col = "red", size = dot_size, alpha = 0.7) +
+    geom_bar(data=cash, aes(x=date, y=value), col = bw_colors[1], stat="identity") +
+    geom_line(col = bw_colors[3]) +
+    geom_point(data=bottom, aes(x=date, y=value), col = bw_colors[2], size = dot_size, alpha = 0.7) +
     scale_y_continuous(label = dollar) +
-    scale_color_manual(values = bw_colors, guide = FALSE) +
+    scale_color_manual(values = c(bw_colors[1], bw_colors[3]), guide = FALSE) +
     geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
                     label = text_labels$key,
                     family = "my_font",
@@ -301,9 +301,9 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
     geom_line() +
-    geom_point(data=bottom, aes(x=date, y=value), col = "red", size = dot_size, alpha = 0.7) +
+    geom_point(data=bottom, aes(x=date, y=value), col = bw_colors[1], size = dot_size, alpha = 0.7) +
     scale_y_continuous(label = dollar) +
-    scale_color_manual(values = c("#3182bd", "black"), guide = FALSE) +
+    scale_color_manual(values = c(bw_colors[2], bw_colors[3]), guide = FALSE) +
     geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
                     label = text_labels$key,
                     family = "my_font",
@@ -334,7 +334,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
     geom_line() +
     scale_y_continuous(label = dollar) +
-    scale_color_manual(values = c("#3182bd", "black"), guide = FALSE) +
+    scale_color_manual(values = c(bw_colors[1], bw_colors[3]), guide = FALSE) +
     geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
                     label = text_labels$key,
                     family = "my_font",
@@ -360,10 +360,10 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   file_path <- paste0(out_path, "/", start_date_string, "/dca_final_growth_lag_", lag_length, "_", start_date_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
-    geom_bar(stat="identity", position="dodge", col = "black") +
-    geom_point(data=bottom, aes(x=date, y=value), col = "red", alpha = 0.7)+
+    geom_bar(stat="identity", position="dodge", col = bw_colors[1]) +
+    geom_point(data=bottom, aes(x=date, y=value), col = bw_colors[3])+
     scale_y_continuous(label = dollar) +
-    scale_color_manual(values = c("#3182bd", "black"), guide = FALSE) +
+    scale_color_manual(values = c(bw_colors[3], bw_colors[1]), guide = FALSE) +
     of_dollars_and_data_theme +
     ggtitle(paste0("Final Growth of Each DCA Payment\nAnd Buy the Dip Purchases")) +
     labs(x = "Date", y = "Amount")
@@ -462,7 +462,7 @@ if (run_all_years == 1){
   file_path <- paste0(out_path, "/dip_buying_outperformance.jpeg")
   
   text_labels <- data.frame(date = c(as.Date("1950-01-01"), as.Date("1950-01-01")),
-                            value = c(0.15, -0.15),
+                            value = c(0.20, -0.15),
                             label = c("Buy the Dip Outperforms", "Buy the Dip Underperforms"))
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
@@ -474,7 +474,7 @@ if (run_all_years == 1){
                     family = "my_font",
                     max.iter = 1) +
     scale_y_continuous(label = percent) +
-    scale_color_manual(values = c("#3182bd"), guide = FALSE) +
+    scale_color_manual(values = c(bw_colors[3]), guide = FALSE) +
     scale_x_date(date_labels = "%Y",
                  breaks = c(
                    as.Date("1920-01-01"),

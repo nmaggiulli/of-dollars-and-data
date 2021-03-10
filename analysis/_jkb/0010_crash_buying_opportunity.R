@@ -24,6 +24,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+bw_colors <- "#000000"
+
 # Percent recovery plot
 percent_loss_gain <- data.frame(loss = seq(0.01, 0.5, 0.01)) %>%
                       mutate(gain = 1/(1-loss) - 1) 
@@ -31,7 +33,7 @@ percent_loss_gain <- data.frame(loss = seq(0.01, 0.5, 0.01)) %>%
 file_path <- paste0(out_path, "/gain_needed_to_recover_loss.jpeg")
 
 plot <- ggplot(percent_loss_gain, aes(x = loss, y = gain)) + 
-  geom_smooth(se = FALSE) +
+  geom_smooth(se = FALSE, col = bw_colors[1]) +
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
   scale_x_continuous(label = percent_format(accuracy = 1), limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
   of_dollars_and_data_theme +
@@ -113,7 +115,7 @@ plot_dd_pct <- function(dd_pct){
   
   # Plot the results
   plot <- ggplot(to_plot, aes(x = recovery_bucket, y = pct)) +
-    geom_bar(stat="identity", fill = chart_standard_color) +
+    geom_bar(stat="identity", fill = bw_colors[1]) +
     scale_y_continuous(label = percent_format(accuracy = 1),
                        limits = c(0, 0.5)) +
     of_dollars_and_data_theme +
