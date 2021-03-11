@@ -420,33 +420,48 @@ if(invest_dca_cash == 0 & n_month_dca == 12){
   
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
-  to_plot <- final_results %>%
-    filter(asset %in% c("S&P 500 Total Return", "Portfolio 60-40")) %>%
-    select(date, asset, contains("ret")) %>%
-    mutate(value = ifelse(asset == "Portfolio 60-40", ls_ret_12m, dca_ret_12m)) %>%
-    select(date, asset, value)
+  sp500_dca <- final_results %>%
+    filter(asset %in% c("S&P 500 Total Return")) %>%
+    select(date, dca_ret_12m)
   
-  avg_ls <- to_plot %>% filter(asset == "Portfolio 60-40") %>% summarise(value = mean(value)) %>% pull(value)
-  avg_dca <- to_plot %>% filter(asset == "S&P 500 Total Return") %>% summarise(value = mean(value)) %>% pull(value)
+  port6040_ls <- final_results %>%
+    filter(asset %in% c("Portfolio 60-40")) %>%
+    select(date, ls_ret_12m)
   
-  note_string <- str_wrap(paste0("Note: On average, the Average-In strategy has a monthly return of ", 100*round(avg_dca, 3), 
-                                 "%  while Buy Now has a monthly return of ", 100*round(avg_ls, 3), "% over the time period shown.  "), 
-                          width = 80)
+  to_plot <- sp500_dca %>%
+              left_join(port6040_ls) %>%
+              mutate(outperformance = dca_ret_12m - ls_ret_12m) %>%
+              select(date, outperformance)
   
-  to_plot <- to_plot %>%
-    mutate(asset = ifelse(asset == "Portfolio 60-40", "Buy Now into 60-40", "Average-In to S&P 500"))
+  mid_date <- to_plot[ceiling(nrow(to_plot)/2), "date"]
   
-  file_path <- paste0(out_path,"/_sp500_dca_vs_6040_ls_ret_", n_month_dca, "m.jpeg")
+  text_labels <- data.frame()
+  text_labels[1, "outperformance"] <- 0.018
+  text_labels[1, "label"] <- "Average-In Outperforms Buy Now"
+  text_labels[1, "date"] <- mid_date
+  text_labels[2, "outperformance"] <- -0.018
+  text_labels[2, "label"] <- "Average-In Underperforms Buy Now"
+  text_labels[2, "date"] <- mid_date
   
-  plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
-    geom_line() +
-    scale_color_manual(values = bw_colors) +
-    scale_y_continuous(label = percent_format(accuracy = 0.1)) +
+  text_labels <- text_labels %>%
+    mutate(date = as.Date(date))
+  
+  file_path <- paste0(out_path,"/_sp500_dca_vs_6040_ls_outperform_", n_month_dca, "m.jpeg")
+  
+  plot <- ggplot(to_plot, aes(x=date, y=outperformance)) +
+    geom_hline(yintercept = 0, col = "black") +
+    geom_line(col = bw_colors[2]) +
+    geom_text_repel(data=text_labels, aes(x=date, y=outperformance),
+                    color = "black",
+                    label = text_labels$label,
+                    family = "my_font",
+                    max.iter = 1) +
+    scale_y_continuous(label = percent_format(accuracy = 0.1), limits = c(-0.02, 0.02), breaks = seq(-0.02, 0.02, 0.01)) +
     of_dollars_and_data_theme +
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
-    ggtitle(paste0("Monthly Return For\n", n_month_dca, "-Month Average-In to S&P 500 vs.\nBuy Now into 60/40")) +
-    labs(x = "Date", y=("Monthly Return"))
+    ggtitle(paste0(n_month_dca, "-Month Average-In to S&P 500 vs.\nBuy Now into 60/40 Portfolio")) +
+    labs(x = "Date", y=("Average-In Performance Premium (%)"))
   
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
