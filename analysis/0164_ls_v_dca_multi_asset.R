@@ -38,7 +38,7 @@ ProperCase <- function(InputString){
 
 plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
   
-  file_path <- paste0(f_out,"/ls_v_dca_", var, "_", n_month_dca, "m_", asset, ".jpeg")
+  file_path <- paste0(f_out,"/ls_v_dca2_", var, "_", n_month_dca, "m_", asset, ".jpeg")
   
   if(invest_dca_cash == 1){
     additional_note <- paste0("For DCA, cash receives the return on the Bloomberg Barclays US 1-3 Month Treasury Bill Index before being invested.")
@@ -341,7 +341,7 @@ run_asset <- function(a, invest_dca_cash){
     asset_result[i, "asset"] <- a
     asset_result[i, ls_col] <- end_ls - 1
     asset_result[i, dca_col] <- end_dca - 1
-    asset_result[i, out_col] <- end_dca/end_ls - 1
+    asset_result[i, out_col] <- end_dca - end_ls
     asset_result[i, under_col] <- ifelse(end_dca < end_ls, 1, 0)
 
     asset_result[i, ls_r] <- (prod(1 + ls_ret)^(1/n_month_dca)) - 1
@@ -374,7 +374,7 @@ run_asset <- function(a, invest_dca_cash){
 }
 
 all_assets <- unique(df$name)
-invest_dca_cash <- 0
+invest_dca_cash <- 1
 
 if(invest_dca_cash == 1){
   out_path <- paste0(out_path, "/_invest_dca_cash")
@@ -424,7 +424,7 @@ if(invest_dca_cash == 0){
   to_plot <- to_plot %>%
               mutate(asset = ifelse(asset == "Portfolio 60-40", "Lump Sum into 60-40", "DCA into S&P 500"))
   
-  file_path <- paste0(out_path,"/_sp500_dca_vs_6040_ls_sd_", n_month_dca, "m.jpeg")
+  file_path <- paste0(out_path,"/_sp500_dca2_vs_6040_ls_sd_", n_month_dca, "m.jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
     geom_line() +
@@ -455,7 +455,7 @@ if(invest_dca_cash == 0){
   to_plot <- to_plot %>%
     mutate(asset = ifelse(asset == "Portfolio 60-40", "Lump Sum into 60-40", "DCA into S&P 500"))
   
-  file_path <- paste0(out_path,"/_sp500_dca_vs_6040_ls_ret_", n_month_dca, "m.jpeg")
+  file_path <- paste0(out_path,"/_sp500_dca2_vs_6040_ls_ret_", n_month_dca, "m.jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
     geom_line() +
