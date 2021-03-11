@@ -44,7 +44,8 @@ plot <- ggplot(percent_loss_gain, aes(x = loss, y = gain)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 shiller <- readRDS(paste0(localdir, "0009_sp500_ret_pe.RDS")) %>%
-  select(date, price_plus_div)
+  select(date, price_plus_div) %>%
+  filter(date >= "1920-01-01")
 
 dd <- drawdown_path(shiller)
 
