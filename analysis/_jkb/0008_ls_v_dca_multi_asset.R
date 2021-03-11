@@ -23,7 +23,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 bw_colors <- c("#969696", "#000000")
 
-n_month_dca <- 36
+n_month_dca <- 12
 
 remove_and_recreate_folder <- function(path){
   unlink(path)
@@ -103,7 +103,7 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
       of_dollars_and_data_theme +
       theme(legend.position = "bottom",
             legend.title = element_blank()) +
-      ggtitle(paste0(ProperCase(var_note), " For ", n_month_dca, "-Month Average-In\nvs. Buying Now\n", asset)) +
+      ggtitle(paste0("Average-In vs. Buy Now\n",ProperCase(var_note), " Over ", n_month_dca, " Months\n", asset)) +
       labs(x = "Date", y=ProperCase(var_note))
   } else if (var == "outperformance"){
     
