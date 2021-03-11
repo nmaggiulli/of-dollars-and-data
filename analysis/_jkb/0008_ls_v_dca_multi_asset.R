@@ -468,7 +468,7 @@ if(invest_dca_cash == 0 & n_month_dca == 12){
   plot <- ggplot(to_plot, aes(x=period, y=value)) +
     geom_bar(stat="identity", fill = bw_colors[2]) +
     facet_rep_grid(key ~ ., repeat.tick.labels = 'bottom') +
-    scale_y_continuous(label = dollar) +
+    scale_y_continuous(label = dollar, limits = c(0, dca_months*1000), breaks = seq(0, dca_months*1000, 2000)) +
     scale_x_continuous(limits = c(0, dca_months+1), breaks = seq(0, dca_months, 3)) +
     of_dollars_and_data_theme +
     theme(panel.border=element_blank(), axis.line=element_line()) +
