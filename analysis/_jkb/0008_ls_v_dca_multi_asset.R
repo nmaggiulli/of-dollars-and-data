@@ -102,8 +102,7 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
       theme(legend.position = "bottom",
             legend.title = element_blank()) +
       ggtitle(paste0(ProperCase(var_note), " For ", n_month_dca, "-Month Average-In\nvs. Buying Now\n", asset)) +
-      labs(x = "Date", y=ProperCase(var_note),
-           caption = paste0(source_string, "\n", note_string))
+      labs(x = "Date", y=ProperCase(var_note))
   } else if (var == "outperformance"){
     
     n_row <- nrow(in_df)
@@ -113,10 +112,10 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
     
     text_labels <- data.frame()
     text_labels[1, "perf_col"] <- y_max * 1.25
-    text_labels[1, "label"] <- "Average-In Outperforms Buying Now"
+    text_labels[1, "label"] <- "Average-In Outperforms Buy Now"
     text_labels[1, "date"] <- mid_date
     text_labels[2, "perf_col"] <- y_min * 1.25
-    text_labels[2, "label"] <- "Average-In Underperforms Buying Now"
+    text_labels[2, "label"] <- "Average-In Underperforms Buy Now"
     text_labels[2, "date"] <- mid_date
     
     text_labels <- text_labels %>%
@@ -132,9 +131,8 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
                               max.iter = 1) +
               scale_y_continuous(label = percent_format(accuracy = 1), limits = c(y_min*1.4, y_max*1.4)) +
               of_dollars_and_data_theme +
-              ggtitle(paste0("Average-In vs. Buying Now\nOver ", n_month_dca, " Months\n", asset)) +
-              labs(x = "Date", y="Average-In Outperformance (%)",
-                   caption = paste0(source_string, "\n", note_string))
+              ggtitle(paste0("Average-In vs. Buy Now\nOver ", n_month_dca, " Months\n", asset)) +
+              labs(x = "Date", y="Average-In Performance Premium (%)")
   }
   
   # Save the plot
@@ -255,7 +253,7 @@ sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                     rename(value = price_plus_div) %>%
                     mutate(ret = value/lag(value) - 1,
                            name = "U.S. Stocks") %>%
-                    filter(!is.na(ret), date >= "1960-01-01") %>%
+                    filter(!is.na(ret), date >= "1920-01-01") %>%
                     select(date, name, value, ret, cape)
 
 df <- raw %>%
@@ -324,7 +322,7 @@ run_asset <- function(a, invest_dca_cash){
     asset_result[i, "asset"] <- a
     asset_result[i, ls_col] <- end_ls - 1
     asset_result[i, dca_col] <- end_dca - 1
-    asset_result[i, out_col] <- end_dca/end_ls - 1
+    asset_result[i, out_col] <- end_dca - end_ls
     asset_result[i, under_col] <- ifelse(end_dca < end_ls, 1, 0)
 
     asset_result[i, ls_r] <- (prod(1 + ls_ret)^(1/n_month_dca)) - 1
@@ -417,8 +415,7 @@ if(invest_dca_cash == 0){
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
     ggtitle(paste0("Standard Deviation For\n", n_month_dca, "-Month Average-In to S&P 500 vs.\nBuy Now into 60/40")) +
-    labs(x = "Date", y=("Standard Deviation"),
-         caption = paste0("Source:  YCharts (OfDollarsAndData.com)\n", note_string))
+    labs(x = "Date", y=("Standard Deviation"))
   
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
@@ -448,8 +445,7 @@ if(invest_dca_cash == 0){
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
     ggtitle(paste0("Monthly Return For\n", n_month_dca, "-Month Average-In to S&P 500 vs.\nBuy Now into 60/40")) +
-    labs(x = "Date", y=("Monthly Return"),
-         caption = paste0("Source:  YCharts (OfDollarsAndData.com)\n", note_string))
+    labs(x = "Date", y=("Monthly Return"))
   
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
