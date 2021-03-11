@@ -23,6 +23,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 bw_colors <- c("#969696", "#000000")
 
+n_month_dca <- 36
+
 remove_and_recreate_folder <- function(path){
   unlink(path)
   dir.create(file.path(paste0(path)), showWarnings = FALSE)
@@ -364,7 +366,6 @@ if(invest_dca_cash == 1){
 
 for(a in all_assets){
   if((invest_dca_cash == 1 & a != "U.S. Stocks") | invest_dca_cash == 0){
-    n_month_dca <- 12
     run_asset(a, invest_dca_cash)
   }
 }
@@ -387,7 +388,7 @@ export_to_excel(final_summary,
                 1,
                 0)
 
-if(invest_dca_cash == 0){
+if(invest_dca_cash == 0 & n_month_dca == 12){
   #Plot S&P 500 downside vs. 60/40 SD
   to_plot <- final_results %>%
               filter(asset %in% c("S&P 500 Total Return", "Portfolio 60-40")) %>%
@@ -451,13 +452,13 @@ if(invest_dca_cash == 0){
 
   # Plot sample LS vs. DCA
   amount <- 12000
-  n_month_dca <- 12
+  dca_months <- 12
   
-  to_plot <- data.frame(period = rep(seq(1, n_month_dca), 2),
-                        value = c(amount, rep(0, n_month_dca-1),
-                                       rep(amount/n_month_dca, n_month_dca)),
-                        key = c(rep("Buy Now", n_month_dca),
-                                rep("Average-In", n_month_dca))
+  to_plot <- data.frame(period = rep(seq(1, dca_months), 2),
+                        value = c(amount, rep(0, dca_months-1),
+                                       rep(amount/dca_months, dca_months)),
+                        key = c(rep("Buy Now", dca_months),
+                                rep("Average-In", dca_months))
   )
   
   to_plot$key <- factor(to_plot$key, levels = c("Buy Now", "Average-In"))
@@ -468,7 +469,7 @@ if(invest_dca_cash == 0){
     geom_bar(stat="identity", fill = bw_colors[2]) +
     facet_rep_grid(key ~ ., repeat.tick.labels = 'bottom') +
     scale_y_continuous(label = dollar) +
-    scale_x_continuous(limits = c(0, n_month_dca+1), breaks = seq(0, n_month_dca, 3)) +
+    scale_x_continuous(limits = c(0, dca_months+1), breaks = seq(0, dca_months, 3)) +
     of_dollars_and_data_theme +
     theme(panel.border=element_blank(), axis.line=element_line()) +
     ggtitle(paste0("Buy Now vs. Average-In")) +
