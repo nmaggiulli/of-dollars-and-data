@@ -24,6 +24,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 bw_colors <- c("#969696", "#000000")
 
 n_month_dca <- 12
+invest_dca_cash <- 0
 
 remove_and_recreate_folder <- function(path){
   unlink(path)
@@ -67,6 +68,7 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
   } else if (var == "outperformance"){
     to_plot <- in_df %>%
       rename_(.dots = setNames(paste0("dca_outperformance_", n_month_dca, "m"), "perf_col")) %>%
+      rename_(.dots = setNames(paste0("dca_underperformed_", n_month_dca, "m"), "months_col")) %>%
       rename_(.dots = setNames(paste0("ls_sharpe_", n_month_dca, "m"), "ls_sharpe")) %>%
       rename_(.dots = setNames(paste0("dca_sharpe_", n_month_dca, "m"), "dca_sharpe"))
     
@@ -146,7 +148,8 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
     file_path <- paste0(f_out,"/ls_v_dca_", var, "_", n_month_dca, "m_cape_", asset, ".jpeg")
     
     to_plot <- to_plot %>%
-      left_join(select(sp500_ret_pe, date, cape))
+      left_join(select(sp500_ret_pe, date, cape)) %>%
+      filter(date >= "1960-01-01")
     
     cape_pct_25 <- quantile(to_plot$cape, probs = 0.25)
     cape_pct_50 <- quantile(to_plot$cape, probs = 0.5)
@@ -170,14 +173,15 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
     
     cape_summary <- to_plot %>%
                       group_by(cape_group) %>%
-                      summarise(avg_dca_outperformance = mean(perf_col),
+                      summarise(avg_dca_outperformance = -1*mean(perf_col),
+                                dca_underperformed_months = mean(months_col),
                                 avg_ls_sharpe = mean(ls_sharpe),
                                 avg_dca_sharpe = mean(dca_sharpe)) %>%
                       ungroup()
     
     cape_gt_30 <- to_plot %>%
       group_by(cape_gt_30) %>%
-      summarise(avg_dca_outperformance = mean(perf_col),
+      summarise(avg_dca_outperformance = -1*mean(perf_col),
                 avg_ls_sharpe = mean(ls_sharpe),
                 avg_dca_sharpe = mean(dca_sharpe)) %>%
       ungroup()
@@ -193,7 +197,7 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
   }
 }
 
-raw <- read.csv(paste0(importdir, "_jkb/0009_ycharts_multi_asset/timeseries_3-8-2021.csv"), skip = 6) %>%
+raw <- read.csv(paste0(importdir, "_jkb/0008_ycharts_multi_asset/timeseries_3-8-2021.csv"), skip = 6) %>%
   rename(symbol = Symbol,
          name = Name) %>%
   select(-Metric) %>%
@@ -228,7 +232,7 @@ for(i in 1:nrow(port_6040)){
 }
 
 # Bring in 1m-3m tbills
-tbill <- read.csv(paste0(importdir, "_jkb/0009_ycharts_multi_asset/ycharts_1m_3m_treasury_rate.csv"), skip = 6) %>%
+tbill <- read.csv(paste0(importdir, "_jkb/0008_ycharts_multi_asset/ycharts_1m_3m_treasury_rate.csv"), skip = 6) %>%
   rename(symbol = Symbol,
          name = Name) %>%
   select(-Metric) %>%
@@ -357,7 +361,6 @@ run_asset <- function(a, invest_dca_cash){
 }
 
 all_assets <- unique(df$name)
-invest_dca_cash <- 0
 
 if(invest_dca_cash == 1){
   out_path <- paste0(out_path, "/_invest_dca_cash")
@@ -404,7 +407,7 @@ if(invest_dca_cash == 0 & n_month_dca == 12){
                           width = 80)
   
   to_plot <- to_plot %>%
-              mutate(asset = ifelse(asset == "Portfolio 60-40", "Buy Now into 60-40", "Average-In to S&P 500"))
+              mutate(asset = ifelse(asset == "Portfolio 60-40", "Buy Now into 60/40", "Average-In to S&P 500"))
   
   file_path <- paste0(out_path,"/_sp500_dca_vs_6040_ls_sd_", n_month_dca, "m.jpeg")
   
@@ -433,13 +436,15 @@ if(invest_dca_cash == 0 & n_month_dca == 12){
               mutate(outperformance = dca_ret_12m - ls_ret_12m) %>%
               select(date, outperformance)
   
+  print(mean(to_plot$outperformance))
+  
   mid_date <- to_plot[ceiling(nrow(to_plot)/2), "date"]
   
   text_labels <- data.frame()
-  text_labels[1, "outperformance"] <- 0.018
+  text_labels[1, "outperformance"] <- 0.02
   text_labels[1, "label"] <- "Average-In Outperforms Buy Now"
   text_labels[1, "date"] <- mid_date
-  text_labels[2, "outperformance"] <- -0.018
+  text_labels[2, "outperformance"] <- -0.02
   text_labels[2, "label"] <- "Average-In Underperforms Buy Now"
   text_labels[2, "date"] <- mid_date
   
