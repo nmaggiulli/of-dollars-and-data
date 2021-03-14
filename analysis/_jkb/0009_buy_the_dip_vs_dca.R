@@ -264,7 +264,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
     geom_bar(data=cash, aes(x=date, y=value), col = bw_colors[1], stat="identity") +
     geom_line(col = bw_colors[3]) +
-    geom_point(data=bottom, aes(x=date, y=value), col = bw_colors[2], size = dot_size, alpha = 0.7) +
+    geom_point(data=bottom, aes(x=date, y=value), col = bw_colors[3], size = dot_size) +
     scale_y_continuous(label = dollar) +
     scale_color_manual(values = c(bw_colors[1], bw_colors[3]), guide = FALSE) +
     geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
@@ -301,16 +301,16 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
     geom_line() +
-    geom_point(data=bottom, aes(x=date, y=value), col = bw_colors[1], size = dot_size, alpha = 0.7) +
+    geom_point(data=bottom, aes(x=date, y=value), col = bw_colors[3], size = dot_size) +
     scale_y_continuous(label = dollar) +
-    scale_color_manual(values = c(bw_colors[2], bw_colors[3]), guide = FALSE) +
+    scale_color_manual(values = c(bw_colors[3], bw_colors[2]), guide = FALSE) +
     geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
                     label = text_labels$key,
                     family = "my_font",
                     nudge_y = ifelse(text_labels$key == "DCA", -15000, 15000),
                     segment.color = "transparent") +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Buy the Dip", end_title, "\nvs. DCA")) +
+    ggtitle(paste0("Buy the Dip", end_title, " vs. DCA")) +
     labs(x = "Date", y = "Amount")
   
   # Save the plot
@@ -402,9 +402,9 @@ if(testing == 1){
 }
 
 # Do all plotting
-plot_ath_dips(0, "1995-01-01", "2018-12-01")
-plot_dca_v_cash(0, "1995-01-01", "2018-12-01", "2014-12-01")
-plot_dca_v_cash(2, "1995-01-01", "2018-12-01", "2014-12-01")
+plot_ath_dips(0, "1996-01-01", "2019-12-01")
+plot_dca_v_cash(0, "1996-01-01", "2019-12-01", "2014-12-01")
+plot_dca_v_cash(2, "1996-01-01", "2019-12-01", "2014-12-01")
 
 dt1 <- "1928-01-01"
 plot_ath_dips(0, dt1, as.Date(dt1) + years(40) - months(1))
