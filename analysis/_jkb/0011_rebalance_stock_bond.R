@@ -111,7 +111,7 @@ run_rebal <- function(start_date, end_date, rebal_months, rebal_string){
 all_dates <- raw %>% filter(month(date) == 1) %>% select(date) %>% distinct()
 total_months <- nrow(all_dates)
 period_months <- n_years
-rebal_periods <- c(1, 12, 9999)
+rebal_periods <- c(12, 9999)
 
 #Run all sims
 final_results <- data.frame()
@@ -124,9 +124,7 @@ for(i in 1:length(rebal_periods)){
                          end_date = all_dates[(period_months+1):total_months, "date"],
                          rebal_period = rep(r, total_months - period_months))
   
-  if(r == 1){
-    rebal_string <- "Rebalanced Monthly"
-  } else if(r == 12){
+  if(r == 12){
     rebal_string <- "Rebalanced Annually"
   } else{
     rebal_string <- "Never Rebalanced"
@@ -159,7 +157,7 @@ for(i in 1:length(rebal_periods)){
     geom_bar(stat = "identity", fill = bw_colors[2]) +
     scale_y_continuous(label = dollar, limits = c(0, 40)) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Growth of $1 For  ",100*wt_stock, "/", 100*wt_bond," Portfolio\n", rebal_string, " Over ", n_years, " Years")) +
+    ggtitle(paste0("Growth of $1 For ",100*wt_stock, "/", 100*wt_bond," Portfolio\n", rebal_string, " Over ", n_years, " Years")) +
     labs(x = "Start Year" , y = "Growth of $1")
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
