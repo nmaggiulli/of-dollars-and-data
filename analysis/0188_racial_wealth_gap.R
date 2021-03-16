@@ -24,7 +24,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-data_year <- 2016
+data_year <- 2019
 
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
               filter(year == data_year)
@@ -102,7 +102,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
       print(paste0("Overall ", var_title, " is: $", formatC(percentile_var, digits = 0, format = "f", big.mark = ",")))
     }
     
-    file_path <- paste0(out_path, "/", var, "_", quantile_prob_string, "_race_", class_var, "_grid.jpeg")
+    file_path <- paste0(out_path, "/", data_year, "_", var, "_", quantile_prob_string, "_race_", class_var, "_grid.jpeg")
     source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
     note_string <-  str_wrap(paste0("Note:  Calculations based on weighted data from ", 
                                     formatC(n_hh, digits = 0, format = "f", big.mark = ","), 
@@ -201,7 +201,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
       gather(-group_var, key=key, value=value)
   }
   
-  file_path <- paste0(out_path, "/", var, "_", quantile_prob_string, "_", end_filename, ".jpeg")
+  file_path <- paste0(out_path, "/", data_year, "_", var, "_", quantile_prob_string, "_", end_filename, ".jpeg")
   source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
   note_string <-  str_wrap(paste0("Note:  Percentiles are calculated using data based on ", 
                                   formatC(n_hh, digits = 0, format = "f", big.mark = ","), 
@@ -239,7 +239,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
       ungroup() %>%
       gather(-group_var, key=key, value=value)
     
-    file_path <- paste0(out_path, "/", var, "_", quantile_prob_string, "_under35_", end_filename, ".jpeg")
+    file_path <- paste0(out_path, "/", data_year, "_", var, "_", quantile_prob_string, "_under35_", end_filename, ".jpeg")
     source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
     note_string <-  str_wrap(paste0("Note:  Percentiles are calculated using data based on ", 
                                     formatC(n_hh, digits = 0, format = "f", big.mark = ","), 
@@ -271,7 +271,7 @@ create_new_file <- 1
 create_percentile_chart("networth", "Average Net Worth", 0)
 create_percentile_chart("networth", "Median Net Worth", 0.5)
 create_percentile_chart("networth", "75th Percentile Net Worth", 0.75)
-create_percentile_chart("networth", "80th Percentile Net Worth", 0.80)
+create_percentile_chart("networth", "82nd Percentile Net Worth", 0.82)
 create_percentile_chart("networth", "25th Percentile Net Worth", 0.25)
 create_percentile_chart("networth", "90th Percentile Net Worth", 0.9)
 
