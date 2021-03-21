@@ -101,18 +101,17 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
                           paste0("$0")))
   
   plot <- ggplot(to_plot, aes(x=agecl, y=value)) +
-    geom_bar(stat = "identity", position = "dodge", fill = chart_standard_color) +
+    geom_bar(stat = "identity", position = "dodge", fill = "black") +
     facet_rep_wrap(edcl ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
-    geom_text(data = text_labels, aes(x=agecl, y=value, label = label),
-                    col = chart_standard_color,
-                    size = 1.8,
-                    vjust= ifelse(text_labels$value >0, 0, 1)) +
+    # geom_text(data = text_labels, aes(x=agecl, y=value, label = label),
+    #                 col = chart_standard_color,
+    #                 size = 1.8,
+    #                 vjust= ifelse(text_labels$value >0, 0, 1)) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     ggtitle(paste0(var_title, "\nby Age & Education Level")) +
-    labs(x="Age", y=paste0(var_title),
-         caption = paste0(source_string, "\n", note_string))
+    labs(x="Age", y=paste0(var_title))
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -152,18 +151,13 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
     }
     
     file_path <- paste0(out_path, "/", var, "_", quantile_prob_string, "_", end_filename, ".jpeg")
-    source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
-    note_string <-  str_wrap(paste0("Note:  Percentiles are calculated using data based on ", 
-                                    formatC(n_hh, digits = 0, format = "f", big.mark = ","), 
-                                    " U.S. households.")
-                             , width = 85)
     
     text_labels <- to_plot %>%
       mutate(label = ifelse(value > 0, paste0("$", formatC(round(value/1000, 0), big.mark=",", format="f", digits=0), "k"),
                             paste0("$0")))
     
     plot <- ggplot(to_plot, aes(x=group_var, y=value)) +
-      geom_bar(stat = "identity", fill = chart_standard_color) +
+      geom_bar(stat = "identity", fill = "black") +
       geom_text(data=text_labels, aes(x=group_var, y=value, label = label),
                       col = chart_standard_color,
                       vjust = -0.2,
@@ -172,8 +166,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
       scale_y_continuous(label = dollar) +
       of_dollars_and_data_theme +
       ggtitle(paste0(var_title, "\nby ", x_var)) +
-      labs(x=x_var, y=paste0(var_title),
-           caption = paste0(source_string, "\n", note_string))
+      labs(x=x_var, y=paste0(var_title))
     
     ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   }
@@ -184,6 +177,7 @@ create_percentile_chart("debt", "50th Percentile Debt", 0.5)
 create_percentile_chart("mrthel", "50th Percentile Mortgage Debt", 0.5)
 create_percentile_chart("mrthel", "75th Percentile Mortgage Debt", 0.75)
 create_percentile_chart("homeeq", "50th Percentile Home Equity", 0.5)
+create_percentile_chart("networth", "99th Percentile Net Worth", 0.99)
 
 
 
