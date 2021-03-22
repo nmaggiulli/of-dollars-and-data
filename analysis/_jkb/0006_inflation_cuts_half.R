@@ -23,7 +23,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-bw_colors <- c("#969696")
+bw_colors <- c("#000000")
 
 to_plot <- data.frame(rate = seq(0.02, 0.05, 0.01),
                       years = c(35, 23, 17, 14)) %>%
@@ -36,7 +36,7 @@ file_path <- paste0(out_path, "/inflation_cuts_half.jpeg")
 
 # Create plot
 plot <- ggplot(data = to_plot, aes(x = rate, y = years)) +
-          geom_bar(stat = "identity") +
+          geom_bar(stat = "identity", fill = bw_colors) +
           geom_text(data = to_plot, aes(x= rate, y = years, label = label),
                     col = "black",
                     size = 3.5,
@@ -47,7 +47,6 @@ plot <- ggplot(data = to_plot, aes(x = rate, y = years)) +
                     size = 3.5,
                     family = "my_font",
                     vjust = 1.5) +
-          scale_fill_manual(values = bw_colors, guide = FALSE) +
           scale_x_continuous(label = percent_format(accuracy = 1)) +
           of_dollars_and_data_theme +
           theme(axis.line.y = element_blank(),
