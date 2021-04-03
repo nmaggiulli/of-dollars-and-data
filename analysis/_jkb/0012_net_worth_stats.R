@@ -34,6 +34,9 @@ df <- scf_stack %>%
              networth, debt, mrthel, homeeq,
              wgt, 
              agecl, edcl) %>%
+      mutate(eq_over_nw = homeeq/networth,
+             non_mortgage_debt = debt - mrthel,
+             mdebt_over_eq = mrthel/homeeq) %>%
       arrange(hh_id, imp_id)
 
 n_hh <- length(unique(df$hh_id))
@@ -175,9 +178,10 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
 create_new_file <- 1
 create_percentile_chart("debt", "50th Percentile Debt", 0.5)
 create_percentile_chart("mrthel", "50th Percentile Mortgage Debt", 0.5)
-create_percentile_chart("mrthel", "75th Percentile Mortgage Debt", 0.75)
 create_percentile_chart("homeeq", "50th Percentile Home Equity", 0.5)
-create_percentile_chart("networth", "99th Percentile Net Worth", 0.99)
+create_percentile_chart("eq_over_nw", "50th Percentile Equity Over Net Worth", 0.50)
+create_percentile_chart("non_mortgage_debt", "50th Percentile Non-Mortgage Debt", 0.50)
+create_percentile_chart("mdebt_over_eq", "50th Percentile Mortage Debt/Equity", 0.50)
 
 
 

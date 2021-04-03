@@ -24,8 +24,9 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+make_plots <- 0
 n_years <- 30
-wt_stock <- 0.5
+wt_stock <- 0.6
 wt_bond <- 1 - wt_stock
 bw_colors <- c("#969696", "#000000")
 
@@ -78,7 +79,7 @@ run_rebal <- function(start_date, end_date, rebal_months, rebal_string, rebal_ad
   
   file_path <- paste0(out_path, "/rebal_", rebal_months, "_", rebal_addition, "/", date_to_string(start_date), "_area.jpeg")
   
-  if(!file.exists(file_path)){
+  if(!file.exists(file_path) & make_plots == 1){
   
     to_plot <- df %>%
       select(date, contains("value_")) %>%
@@ -155,73 +156,65 @@ for(i in 1:nrow(rebal_sims)){
     
     print(start)
     print(rebal_period)
-    if(s == 1){
+    if(s == 1 & i == 1){
       final_results <- run_rebal(start, end, rebal_period, rebal_string, r_addition)
     } else{
       final_results <- final_results %>% bind_rows(run_rebal(start, end, rebal_period, rebal_string, r_addition))
     }
   }
   
-  to_plot <- final_results %>%
-    filter(rebal_months == r, rebal_addition == r_addition)
-  
-  file_path <- paste0(out_path, "/growth_of_dollar_", r, "_", r_addition, ".jpeg")
-  
-  plot <- ggplot(to_plot, aes(x = start_date, y = final_value)) +
-    geom_bar(stat = "identity", fill = bw_colors[2]) +
-    scale_y_continuous(label = dollar) +
-    of_dollars_and_data_theme +
-    ggtitle(paste0("Growth of $100 For ",100*wt_stock, "/", 100*wt_bond," Portfolio\n", rebal_string, " Over ", n_years, " Years")) +
-    labs(x = "Start Year" , y = "Growth of $100")
-  # Save the plot
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-  
-  file_path <- paste0(out_path, "/max_dd_", r, "_", r_addition, ".jpeg")
-  
-  avg_dd <- mean(to_plot$max_dd)
-  
-  plot <- ggplot(to_plot, aes(x = start_date, y = max_dd)) +
-    geom_bar(stat = "identity", fill = bw_colors[2]) +
-    geom_hline(yintercept = avg_dd, line_type = "dashed") +
-    scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-1, 0), breaks = seq(-1, 0, 0.1)) +
-    of_dollars_and_data_theme +
-    ggtitle(paste0("Maximim Drawdown For  ",100*wt_stock, "/", 100*wt_bond," Portfolio\n", rebal_string, " Over ", n_years, " Years")) +
-    labs(x = "Start Year" , y = "Maximum Drawdown")
-  
-  # Save the plot
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-  
-  file_path <- paste0(out_path, "/stock_pct_", r, "_", r_addition, ".jpeg")
-  
-  plot <- ggplot(to_plot, aes(x = start_date, y = final_stock_pct)) +
-    geom_bar(stat = "identity", fill = bw_colors[2]) +
-    scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
-    of_dollars_and_data_theme +
-    ggtitle(paste0("Final Stock Percentage For  ",100*wt_stock, "/", 100*wt_bond," Portfolio\n", rebal_string, " Over ", n_years, " Years")) +
-    labs(x = "Start Year" , y = "Final Stock Percentage")
-  
-  # Save the plot
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  if(make_plots == 1){
+
+    to_plot <- final_results %>%
+      filter(rebal_months == r, rebal_addition == r_addition)
+    
+    file_path <- paste0(out_path, "/growth_of_dollar_", r, "_", r_addition, ".jpeg")
+    
+    plot <- ggplot(to_plot, aes(x = start_date, y = final_value)) +
+      geom_bar(stat = "identity", fill = bw_colors[2]) +
+      scale_y_continuous(label = dollar) +
+      of_dollars_and_data_theme +
+      ggtitle(paste0("Growth of $100 For ",100*wt_stock, "/", 100*wt_bond," Portfolio\n", rebal_string, " Over ", n_years, " Years")) +
+      labs(x = "Start Year" , y = "Growth of $100")
+    # Save the plot
+    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  }
 }
 
 to_plot <- final_results %>%
-              select(start_date, final_cor) %>%
-              distinct() %>%
-              arrange(start_date)
+              filter(rebal_addition == 100) %>%
+              mutate(rebal_addition_string = ifelse(rebal_addition == 0, "Not Adding Funds", "Adding Funds"),
+                     rebalance_string = ifelse(rebal_months == 12, "Rebalance Annually", "Never Rebalance"))
 
-file_path <- paste0(out_path, "/correlation_stock_bond.jpeg")
+file_path <- paste0(out_path, "/max_dd_", r, "_", r_addition, ".jpeg")
 
-plot <- ggplot(to_plot, aes(x = start_date, y = final_cor)) +
-  geom_bar(stat = "identity", fill = bw_colors[2]) +
-  scale_y_continuous(label = percent_format(accuracy = 1)) +
+plot <- ggplot(to_plot, aes(x = start_date, y = max_dd, col = rebalance_string)) +
+  geom_line() +
+  scale_color_manual(values = bw_colors) +
+  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-1, 0), breaks = seq(-1, 0, 0.1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Rolling ", n_years, "-Year Correlation\nBetween Stocks and Bonds")) +
-  labs(x = "Start Year" , y = "Correlation")
+    theme(legend.position = "bottom",
+          legend.title = element_blank()) +
+  ggtitle(paste0("Maximim Drawdown For  ",100*wt_stock, "/", 100*wt_bond," Portfolio\nOver ", n_years, " Years")) +
+  labs(x = "Start Year" , y = "Maximum Drawdown")
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+file_path <- paste0(out_path, "/stock_pct_", r, "_", r_addition, ".jpeg")
 
+plot <- ggplot(to_plot, aes(x = start_date, y = final_stock_pct, col = rebalance_string)) +
+  geom_line() +
+  scale_color_manual(values = bw_colors) +
+  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("Final Stock Percentage For  ",100*wt_stock, "/", 100*wt_bond," Portfolio\nOver ", n_years, " Years")) +
+  labs(x = "Start Year" , y = "Final Stock Percentage")
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 
 # ############################  End  ################################## #
