@@ -73,7 +73,7 @@ summary(l_reg)
 file_path <- paste0(out_path, "/equity_allocation_and_forward_returns.jpeg")
 
 # Set note and source string
-source_string <- str_wrap("Source: AAII, DFA, 1987-2018 (OfDollarsAndData.com)",
+source_string <- str_wrap("Source: AAII, DFA, 1987-2021 (OfDollarsAndData.com)",
                           width = 85)
 
 # Plot the allocation vs. future returns
@@ -94,16 +94,36 @@ my_gtable   <- ggplot_gtable(ggplot_build(plot))
 ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
 # Plot another chart
-# Set the file_path based on the function input 
-file_path <- paste0(out_path, "/bytime_equity_allocation_and_forward_returns.jpeg")
-
-# Set note and source string
-source_string <- str_wrap("Source: AAII, DFA, 1987-2018 (OfDollarsAndData.com)",
-                          width = 85)
-
 to_plot <- raw %>%
             select(date, stock_allocation, ret_forward_10yr) %>%
             gather(-date, key=key, value=value)
+
+# Equity allocation only
+file_path <- paste0(out_path, "/equity_allocation_over_time.jpeg")
+source_string <- str_wrap("Source: AAII, 1987-2021",
+                          width = 85)
+
+# Plot the allocation vs. future returns
+plot <- ggplot(aaii, aes(x = date, y = stock_allocation)) +
+  geom_line() +
+  geom_hline(yintercept = 0.61, col = "gray") +
+  scale_y_continuous(label = percent) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Investor Allocation to Equities Over Time")) +
+  labs(x = "Date" , y = "Average Investor Allocation to Equities",
+       caption = paste0("\n", source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+export_to_excel(select(aaii, date, stock_allocation),
+    paste0(out_path, "/aaii_raw.xlsx"),
+                sheetname = "aaii",
+                new_file = 1,
+                fancy_formatting = 0)
+
+# Set the file_path 
+file_path <- paste0(out_path, "/bytime_equity_allocation_and_forward_returns.jpeg")
 
 # Plot the allocation vs. future returns
 plot <- ggplot(to_plot, aes(x = date, y = value, col = key)) +
@@ -119,6 +139,9 @@ my_gtable   <- ggplot_gtable(ggplot_build(plot))
 
 # Save the plot
 ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+
+
+
 
 # Model to test trend in AAII
 trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_date){
@@ -238,10 +261,6 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
     
     # Set the file_path based on the function input 
     file_path <- paste0(out_path, "/", model_name, "/worst_returns_", m, "_", model_name, ".jpeg")
-    
-    # Set note and source string
-    source_string <- str_wrap("Source: AAII, DFA (OfDollarsAndData.com)",
-                              width = 85)
     
     # Create distribution of GT vs. Buy and Hold
     plot <- ggplot(to_plot, aes(x=reorder(yr_mo, monthly_return_pct), y=monthly_return_pct)) +
@@ -473,10 +492,6 @@ trend_aaii <- function(upper_cutoff, lower_cutoff, model_name, start_date, end_d
   
   # Set the file_path based on the function input 
   file_path <- paste0(out_path, "/", model_name, "/dd_", model_name, ".jpeg")
-  
-  # Set source
-  source_string <- str_wrap(paste0("Source:  AAII, DFA (OfDollarsAndData.com)"),
-                            width = 85)
   
   # Set note
   note_string   <- str_wrap(paste0("Note:  The largest drawdown for AvgEquityShare is ", 100*round(max_dd_trend, 3), "% compared to 
