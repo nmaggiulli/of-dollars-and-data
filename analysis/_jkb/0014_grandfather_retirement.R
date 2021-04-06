@@ -30,7 +30,9 @@ birth_year <- 1938
 start_year <- 1993
 end_date <- as.Date("2019-05-13")
 ss_age <- 62
-payment <- 500
+savings_rate <- 0.60
+payment1 <- 800*savings_rate
+payment2 <- 1400*savings_rate
 
 raw <- read.csv(paste0(importdir, "_jkb/0014_grandfather_retirement/SPXTR_data.csv")) %>%
           rename(index_sp500 = `S.P.500.Total.Return.Level`) %>%
@@ -48,14 +50,14 @@ for(i in 1:nrow(df)){
   mt <- month(df[i, "date"])
   
   if(i == 1){
-    df[i, "value_portfolio"] <- payment
+    df[i, "value_portfolio"] <- payment1
   } else{
     lag_mt <- month(df[(i-1), "date"])
     
     if(mt != lag_mt & yr >= (ss_age + birth_year)){
-      new_payment <- payment*2
+      new_payment <- payment1 + payment2
     } else if(mt != lag_mt){
-      new_payment <- payment
+      new_payment <- payment1
     }else{
       new_payment <- 0
     }
