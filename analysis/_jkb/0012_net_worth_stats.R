@@ -39,6 +39,48 @@ df <- scf_stack %>%
              mdebt_over_eq = mrthel/homeeq) %>%
       arrange(hh_id, imp_id)
 
+max_num <- 1 * 10^6
+
+homeeq_summary <- df %>%
+            group_by(hh_id) %>%
+            summarise(homeeq = mean(homeeq),
+                      networth = mean(networth)) %>%
+            ungroup() %>%
+            mutate(nw_bucket = case_when(
+              networth < 250000 ~ "<$250k",
+              networth < 500000 ~ "$250k-$500k",
+              networth < 1000000 ~ "$500k-$1M",
+              networth < 5000000 ~ "$1M-$5M",
+              TRUE ~ "$5M+"
+            ),
+                  homeeq_pct = homeeq/networth,
+                   homeeq_dummy = ifelse(homeeq > 0, 1, 0))
+
+homeeq_summary$nw_bucket <- factor(homeeq_summary$nw_bucket, levels = c("<$250k","$250k-$500k", "$500k-$1M",
+                                                                        "$1M-$5M", "$5M+"
+                                                                        ))
+
+max_num <- 10 * 10^6
+to_plot <- homeeq_summary %>%
+  filter(networth < max_num, networth > 10000) %>%
+  group_by(nw_bucket) %>%
+  summarise(home_own_pct = mean(homeeq_dummy),
+            homeeq_pct = mean(homeeq_pct)) %>%
+  ungroup()
+
+file_path <- paste0(out_path, "/homeeq_pct_vs_networth.jpeg")
+
+plot <- ggplot(to_plot, aes(x=networth, y=homeeq_dummy)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  scale_x_continuous(label = dollar, limits = c(0, max_num*1.1), breaks = seq(0, max_num, max_num/4)) +
+  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 1)) +
+  of_dollars_and_data_theme +
+  ggtitle("Home Equity Percentage vs. Net Worth") +
+  labs(x="Net Worth", y="Home Equity Percentage")
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 n_hh <- length(unique(df$hh_id))
 
 create_percentile_chart <- function(var, var_title, quantile_prob){
