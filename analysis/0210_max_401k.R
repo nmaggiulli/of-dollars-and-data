@@ -23,8 +23,12 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 annual_savings <- 10000
 cap_gains <- 0.15
 annual_dividend <- 0.02
-annual_growth <- 0.03
+annual_growth <- 0.05
 inc_tax <- 0.24
+
+# Plan fee of 73 bps equates Roth with Taxable account over 30 years (cap gains at 15%)
+# Plan fee of 153 bps equates Roth with Taxable account over 30 years (cap gains at 30%)
+plan_fee <- 0.0
 
 final_results <- data.frame()
 tax_rates <- seq(0, 0.34, 0.01)
@@ -32,7 +36,7 @@ tax_rates <- seq(0, 0.34, 0.01)
 # Pretax parameters
 counter <- 1
 for(tax_rate_retire in tax_rates){
-  n_years <- 40
+  n_years <- 30
   
   df <- data.frame()
   
@@ -53,7 +57,7 @@ for(tax_rate_retire in tax_rates){
       df[i, "value_taxable"] <- df[(i-1), "value_taxable"] + df[i, "unrealized_gains"] + df[i, "post_tax_dividend"] + annual_savings
       df[i, "liquid_taxable"] <- df[i, "value_taxable"] - (cap_gains*df[i, "cum_unrealized_gains"]) 
       
-      df[i, "value_roth401k"] <- (df[(i-1), "value_roth401k"] * (1+annual_growth+annual_dividend)) + annual_savings
+      df[i, "value_roth401k"] <- (df[(i-1), "value_roth401k"] * (1+annual_growth+annual_dividend-plan_fee)) + annual_savings
       df[i, "value_trad401k"] <- (df[(i-1), "value_trad401k"] * (1+annual_growth+annual_dividend)) + (annual_savings/(1-inc_tax))
     }
     df[i, "liquid_trad401k"] <- df[i, "value_trad401k"] * (1-tax_rate_retire)
