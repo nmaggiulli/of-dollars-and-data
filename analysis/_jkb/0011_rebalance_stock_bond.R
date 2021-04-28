@@ -214,6 +214,11 @@ to_plot <- summary %>%
   gather(-start_date, key=key, value=value) %>%
   mutate(key = ifelse(key == "min_value", "Worst Month", "Best Month"))
 
+no_additions_summary <- summary %>%
+                      filter(rebal_addition == 0)
+
+print(mean(no_additions_summary$value_diff_annualized))
+
 file_path <- paste0(out_path, "/_growth_max_min.jpeg")
 
 text_labels <- data.frame()
@@ -259,6 +264,34 @@ plot <- ggplot(to_plot, aes(x = start_date, y = max_dd, col = rebal_addition_str
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-0.7, 0), breaks = seq(-0.7, 0, 0.1)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Maximum Drawdown For ",100*wt_stock, "/", 100*wt_bond," Portfolio\nRebalanced Annually Over ", n_years, " Years")) +
+  labs(x = "Start Year" , y = "Maximum Drawdown")
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Max dd by rebal
+to_plot <- final_results %>%
+  filter(rebal_addition == 0, rebal_month == 1 | rebal_month == 99) %>%
+  mutate(rebalance_string = ifelse(rebal_month <= 12, "Rebalance Annually", "Never Rebalance"))
+
+file_path <- paste0(out_path, "/_max_dd_rebalance_vs_not.jpeg")
+
+text_labels <- data.frame()
+text_labels[1, "start_date"] <- as.Date("1961-01-01")
+text_labels[1, "max_dd"] <- -0.1
+text_labels[1, "label"] <- "Rebalance Annually"
+
+text_labels[2, "start_date"] <- as.Date("1961-01-01")
+text_labels[2, "max_dd"] <- -0.45
+text_labels[2, "label"] <- "Never Rebalance"
+
+plot <- ggplot(to_plot, aes(x = start_date, y = max_dd, col = rebalance_string)) +
+  geom_line() +
+  geom_text(data = text_labels, aes(x=start_date, y = max_dd, col = label, label = label, family = "my_font")) +
+  scale_color_manual(values = bw_colors, guide = FALSE) +
+  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-0.7, 0), breaks = seq(-0.7, 0, 0.1)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Maximum Drawdown For ",100*wt_stock, "/", 100*wt_bond," Portfolio\nOver ", n_years, " Years")) +
   labs(x = "Start Year" , y = "Maximum Drawdown")
 
 # Save the plot
