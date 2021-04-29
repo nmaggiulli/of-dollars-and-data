@@ -47,14 +47,6 @@ spx <- read.csv(paste0(importdir, "_jkb/0011_rebalance_stock_bond/spx_timeseries
 
 spx_median_1yr_ret <- quantile(spx$ret_1yr, probs = 0.5)
 
-sp500 <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-  select(date, price_plus_div) %>%
-  mutate(ret_1yr = lead(price_plus_div, 12)/price_plus_div - 1) %>%
-  filter(date >="1963-01-01") %>% 
-  drop_na()
-
-sp500_median_1yr_ret <- quantile(sp500$ret_1yr, probs = 0.5)
-  
 # Grab stock/bond data
 raw <- read.csv(paste0(importdir, "_jkb/0011_rebalance_stock_bond/sp500_5yr_treasury.csv"), skip = 6) %>%
           filter(Date != "", `S.P.500.Index` != "") %>%
@@ -206,41 +198,6 @@ summary <- final_results %>%
                         max_sd = max(final_sd)) %>%
               ungroup() %>%
               mutate(rebal_addition_string = ifelse(rebal_addition == 0, "Not Adding Funds", "Adding Funds Monthly"))
-
-# Do across all 12-month periods
-to_plot <- summary %>%
-  filter(rebal_addition == 0) %>%
-  select(start_date, min_value, max_value) %>%
-  gather(-start_date, key=key, value=value) %>%
-  mutate(key = ifelse(key == "min_value", "Worst Month", "Best Month"))
-
-no_additions_summary <- summary %>%
-                      filter(rebal_addition == 0)
-
-print(mean(no_additions_summary$value_diff_annualized))
-
-file_path <- paste0(out_path, "/_growth_max_min.jpeg")
-
-text_labels <- data.frame()
-text_labels[1, "start_date"] <- as.Date("1956-01-01")
-text_labels[1, "value"] <- 1900
-text_labels[1, "label"] <- "Best Month"
-
-text_labels[2, "start_date"] <- as.Date("1960-01-01")
-text_labels[2, "value"] <- 800
-text_labels[2, "label"] <- "Worst Month"
-
-plot <- ggplot(to_plot, aes(x = start_date, y = value, col = key)) +
-  geom_line() +
-  geom_text(data = text_labels, aes(x=start_date, y = value, col = label, label = label, family = "my_font")) +
-  scale_color_manual(values = bw_colors, guide = FALSE) +
-  scale_y_continuous(label = dollar) +
-  of_dollars_and_data_theme +
-  ggtitle(paste0("Final Value For ",100*wt_stock, "/", 100*wt_bond," Portfolio\nRebalanced Annually\nOver ", n_years, " Years")) +
-  labs(x = "Start Year" , y = "Final Value of $100 Investment")
-
-# Save the plot
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Do max dd
 to_plot <- summary %>%
