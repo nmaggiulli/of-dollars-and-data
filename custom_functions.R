@@ -216,3 +216,18 @@ proper_case <- function(InputString){
 format_as_dollar <- function(NumberInput, Digits=0){
   return(paste0("$", formatC(NumberInput, digits = Digits, format = "f", big.mark = ",")))
 }
+
+import_ycharts_timeseries <- function(path){
+  tmp <- read.csv(paste0(path),
+           skip = 6) %>%
+    select(-Metric, -Name) %>%
+    rename(symbol = Symbol) %>%
+    gather(-symbol, key=key, value=value) %>%
+    mutate(year = gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\1", key, perl = TRUE),
+           month =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\2", key, perl = TRUE),
+           day =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\3", key, perl = TRUE),
+           date = as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d")) %>%
+    arrange(date)
+  
+  return(tmp)
+}
