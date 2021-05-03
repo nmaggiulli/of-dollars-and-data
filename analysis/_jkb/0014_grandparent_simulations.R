@@ -30,9 +30,9 @@ birth_year <- 1938
 start_year <- 1993
 end_date <- as.Date("2019-05-01")
 ss_age <- 62
-savings_rate <- 0.60
-payment1 <- 800*savings_rate
-payment2 <- 1400*savings_rate
+savings_rate <- 0.50
+payment1 <- 1000*savings_rate
+payment2 <- 1200*savings_rate
 
 raw <- read.csv(paste0(importdir, "_jkb/0014_grandparent_simulation/SPXTR_data.csv")) %>%
           rename(index_sp500 = `S.P.500.Total.Return.Level`) %>%
