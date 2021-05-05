@@ -28,7 +28,7 @@ raw <- read.csv(paste0(importdir, "0238_dogecoin/IDOGEUSD_data.csv")) %>%
             select(date, index) %>%
             arrange(date) %>%
             filter(date >= "2020-03-27") %>%
-            mutate(index = ifelse(date == as.Date("2021-04-15"), 0.37, index))
+            mutate(index = ifelse(date == as.Date("2021-05-03"), 0.61, index))
 
 df <- raw %>%
         mutate(payment = case_when(date == as.Date("2020-03-27") ~  1200,
