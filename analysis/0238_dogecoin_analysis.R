@@ -28,7 +28,7 @@ raw <- read.csv(paste0(importdir, "0238_dogecoin/IDOGEUSD_data.csv")) %>%
             select(date, index) %>%
             arrange(date) %>%
             filter(date >= "2020-03-27") %>%
-            mutate(index = ifelse(date == as.Date("2021-05-03"), 0.61, index))
+            mutate(index = ifelse(date == as.Date("2021-05-04"), 0.66, index))
 
 df <- raw %>%
         mutate(payment = case_when(date == as.Date("2020-03-27") ~  1200,
@@ -64,7 +64,7 @@ to_plot <- df
 plot <- ggplot(to_plot, aes(x=date, y=portfolio)) +
   geom_line() +
   geom_point(data = purchases, col = "green") +
-  scale_y_continuous(label = dollar, trans = log10_trans()) +
+  scale_y_continuous(label = dollar, breaks = seq(0, 600000, 100000)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Putting all 3 U.S. Stimulus Checks into Dogecoin")) +
   labs(x="Date", y="Portfolio Value",
