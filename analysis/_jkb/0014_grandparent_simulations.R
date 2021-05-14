@@ -51,6 +51,7 @@ for(i in 1:nrow(df)){
   
   if(i == 1){
     df[i, "value_portfolio"] <- payment1
+    df[i, "contributions"] <- payment1
   } else{
     lag_mt <- month(df[(i-1), "date"])
     
@@ -63,6 +64,7 @@ for(i in 1:nrow(df)){
     }
     
     df[i, "value_portfolio"] <- df[(i-1), "value_portfolio"] * (1 + ret) + new_payment
+    df[i, "contributions"] <- df[(i-1), "contributions"] + new_payment
   }
 }
 
