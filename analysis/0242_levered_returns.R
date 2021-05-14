@@ -32,7 +32,7 @@ dow_2020 <- read.csv(paste0(importdir, "/0242_levered_returns/DJI_data.csv"),
               mutate(date = as.Date(date)) %>%
               filter(year(date) == 2020)
 
-n_years <- 30
+n_years <- 20
 n_trading_days <- n_years*250
 
 df <- dow_pre_2020 %>%
@@ -73,17 +73,33 @@ for(i in 1:nrow(all_dates)){
     
 }
 
+bps_fee <- 0.006
+
 to_plot <- final_results %>%
               mutate(ann_1x = port_1x^(1/n_years) - 1,
-                     ann_2x = port_2x^(1/n_years) - 1,
-                     ann_3x = port_3x^(1/n_years) - 1,
+                     ann_2x = port_2x^(1/n_years) - 1 - bps_fee,
+                     ann_3x = port_3x^(1/n_years) - 1 - bps_fee,
                      `2x Leverage` = ann_2x - ann_1x,
                      `3x Leverage` = ann_3x - ann_1x) %>%
           select(start_date, `2x Leverage`, `3x Leverage`) %>%
           gather(-start_date, key=key, value=value)
 
+avg_2x <- to_plot %>%
+            filter(key == "2x Leverage") %>%
+            summarize(avg = mean(value)) %>%
+            pull(avg)
+
+avg_3x <- to_plot %>%
+  filter(key == "3x Leverage") %>%
+  summarize(avg = mean(value)) %>%
+  pull(avg)
+
 file_path <- paste0(out_path, "/levered_outperformance_", n_years, "yrs.jpeg")
 source_string <- "Source:  Bloomberg (OfDollarsAndData.com)"
+note_string <- str_wrap(paste0("Note: Assumes an annual fee of ", 10000*bps_fee, " basis points for each leveraged strategy. ",
+                               "The average annualized outperformance of the 2x Leverage strategy is ", round(100*avg_2x, 2), "%. ",
+                               "The average annualized outperformance of the 3x Leverage strategy is ", round(100*avg_3x, 2), "%."),
+                        width = 85)
 
 text_labels <- data.frame()
 
@@ -115,7 +131,7 @@ plot <- ggplot(to_plot, aes(x=start_date, y= value, col = key)) +
         legend.title = element_blank()) +
   ggtitle(paste0("Dow Jones\nLevered Annualized Outperformance\nOver ", n_years, " Years")) +
   labs(x="Start Date", y="Annualized Outperformance",
-       caption = paste0(source_string))
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
