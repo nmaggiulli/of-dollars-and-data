@@ -32,7 +32,7 @@ dow_2020 <- read.csv(paste0(importdir, "/0242_levered_returns/DJI_data.csv"),
               mutate(date = as.Date(date)) %>%
               filter(year(date) == 2020)
 
-n_years <- 20
+n_years <- 30
 n_trading_days <- n_years*250
 
 df <- dow_pre_2020 %>%
@@ -85,16 +85,36 @@ to_plot <- final_results %>%
 file_path <- paste0(out_path, "/levered_outperformance_", n_years, "yrs.jpeg")
 source_string <- "Source:  Bloomberg (OfDollarsAndData.com)"
 
+text_labels <- data.frame()
+
+if(n_years == 10){
+  label_date <- as.Date("1965-01-01")  
+} else if (n_years == 20){
+  label_date <- as.Date("1960-01-01")  
+} else if (n_years == 30){
+  label_date <- as.Date("1955-01-01")  
+}
+
+
+text_labels[1, "start_date"] <- label_date
+text_labels[1, "value"] <- 0.4
+text_labels[1, "label"] <- "Levered Portfolio Outperforms"
+
+text_labels[2, "start_date"] <- label_date
+text_labels[2, "value"] <- -0.35
+text_labels[2, "label"] <- "Levered Portfolio Underperforms"
+
 plot <- ggplot(to_plot, aes(x=start_date, y= value, col = key)) +
   geom_line() +
   geom_hline(yintercept = 0, linetype = "dashed") +
-  scale_color_discrete() +
-  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  geom_text(data = text_labels, aes(x=start_date, y=value, label = label), col = "black", family = "my_font") +
+  scale_color_manual(values = c("#67a9cf", "#ef8a62")) +
+  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-0.4, 0.4), breaks = seq(-0.4, 0.4, 0.1)) +
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
-  ggtitle(paste0("Dow Jones Levered Outperformance\nOver ", n_years, " Years")) +
-  labs(x="Date", y="Annualized Outperformance",
+  ggtitle(paste0("Dow Jones\nLevered Annualized Outperformance\nOver ", n_years, " Years")) +
+  labs(x="Start Date", y="Annualized Outperformance",
        caption = paste0(source_string))
 
 # Save the plot
