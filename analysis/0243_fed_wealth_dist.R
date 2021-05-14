@@ -63,5 +63,25 @@ df <- fed_wealth_data %>%
         TRUE ~ NaN
       ))
 
+to_plot <- df %>%
+            select(year, category, growth_real_nw)
+
+
+file_path <- paste0(out_path, "/growth_rates_of_nw.jpeg")
+source_string <- "Source:  FRED, FED (OfDollarsAndData.com)"
+
+plot <- ggplot(to_plot, aes(x=year, y= growth_real_nw, col = category)) +
+  geom_line() +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("Annual Real Growth Rate in Wealth")) +
+  labs(x="Year", y="Real Growth Rate",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 
 # ############################  End  ################################## #
