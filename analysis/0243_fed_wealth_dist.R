@@ -11,9 +11,10 @@ library(scales)
 library(readxl)
 library(lubridate)
 library(ggrepel)
-library(gganimate)
 library(tidylog)
 library(zoo)
+library(Hmisc)
+library(lemon)
 library(tidyverse)
 
 folder_name <- "0243_fed_wealth_dist"
@@ -27,6 +28,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 # Boomers born in 1955 (on average)
 # Born in 1972 (on average)
 # Millennials born in 1989 (on average)
+
+my_colors <- c("#d7191c", "#fdae61", "#2c7bb6", "#abd9e9")
 
 cpi <- readRDS(paste0(localdir, "0021_FRED_cpi.Rds")) %>%
         filter(year >= 1989) %>%
@@ -75,11 +78,7 @@ df <- fed_wealth_data %>%
                real_nmd = non_mortgage_debt*inflator,
                category = ifelse(category == "BabyBoom", "BabyBoomers", category)) %>%
       select(year, category, age, contains("real_"), household_count) %>%
-      arrange(category, year) %>%
-      mutate(growth_real_nw = case_when(
-        category == lag(category, 1) ~ real_nw/lag(real_nw, 1) - 1,
-        TRUE ~ NaN
-      ))
+      arrange(category, year)
 
 df$category <- factor(df$category, levels = c("Millennial", "GenX", "BabyBoomers", "Silent"))
 
@@ -93,6 +92,7 @@ for(i in 1:nrow(vars_to_plot)){
   
   to_plot <- df %>%
     rename_(.dots = setNames(full_var, "var_to_plot")) %>%
+    mutate(var_to_plot = var_to_plot/(10^6)) %>%
     select(age, category, var_to_plot, household_count)
     
   file_path <- paste0(out_path, "/age_", full_var, ".jpeg")
@@ -104,11 +104,12 @@ for(i in 1:nrow(vars_to_plot)){
   plot <- ggplot(to_plot, aes(x=age, y = var_to_plot, col = category)) +
     geom_line() +
     scale_y_continuous(label = dollar) +
+    scale_color_manual(values = my_colors) +
     of_dollars_and_data_theme +
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
     ggtitle(paste0("Inflation-Adjusted ", proper_name, "\nBy Age and Generation")) +
-    labs(x="Age", y="Value (2020 Dollars)",
+    labs(x="Age", y="Value in Trillions (2020 Dollars)",
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
@@ -116,7 +117,7 @@ for(i in 1:nrow(vars_to_plot)){
   
   # Do per capita plot
   to_plot <- to_plot %>%
-            mutate(var_to_plot = var_to_plot/household_count*(10^6))
+            mutate(var_to_plot = var_to_plot/household_count*(10^6)*(10^6))
   
   file_path <- paste0(out_path, "/per_capita_age_", full_var, ".jpeg")
   source_string <- "Source:  FRED, FED Distributional Accounts (OfDollarsAndData.com)"
@@ -124,6 +125,7 @@ for(i in 1:nrow(vars_to_plot)){
   plot <- ggplot(to_plot, aes(x=age, y = var_to_plot, col = category)) +
     geom_line() +
     scale_y_continuous(label = dollar) +
+    scale_color_manual(values = my_colors) +
     of_dollars_and_data_theme +
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
@@ -135,12 +137,111 @@ for(i in 1:nrow(vars_to_plot)){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
+# Bring in SCF data
+scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
+              filter(agecl %in% c("<35"))
+source_string <- "Source:  Survey of Consumer Finances (OfDollarsAndData.com)"
 
+summary <- scf_stack %>%
+  group_by(edcl, year) %>%
+  summarise(
+    `10th Percentile` = wtd.quantile(networth, weights = wgt, probs= 0.1),
+    `50th Percentile` = wtd.quantile(networth, weights = wgt, probs= 0.5),
+    `90th Percentile` = wtd.quantile(networth, weights = wgt, probs= 0.90)
+  ) %>%
+  ungroup() %>%
+  gather(-edcl, -year, key=key, value=value) 
 
+to_plot <- summary %>%
+              filter(key %in% c("50th Percentile", "90th Percentile"))
 
+file_path <- paste0(out_path, "/under_35_nw_dist_by_year_50_90.jpeg")
 
+plot <- ggplot(to_plot, aes(x=year, y = value, col = key)) +
+  geom_line() +
+  facet_rep_wrap(edcl ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
+  scale_color_manual(values = c(my_colors[1:2])) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("Inflation-Adjusted Net Worth by Year\nHouseholds under 35")) +
+  labs(x="Year", y="Networth",
+       caption = paste0(source_string))
 
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+# Redo with lower end of distribuion
+to_plot <- summary %>%
+  filter(key %in% c("10th Percentile", "50th Percentile"))
 
+to_plot$key <- factor(to_plot$key, levels = c("50th Percentile", "10th Percentile"))
+
+file_path <- paste0(out_path, "/under_35_nw_dist_by_year_10_50.jpeg")
+
+plot <- ggplot(to_plot, aes(x=year, y = value, col = key)) +
+  geom_line() +
+  facet_rep_wrap(edcl ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
+  scale_color_manual(values = c(my_colors[1:2])) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("Inflation-Adjusted Net Worth By Year\nHouseholds under 35")) +
+  labs(x="Year", y="Networth",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Do summaries for other vars
+scf_vars_to_plot <- data.frame(
+  var = c("debt", "income", "fin"),
+  proper_name = c("Debt", "Income", "Financial Assets")
+  )
+
+for(i in 1:nrow(scf_vars_to_plot)){
+  var <- scf_vars_to_plot[i, "var"]
+  proper_name <- scf_vars_to_plot[i, "proper_name"]
+  
+  tmp <- scf_stack %>%
+    rename_(.dots = setNames(var, "var_to_summarize")) %>%
+    group_by(edcl, year) %>%
+    summarise(
+      `10th Percentile` = wtd.quantile(var_to_summarize, weights = wgt, probs= 0.1),
+      `25th Percentile` = wtd.quantile(var_to_summarize, weights = wgt, probs= 0.25),
+      `50th Percentile` = wtd.quantile(var_to_summarize, weights = wgt, probs= 0.5),
+      `75th Percentile` = wtd.quantile(var_to_summarize, weights = wgt, probs= 0.75),
+      `90th Percentile` = wtd.quantile(var_to_summarize, weights = wgt, probs= 0.90)
+    ) %>%
+    ungroup() %>%
+    gather(-edcl, -year, key=key, value=value) 
+  
+  if(var == "debt"){
+    to_plot <- tmp %>%
+                filter(key %in% c("50th Percentile", "75th Percentile", "90th Percentile"))
+  } else{
+    to_plot <- tmp %>%
+      filter(key %in% c("10th Percentile", "50th Percentile", "90th Percentile"))
+  }
+  
+  file_path <- paste0(out_path, "/under_35_", var, "_by_year.jpeg")
+  
+  plot <- ggplot(to_plot, aes(x=year, y = value, col = key)) +
+    geom_line() +
+    facet_rep_wrap(edcl ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
+    scale_color_manual(values = c(my_colors[1:3])) +
+    scale_y_continuous(label = dollar) +
+    of_dollars_and_data_theme +
+    theme(legend.position = "bottom",
+          legend.title = element_blank()) +
+    ggtitle(paste0("Inflation-Adjusted ", proper_name, " By Year\nHouseholds under 35")) +
+    labs(x="Year", y=proper_name,
+         caption = paste0(source_string))
+  
+  # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+}
 
 # ############################  End  ################################## #
