@@ -18,7 +18,7 @@ library(mitools)
 library(Hmisc)
 library(tidyverse)
 
-folder_name <- "_jkb/0012_net_worth_stats"
+folder_name <- "_jkb/0017_networth_stats"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -27,73 +27,28 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 data_year <- 2019
 
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
-              filter(year == data_year)
+  filter(year == data_year)
 
 df <- scf_stack %>%
-      select(hh_id, imp_id, 
-             networth, debt, mrthel, homeeq,
-             wgt, 
-             agecl, edcl) %>%
-      mutate(eq_over_nw = homeeq/networth,
-             non_mortgage_debt = debt - mrthel,
-             mdebt_over_eq = mrthel/homeeq) %>%
-      arrange(hh_id, imp_id)
-
-max_num <- 1 * 10^6
-
-homeeq_summary <- df %>%
-            group_by(hh_id) %>%
-            summarise(homeeq = mean(homeeq),
-                      networth = mean(networth)) %>%
-            ungroup() %>%
-            mutate(nw_bucket = case_when(
-              networth < 250000 ~ "<$250k",
-              networth < 500000 ~ "$250k-$500k",
-              networth < 1000000 ~ "$500k-$1M",
-              networth < 5000000 ~ "$1M-$5M",
-              TRUE ~ "$5M+"
-            ),
-                  homeeq_pct = homeeq/networth,
-                   homeeq_dummy = ifelse(homeeq > 0, 1, 0))
-
-homeeq_summary$nw_bucket <- factor(homeeq_summary$nw_bucket, levels = c("<$250k","$250k-$500k", "$500k-$1M",
-                                                                        "$1M-$5M", "$5M+"
-                                                                        ))
-
-max_num <- 10 * 10^6
-to_plot <- homeeq_summary %>%
-  filter(networth < max_num, networth > 10000) %>%
-  group_by(nw_bucket) %>%
-  summarise(home_own_pct = mean(homeeq_dummy),
-            homeeq_pct = mean(homeeq_pct)) %>%
-  ungroup()
-
-file_path <- paste0(out_path, "/homeeq_pct_vs_networth.jpeg")
-
-plot <- ggplot(to_plot, aes(x=networth, y=homeeq_dummy)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  scale_x_continuous(label = dollar, limits = c(0, max_num*1.1), breaks = seq(0, max_num, max_num/4)) +
-  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 1)) +
-  of_dollars_and_data_theme +
-  ggtitle("Home Equity Percentage vs. Net Worth") +
-  labs(x="Net Worth", y="Home Equity Percentage")
-
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  select(hh_id, imp_id, 
+         networth, debt, mrthel, homeeq,
+         wgt, 
+         agecl, edcl) %>%
+  arrange(hh_id, imp_id)
 
 n_hh <- length(unique(df$hh_id))
 
 create_percentile_chart <- function(var, var_title, quantile_prob){
-
+  
   if(quantile_prob != 0){
     to_plot <- df %>%
-                      rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
-                      group_by(edcl, agecl) %>%
-                      summarise(
-                         percentile = wtd.quantile(var_for_qtile, weights = wgt, probs=quantile_prob)
-                        ) %>%
-                      ungroup() %>%
-                    gather(-edcl, -agecl, key=key, value=value)
+      rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
+      group_by(edcl, agecl) %>%
+      summarise(
+        percentile = wtd.quantile(var_for_qtile, weights = wgt, probs=quantile_prob)
+      ) %>%
+      ungroup() %>%
+      gather(-edcl, -agecl, key=key, value=value)
     
     percentile_var <- df %>%
       rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
@@ -126,7 +81,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   note_string <-  str_wrap(paste0("Note:  Calculations based on weighted data from ", 
                                   formatC(n_hh, digits = 0, format = "f", big.mark = ","), 
                                   " U.S. households.")
-                                  , width = 85)
+                           , width = 85)
   
   assign(paste0("age_edc_", var, "_", quantile_prob_string), to_plot, envir = .GlobalEnv)
   
@@ -172,17 +127,17 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
       end_filename <- "edc"
       x_var <- "Education Level"
     }
-  
+    
     if(quantile_prob != 0){
       to_plot <- df %>%
-                  rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
-                  rename_(.dots = setNames(paste0(group_var), "group_var")) %>%
-                  group_by(group_var) %>%
-                  summarise(
-                    percentile = wtd.quantile(var_for_qtile, weights = wgt, probs=quantile_prob)
-                  ) %>%
-                  ungroup() %>%
-                  gather(-group_var, key=key, value=value)
+        rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
+        rename_(.dots = setNames(paste0(group_var), "group_var")) %>%
+        group_by(group_var) %>%
+        summarise(
+          percentile = wtd.quantile(var_for_qtile, weights = wgt, probs=quantile_prob)
+        ) %>%
+        ungroup() %>%
+        gather(-group_var, key=key, value=value)
     } else{
       to_plot <- df %>%
         rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
@@ -204,9 +159,9 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
     plot <- ggplot(to_plot, aes(x=group_var, y=value)) +
       geom_bar(stat = "identity", fill = "black") +
       geom_text(data=text_labels, aes(x=group_var, y=value, label = label),
-                      col = chart_standard_color,
-                      vjust = -0.2,
-                      size = 3) +
+                col = chart_standard_color,
+                vjust = -0.2,
+                size = 3) +
       scale_color_discrete(guide = FALSE) +
       scale_y_continuous(label = dollar) +
       of_dollars_and_data_theme +
@@ -218,13 +173,4 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
 }
 
 create_new_file <- 1
-create_percentile_chart("debt", "50th Percentile Debt", 0.5)
-create_percentile_chart("mrthel", "50th Percentile Mortgage Debt", 0.5)
-create_percentile_chart("homeeq", "50th Percentile Home Equity", 0.5)
-create_percentile_chart("eq_over_nw", "50th Percentile Equity Over Net Worth", 0.50)
-create_percentile_chart("non_mortgage_debt", "50th Percentile Non-Mortgage Debt", 0.50)
-create_percentile_chart("mdebt_over_eq", "50th Percentile Mortage Debt/Equity", 0.50)
-
-
-
-# ############################  End  ################################## #
+create_percentile_chart("networth", "99th Percentile Net Worth", 0.99)
