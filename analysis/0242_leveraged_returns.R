@@ -45,6 +45,27 @@ df <- dow_pre_2020 %>%
                lead_date = lead(date, n_trading_days)) %>%
           filter(!is.na(ret))
 
+min_date <- min(df$date)
+max_date <- max(df$date)
+
+# Fill gaps in data for YCharts ingest
+to_ycharts <- data.frame(date = seq.Date(min_date, max_date, by = "day")) %>%
+          left_join(df) %>%
+          filter(weekdays(date) != "Saturday", weekdays(date) != "Sunday") %>%
+          select(date, index) %>%
+          mutate(index = na.locf(index)) %>%
+          mutate(ret = round(index/lag(index, 1) - 1, 5)) %>%
+          filter(!is.na(ret)) %>%
+              rename(Date = date,
+                     Value = ret) %>%
+              select(Date, Value)
+
+export_to_excel(to_ycharts, 
+                outfile = paste0(out_path, "/dow_daily.xlsx"),
+                sheetname = "dow_raw",
+                new_file = 1,
+                fancy_formatting = 0)
+
 final_results <- data.frame()
 
 all_dates <- df %>%
