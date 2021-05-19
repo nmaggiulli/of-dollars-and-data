@@ -24,10 +24,10 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 #Generation assumptions
-# Silent Gen born in 1937 (on average)
-# Boomers born in 1955 (on average)
-# Born in 1972 (on average)
-# Millennials born in 1989 (on average)
+# Silent Gen born in 1937 (1937 on average)
+# Boomers born in 1946-964 (1955 on average)
+# Born in 1965-1980 (1972 on average)
+# Millennials born in 1981-1996 (1989 on average)
 
 my_colors <- c("#d7191c", "#fdae61", "#2c7bb6", "#abd9e9")
 
@@ -84,7 +84,7 @@ df$category <- factor(df$category, levels = c("Millennial", "GenX", "BabyBoomers
 
 vars_to_plot <- data.frame(var = c("nw", "assets", "re", "fa", "mm", "liabilities", "mortgages", "nmd", "cc"),
                            proper_name = c("Net Worth", "Assets", "Real Estate", "Financial Assets", "Money Market Assets",
-                                           "Liabilities", "Mortgage Debt", "Non-Mortgage Debt", "Consumer Credit"))
+                                           "Liabilities", "Mortgage Debt", "Other Debt", "Consumer Credit"))
 
 for(i in 1:nrow(vars_to_plot)){
   full_var <- paste0("real_", vars_to_plot[i, "var"])
@@ -139,7 +139,13 @@ for(i in 1:nrow(vars_to_plot)){
 
 # Bring in SCF data
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
-              filter(agecl %in% c("<35"))
+              filter(agecl %in% c("<35")) %>%
+              mutate(rent_over_income = case_when(
+                rent > 0 & (rent*12 > income) ~ 1,
+                rent > 0 ~ (rent*12)/income,
+                TRUE ~ NaN
+              ))
+
 source_string <- "Source:  Survey of Consumer Finances (OfDollarsAndData.com)"
 
 summary <- scf_stack %>%
@@ -197,8 +203,8 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Do summaries for other vars
 scf_vars_to_plot <- data.frame(
-  var = c("debt", "income", "fin"),
-  proper_name = c("Debt", "Income", "Financial Assets")
+  var = c("debt", "income", "homeeq", "rent"),
+  proper_name = c("Debt", "Income", "Home Equity", "Monthly Rent")
   )
 
 for(i in 1:nrow(scf_vars_to_plot)){
@@ -226,7 +232,7 @@ for(i in 1:nrow(scf_vars_to_plot)){
       filter(key %in% c("10th Percentile", "50th Percentile", "90th Percentile"))
   }
   
-  file_path <- paste0(out_path, "/under_35_", var, "_by_year.jpeg")
+  file_path <- paste0(out_path, "/under_35_ed_", var, "_by_year.jpeg")
   
   plot <- ggplot(to_plot, aes(x=year, y = value, col = key)) +
     geom_line() +
@@ -242,6 +248,64 @@ for(i in 1:nrow(scf_vars_to_plot)){
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  to_plot <- scf_stack %>%
+    rename_(.dots = setNames(var, "var_to_summarize")) %>%
+    group_by(year) %>%
+    summarise(
+      `50th Percentile` = wtd.quantile(var_to_summarize, weights = wgt, probs= 0.5),
+      `75th Percentile` = wtd.quantile(var_to_summarize, weights = wgt, probs= 0.75),
+      `90th Percentile` = wtd.quantile(var_to_summarize, weights = wgt, probs= 0.90)
+    ) %>%
+    ungroup() %>%
+    gather(-year, key=key, value=value) 
+  
+  file_path <- paste0(out_path, "/under_35_all_", var, "_by_year.jpeg")
+  
+  plot <- ggplot(to_plot, aes(x=year, y = value, col = key)) +
+    geom_line() +
+    scale_color_manual(values = c(my_colors[1:3])) +
+    scale_y_continuous(label = dollar) +
+    of_dollars_and_data_theme +
+    theme(legend.position = "bottom",
+          legend.title = element_blank()) +
+    ggtitle(paste0("Inflation-Adjusted ", proper_name, " By Year\nHouseholds under 35")) +
+    labs(x="Year", y=proper_name,
+         caption = paste0(source_string))
+  
+  # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
+
+# Do rent over income summary
+to_plot <- scf_stack %>%
+  filter(!is.nan(rent_over_income)) %>%
+  group_by(edcl, year) %>%
+  summarise(
+    `10th Percentile` = wtd.quantile(rent_over_income, weights = wgt, probs= 0.1),
+    `50th Percentile` = wtd.quantile(rent_over_income, weights = wgt, probs= 0.5),
+    `90th Percentile` = wtd.quantile(rent_over_income, weights = wgt, probs= 0.90)
+  ) %>%
+  ungroup() %>%
+  gather(-edcl, -year, key=key, value=value) 
+
+file_path <- paste0(out_path, "/under_35_rent_over_income_by_year.jpeg")
+note_string <- str_wrap(paste0("Note: Shows renters only. Annual rent exceeding annual income has been capped at 100%."),
+                        width = 75)
+
+plot <- ggplot(to_plot, aes(x=year, y = value, col = key)) +
+  geom_line() +
+  facet_rep_wrap(edcl ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
+  scale_color_manual(values = c(my_colors[1:3])) +
+  scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 1)) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("Inflation-Adjusted Rent Over Income By Year\nHouseholds under 35")) +
+  labs(x="Year", y="Rent Over Income",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #

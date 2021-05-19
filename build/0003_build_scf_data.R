@@ -54,7 +54,7 @@ for (x in year_list){
   # kids = number of kids
   
   vars_to_keep <- c('y1', 'yy1', 'networth', 'debt', 'asset', 'liq', 'reteq',
-                    'homeeq', 'hdebt', 'fin', 'nfin', 'vehic', 'bus', 'oresre', 'othnfin', 'mrthel', 'resdbt', 'ccbal', 
+                    'homeeq', 'rent', 'hdebt', 'fin', 'nfin', 'vehic', 'bus', 'oresre', 'othnfin', 'mrthel', 'resdbt', 'ccbal', 
                     'income', 'wageinc', 'intdivinc', 'bussefarminc', 'equitinc', 'ssretinc',
                     'agecl', 'age', 'hhsex', 'race', 'racecl4', 'edcl', 'married', 'kids', 'wgt')
   
