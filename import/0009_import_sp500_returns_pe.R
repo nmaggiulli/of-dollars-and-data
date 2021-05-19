@@ -33,13 +33,15 @@ sp500_ret_pe$date <- as.numeric(sp500_ret_pe$date)
 sp500_ret_pe$cpi <- as.numeric(sp500_ret_pe$cpi)
 sp500_ret_pe$cape <- as.numeric(sp500_ret_pe$cape)
 sp500_ret_pe$long_irate <- as.numeric(sp500_ret_pe$long_irate)
+sp500_ret_pe$real_earn <- as.numeric(sp500_ret_pe$real_earn)
+sp500_ret_pe$real_earn_scaled <- as.numeric(sp500_ret_pe$real_earn_scaled)
 
 # Create a numeric end date based on the closest start of month to today's date
 end_date <- year(Sys.Date()) + month(Sys.Date())/100
 
 # Filter out missing dividends
 sp500_ret_pe <- sp500_ret_pe %>%
-                  select(date, real_price, real_div, long_irate, cape, cpi) %>%
+                  select(date, real_price, real_div, real_earn, real_earn_scaled, long_irate, cape, cpi) %>%
                   filter(!is.na(date), date < end_date) %>%
                   mutate(real_div = ifelse(is.na(real_div), 0, real_div))
 
