@@ -185,8 +185,8 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Do summaries for other vars
 scf_vars_to_plot <- data.frame(
-  var = c("nhd", "income", "homeeq", "rent"),
-  proper_name = c("Non-Home Debt", "Income", "Home Equity", "Monthly Rent")
+  var = c("nhd", "income", "homeeq", "rent", "networth"),
+  proper_name = c("Non-Home Debt", "Income", "Home Equity", "Monthly Rent", "Net Worth")
   )
 
 for(i in 1:nrow(scf_vars_to_plot)){
