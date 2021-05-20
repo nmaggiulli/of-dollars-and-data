@@ -58,7 +58,7 @@ fed_wealth_data <- read.csv(paste0(importdir, "/0243_fed_distributional_financia
                              non_mortgage_debt
                              ) %>%
                       mutate(age = case_when(
-                        category == "Silent" ~ year - 1937,
+                        category == "Silent" ~ year - 1938,
                         category == "BabyBoom" ~ year - 1955,
                         category == "GenX" ~ year - 1972,
                         category == "Millennial" ~ year - 1989,
@@ -75,16 +75,16 @@ df <- fed_wealth_data %>%
                real_fa = financial_assets*inflator,
                real_cc = consumer_credit*inflator,
                real_mm = money_market_fund_shares*inflator,
-               real_nmd = non_mortgage_debt*inflator,
+               real_nhd = non_mortgage_debt*inflator,
                category = ifelse(category == "BabyBoom", "BabyBoomers", category)) %>%
       select(year, category, age, contains("real_"), household_count) %>%
       arrange(category, year)
 
 df$category <- factor(df$category, levels = c("Millennial", "GenX", "BabyBoomers", "Silent"))
 
-vars_to_plot <- data.frame(var = c("nw", "assets", "re", "fa", "mm", "liabilities", "mortgages", "nmd", "cc"),
+vars_to_plot <- data.frame(var = c("nw", "assets", "re", "fa", "mm", "liabilities", "mortgages", "nhd", "cc"),
                            proper_name = c("Net Worth", "Assets", "Real Estate", "Financial Assets", "Money Market Assets",
-                                           "Liabilities", "Mortgage Debt", "Other Debt", "Consumer Credit"))
+                                           "Liabilities", "Mortgage Debt", "Non-Home Debt", "Consumer Credit"))
 
 for(i in 1:nrow(vars_to_plot)){
   full_var <- paste0("real_", vars_to_plot[i, "var"])
@@ -97,7 +97,7 @@ for(i in 1:nrow(vars_to_plot)){
     
   file_path <- paste0(out_path, "/age_", full_var, ".jpeg")
   source_string <- "Source:  FRED, FED Distributional Accounts (OfDollarsAndData.com)"
-  note_string <- str_wrap(paste0("Note: Assumes that the Silent Generation was born in 1937, BabyBoomers were born in 1955, 
+  note_string <- str_wrap(paste0("Note: Assumes that, on average, the Silent Generation was born in 1938, BabyBoomers were born in 1955, 
                                  GenX was born in 1972, and Millennials were born in 1989."),
                           width = 75)
   
@@ -109,7 +109,7 @@ for(i in 1:nrow(vars_to_plot)){
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
     ggtitle(paste0("Inflation-Adjusted ", proper_name, "\nBy Age and Generation")) +
-    labs(x="Age", y="Value in Trillions (2020 Dollars)",
+    labs(x="Average Age", y="Value in Trillions (2020 Dollars)",
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
@@ -118,6 +118,8 @@ for(i in 1:nrow(vars_to_plot)){
   # Do per capita plot
   to_plot <- to_plot %>%
             mutate(var_to_plot = var_to_plot/household_count*(10^6)*(10^6))
+  
+  assign(paste0("per_cap_", full_var), to_plot, envir = .GlobalEnv)
   
   file_path <- paste0(out_path, "/per_capita_age_", full_var, ".jpeg")
   source_string <- "Source:  FRED, FED Distributional Accounts (OfDollarsAndData.com)"
@@ -130,7 +132,7 @@ for(i in 1:nrow(vars_to_plot)){
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
     ggtitle(paste0("Inflation-Adjusted ", proper_name, " Per Capita\nBy Age and Generation")) +
-    labs(x="Age", y="Value Per Capita (2020 Dollars)",
+    labs(x="Average Age", y="Value Per Capita (2020 Dollars)",
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
@@ -143,8 +145,9 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
               mutate(rent_over_income = case_when(
                 rent > 0 & (rent*12 > income) ~ 1,
                 rent > 0 ~ (rent*12)/income,
-                TRUE ~ NaN
-              ))
+                TRUE ~ NaN),
+                nhd = debt - mrthel
+              )
 
 source_string <- "Source:  Survey of Consumer Finances (OfDollarsAndData.com)"
 
@@ -158,27 +161,6 @@ summary <- scf_stack %>%
   ungroup() %>%
   gather(-edcl, -year, key=key, value=value) 
 
-to_plot <- summary %>%
-              filter(key %in% c("50th Percentile", "90th Percentile"))
-
-file_path <- paste0(out_path, "/under_35_nw_dist_by_year_50_90.jpeg")
-
-plot <- ggplot(to_plot, aes(x=year, y = value, col = key)) +
-  geom_line() +
-  facet_rep_wrap(edcl ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
-  scale_color_manual(values = c(my_colors[1:2])) +
-  scale_y_continuous(label = dollar) +
-  of_dollars_and_data_theme +
-  theme(legend.position = "bottom",
-        legend.title = element_blank()) +
-  ggtitle(paste0("Inflation-Adjusted Net Worth by Year\nHouseholds under 35")) +
-  labs(x="Year", y="Networth",
-       caption = paste0(source_string))
-
-# Save the plot
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-
-# Redo with lower end of distribuion
 to_plot <- summary %>%
   filter(key %in% c("10th Percentile", "50th Percentile"))
 
@@ -203,8 +185,8 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Do summaries for other vars
 scf_vars_to_plot <- data.frame(
-  var = c("debt", "income", "homeeq", "rent"),
-  proper_name = c("Debt", "Income", "Home Equity", "Monthly Rent")
+  var = c("nhd", "income", "homeeq", "rent"),
+  proper_name = c("Non-Home Debt", "Income", "Home Equity", "Monthly Rent")
   )
 
 for(i in 1:nrow(scf_vars_to_plot)){
@@ -224,7 +206,7 @@ for(i in 1:nrow(scf_vars_to_plot)){
     ungroup() %>%
     gather(-edcl, -year, key=key, value=value) 
   
-  if(var == "debt"){
+  if(var == "nhd"){
     to_plot <- tmp %>%
                 filter(key %in% c("50th Percentile", "75th Percentile", "90th Percentile"))
   } else{
@@ -260,7 +242,35 @@ for(i in 1:nrow(scf_vars_to_plot)){
     ungroup() %>%
     gather(-year, key=key, value=value) 
   
-  file_path <- paste0(out_path, "/under_35_all_", var, "_by_year.jpeg")
+  file_path <- paste0(out_path, "/under_35_all_50_90_", var, "_by_year.jpeg")
+  
+  plot <- ggplot(to_plot, aes(x=year, y = value, col = key)) +
+    geom_line() +
+    scale_color_manual(values = c(my_colors[1:3])) +
+    scale_y_continuous(label = dollar) +
+    of_dollars_and_data_theme +
+    theme(legend.position = "bottom",
+          legend.title = element_blank()) +
+    ggtitle(paste0("Inflation-Adjusted ", proper_name, " By Year\nHouseholds under 35")) +
+    labs(x="Year", y=proper_name,
+         caption = paste0(source_string))
+  
+  # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  #Do 10-50
+  to_plot <- scf_stack %>%
+    rename_(.dots = setNames(var, "var_to_summarize")) %>%
+    group_by(year) %>%
+    summarise(
+      `10th Percentile` = wtd.quantile(var_to_summarize, weights = wgt, probs= 0.1),
+      `25th Percentile` = wtd.quantile(var_to_summarize, weights = wgt, probs= 0.25),
+      `50th Percentile` = wtd.quantile(var_to_summarize, weights = wgt, probs= 0.50)
+    ) %>%
+    ungroup() %>%
+    gather(-year, key=key, value=value) 
+  
+  file_path <- paste0(out_path, "/under_35_all_10_50_", var, "_by_year.jpeg")
   
   plot <- ggplot(to_plot, aes(x=year, y = value, col = key)) +
     geom_line() +
@@ -280,22 +290,21 @@ for(i in 1:nrow(scf_vars_to_plot)){
 # Do rent over income summary
 to_plot <- scf_stack %>%
   filter(!is.nan(rent_over_income)) %>%
-  group_by(edcl, year) %>%
+  group_by(year) %>%
   summarise(
-    `10th Percentile` = wtd.quantile(rent_over_income, weights = wgt, probs= 0.1),
     `50th Percentile` = wtd.quantile(rent_over_income, weights = wgt, probs= 0.5),
+    `75th Percentile` = wtd.quantile(rent_over_income, weights = wgt, probs= 0.75),
     `90th Percentile` = wtd.quantile(rent_over_income, weights = wgt, probs= 0.90)
   ) %>%
   ungroup() %>%
-  gather(-edcl, -year, key=key, value=value) 
+  gather(-year, key=key, value=value) 
 
-file_path <- paste0(out_path, "/under_35_rent_over_income_by_year.jpeg")
+file_path <- paste0(out_path, "/under_35_all_rent_over_income_by_year.jpeg")
 note_string <- str_wrap(paste0("Note: Shows renters only. Annual rent exceeding annual income has been capped at 100%."),
                         width = 75)
 
 plot <- ggplot(to_plot, aes(x=year, y = value, col = key)) +
   geom_line() +
-  facet_rep_wrap(edcl ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
   scale_color_manual(values = c(my_colors[1:3])) +
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 1)) +
   of_dollars_and_data_theme +
