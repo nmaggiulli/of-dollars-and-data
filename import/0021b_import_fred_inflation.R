@@ -19,14 +19,17 @@ getSymbols('CPIAUCNS',src='FRED')
 cpi <- data.frame(date = index(CPIAUCNS), 
                   CPIAUCNS, row.names=NULL)
 
-cpi <- cpi %>%
+saveRDS(cpi, paste0(localdir, "0021_FRED_cpi_monthly.Rds"))
+
+cpi_annual <- cpi %>%
           mutate(year = year(date),
                  month = month(date)) %>%
           filter(month == 12) %>%
-          mutate(rate_cpi = CPIAUCNS/lag(CPIAUCNS) - 1) %>%
-          select(year, rate_cpi)
+          mutate(rate_cpi = CPIAUCNS/lag(CPIAUCNS) - 1,
+                 index_cpi = CPIAUCNS) %>%
+          select(year, index_cpi, rate_cpi)
 
-saveRDS(cpi, paste0(localdir, "0021_FRED_cpi.Rds"))
+saveRDS(cpi_annual, paste0(localdir, "0021_FRED_cpi.Rds"))
 
 
 

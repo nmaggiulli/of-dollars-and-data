@@ -270,6 +270,10 @@ for(i in 1:nrow(scf_vars_to_plot)){
     ungroup() %>%
     gather(-year, key=key, value=value) 
   
+  if(var == "networth"){
+    assign("to_plot_nw_10_50", to_plot, envir = .GlobalEnv)
+  }
+  
   file_path <- paste0(out_path, "/under_35_all_10_50_", var, "_by_year.jpeg")
   
   plot <- ggplot(to_plot, aes(x=year, y = value, col = key)) +
