@@ -149,6 +149,38 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                 nhd = debt - mrthel
               )
 
+summary_age_nw <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
+  filter(agecl %in% c("<35", "35-44", "45-54", "55-64")) %>%
+  mutate(rent_over_income = case_when(
+    rent > 0 & (rent*12 > income) ~ 1,
+    rent > 0 ~ (rent*12)/income,
+    TRUE ~ NaN),
+    nhd = debt - mrthel
+  ) %>%
+  group_by(year, agecl) %>%
+  summarise(
+    `50th Percentile` = wtd.quantile(networth, weights = wgt, probs= 0.5),
+  ) %>%
+  ungroup() %>%
+  gather(-year, -agecl, key=key, value=value) 
+
+file_path <- paste0(out_path, "/_age_nw_dist_by_year.jpeg")
+source_string <- "Source:  Survey of Consumer Finances (OfDollarsAndData.com)"
+
+plot <- ggplot(summary_age_nw, aes(x=year, y = value, col = key)) +
+  geom_line() +
+  facet_rep_wrap(agecl ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
+  scale_color_manual(values = c(my_colors[1]), guide = FALSE) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Median Net Worth By Year\nBy Household Age")) +
+  labs(x="Year", y="Networth",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+
 source_string <- "Source:  Survey of Consumer Finances (OfDollarsAndData.com)"
 
 summary <- scf_stack %>%
