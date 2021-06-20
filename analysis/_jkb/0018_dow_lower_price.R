@@ -39,8 +39,9 @@ for(i in 1:nrow(raw)-1){
 }
 
 all_lower_in_future <- raw %>%
-                        filter(days_to_lower != 0)
+                        filter(days_to_lower != 0) 
 
-
+print(mean(all_lower_in_future$days_to_lower))
+print(quantile(all_lower_in_future$days_to_lower, probs = 0.5))
 
 # ############################  End  ################################## #
