@@ -40,15 +40,18 @@ for(i in 1:nrow(df)){
 
     df[i, "port_sell_ann"] <- df[(i-1), "port_sell_ann"] * (1 + (ret*(1-cap_gains)))
   }
+  df[i, "ann_bh"] <- (df[i, "port_bh"]/starting_amount)^(1/(i-1)) - 1
+  df[i, "ann_bh_liq"] <- (df[i, "port_bh_liq"]/starting_amount)^(1/(i-1)) - 1
+  df[i, "ann_sell"] <- (df[i, "port_sell_ann"]/starting_amount)^(1/(i-1)) - 1
   
   df[i, "premium_bh_no_sell"] <- df[i, "port_bh_liq"]/df[i, "port_sell_ann"]
-  df[i, "premium_bh_no_sell_ann"] <- df[i, "premium_bh_no_sell"]^(1/i) - 1
+  df[i, "premium_bh_no_sell_ann"] <- df[i, "ann_bh_liq"] - df[i, "ann_sell"]
   
   df[i, "premium_bh_nontax"] <- df[i, "port_bh"]/df[i, "port_bh_liq"]
-  df[i, "premium_bh_nontax_ann"] <- df[i, "premium_bh_nontax"]^(1/i) - 1
+  df[i, "premium_bh_nontax_ann"] <- df[i, "ann_bh"] - df[i, "ann_bh_liq"]
   
   df[i, "premium_bh"] <- df[i, "port_bh"]/df[i, "port_sell_ann"]
-  df[i, "premium_bh_ann"] <- df[i, "premium_bh"]^(1/i) - 1
+  df[i, "premium_bh_ann"] <- df[i, "ann_bh"] - df[i, "ann_sell"]
 }
 
 to_plot <- df %>%
