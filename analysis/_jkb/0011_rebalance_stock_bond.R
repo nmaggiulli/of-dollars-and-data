@@ -80,8 +80,33 @@ run_rebal <- function(start_date, end_date, rebal_month, rebal_string, rebal_add
         df[i, "value_bond"] <- (df[(i-1), "value_port"] * wt_bond) * (1 + df[i, "ret_bond"]) + (rebal_addition*wt_bond)
       } else{
         df[i, "rebalance"] <- 0
-        df[i, "value_stock"] <- df[(i-1), "value_stock"] * (1 + df[i, "ret_stock"]) + (rebal_addition*wt_stock)
-        df[i, "value_bond"] <- df[(i-1), "value_bond"] * (1 + df[i, "ret_bond"]) + (rebal_addition*wt_bond)
+        
+        if(rebal_addition > 0){
+          #Find amount away from target
+          stock_target <- (df[(i-1), "value_port"] + rebal_addition) * wt_stock
+          prior_stock_value <- df[(i-1), "value_stock"]
+          
+          if(prior_stock_value > stock_target){
+            wt_stock_temp <- 0
+            wt_bond_temp <- 1
+          } else if((prior_stock_value + rebal_addition) < stock_target){
+            wt_stock_temp <- 1
+            wt_bond_temp <- 0
+          } else {
+            wt_stock_temp <- (stock_target - prior_stock_value)/rebal_addition
+            wt_bond_temp <- 1 - wt_stock_temp
+          }
+        } else{
+          wt_stock_temp <- 0
+          wt_bond_temp <- 0
+        }
+        
+        stock_addition <- rebal_addition*wt_stock_temp
+        bond_addition <- rebal_addition*wt_bond_temp
+        
+        # This is now an accumulation rebalance strategy
+        df[i, "value_stock"] <- (df[(i-1), "value_stock"] + stock_addition) * (1 + df[i, "ret_stock"])
+        df[i, "value_bond"] <- (df[(i-1), "value_bond"] + bond_addition) * (1 + df[i, "ret_bond"])
       }
       df[i, "value_port"] <- df[i, "value_stock"] + df[i, "value_bond"]
       df[i, "ret_port"] <- df[i, "value_port"]/df[(i-1), "value_port"] - 1
