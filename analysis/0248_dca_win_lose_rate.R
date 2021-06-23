@@ -40,7 +40,7 @@ print(paste0("10 year chance S&P 500 is positive: ", 100*round(mean(df$sp500_10y
 
 start_months <- df[1:(nrow(df)-period_length+1), "date"]
 
-run_dca <- function(start_month, end_month, w_stock){
+run_dca <- function(start_month, end_month, w_stock, title_string){
   dca_amount <- 100
   tmp <- df %>%
             filter(date >= start_month, date <= end_month)
@@ -67,6 +67,37 @@ run_dca <- function(start_month, end_month, w_stock){
     }
     tmp[j, "value_port"] <- tmp[j, "value_stock"] + tmp[j, "value_bond"]
   }
+  
+  if(start_month == as.Date("1999-03-01") | start_month == as.Date("1946-04-01")){
+    date_as_string <- date_to_string(start_month)
+    
+    to_plot_tmp <- tmp %>%
+                  select(date, value_port, cost_basis) %>%
+                  gather(-date, key=key, value=value) %>%
+                  mutate(key = case_when(
+                    key == "value_port" ~ "Portfolio Value",
+                    key == "cost_basis" ~ "Cost Basis",
+                    TRUE ~ "Error"
+                  ))
+    
+    file_path <- paste0(out_path, "/perf_", date_as_string, "_", 100*w_stock,".jpeg")
+    source_string <- paste0("Source: Returns 2.0")
+    
+    plot <- ggplot(to_plot_tmp, aes(x= date, y=value, col = key)) +
+      geom_line() +
+      scale_color_manual(values = c("black", "blue")) +
+      scale_y_continuous(label = dollar) +
+      of_dollars_and_data_theme +
+      theme(legend.position = "bottom",
+            legend.title = element_blank()) +
+      ggtitle(paste0("Portfolio vs. Cost Basis\n", title_string, " Portfolio")) +
+      labs(x="Date", y="Value",
+           caption = paste0(source_string))
+    
+    # Save the plot
+    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  }
+  
   tail <- tmp %>%
             tail(1)
   
@@ -83,11 +114,11 @@ for(i in 1:length(start_months)){
   print(end_month)
   print("---")
   
-  dca_stock <- run_dca(start_month, end_month, 1) %>%
+  dca_stock <- run_dca(start_month, end_month, 1, "All Stock") %>%
                  select(cost_basis, value_port)
-  dca_bond <- run_dca(start_month, end_month, 0)%>%
+  dca_bond <- run_dca(start_month, end_month, 0, "All Bond")%>%
                 pull(value_port)
-  dca_6040 <- run_dca(start_month, end_month, 0.6)%>%
+  dca_6040 <- run_dca(start_month, end_month, 0.6, "60/40")%>%
                 pull(value_port)
   
   final_results[i, "start_date"] <- start_month
@@ -127,6 +158,7 @@ source_string <- paste0("Source: Returns 2.0")
 
 plot <- ggplot(to_plot, aes(x= value, fill = key)) +
   geom_density(alpha = 0.4) +
+  scale_fill_manual(values = c("blue", "green")) +
   scale_x_continuous(label = percent_format(accuracy = 1)) +
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
