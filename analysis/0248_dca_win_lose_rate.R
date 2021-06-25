@@ -25,6 +25,22 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 period_length <- 120
 
+jpy <- read.csv(paste0(importdir,"/0248_dca_win_lose_rate/NIKKEI225_fred.csv")) %>%
+  mutate(date = as.Date(DATE),
+         month = as.Date(paste0(year(date), "-", month(date), "-01"), format = "%Y-%m-%d"),
+         index_jpy = as.numeric(NIKKEI225))
+
+monthly_jpy <- jpy %>%
+              group_by(month) %>%
+              summarise(mean_jpy = mean(index_jpy, na.rm = TRUE)) %>%
+              ungroup() %>%
+              mutate(ret_jpy = mean_jpy/lag(mean_jpy, 1) - 1) %>%
+              rename(date = month) %>%
+              select(date, ret_jpy) %>%
+              drop_na
+
+jpy_months <- pull(monthly_jpy[1:(nrow(monthly_jpy)-period_length+1), "date"])
+
 df <- read.csv(paste0(importdir, "/0248_dca_win_lose_rate/dfa_sp500_bond_cpi.csv"), skip = 7,
                      col.names = c("date", "index_bond", "index_sp500", "index_cpi")) %>%
   drop_na() %>%
@@ -34,13 +50,14 @@ df <- read.csv(paste0(importdir, "/0248_dca_win_lose_rate/dfa_sp500_bond_cpi.csv
          ret_sp500 = index_sp500/lag(index_sp500, 1) - 1) %>%
   drop_na %>%
   mutate(ret_10yr_sp500 = index_sp500/lag(index_sp500, period_length) - 1,
-         sp500_10yr_pos = ifelse(ret_10yr_sp500 > 0, 1, 0))
+         sp500_10yr_pos = ifelse(ret_10yr_sp500 > 0, 1, 0)) %>%
+  left_join(monthly_jpy)
 
 print(paste0("10 year chance S&P 500 is positive: ", 100*round(mean(df$sp500_10yr_pos, na.rm = TRUE), 2), "%"))
 
 start_months <- df[1:(nrow(df)-period_length+1), "date"]
 
-run_dca <- function(start_month, end_month, w_stock, title_string){
+run_dca <- function(start_month, end_month, w_stock, stock_ret, title_string){
   dca_amount <- 100
   tmp <- df %>%
             filter(date >= start_month, date <= end_month)
@@ -51,7 +68,7 @@ run_dca <- function(start_month, end_month, w_stock, title_string){
       tmp[j, "value_stock"] <- dca_amount * w_stock
       tmp[j, "value_bond"] <- dca_amount * (1- w_stock)
     } else{
-      ret_stock <- 1 + tmp[j, "ret_sp500"]
+      ret_stock <- 1 + tmp[j, stock_ret]
       ret_bond  <- 1 + tmp[j, "ret_bond"]
       mt <- month(tmp[j, "date"])
         
@@ -80,7 +97,9 @@ run_dca <- function(start_month, end_month, w_stock, title_string){
                     TRUE ~ "Error"
                   ))
     
-    file_path <- paste0(out_path, "/perf_", date_as_string, "_", 100*w_stock,".jpeg")
+    title_string_cleaned <- str_replace_all(title_string, "\\/", "_")
+    
+    file_path <- paste0(out_path, "/perf_", date_as_string, "_", title_string_cleaned, ".jpeg")
     source_string <- paste0("Source: Returns 2.0")
     
     plot <- ggplot(to_plot_tmp, aes(x= date, y=value, col = key)) +
@@ -90,7 +109,7 @@ run_dca <- function(start_month, end_month, w_stock, title_string){
       of_dollars_and_data_theme +
       theme(legend.position = "bottom",
             legend.title = element_blank()) +
-      ggtitle(paste0("Portfolio vs. Cost Basis\n", title_string, " Portfolio")) +
+      ggtitle(paste0("Portfolio Value vs. Cost Basis\n", title_string, " Portfolio")) +
       labs(x="Date", y="Value",
            caption = paste0(source_string))
     
@@ -114,11 +133,11 @@ for(i in 1:length(start_months)){
   print(end_month)
   print("---")
   
-  dca_stock <- run_dca(start_month, end_month, 1, "All Stock") %>%
+  dca_stock <- run_dca(start_month, end_month, 1, "ret_sp500", "All Stock") %>%
                  select(cost_basis, value_port)
-  dca_bond <- run_dca(start_month, end_month, 0, "All Bond")%>%
+  dca_bond <- run_dca(start_month, end_month, 0,  "ret_sp500", "All Bond")%>%
                 pull(value_port)
-  dca_6040 <- run_dca(start_month, end_month, 0.6, "60/40")%>%
+  dca_6040 <- run_dca(start_month, end_month, 0.6,  "ret_sp500", "60/40")%>%
                 pull(value_port)
   
   final_results[i, "start_date"] <- start_month
@@ -127,6 +146,13 @@ for(i in 1:length(start_months)){
   final_results[i, "value_stock"] <- dca_stock$value_port
   final_results[i, "value_bond"] <- dca_bond
   final_results[i, "value_6040"] <- dca_6040
+  final_results[i, "value_jpy"] <- NA
+  
+  if(start_month %in% jpy_months){
+    dca_jpy <- run_dca(start_month, end_month, 1,  "ret_jpy", "All JPY")%>%
+      pull(value_port)
+    final_results[i, "value_jpy"] <- dca_jpy
+  } 
 
 }
 
@@ -135,19 +161,22 @@ final_results <- final_results %>%
                          stock_beats_bonds = ifelse(value_stock > value_bond, 1, 0),
                          bonds_beats_cash = ifelse(value_bond > cost_basis, 1, 0),
                          p6040_beats_cash = ifelse(value_6040 > cost_basis, 1, 0),
-                         stock_perf_premium = value_stock/cost_basis - 1,
-                         bond_perf_premium = value_bond/cost_basis - 1)
+                         jpy_beats_cash = ifelse(value_jpy > cost_basis, 1, 0),
+                         sp500_perf_premium = value_stock/cost_basis - 1,
+                         bond_perf_premium = value_bond/cost_basis - 1,
+                         jpy_perf_premium = value_jpy/cost_basis - 1)
 
 print(paste0("Stock beats cash: ", 100*round(mean(final_results$stock_beats_cash), 2), "%"))
 print(paste0("Stock beats bonds: ", 100*round(mean(final_results$stock_beats_bonds), 2), "%"))
 print(paste0("Bonds beats cash: ", 100*round(mean(final_results$bonds_beats_cash), 2), "%"))
 print(paste0("6040 beats cash: ", 100*round(mean(final_results$p6040_beats_cash), 2), "%"))
+print(paste0("Japan Stocks beats cash: ", 100*round(mean(final_results$jpy_beats_cash, na.rm = TRUE), 2), "%"))
 
 to_plot <- final_results %>%
-            select(start_date, contains("premium")) %>%
+            select(start_date, sp500_perf_premium, bond_perf_premium) %>%
             gather(-start_date, key=key, value=value) %>%
             mutate(key = case_when(
-              key == "stock_perf_premium" ~ "S&P 500",
+              key == "sp500_perf_premium" ~ "S&P 500",
               key == "bond_perf_premium" ~ "100% Bonds",
               key == "p6040_pref_premium" ~ "60/40 Portfolio",
               TRUE ~ "Error"
@@ -165,8 +194,94 @@ plot <- ggplot(to_plot, aes(x= value, fill = key)) +
         legend.title = element_blank(),
         axis.ticks.y = element_blank(),
         axis.text.y = element_blank()) +
-  ggtitle(paste0("DCA Performance Premium Over 10 Years\nBy Portfolio")) +
-  labs(x="Total Performance Premium Above Cash", y="Frequency",
+  ggtitle(paste0("DCA Performance Premium Above Cash\nOver 10 Years\nBy Portfolio")) +
+  labs(x="Performance Premium Above Cash", y="Frequency",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# JPY plots
+file_path <- paste0(out_path, "/dca_jpy.jpeg")
+source_string <- paste0("Source: FRED")
+
+to_plot <- final_results %>%
+            select(start_date, jpy_perf_premium) %>%
+            drop_na
+
+plot <- ggplot(to_plot, aes(x= jpy_perf_premium)) +
+  geom_density(alpha = 0.4, fill = "red") +
+  scale_x_continuous(label = percent_format(accuracy = 1)) +
+  of_dollars_and_data_theme +
+  theme(axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()) +
+  ggtitle(paste0("DCA Performance Premium Above Cash\nOver 10 Years\n100% Japanese Stocks")) +
+  labs(x="Performance Premium Above Cash", y="Frequency",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# By date
+file_path <- paste0(out_path, "/dca_jpy_by_date.jpeg")
+source_string <- paste0("Source: FRED")
+
+plot <- ggplot(to_plot, aes(x= start_date, y=jpy_perf_premium)) +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("DCA Performance Premium Above Cash\nOver 10 Years\n100% Japanese Stocks")) +
+  labs(x="Date", y="Performance Premium Above Cash",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# JPY + SPY
+file_path <- paste0(out_path, "/dca_jpy_sp500.jpeg")
+source_string <- paste0("Source: Returns 2.0, FRED")
+
+to_plot <- final_results %>%
+  select(start_date, sp500_perf_premium, jpy_perf_premium) %>%
+  gather(-start_date, key=key, value=value) %>%
+  mutate(key = case_when(
+    key == "sp500_perf_premium" ~ "S&P 500",
+    key == "jpy_perf_premium" ~ "100% Japanese Stocks",
+    key == "p6040_pref_premium" ~ "60/40 Portfolio",
+    TRUE ~ "Error"
+  ))
+
+plot <- ggplot(to_plot, aes(x= value, fill = key)) +
+  geom_density(alpha = 0.4) +
+  scale_fill_manual(values = c("red", "green")) +
+  scale_x_continuous(label = percent_format(accuracy = 1)) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()) +
+  ggtitle(paste0("DCA Performance Premium Above Cash\nOver 10 Years\nUS vs. JPY Stocks")) +
+  labs(x="Performance Premium Above Cash", y="Frequency",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+#SP500 by date
+file_path <- paste0(out_path, "/dca_sp500_by_date.jpeg")
+source_string <- paste0("Source: FRED")
+
+to_plot <- final_results %>%
+            select(start_date, sp500_perf_premium)
+
+plot <- ggplot(to_plot, aes(x= start_date, y=sp500_perf_premium)) +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("DCA Performance Premium Above Cash\nOver 10 Years\nS&P 500")) +
+  labs(x="Date", y="Performance Premium Above Cash",
        caption = paste0(source_string))
 
 # Save the plot
