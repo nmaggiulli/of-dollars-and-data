@@ -53,7 +53,7 @@ df <- read.csv(paste0(importdir, "/0248_dca_win_lose_rate/dfa_sp500_bond_cpi.csv
          sp500_10yr_pos = ifelse(ret_10yr_sp500 > 0, 1, 0)) %>%
   left_join(monthly_jpy)
 
-print(paste0("10 year chance S&P 500 is positive: ", 100*round(mean(df$sp500_10yr_pos, na.rm = TRUE), 2), "%"))
+print(paste0("10 year chance U.S. Stocks is positive: ", 100*round(mean(df$sp500_10yr_pos, na.rm = TRUE), 2), "%"))
 
 start_months <- df[1:(nrow(df)-period_length+1), "date"]
 
@@ -99,8 +99,10 @@ run_dca <- function(start_month, end_month, w_stock, stock_ret, title_string){
     
     title_string_cleaned <- str_replace_all(title_string, "\\/", "_")
     
-    file_path <- paste0(out_path, "/perf_", date_as_string, "_", title_string_cleaned, ".jpeg")
+    file_path <- paste0(out_path, "/performance_", date_as_string, "_", title_string_cleaned, ".jpeg")
     source_string <- paste0("Source: Returns 2.0")
+    note_string <- str_wrap(paste0("Note: Assumes that DCA invests $100 a month for 10 years. Includes dividends (if applicable), but not adjusted for inflation."),
+                            width = 80)
     
     plot <- ggplot(to_plot_tmp, aes(x= date, y=value, col = key)) +
       geom_line() +
@@ -111,7 +113,7 @@ run_dca <- function(start_month, end_month, w_stock, stock_ret, title_string){
             legend.title = element_blank()) +
       ggtitle(paste0("Portfolio Value vs. Cost Basis\n", title_string, " Portfolio")) +
       labs(x="Date", y="Value",
-           caption = paste0(source_string))
+           caption = paste0(source_string, "\n", note_string))
     
     # Save the plot
     ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -164,6 +166,7 @@ final_results <- final_results %>%
                          jpy_beats_cash = ifelse(value_jpy > cost_basis, 1, 0),
                          sp500_perf_premium = value_stock/cost_basis - 1,
                          bond_perf_premium = value_bond/cost_basis - 1,
+                         p6040_pref_premium = value_6040/cost_basis - 1,
                          jpy_perf_premium = value_jpy/cost_basis - 1)
 
 print(paste0("Stock beats cash: ", 100*round(mean(final_results$stock_beats_cash), 2), "%"))
@@ -172,18 +175,24 @@ print(paste0("Bonds beats cash: ", 100*round(mean(final_results$bonds_beats_cash
 print(paste0("6040 beats cash: ", 100*round(mean(final_results$p6040_beats_cash), 2), "%"))
 print(paste0("Japan Stocks beats cash: ", 100*round(mean(final_results$jpy_beats_cash, na.rm = TRUE), 2), "%"))
 
+print(paste0("Median Stock cash beat: ", 100*round(quantile(final_results$sp500_perf_premium, probs = 0.5, na.rm = TRUE), 2), "%"))
+print(paste0("Median Bond cash beat: ", 100*round(quantile(final_results$bond_perf_premium, probs = 0.5, na.rm = TRUE), 2), "%"))
+print(paste0("Median Japan Stock cash beat: ", 100*round(quantile(final_results$jpy_perf_premium, probs = 0.5, na.rm = TRUE), 2), "%"))
+
 to_plot <- final_results %>%
             select(start_date, sp500_perf_premium, bond_perf_premium) %>%
             gather(-start_date, key=key, value=value) %>%
             mutate(key = case_when(
-              key == "sp500_perf_premium" ~ "S&P 500",
-              key == "bond_perf_premium" ~ "100% Bonds",
+              key == "sp500_perf_premium" ~ "U.S. Stocks",
+              key == "bond_perf_premium" ~ "5-Year Treasuries",
               key == "p6040_pref_premium" ~ "60/40 Portfolio",
               TRUE ~ "Error"
             ))
 
 file_path <- paste0(out_path, "/dca_perf_premium.jpeg")
 source_string <- paste0("Source: Returns 2.0")
+note_string <- str_wrap(paste0("Note: Assumes that DCA invests $100 a month for 10 years. Includes dividends (if applicable), but not adjusted for inflation."),
+                        width = 80)
 
 plot <- ggplot(to_plot, aes(x= value, fill = key)) +
   geom_density(alpha = 0.4) +
@@ -194,30 +203,42 @@ plot <- ggplot(to_plot, aes(x= value, fill = key)) +
         legend.title = element_blank(),
         axis.ticks.y = element_blank(),
         axis.text.y = element_blank()) +
-  ggtitle(paste0("DCA Performance Premium Above Cash\nOver 10 Years\nBy Portfolio")) +
-  labs(x="Performance Premium Above Cash", y="Frequency",
-       caption = paste0(source_string))
+  ggtitle(paste0("DCA Total Return Above Cash\nOver 10 Years\nBy Portfolio")) +
+  labs(x="Total Return Above Cash", y="Frequency",
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-# JPY plots
-file_path <- paste0(out_path, "/dca_jpy.jpeg")
-source_string <- paste0("Source: FRED")
-
+#60/40
 to_plot <- final_results %>%
-            select(start_date, jpy_perf_premium) %>%
-            drop_na
+  select(start_date, sp500_perf_premium, bond_perf_premium, p6040_pref_premium) %>%
+  gather(-start_date, key=key, value=value) %>%
+  mutate(key = case_when(
+    key == "sp500_perf_premium" ~ "U.S. Stocks",
+    key == "bond_perf_premium" ~ "5-Year Treasuries",
+    key == "p6040_pref_premium" ~ "60/40 Portfolio",
+    TRUE ~ "Error"
+  ))
 
-plot <- ggplot(to_plot, aes(x= jpy_perf_premium)) +
-  geom_density(alpha = 0.4, fill = "red") +
+
+file_path <- paste0(out_path, "/dca_perf_premium_6040.jpeg")
+source_string <- paste0("Source: Returns 2.0")
+note_string <- str_wrap(paste0("Note: Assumes that DCA invests $100 a month for 10 years. Includes dividends (if applicable), but not adjusted for inflation."),
+                        width = 80)
+
+plot <- ggplot(to_plot, aes(x= value, fill = key)) +
+  geom_density(alpha = 0.4) +
+  scale_fill_manual(values = c("blue", "red", "green")) +
   scale_x_continuous(label = percent_format(accuracy = 1)) +
   of_dollars_and_data_theme +
-  theme(axis.ticks.y = element_blank(),
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.ticks.y = element_blank(),
         axis.text.y = element_blank()) +
-  ggtitle(paste0("DCA Performance Premium Above Cash\nOver 10 Years\n100% Japanese Stocks")) +
-  labs(x="Performance Premium Above Cash", y="Frequency",
-       caption = paste0(source_string))
+  ggtitle(paste0("DCA Total Return Above Cash\nOver 10 Years\nBy Portfolio")) +
+  labs(x="Total Return Above Cash", y="Frequency",
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -231,9 +252,9 @@ plot <- ggplot(to_plot, aes(x= start_date, y=jpy_perf_premium)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   scale_y_continuous(label = percent_format(accuracy = 1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("DCA Performance Premium Above Cash\nOver 10 Years\n100% Japanese Stocks")) +
-  labs(x="Date", y="Performance Premium Above Cash",
-       caption = paste0(source_string))
+  ggtitle(paste0("DCA Total Return Above Cash\nOver 10 Years\n100% Japanese Stocks")) +
+  labs(x="Date", y="Total Return Above Cash",
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -246,8 +267,8 @@ to_plot <- final_results %>%
   select(start_date, sp500_perf_premium, jpy_perf_premium) %>%
   gather(-start_date, key=key, value=value) %>%
   mutate(key = case_when(
-    key == "sp500_perf_premium" ~ "S&P 500",
-    key == "jpy_perf_premium" ~ "100% Japanese Stocks",
+    key == "sp500_perf_premium" ~ "U.S. Stocks",
+    key == "jpy_perf_premium" ~ "Japanese Stocks",
     key == "p6040_pref_premium" ~ "60/40 Portfolio",
     TRUE ~ "Error"
   ))
@@ -261,9 +282,9 @@ plot <- ggplot(to_plot, aes(x= value, fill = key)) +
         legend.title = element_blank(),
         axis.ticks.y = element_blank(),
         axis.text.y = element_blank()) +
-  ggtitle(paste0("DCA Performance Premium Above Cash\nOver 10 Years\nUS vs. JPY Stocks")) +
-  labs(x="Performance Premium Above Cash", y="Frequency",
-       caption = paste0(source_string))
+  ggtitle(paste0("DCA Total Return Above Cash\nOver 10 Years\nUS vs. JPY Stocks")) +
+  labs(x="Total Return Above Cash", y="Frequency",
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -280,9 +301,9 @@ plot <- ggplot(to_plot, aes(x= start_date, y=sp500_perf_premium)) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   scale_y_continuous(label = percent_format(accuracy = 1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("DCA Performance Premium Above Cash\nOver 10 Years\nS&P 500")) +
-  labs(x="Date", y="Performance Premium Above Cash",
-       caption = paste0(source_string))
+  ggtitle(paste0("DCA Total Return Above Cash\nOver 10 Years\nU.S. Stocks")) +
+  labs(x="Date", y="Total Return Above Cash",
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
