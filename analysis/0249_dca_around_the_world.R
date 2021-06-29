@@ -1,0 +1,129 @@
+cat("\014") # Clear your console
+rm(list = ls()) #clear your environment
+
+########################## Load in header file ######################## #
+setwd("~/git/of_dollars_and_data")
+source(file.path(paste0(getwd(),"/header.R")))
+
+########################## Load in Libraries ########################## #
+
+library(scales)
+library(readxl)
+library(lubridate)
+library(ggrepel)
+library(tidylog)
+library(zoo)
+library(Hmisc)
+library(lemon)
+library(tidyverse)
+
+folder_name <- "0249_dca_around_the_world"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+
+########################## Start Program Here ######################### #
+
+period_length <- 120
+
+raw_1970 <- read.csv(paste0(importdir, "/0249_world_returns/dfa_msci_1970.csv"), skip = 6,
+                col.names = c("date", "Australia", "Sweden", "US", "Spain",
+                              "UK", "Canada", "Japan"),
+                ) %>%
+        filter(row_number() != 1, `Australia` != "") %>%
+        mutate(date = as.Date(date, "%m/%d/%Y"))
+
+df_1970 <- sapply(raw_1970[2:ncol(raw_1970)], as.numeric) %>%
+                as.data.frame() %>%
+                bind_cols(date = raw_1970[, "date"]) %>%
+            select(date, everything())
+
+raw_1999 <- read.csv(paste0(importdir, "/0249_world_returns/dfa_msci_1999.csv"), skip = 6,
+                     col.names = c("date", "China", "Mexico", "SouthAfrica", "Greece"),
+) %>%
+  filter(row_number() != 1, `China` != "") %>%
+  mutate(date = as.Date(date, "%m/%d/%Y"))
+
+df_1999 <- sapply(raw_1999[2:ncol(raw_1999)], as.numeric) %>%
+  as.data.frame() %>%
+  bind_cols(date = raw_1999[, "date"]) %>%
+  select(date, everything())
+
+df <- df_1970 %>%
+        left_join(df_1999)
+
+index_cols <- colnames(df[, 2:ncol(df)])
+
+final_results <- data.frame()
+counter <- 0
+
+for(x in index_cols){
+  print(x)
+  pre_filter <- df %>%
+            select_("date", x) %>%
+            rename_(.dots = setNames(paste0(x), "index")) %>%
+            drop_na %>%
+            mutate(ret = index/lag(index, 1) - 1)
+            
+  start_months <- pre_filter[1:(nrow(pre_filter)-period_length+1), "date"]
+   
+  for(s in 1:length(start_months)){
+    print(start_months[s])
+    start_month <- start_months[s]
+    end_month <- start_month + days(1) + months(period_length-1) - days(1)
+    
+    tmp <- pre_filter %>%
+      filter(date >= start_month, date <= end_month)
+    
+    dca_amount <- 100
+    
+    for(j in 1:nrow(tmp)){
+      if(j == 1){
+        tmp[j, "cost_basis"] <- dca_amount
+        tmp[j, "value"] <- dca_amount
+      } else{
+        ret <- 1 + tmp[j, "ret"]
+        mt <- month(tmp[j, "date"])
+        
+        tmp[j, "cost_basis"] <- tmp[(j-1), "cost_basis"] + dca_amount
+        tmp[j, "value"] <- (tmp[(j-1), "value"] * ret) + dca_amount
+      }
+    }
+    
+    tail <- tmp %>%
+      tail(1)
+    
+    counter <- counter + 1
+    
+    final_results[counter, "start_date"] <- start_month
+    final_results[counter, "end_date"]   <- end_month
+    final_results[counter, "cost_basis"] <- tail$cost_basis
+    final_results[counter, "value"]      <- tail$value
+    final_results[counter, "country"]    <- x
+  }
+}
+
+file_path <- paste0(out_path, "/dca_all_countries.jpeg")
+source_string <- paste0("Source: Returns2.0")
+note_string <- str_wrap(paste0("Note: Assumes that DCA invests $100 a month for 10 years. Returns are shown net of dividends."),
+                        width = 80)
+
+to_plot <- final_results %>%
+              mutate(stock_beats_cash = ifelse(value > cost_basis, 1, 0))
+
+plot <- ggplot(to_plot, aes(x= start_date, y=value, col = country)) +
+  geom_line() +
+  scale_y_continuous(label = dollar) +
+  geom_hline(yintercept = period_length*dca_amount, linetype = "dashed") +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("DCA Final Portfolio Value\nOver 10 Years\nBy Country")) +
+  labs(x="Start Date", y="Final Portfolio Value",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+print(paste0("Stock beats cash: ", 100*round(mean(to_plot$stock_beats_cash), 2), "%"))
+
+# ############################  End  ################################## #
