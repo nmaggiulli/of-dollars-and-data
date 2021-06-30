@@ -115,7 +115,8 @@ final_results <- final_results %>%
 final_results$stock_premium_bins <- factor(final_results$stock_premium_bins, levels = c("<0%", "0%-50%",">50%"))
 
 source_string <- paste0("Source: Returns 2.0")
-note_string <- str_wrap(paste0("Note: Assumes that DCA invests $100 a month for 10 years. Returns are shown net of dividends."),
+note_string <- str_wrap(paste0("Note: Assumes that DCA invests $100 a month for 10 years. Returns are shown net of dividends.  ",
+                               "All country data starts in 1970, except data for China, Russia, and Greece which start in 1999."),
                         width = 80)
 
 file_path <- paste0(out_path, "/dca_all_countries.jpeg")
@@ -161,8 +162,8 @@ plot <- ggplot(to_plot, aes(x=stock_premium_bins, y=pct, fill = country)) +
   scale_fill_discrete(guide = FALSE) +
   scale_y_continuous(label = percent_format(accuracy = 1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("DCA Return Above Cash\nOver 10 Years\nBy Country and Return Bin")) +
-  labs(x="Return Bin", y="Percentage",
+  ggtitle(paste0("DCA Return Above Cash\nOver 10 Years\nBy Country and Return Amount")) +
+  labs(x="Final Return Above Cash", y="Percentage",
        caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
@@ -170,6 +171,8 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 print(paste0("Stock beats cash: ", 100*round(mean(final_results$stock_beats_cash), 2), "% of the time (avg)"))
 print(paste0("Stock beats cash by: ", 100*round(mean(final_results$stock_premium), 2), "% (avg)"))
+print(paste0("Stock beats cash by: ", 100*round(quantile(final_results$stock_premium, probs = 0.25), 2), "% (25th pct)"))
 print(paste0("Stock beats cash by: ", 100*round(quantile(final_results$stock_premium, probs = 0.5), 2), "% (median)"))
+print(paste0("Stock beats cash by: ", 100*round(quantile(final_results$stock_premium, probs = 0.75), 2), "% (75th pct)"))
 
 # ############################  End  ################################## #
