@@ -13,8 +13,7 @@ library(lubridate)
 library(ggrepel)
 library(tidylog)
 library(zoo)
-library(Hmisc)
-library(lemon)
+library(FinCal)
 library(tidyverse)
 
 folder_name <- "0249_dca_around_the_world"
@@ -50,6 +49,30 @@ df_1999 <- sapply(raw_1999[2:ncol(raw_1999)], as.numeric) %>%
 
 df <- df_1970 %>%
         left_join(df_1999)
+
+long_df <- df %>%
+            gather(-date, key=key, value=value)
+
+first_1970 <- long_df %>%
+                filter(date == as.Date("1970-01-31")) %>%
+                rename(first_value = value) %>%
+                select(-date) %>%
+                drop_na
+
+ew_df <- long_df %>%
+            filter(date >= as.Date("1970-01-31")) %>%
+            inner_join(first_1970) %>%
+              mutate(index = value/first_value) %>%
+            group_by(date) %>%
+            summarize(count = n(),
+                      sum_index = sum(index),
+                      ) %>%
+            ungroup() %>%
+            mutate(EW = sum_index/count) %>%
+            select(date, EW)
+
+df <- df %>%
+      left_join(ew_df)
 
 index_cols <- colnames(df[, 2:ncol(df)])
 
@@ -114,13 +137,16 @@ final_results <- final_results %>%
                 
 final_results$stock_premium_bins <- factor(final_results$stock_premium_bins, levels = c("<0%", "0%-50%",">50%"))
 
+final_results_no_ew <- final_results %>%
+                        filter(country != "EW")
+
 source_string <- paste0("Source: Returns 2.0")
 note_string <- str_wrap(paste0("Note: Assumes that DCA invests $100 a month for 10 years. Returns are shown net of dividends.  ",
                                "All country data starts in 1970, except data for China, Russia, and Greece which start in 1999."),
                         width = 80)
 
 file_path <- paste0(out_path, "/dca_all_countries.jpeg")
-to_plot <- final_results 
+to_plot <- final_results_no_ew
 
 plot <- ggplot(to_plot, aes(x= start_date, y=value, col = country)) +
   geom_line() +
@@ -138,13 +164,13 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Do binning
 file_path <- paste0(out_path, "/dca_bins_all_countries.jpeg")
-
-country_bin <- final_results %>%
+                        
+country_bin <- final_results_no_ew %>%
               group_by(stock_premium_bins, country) %>%
               summarise(count = n()) %>%
               ungroup()
 
-country <- final_results %>%
+country <- final_results_no_ew %>%
   group_by(country) %>%
   summarise(country_total = n()) %>%
   ungroup()
@@ -169,10 +195,18 @@ plot <- ggplot(to_plot, aes(x=stock_premium_bins, y=pct, fill = country)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-print(paste0("Stock beats cash: ", 100*round(mean(final_results$stock_beats_cash), 2), "% of the time (avg)"))
-print(paste0("Stock beats cash by: ", 100*round(mean(final_results$stock_premium), 2), "% (avg)"))
-print(paste0("Stock beats cash by: ", 100*round(quantile(final_results$stock_premium, probs = 0.25), 2), "% (25th pct)"))
-print(paste0("Stock beats cash by: ", 100*round(quantile(final_results$stock_premium, probs = 0.5), 2), "% (median)"))
-print(paste0("Stock beats cash by: ", 100*round(quantile(final_results$stock_premium, probs = 0.75), 2), "% (75th pct)"))
+print_sim_stats <- function(df){
+  print(paste0("Stock beats cash: ", 100*round(mean(df$stock_beats_cash), 2), "% of the time (avg)"))
+  print(paste0("Stock beats cash by: ", 100*round(quantile(df$stock_premium, probs = 0.25), 2), "% (25th pct)"))
+  print(paste0("Stock beats cash by: ", 100*round(quantile(df$stock_premium, probs = 0.5), 2), "% (median)"))
+  print(paste0("Stock beats cash by: ", 100*round(quantile(df$stock_premium, probs = 0.75), 2), "% (75th pct)"))
+  
+}
+
+ew_only <- final_results %>%
+  filter(country == "EW")
+
+print_sim_stats(final_results_no_ew)
+print_sim_stats(ew_only)
 
 # ############################  End  ################################## #
