@@ -13,7 +13,6 @@ library(lubridate)
 library(ggrepel)
 library(tidylog)
 library(zoo)
-library(FinCal)
 library(tidyverse)
 
 folder_name <- "0249_dca_around_the_world"
