@@ -51,7 +51,8 @@ df <- read.csv(paste0(importdir, "/0248_dca_win_lose_rate/dfa_sp500_bond_cpi.csv
   drop_na %>%
   mutate(ret_10yr_sp500 = index_sp500/lag(index_sp500, period_length) - 1,
          sp500_10yr_pos = ifelse(ret_10yr_sp500 > 0, 1, 0)) %>%
-  left_join(monthly_jpy)
+  left_join(monthly_jpy) %>%
+  filter(date <= "2020-12-31")
 
 print(paste0("10 year chance U.S. Stocks is positive: ", 100*round(mean(df$sp500_10yr_pos, na.rm = TRUE), 2), "%"))
 
