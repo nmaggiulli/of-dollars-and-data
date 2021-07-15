@@ -299,6 +299,14 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   # New plot
   file_path <- paste0(out_path, "/", start_date_string, "/dca_vs_dip_lag_", lag_length, "_", start_date_string, ".jpeg")
   
+  if(text_date == "1980-01-01"){
+    dca_y_nudge <- 15000
+  } else{
+    dca_y_nudge <- -15000
+  }
+  
+  other_nudge <- -1*dca_y_nudge
+  
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
     geom_line() +
     geom_point(data=bottom, aes(x=date, y=value), col = bw_colors[3], size = dot_size) +
@@ -307,7 +315,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
     geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
                     label = text_labels$key,
                     family = "my_font",
-                    nudge_y = ifelse(text_labels$key == "DCA", -15000, 15000),
+                    nudge_y = ifelse(text_labels$key == "DCA", dca_y_nudge, other_nudge),
                     segment.color = "transparent") +
     of_dollars_and_data_theme +
     ggtitle(paste0("Buy the Dip", end_title, " vs. DCA")) +
