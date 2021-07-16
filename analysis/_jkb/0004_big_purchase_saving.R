@@ -20,7 +20,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-my_color <- "#636363"
+my_color <- "#000000"
 
 #Bring in IEI data
 raw_iei <- read.csv(paste0(importdir, folder_name, "/IEI_data.csv")) %>%
@@ -54,7 +54,7 @@ bond_ret <- read.csv(paste0(importdir, "/0209_bond_rets/treasury_5yr.csv"), skip
 stock_bond <- readRDS(paste0(localdir, "0009_sp500_ret_pe.RDS")) %>%
   select(date, price_plus_div) %>%
   mutate(ret_sp500 = price_plus_div/lag(price_plus_div) - 1) %>%
-  filter(date >= "1926-01-01") %>%
+  filter(date >= "1926-01-01", date <= "2020-12-31") %>%
   left_join(bond_ret)
 
 min_year <- year(min(stock_bond$date))
