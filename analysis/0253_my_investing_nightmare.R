@@ -15,7 +15,7 @@ library(tidylog)
 library(zoo)
 library(tidyverse)
 
-folder_name <- "0252_my_investing_nightmare"
+folder_name <- "0253_my_investing_nightmare"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -70,8 +70,8 @@ plot_country <- function(country, start_date, end_date){
   to_plot <- to_plot %>%
               mutate(value = index/first_value - 1)
   
-  file_path <- paste0(out_path, "/", country, "_", date_to_string(start_date), "_", date_to_string(end_date),".jpeg")
-  source_string <- "Source: Returns 2.0"
+  file_path <- paste0(out_path, "/", country, "_", date_to_string(start_date), "_", date_to_string(end_date),"_pct_change.jpeg")
+  source_string <- "Source: Returns 2.0 (OfDollarsAndData.com)"
   
   plot <- ggplot(to_plot, aes(x= date, y=value)) +
     geom_line() +
@@ -87,7 +87,6 @@ plot_country <- function(country, start_date, end_date){
 
 plot_country("Spain", "1973-09-30", "1983-08-31")
 plot_country("Greece", "2007-12-31", "2017-11-30")
-plot_country("Russia", "2007-12-31", "2017-11-30")
 plot_country("Italy", "2006-02-28", "2016-01-31")
 plot_country("US", "1999-03-31", "2009-02-28")
 
