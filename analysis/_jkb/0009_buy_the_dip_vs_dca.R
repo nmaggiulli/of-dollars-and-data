@@ -197,7 +197,7 @@ plot_ath_dips <- function(lag_length, start_date, end_date){
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
     geom_line(col = bw_colors[3]) +
-    geom_point(data=ath, aes(x=date, y=value), col = bw_colors[1], size = dot_size, alpha = 0.7) +
+    geom_point(data=ath, aes(x=date, y=value), col = bw_colors[2], size = dot_size) +
     scale_y_continuous(label = dollar) +
     scale_x_date(date_labels = "%Y") +
     of_dollars_and_data_theme +
@@ -212,7 +212,7 @@ plot_ath_dips <- function(lag_length, start_date, end_date){
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
     geom_line(col = bw_colors[3]) +
-    geom_point(data=ath, aes(x=date, y=value), col = bw_colors[1], size = dot_size) +
+    geom_point(data=ath, aes(x=date, y=value), col = bw_colors[2], size = dot_size) +
     geom_point(data=bottom, aes(x=date, y=value), col = bw_colors[3], size = dot_size) +
     scale_y_continuous(label = dollar) +
     scale_x_date(date_labels = "%Y") +
