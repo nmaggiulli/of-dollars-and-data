@@ -153,17 +153,22 @@ ath <- raw %>%
         mutate(year = year(date),
                month = month(date))
 
+streak <- 1
 for(i in 1:nrow(ath)){
   if(i == 1){
     ath[i, "ath"] <- 1
+    ath[i, "streak"] <- 1
     ath_tmp <- ath[i, "index"]
   } else{
     if(ath[i, "index"] > ath_tmp){
       ath[i, "ath"] <- 1
       ath_tmp <- ath[i, "index"]
+      streak <- streak + 1
     } else{
       ath[i, "ath"] <- 0
+      streak <- 0
     }
+    ath[i, "streak"] <- streak
   }
 }
 
