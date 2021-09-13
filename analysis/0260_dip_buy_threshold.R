@@ -27,6 +27,7 @@ raw <- readRDS(paste0(localdir, "/0009_sp500_ret_pe.Rds")) %>%
         select(date, price_plus_div)
 
 dd <- drawdown_path(raw)
+monthly_amount <- 100
 
 run_dip_buying <- function(start_date, end_date, dd_threshold){
   tmp <- raw %>%
@@ -34,7 +35,7 @@ run_dip_buying <- function(start_date, end_date, dd_threshold){
                  date <= end_date) %>%
           left_join(dd)
   
-  monthly_amount <- 100
+
   cash_saving <- 1
   
   for(i in 1:nrow(tmp)){
@@ -64,6 +65,15 @@ run_dip_buying <- function(start_date, end_date, dd_threshold){
       tmp[i, "value_dca"] <- tmp[(i-1), "value_dca"] * (1 + ret) + monthly_amount
     }
   }
+  
+  if(start_date == as.Date("1980-01-01") & dd_threshold == -0.5){
+    assign("tmp_1980_50pct", tmp, envir = .GlobalEnv)
+  } else if(start_date == as.Date("1963-01-01") & dd_threshold == -0.4){
+    assign("tmp_1963_40pct", tmp, envir = .GlobalEnv)
+  } else if(start_date == as.Date("1990-01-01") & dd_threshold == -0.5){
+    assign("tmp_1990_50pct", tmp, envir = .GlobalEnv)
+  }
+  
   return(tmp)
 }
 
@@ -107,19 +117,104 @@ summary <- final_results %>%
                       median_btd_outperf = quantile(btd_outperf, probs = 0.5)) %>%
             ungroup()
 
-to_plot <- final_results
+# Do when BTD wins
+to_plot <- tmp_1963_40pct %>%
+              mutate(`Buy the Dip` = value_dip + value_cash,
+                     DCA = value_dca) %>%
+              select(date, DCA, `Buy the Dip`) %>%
+              gather(-date, key=key, value=value)
+
+file_path <- paste0(out_path, "/btd_1963_win.jpeg")
+source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)")
+note_string <- paste0("Note: Both strategies save $", monthly_amount, " per month.")
+
+plot <- ggplot(to_plot, aes(x= date, y=value, col = key)) +
+  geom_line() +
+  scale_color_manual(values = c("red", "black")) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("When Buy the Dip Beats DCA")) +
+  labs(x="Date", y="Portfolio Value",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# When DCA beats BTD
+to_plot <- tmp_1980_50pct %>%
+  mutate(`Buy the Dip` = value_dip + value_cash,
+         DCA = value_dca) %>%
+  select(date, DCA, `Buy the Dip`) %>%
+  gather(-date, key=key, value=value)
+
+file_path <- paste0(out_path, "/dca_1980_win.jpeg")
+
+plot <- ggplot(to_plot, aes(x= date, y=value, col = key)) +
+  geom_line() +
+  scale_color_manual(values = c("red", "black")) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("When DCA Beats Buy the Dip")) +
+  labs(x="Date", y="Portfolio Value",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+#Plot 1990 cash and dip
+to_plot <- tmp_1990_50pct %>%
+  mutate(`Buy the Dip` = value_dip + value_cash,
+         DCA = value_dca,
+         Cash = value_cash) %>%
+  select(date, DCA, `Buy the Dip`, Cash) %>%
+  gather(-date, key=key, value=value)
+
+file_path <- paste0(out_path, "/dca_btd_1990.jpeg")
+
+plot <- ggplot(to_plot, aes(x= date, y=value, col = key)) +
+  geom_line() +
+  scale_color_manual(values = c("red", "green", "black")) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("How Buy the Dip Works")) +
+  labs(x="Date", y="Portfolio Value",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Do geom joy plot of all results
+to_plot <- final_results 
+
+to_plot$dd_threshold <- factor(to_plot$dd_threshold, levels = rev(c("-10%", "-20%", "-30%", "-40%", "-50%")))
 
 file_path <- paste0(out_path, "/btd_outperf_by_dd.jpeg")
-source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)")
 
-plot <- ggplot(to_plot, aes(x= btd_outperf, y=as.factor(dd_threshold), fill = as.factor(dd_threshold))) +
+text_labels <- data.frame()
+text_labels[1, "btd_outperf"] <- -0.8
+text_labels[1, "dd_threshold"] <- "-20%"
+text_labels[1, "label"] <- "Buy the Dip\nUnderperforms"
+text_labels[2, "btd_outperf"] <- 0.45
+text_labels[2, "dd_threshold"] <- "-20%"
+text_labels[2, "label"] <- "Buy the Dip\nOutperforms"
+
+plot <- ggplot(to_plot, aes(x= btd_outperf, y=dd_threshold, fill = dd_threshold)) +
   geom_joy_gradient(rel_min_height = 0.01, scale = 3) +
   geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_text(data=text_labels, aes(x=btd_outperf, y=dd_threshold, label = label),
+            family = "my_font",
+            size = 3) +
   scale_fill_discrete(guide = "none") +
   scale_x_continuous(label = percent_format(accuracy = 1)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Buy the Dip Outperformance Over DCA\nby Dip Threshold")) +
-  labs(x="Outperformance over DCA (%)", y="Dip Threshold",
+  labs(x="BTD Outperformance over DCA", y="Dip Threshold",
        caption = paste0(source_string))
 
 # Save the plot
