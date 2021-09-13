@@ -49,7 +49,7 @@ run_dip_buying <- function(start_date, end_date, dd_threshold){
       if(dd < dd_threshold){
         cash_saving <- 0
         tmp[i, "value_cash"] <- 0
-        tmp[i, "value_dip"] <- tmp[(i-1), "value_dip"] * (1 + ret) + tmp[(i-1), "value_cash"] * (1 + ret) + monthly_amount
+        tmp[i, "value_dip"] <- tmp[(i-1), "value_dip"] * (1 + ret) + tmp[(i-1), "value_cash"] + monthly_amount
       } else if (dd == 0){
         cash_saving <- 1
         tmp[i, "value_cash"] <- tmp[(i-1), "value_cash"] + monthly_amount
