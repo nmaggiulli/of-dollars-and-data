@@ -262,11 +262,11 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   file_path <- paste0(out_path, "/", start_date_string, "/dip_cash_lag_", lag_length, "_", start_date_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
-    geom_bar(data=cash, aes(x=date, y=value), col = bw_colors[1], stat="identity") +
+    geom_bar(data=cash, aes(x=date, y=value), col = bw_colors[2], stat="identity") +
     geom_line(col = bw_colors[3]) +
     geom_point(data=bottom, aes(x=date, y=value), col = bw_colors[3], size = dot_size) +
     scale_y_continuous(label = dollar) +
-    scale_color_manual(values = c(bw_colors[1], bw_colors[3]), guide = FALSE) +
+    scale_color_manual(values = c(bw_colors[2], bw_colors[3]), guide = FALSE) +
     geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
                     label = text_labels$key,
                     family = "my_font",
@@ -327,34 +327,6 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   # Pull cumulative dollar growth
   cumulative_totals <- calculate_dca_dip_diff(lag_length, start_date, end_date)
   
-  to_plot <- cumulative_totals %>%
-                select(date, cumulative_dca, cumulative_dip) %>%
-                rename(`DCA` = cumulative_dca,
-                       `Buy the Dip` = cumulative_dip) %>%
-                gather(-date, key=key, value=value)
-  
-  text_labels <- to_plot %>%
-                  filter(date == text_date)
-  
-  # Plot Cumululative growth
-  file_path <- paste0(out_path, "/", start_date_string, "/cumulative_growth_lag_", lag_length, "_", start_date_string, ".jpeg")
-  
-  plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
-    geom_line() +
-    scale_y_continuous(label = dollar) +
-    scale_color_manual(values = c(bw_colors[1], bw_colors[3]), guide = FALSE) +
-    geom_text_repel(data=text_labels, aes(x=date, y=value, col = key),
-                    label = text_labels$key,
-                    family = "my_font",
-                    nudge_y = ifelse(text_labels$key == "DCA", -15000, 1000),
-                    segment.color = "transparent") +
-    of_dollars_and_data_theme +
-    ggtitle(paste0("Cumulative Growth of DCA and\nBuy the Dip", end_title)) +
-    labs(x = "Date", y = "Amount")
-  
-  # Save the plot
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-  
   # DCA growth only
   to_plot <- cumulative_totals %>%
               select(date, dca_growth) %>%
@@ -368,10 +340,10 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   file_path <- paste0(out_path, "/", start_date_string, "/dca_final_growth_lag_", lag_length, "_", start_date_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value)) +
-    geom_bar(stat="identity", position="dodge", col = bw_colors[1]) +
+    geom_bar(stat="identity", position="dodge", col = bw_colors[2]) +
     geom_point(data=bottom, aes(x=date, y=value), col = bw_colors[3])+
     scale_y_continuous(label = dollar) +
-    scale_color_manual(values = c(bw_colors[3], bw_colors[1]), guide = FALSE) +
+    scale_color_manual(values = c(bw_colors[3], bw_colors[2]), guide = FALSE) +
     of_dollars_and_data_theme +
     ggtitle(paste0("Final Growth of Each DCA Payment\nAnd Buy the Dip Purchases")) +
     labs(x = "Date", y = "Amount")
