@@ -70,8 +70,8 @@ run_dip_buying <- function(start_date, end_date, dd_threshold){
     assign("tmp_1980_50pct", tmp, envir = .GlobalEnv)
   } else if(start_date == as.Date("1963-01-01") & dd_threshold == -0.4){
     assign("tmp_1963_40pct", tmp, envir = .GlobalEnv)
-  } else if(start_date == as.Date("1990-01-01") & dd_threshold == -0.5){
-    assign("tmp_1990_50pct", tmp, envir = .GlobalEnv)
+  } else if(start_date == as.Date("1970-01-01") & dd_threshold == -0.4){
+    assign("tmp_1970_40pct", tmp, envir = .GlobalEnv)
   }
   
   return(tmp)
@@ -135,7 +135,7 @@ plot <- ggplot(to_plot, aes(x= date, y=value, col = key)) +
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
-  ggtitle(paste0("When Buy the Dip Beats DCA")) +
+  ggtitle(paste0("When Buy the Dip Beats DCA\n1963-1983")) +
   labs(x="Date", y="Portfolio Value",
        caption = paste0(source_string, "\n", note_string))
 
@@ -158,7 +158,7 @@ plot <- ggplot(to_plot, aes(x= date, y=value, col = key)) +
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
-  ggtitle(paste0("When DCA Beats Buy the Dip")) +
+  ggtitle(paste0("When DCA Beats Buy the Dip\n1980-2000")) +
   labs(x="Date", y="Portfolio Value",
        caption = paste0(source_string, "\n", note_string))
 
@@ -166,23 +166,63 @@ plot <- ggplot(to_plot, aes(x= date, y=value, col = key)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 #Plot 1990 cash and dip
-to_plot <- tmp_1990_50pct %>%
-  mutate(`Buy the Dip` = value_dip + value_cash,
-         DCA = value_dca,
+first_value <- pull(tmp_1970_40pct[1, "price_plus_div"])
+
+to_plot <- tmp_1970_40pct %>%
+  mutate(Index = 10000*price_plus_div/first_value,
          Cash = value_cash) %>%
-  select(date, DCA, `Buy the Dip`, Cash) %>%
+  select(date, Index, Cash) %>%
   gather(-date, key=key, value=value)
 
-file_path <- paste0(out_path, "/dca_btd_1990.jpeg")
+points <- tmp_1970_40pct %>%
+              mutate(Index = 10000*price_plus_div/first_value,
+                     Cash = value_cash) %>%
+                    filter(Cash == 0) %>%
+              select(date, Index) %>%
+              gather(-date, key=key, value=value)
+
+text_labels <- data.frame()
+text_labels[1, "date"] <- as.Date("1980-01-01")
+text_labels[1, "value"] <- 15000
+text_labels[1, "label"] <- "Buy the Dip\nPurchases"
+
+file_path <- paste0(out_path, "/how_btd_works_1970.jpeg")
+note_string2 <- paste0("Note: Buy the Dip saves $", monthly_amount, " per month.")
 
 plot <- ggplot(to_plot, aes(x= date, y=value, col = key)) +
   geom_line() +
-  scale_color_manual(values = c("red", "green", "black")) +
+  geom_point(data = points, aes(x=date, y=value), col = "red", alpha = 0.5) +
+  geom_text(data = text_labels, aes(x=date, y= value, label = label), col = "red",
+            family = "my_font") +
+  scale_color_manual(values = c("green", "black")) +
   scale_y_continuous(label = dollar) +
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
-  ggtitle(paste0("How Buy the Dip Works")) +
+  ggtitle(paste0("How Buy the Dip Works\n1970-1990")) +
+  labs(x="Date", y="Growth of $10,000",
+       caption = paste0(source_string, "\n", note_string2))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Do one more BTD vs DCA
+to_plot <- tmp_1970_40pct %>%
+  mutate(`Buy the Dip` = value_dip + value_cash,
+         DCA = value_dca) %>%
+  select(date, DCA, `Buy the Dip`) %>%
+  gather(-date, key=key, value=value)
+
+file_path <- paste0(out_path, "/btd_win_1970.jpeg")
+
+plot <- ggplot(to_plot, aes(x= date, y=value, col = key)) +
+  geom_line() +
+  scale_color_manual(values = c("red", "black")) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("Buy the Dip vs. DCA\n1970-1990")) +
   labs(x="Date", y="Portfolio Value",
        caption = paste0(source_string, "\n", note_string))
 
