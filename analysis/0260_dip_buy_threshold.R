@@ -117,6 +117,12 @@ summary <- final_results %>%
                       median_btd_outperf = quantile(btd_outperf, probs = 0.5)) %>%
             ungroup()
 
+export_to_excel(df = summary,
+                outfile = paste0(out_path, "/summary_results.xlsx"),
+                sheetname = "results",
+                new_file = 1,
+                fancy_formatting = 0)
+
 # Do when BTD wins
 to_plot <- tmp_1963_40pct %>%
               mutate(`Buy the Dip` = value_dip + value_cash,
