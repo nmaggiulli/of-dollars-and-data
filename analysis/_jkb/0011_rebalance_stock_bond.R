@@ -245,7 +245,7 @@ plot <- ggplot(to_plot, aes(x = start_date, y = max_dd, col = rebal_addition_str
   scale_color_manual(values = bw_colors, guide = FALSE) +
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-0.7, 0), breaks = seq(-0.7, 0, 0.1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Maximum Drawdown For ",100*wt_stock, "/", 100*wt_bond," Portfolio\nRebalanced Annually Over ", n_years, " Years")) +
+  ggtitle(paste0("Maximum Drawdown for ",100*wt_stock, "/", 100*wt_bond," Portfolio\nRebalanced Annually Over ", n_years, " Years")) +
   labs(x = "Start Year" , y = "Maximum Drawdown")
 
 # Save the plot
@@ -273,7 +273,7 @@ plot <- ggplot(to_plot, aes(x = start_date, y = max_dd, col = rebalance_string))
   scale_color_manual(values = bw_colors, guide = FALSE) +
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-0.7, 0), breaks = seq(-0.7, 0, 0.1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Maximum Drawdown For ",100*wt_stock, "/", 100*wt_bond," Portfolio\nOver ", n_years, " Years")) +
+  ggtitle(paste0("Maximum Drawdown for ",100*wt_stock, "/", 100*wt_bond," Portfolio\nOver ", n_years, " Years")) +
   labs(x = "Start Year" , y = "Maximum Drawdown")
 
 # Save the plot
@@ -301,7 +301,7 @@ plot <- ggplot(to_plot, aes(x = start_date, y = final_stock_pct, col = rebalance
   scale_color_manual(values = bw_colors, guide = FALSE) +
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Final Stock Percentage For ",100*wt_stock, "/", 100*wt_bond," Portfolio\nOver ", n_years, " Years")) +
+  ggtitle(paste0("Final Stock Percentage for ",100*wt_stock, "/", 100*wt_bond," Portfolio\nOver ", n_years, " Years")) +
   labs(x = "Start Year" , y = "Final Stock Percentage")
 
 # Save the plot
@@ -325,7 +325,7 @@ plot <- ggplot(to_plot, aes(x = start_date, y = final_value, col = rebalance_str
   scale_color_manual(values = bw_colors, guide = FALSE) +
   scale_y_continuous(label = dollar) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Final Portfolio Value For ",100*wt_stock, "/", 100*wt_bond," Portfolio\nOver ", n_years, " Years")) +
+  ggtitle(paste0("Final Portfolio Value for ",100*wt_stock, "/", 100*wt_bond," Portfolio\nOver ", n_years, " Years")) +
   labs(x = "Start Year" , y = "Final Value of $100 Investment")
 
 # Save the plot

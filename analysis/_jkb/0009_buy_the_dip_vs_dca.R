@@ -217,7 +217,7 @@ plot_ath_dips <- function(lag_length, start_date, end_date){
     scale_y_continuous(label = dollar) +
     scale_x_date(date_labels = "%Y") +
     of_dollars_and_data_theme +
-    ggtitle("All-Time Highs & 'Dips'\nfor the S&P 500") +
+    ggtitle("All-Time Highs & Dips\nfor the S&P 500") +
     labs(x = "Date", y = "Growth of $1")
   
   # Save the plot
@@ -345,7 +345,7 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
     scale_y_continuous(label = dollar) +
     scale_color_manual(values = c(bw_colors[3], bw_colors[2]), guide = FALSE) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Final Growth of Each DCA Payment\nAnd Buy the Dip Purchases")) +
+    ggtitle(paste0("Final Growth of Each DCA Payment\nand Buy the Dip Purchases")) +
     labs(x = "Date", y = "Amount")
   
   # Save the plot

@@ -124,7 +124,7 @@ value_path <- gather(value_path, scenario, value, -year)
 to_plot <- value_path
 
 file_path <- paste0(out_path, "/sequence_of_return_full_sim.jpeg")
-top_title <- paste0("Negative Returns Have A Larger Impact\nLater in Life")
+top_title <- paste0("Negative Returns Have a Larger Impact\nLater in Life")
 
 plot <- ggplot(to_plot, aes(x = year, y = value)) +
   geom_line() +
