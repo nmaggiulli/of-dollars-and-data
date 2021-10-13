@@ -55,7 +55,8 @@ plot_years <- function(n_years, start_date, title_string){
   to_plot <- df %>%
     filter(!is.na(ret)) %>%
     mutate(year = year(date)) %>%
-    select(year, ret)
+    select(year, ret) %>%
+    mutate(label = paste0(format(round(100*ret, digits=1), nsmall = 1), "%"))
   
   start_date_string <- as.character(start_date)
   
@@ -72,7 +73,7 @@ plot_years <- function(n_years, start_date, title_string){
   plot <- ggplot(data = to_plot, aes(x = as.factor(year), y = ret)) +
     geom_bar(stat = "identity", position = "dodge", fill = "black") +
     geom_text(data = to_plot, 
-              aes(as.factor(year), ret + (text_bump * sign(ret)), label = paste0(round(100*ret, 1), "%")),
+              aes(as.factor(year), ret + (text_bump * sign(ret)), label = label),
               col = "black", 
               size = 4) +
     ggtitle(title_string) +

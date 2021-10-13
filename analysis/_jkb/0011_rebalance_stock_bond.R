@@ -132,7 +132,7 @@ run_rebal <- function(start_date, end_date, rebal_month, rebal_string, rebal_add
     plot <- ggplot(to_plot, aes(x=date, y=value, fill=key)) + 
       geom_area(alpha=0.6 , size=1) +
       scale_fill_manual(values = bw_colors[1:2]) +
-      scale_y_continuous(label = percent, breaks = seq(0, 1, 0.1), limits = c(0, 1)) +
+      scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 1, 0.1), limits = c(0, 1)) +
       of_dollars_and_data_theme +
       theme(legend.title = element_blank(),
             legend.position = "bottom") +
@@ -243,6 +243,15 @@ plot <- ggplot(to_plot, aes(x = start_date, y = max_dd, col = rebal_addition_str
   geom_line() +
   geom_text(data = text_labels, aes(x=start_date, y = max_dd, col = label, label = label, family = "my_font")) +
   scale_color_manual(values = bw_colors, guide = FALSE) +
+  scale_x_date(date_labels ="%Y", breaks = c(
+    as.Date("1930-01-01"),
+    as.Date("1940-01-01"),
+    as.Date("1950-01-01"),
+    as.Date("1960-01-01"),
+    as.Date("1970-01-01"),
+    as.Date("1980-01-01"),
+    as.Date("1990-01-01")
+  )) +
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-0.7, 0), breaks = seq(-0.7, 0, 0.1)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Maximum Drawdown for ",100*wt_stock, "/", 100*wt_bond," Portfolio\nRebalanced Annually Over ", n_years, " Years")) +
@@ -271,6 +280,15 @@ plot <- ggplot(to_plot, aes(x = start_date, y = max_dd, col = rebalance_string))
   geom_line() +
   geom_text(data = text_labels, aes(x=start_date, y = max_dd, col = label, label = label, family = "my_font")) +
   scale_color_manual(values = bw_colors, guide = FALSE) +
+  scale_x_date(date_labels ="%Y", breaks = c(
+    as.Date("1930-01-01"),
+    as.Date("1940-01-01"),
+    as.Date("1950-01-01"),
+    as.Date("1960-01-01"),
+    as.Date("1970-01-01"),
+    as.Date("1980-01-01"),
+    as.Date("1990-01-01")
+  )) +
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(-0.7, 0), breaks = seq(-0.7, 0, 0.1)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Maximum Drawdown for ",100*wt_stock, "/", 100*wt_bond," Portfolio\nOver ", n_years, " Years")) +
@@ -300,6 +318,15 @@ plot <- ggplot(to_plot, aes(x = start_date, y = final_stock_pct, col = rebalance
   geom_text(data = text_labels, aes(x=start_date, y = final_stock_pct, col = label, label = label, family = "my_font")) +
   scale_color_manual(values = bw_colors, guide = FALSE) +
   scale_y_continuous(label = percent_format(accuracy = 1), limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
+  scale_x_date(date_labels ="%Y", breaks = c(
+    as.Date("1930-01-01"),
+    as.Date("1940-01-01"),
+    as.Date("1950-01-01"),
+    as.Date("1960-01-01"),
+    as.Date("1970-01-01"),
+    as.Date("1980-01-01"),
+    as.Date("1990-01-01")
+  )) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Final Stock Percentage for ",100*wt_stock, "/", 100*wt_bond," Portfolio\nOver ", n_years, " Years")) +
   labs(x = "Start Year" , y = "Final Stock Percentage")
@@ -324,6 +351,15 @@ plot <- ggplot(to_plot, aes(x = start_date, y = final_value, col = rebalance_str
   geom_text(data = text_labels, aes(x=start_date, y = final_value, col = label, label = label, family = "my_font")) +
   scale_color_manual(values = bw_colors, guide = FALSE) +
   scale_y_continuous(label = dollar) +
+  scale_x_date(date_labels ="%Y", breaks = c(
+    as.Date("1930-01-01"),
+    as.Date("1940-01-01"),
+    as.Date("1950-01-01"),
+    as.Date("1960-01-01"),
+    as.Date("1970-01-01"),
+    as.Date("1980-01-01"),
+    as.Date("1990-01-01")
+  )) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Final Portfolio Value for ",100*wt_stock, "/", 100*wt_bond," Portfolio\nOver ", n_years, " Years")) +
   labs(x = "Start Year" , y = "Final Value of $100 Investment")
