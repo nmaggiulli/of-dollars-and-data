@@ -22,26 +22,24 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-raw <- read.csv(paste0(importdir, "/0265_risking_fast_and_slow/returns20_stock_bond_cpi.csv"), skip = 7,
-                col.names = c("date", "ret_5yr", "ret_sp500", "ret_cpi", "drop")) %>%
+raw <- read.csv(paste0(importdir, "/0265_risking_fast_and_slow/returns20_stock_cash_cpi.csv"), skip = 7,
+                col.names = c("date", "ret_1m", "ret_sp500", "ret_cpi", "drop")) %>%
         select(-drop) %>%
         drop_na() %>%
         mutate(date = as.Date(date, "%m/%d/%Y"),
                ret_sp500_real = ret_sp500 - ret_cpi,
-               ret_5yr_real = ret_5yr - ret_cpi) %>%
-        select(date, contains("_real"), ret_cpi)
+               ret_1m_real = ret_1m - ret_cpi) %>%
+        select(date, contains("_real"))
 
 df <- raw 
 
 for(i in 1:nrow(df)){
   if(i == 1){
     df[i, "index_sp500"] <- 1
-    df[i, "index_5yr"] <- 1
     df[i, "index_cash"] <- 1
   } else{
     df[i, "index_sp500"] <- df[(i-1), "index_sp500"] * (1 + df[i, "ret_sp500_real"])
-    df[i, "index_5yr"] <- df[(i-1), "index_5yr"] * (1 + df[i, "ret_5yr_real"])
-    df[i, "index_cash"] <- df[(i-1), "index_cash"] * (1 - df[i, "ret_cpi"])
+    df[i, "index_cash"] <- df[(i-1), "index_cash"] * (1 + df[i, "ret_1m_real"])
   }
 }
 
@@ -79,12 +77,16 @@ to_plot <- final_results %>%
 text_labels <- to_plot %>%
                 mutate(lbl = paste0(round(value*100, 0), "%"))
 
+first_year <- year(min(df$date))
+last_year <- year(max(df$date))
+
 file_path <- paste0(out_path, "/sp500_vs_cash_positive_bars.jpeg")
-source_string <- "Source: Returns 2.0 (OfDollarsAndData.com)"
+source_string <- paste0("Source: Returns 2.0, ", first_year, "-", last_year, " (OfDollarsAndData.com)")
+note_string <- "Note: All returns adjusted for inflation. Cash return is 1-Month Treasury Bills."
 
 plot <- ggplot(to_plot, aes(x= label, y=value, fill = key)) +
   geom_bar(stat = "identity", position = "dodge") +
-  geom_text(data = text_labels, aes(x=label, y=value + 0.035, col = key, label = lbl),
+  geom_text(data = text_labels, aes(x=label, y=value + 0.0095, col = key, label = lbl),
             position = position_dodge(width = 1),
             size = 3,
             family = "my_font") +
@@ -96,7 +98,7 @@ plot <- ggplot(to_plot, aes(x= label, y=value, fill = key)) +
         legend.position = "bottom") +
   ggtitle(paste0("Probability of Investment Being Down >5%\nby Holding Period")) +
   labs(x="Holding Period", y="Percentage of Months",
-       caption = paste0(source_string))
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
