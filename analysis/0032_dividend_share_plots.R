@@ -7,7 +7,6 @@ source(file.path(paste0(getwd(),"/header.R")))
 
 ########################## Load in Libraries ########################## #
 
-library(dplyr)
 library(tidyr)
 library(scales)
 library(ggplot2)
@@ -16,7 +15,9 @@ library(grid)
 library(gridExtra)
 library(gtable)
 library(ggrepel)
+library(lubridate)
 library(stringr)
+library(tidyverse)
 
 folder_name <- "0032_dividend_share_plots"
 out_path <- paste0(exportdir, folder_name)
@@ -31,11 +32,8 @@ my_palette <- c("#E41A1C", "#4DAF4A", "#000000", "#377EB8", "#984EA3", "#FF7F00"
 # Load in S&P data from Shiller
 sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
-# Subset S&P 500 returns
-sp500_ret_pe <- filter(sp500_ret_pe, date < "2017-01-01")
-
-first_year <- min(sp500_ret_pe$date)
-last_year <- max(sp500_ret_pe$date)
+first_year <- min(year(sp500_ret_pe$date))
+last_year <- max(year(sp500_ret_pe$date))
 
 # Loop over different time horizons
 n_years_vec <- seq(20, 50, 10)
