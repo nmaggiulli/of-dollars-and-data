@@ -30,7 +30,7 @@ spx <- read.csv(paste0(importdir, "0097_spx_daily/spx_daily.csv")) %>%
         rename(date = Period,
                index = `S.P.500.Level`) %>%
         mutate(date = as.Date(date, format = "%Y-%m-%d")) %>%
-        filter(date >= "2009-12-31", date < "2019-01-01") %>%
+        filter(date >= "2009-12-31", date < "2021-01-01") %>%
         arrange(date) %>%
         mutate(year = year(date),
                date = as.Date(date),
@@ -42,11 +42,13 @@ max_year <- max(spx$year)
 
 mcrib_dates <- data.frame(start = c("2010-11-02", "2011-10-24", "2012-12-17",
                                     "2013-10-15", "2014-11-05", "2015-09-15",
-                                    "2016-11-09", "2017-11-09", "2018-10-29"
+                                    "2016-11-09", "2017-11-09", "2018-10-29",
+                                    "2019-10-07", "2020-12-02"
                                     ),
                           end = c("2010-12-05", "2011-11-14", "2013-01-15",
                                   "2013-12-15", "2014-12-31", "2015-11-30", 
-                                  "2016-12-31", "2017-12-31", "2018-12-31"
+                                  "2016-12-31", "2017-12-31", "2018-12-31",
+                                  "2019-12-31", "2020-12-31"
                                   )) %>%
                           mutate(n_days = as.Date(end)-as.Date(start),
                                  sim_start = as.Date(paste0(year(start), "-01-01")),
@@ -91,10 +93,14 @@ file_path <- paste0(out_path, "/mcrib_days.jpeg")
 to_plot <- spx_mcrib %>%
             group_by(mcrib) %>%
             summarise(ret = mean(ret, na.rm = TRUE)) %>%
-            ungroup()
+            ungroup() %>%
+            arrange(mcrib) %>%
+            mutate(label = paste0(round(100*ret,2), "%"))
 
 plot <- ggplot(to_plot, aes(x=mcrib, y=ret, fill = mcrib)) +
           geom_bar(stat="identity") +
+          geom_text(data=to_plot, aes(x=mcrib, y=ret+0.00004, label=label),
+                    col = "black") +
           scale_fill_manual(values = c("red", "blue"), guide = FALSE) +
           of_dollars_and_data_theme +
           scale_y_continuous(label = percent_format(accuracy = 0.01)) +
