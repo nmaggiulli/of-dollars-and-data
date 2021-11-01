@@ -26,11 +26,13 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+end_analysis_date <- "2021-01-01"
+
 spx <- read.csv(paste0(importdir, "0097_spx_daily/spx_daily.csv")) %>%
         rename(date = Period,
                index = `S.P.500.Level`) %>%
         mutate(date = as.Date(date, format = "%Y-%m-%d")) %>%
-        filter(date >= "2009-12-31", date < "2021-01-01") %>%
+        filter(date >= "2009-12-31", date < end_analysis_date) %>%
         arrange(date) %>%
         mutate(year = year(date),
                date = as.Date(date),
@@ -52,7 +54,8 @@ mcrib_dates <- data.frame(start = c("2010-11-02", "2011-10-24", "2012-12-17",
                                   )) %>%
                           mutate(n_days = as.Date(end)-as.Date(start),
                                  sim_start = as.Date(paste0(year(start), "-01-01")),
-                                 sim_end = as.Date(paste0(year(start), "-12-31")) - n_days)
+                                 sim_end = as.Date(paste0(year(start), "-12-31")) - n_days) %>%
+                          filter(sim_end < end_analysis_date)
 
 for(i in 1:nrow(mcrib_dates)){
   s <- mcrib_dates[i, "start"]
