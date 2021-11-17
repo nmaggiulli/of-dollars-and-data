@@ -9,6 +9,7 @@ source(file.path(paste0(getwd(),"/header.R")))
 
 library(rtweet)
 library(httpuv)
+library(readxl)
 library(tidyverse)
 
 folder_name <- "/_fl/xxxx_twitter_follower_summary"
@@ -16,6 +17,9 @@ out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
+
+# Dummy to pull data if needed
+pull_data <- 0
 
 # My app name
 appname <- "TweetScraper22"
@@ -31,9 +35,6 @@ twitter_token <- create_token(
 # List of handles
 handles <- c("dollarsanddata")
 
-# Dummy to pull data if needed
-pull_data <- 1
-
 if (pull_data == 1){
   for (i in 1:length(handles)){
     user <- handles[i]
@@ -44,11 +45,27 @@ if (pull_data == 1){
   }
   
   user_data <- lookup_users(followers$user_id)
+  
+  user_final <- user_data %>%
+    select(screen_name, name, created_at, location, description)
+  
+  export_to_excel(user_final, outfile = paste0(out_path, "/", handles[1], "_twitter_data.xlsx"), sheetname = "twtr", 1, 0)
+} else{
+  df <- read_excel(paste0(out_path, "/", handles[1], "_twitter_data.xlsx")) %>%
+          mutate(flag_bitcoin = grepl("bitcoin", description, ignore.case = TRUE),
+                 flag_founder = grepl("founder", description, ignore.case = TRUE),
+                 flag_investor = grepl("investor", description, ignore.case = TRUE),
+                 flag_nyc = grepl("nyc", location, ignore.case = TRUE),
+                 )
+  
+  summary <- df %>%
+              summarise(flag_bitcoin = mean(flag_bitcoin),
+                        flag_founder = mean(flag_founder),
+                        flag_investor = mean(flag_investor),
+                        flag_nyc = mean(flag_nyc)
+              )
+                        
 }
 
-user_final <- user_data %>%
-              select(screen_name, name, created_at, location, description)
-
-export_to_excel(user_final, outfile = paste0(out_path, "/", handles[1], "_twitter_data.xlsx"), sheetname = "twtr", 1, 0)
 
 # ############################  End  ################################## #
