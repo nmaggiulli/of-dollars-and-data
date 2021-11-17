@@ -11,7 +11,7 @@ library(rtweet)
 library(httpuv)
 library(tidyverse)
 
-folder_name <- "/_fl/xx_twitter_follower_summary"
+folder_name <- "/_fl/xxxx_twitter_follower_summary"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -29,7 +29,7 @@ twitter_token <- create_token(
   consumer_secret = creds$consumer_secret)
 
 # List of handles
-handles <- c("dolarsanddata")
+handles <- c("dollarsanddata")
 
 # Dummy to pull data if needed
 pull_data <- 1
@@ -43,11 +43,11 @@ if (pull_data == 1){
     followers$date <- Sys.Date()
   }
   
-  user_data <- lookup_users(followers$user_id) %>%
-                  select(user_id, screen_name, name, location, description)
+  user_data <- lookup_users(followers$user_id)
 }
 
-user_final <- user_data
+user_final <- user_data %>%
+              select(screen_name, name, created_at, location, description)
 
 export_to_excel(user_final, outfile = paste0(out_path, "/", handles[1], "_twitter_data.xlsx"), sheetname = "twtr", 1, 0)
 
