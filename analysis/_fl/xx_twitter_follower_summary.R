@@ -20,20 +20,16 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 # My app name
 appname <- "TweetScraper22"
 
-# API key
-key <- 'TMRoCTZ2Eis1O7ELovhs8ni9X'
-
-# API secret
-secret <- 'trdbfmbVNG5BOiJyvX4pUDmtccN0KV5Y5AWNcz2zKUbzhwus27'
+creds <- read.csv(paste0(importdir, "/0000_credentials/twitter_creds.csv"))
 
 # Login token
 twitter_token <- create_token(
   app = appname,
-  consumer_key = key,
-  consumer_secret = secret)
+  consumer_key = creds$consumer_key,
+  consumer_secret = creds$consumer_secret)
 
 # List of handles
-handles <- c("dollarsanddata")
+handles <- c("dolarsanddata")
 
 # Dummy to pull data if needed
 pull_data <- 1
