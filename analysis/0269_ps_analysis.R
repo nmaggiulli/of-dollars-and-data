@@ -49,15 +49,20 @@ mcap <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_11-19
 
 df <- ps %>%
         full_join(mcap) %>%
-        drop_na()
+        drop_na() %>%
+        mutate(ps_above_20 = ifelse(ps > 20, "P/S > 20", "P/S <= 20"))
 
-dates_to_run <- c("2016-11-30", "2017-11-30", "2018-11-30", "2019-11-30", "2020-11-30")
+dates_to_run <- c("2017-11-30", "2018-11-30", "2019-11-30", "2020-11-30")
+
+source_string <- paste0("Source: YCharts (OfDollarsAndData.com)")
+note_string <- str_wrap(paste0("Note: U.S. stocks are represented by the Russell 3000 index. ",
+                               "Stocks with missing data have been excluded."),
+                        width = 85)
 
 for(dt in dates_to_run){
     
   ps_stocks <- df %>%
                 filter(date == as.Date(dt)) %>%
-                mutate(ps_above_20 = ifelse(ps > 20, 1, 0)) %>%
                 select(symbol, ps_above_20, mcap)
   
   starting_mcap <- ps_stocks %>%
@@ -72,30 +77,49 @@ for(dt in dates_to_run){
               summarise(mcap = sum(mcap)) %>%
               ungroup() %>%
               left_join(starting_mcap) %>%
-              mutate(mcap_final = mcap/starting_mcap,
-                     ps_above_20 = ifelse(ps_above_20 == 1, "P/S > 20", "P/S <= 20")) 
-  
-  print(nrow(to_plot))
+              mutate(mcap_final = mcap/starting_mcap) 
   
   date_string <- date_to_string(dt)
   
   file_path <- paste0(out_path, "/ps_gt_20_mcap_", date_string, ".jpeg")
-  source_string <- paste0("Source: YCharts (OfDollarsAndData.com)")
   
   # Plot the returns to show how much they change over time
   plot <- ggplot(data = to_plot, aes(x = date, y = mcap_final, col = ps_above_20)) +
     geom_line() +
     scale_y_continuous(label = dollar) +
-    ggtitle(paste0("Growth of $1 for Stocks by P/S Ratio")) +
+    scale_x_date(date_labels = "%m/%y") +
+    scale_color_manual(values = c("black", "red")) +
+    ggtitle(paste0("Growth of $1 for U.S. Stocks\nby P/S Ratio")) +
     of_dollars_and_data_theme +
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
     labs(x = "Date" , y = "Growth of $1",
-         caption = paste0(source_string))
+         caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-
 }
+
+to_plot <- df %>%
+                  group_by(date, ps_above_20) %>%
+                  summarise(total_mcap = sum(mcap)) %>%
+                  ungroup() %>%
+                  filter(ps_above_20 == "P/S > 20")
+
+file_path <- paste0(out_path, "/ps_above_20_mcap.jpeg")
+
+# Plot the returns to show how much they change over time
+plot <- ggplot(data = to_plot, aes(x = date, y = total_mcap)) +
+  geom_line() +
+  scale_y_continuous(label = dollar) +
+  scale_x_date(date_labels = "%m/%y") +
+  ggtitle(paste0("Total Market Capitalization of U.S. Stocks\nwith P/S Ratio > 20")) +
+  of_dollars_and_data_theme +
+  labs(x = "Date" , y = "Market Capitalization (in millions)",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 
 # ############################  End  ################################## #
