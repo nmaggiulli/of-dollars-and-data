@@ -28,7 +28,7 @@ inc_tax <- 0.24
 
 # Plan fee of 73 bps equates Roth with Taxable account over 30 years (cap gains at 15%)
 # Plan fee of 153 bps equates Roth with Taxable account over 30 years (cap gains at 30%)
-plan_fee <- 0.0
+plan_fee <- 0.00
 
 final_results <- data.frame()
 tax_rates <- seq(0, 0.34, 0.01)
@@ -76,7 +76,7 @@ for(tax_rate_retire in tax_rates){
   counter <- counter + 1
 }
 
-file_path <- paste0(out_path, "/roth_vs_taxable_balance_40yr.jpeg")
+file_path <- paste0(out_path, "/roth_vs_taxable_balance_40yr_redux.jpeg")
 source_string <- paste0("Source:  Simulated data (OfDollarsAndData.com)")
 note_string <- str_wrap(paste0("Note: Assumes a ", 100*(annual_growth+annual_dividend), 
                                "% annual growth rate, a ", 100*cap_gains, "% tax rate on capital gains, ",
@@ -101,7 +101,7 @@ plot <- ggplot(to_plot, aes(x = year, y = value, col = key)) +
             show.legend = FALSE) +
   scale_color_manual(values = c("blue", "black")) +
   scale_y_continuous(label = dollar) +
-  scale_x_continuous(limits = c(0, 45)) +
+  scale_x_continuous(limits = c(0, 35)) +
   of_dollars_and_data_theme +
   theme(legend.title = element_blank(),
         legend.position = "bottom") +
@@ -112,32 +112,6 @@ plot <- ggplot(to_plot, aes(x = year, y = value, col = key)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-# Plot vs tax rates
-file_path <- paste0(out_path, "/trad401k_vs_taxable_ann_premium.jpeg")
-note_string <- str_wrap(paste0("Note: Assumes a ", 100*(annual_growth+annual_dividend), 
-                               "% annual growth rate, a ", 100*cap_gains, "% tax rate on capital gains, a ",
-                               100*inc_tax, "% tax rate on income while working, and a ", n_years, 
-                               "-year investment period."),
-                        width = 85)
-
-to_plot <- final_results
-
-point <- to_plot %>% filter(tax_rate == inc_tax)
-
-plot <- ggplot(to_plot, aes(x = tax_rate, y = trad401k_ann_premium)) +
-  geom_line() +
-  geom_vline(xintercept = inc_tax, linetype = "dashed") +
-  geom_point(data=point, aes(x=tax_rate, y=trad401k_ann_premium), col = "red", size = 2) +
-  scale_color_manual(values = c("black")) +
-  scale_y_continuous(label = percent_format(accuracy = 0.01), limits = c(-0.0002, 0.0105), breaks = seq(0, 0.01, 0.0025)) +
-  scale_x_continuous(label = percent_format(accuracy = 1)) +
-  of_dollars_and_data_theme +
-  ggtitle(paste0("Annualized Traditional 401(k) Premium\nBased on Tax Rate in Retirement")) +
-  labs(x = "Income Tax Rate in Retirement" , y = paste0("Annualized Traditional 401(k) Premium"),
-       caption = paste0("\n", source_string, "\n", note_string))
-
-# Save the plot
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 
 # ############################  End  ################################## #
