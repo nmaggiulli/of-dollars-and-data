@@ -179,12 +179,13 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
 }
 
 create_new_file <- 1
-create_percentile_chart("networth", "25th Percentile Net Worth", 0.25)
-create_percentile_chart("networth", "Median Net Worth", 0.5)
-create_percentile_chart("networth", "75th Percentile Net Worth", 0.75)
-create_percentile_chart("networth", "Average Net Worth", 0)
+# create_percentile_chart("networth", "25th Percentile Net Worth", 0.25)
+# create_percentile_chart("networth", "Median Net Worth", 0.5)
+# create_percentile_chart("networth", "75th Percentile Net Worth", 0.75)
+# create_percentile_chart("networth", "Average Net Worth", 0)
 create_percentile_chart("networth", "90th Percentile Net Worth", 0.9)
 create_percentile_chart("networth", "99th Percentile Net Worth", 0.99)
+create_percentile_chart("networth", "99.9th Percentile Net Worth", 0.999)
 
 
 # ############################  End  ################################## #
