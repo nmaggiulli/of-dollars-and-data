@@ -49,18 +49,22 @@ df <- mcap %>%
 
 mcaps_by_decile <- df %>%
                       group_by(date, decile) %>%
-                      summarise(mcap = sum(mcap)) %>%
+                      summarise(mcap = sum(mcap),
+                                n_stocks = n()) %>%
                       ungroup()
 
 starting_mcaps <- df %>%
                     filter(date == min_date) %>%
                     group_by(decile) %>%
-                    summarise(starting_mcap = sum(mcap)) %>%
+                    summarise(total_mcap = sum(mcap),
+                              min_mcap = min(mcap),
+                              median_mcap = quantile(mcap, probs = 0.5),
+                              max_mcap = max(mcap)) %>%
                     ungroup() 
 
 to_plot <- mcaps_by_decile %>%
               left_join(starting_mcaps) %>%
-              mutate(pct_change = mcap/starting_mcap - 1) %>%
+              mutate(pct_change = mcap/total_mcap - 1) %>%
               filter(date == max_date) %>%
               select(decile, pct_change)
 
