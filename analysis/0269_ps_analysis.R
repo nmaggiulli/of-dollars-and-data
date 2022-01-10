@@ -22,7 +22,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-ps <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_11-19-2021_ps.csv"),
+ps <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_1-8-2022_ps.csv"),
                    skip = 6) %>%
   select(-Metric, -Name) %>%
   rename(symbol = Symbol) %>%
@@ -34,7 +34,7 @@ ps <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_11-19-2
   select(date, symbol, ps) %>%
   drop_na()
 
-mcap <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_11-19-2021_mcap.csv"),
+mcap <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_1-8-2022_mcap.csv"),
                skip = 6) %>%
   select(-Metric, -Name) %>%
   rename(symbol = Symbol) %>%
@@ -51,6 +51,16 @@ df <- ps %>%
         full_join(mcap) %>%
         drop_na() %>%
         mutate(ps_above_20 = ifelse(ps > 20, "P/S > 20", "P/S <= 20"))
+
+all_dates <- df %>%
+              group_by(date) %>%
+              summarise(n_symbols = n()) %>%
+              ungroup()
+              filter(n_symbols > 2500) %>%
+              select(date)
+              
+df <- df %>%
+        inner_join(all_dates)
 
 dates_to_run <- c("2017-11-30", "2018-11-30", "2019-11-30", "2020-11-30")
 
@@ -102,7 +112,8 @@ for(dt in dates_to_run){
 
 to_plot <- df %>%
                   group_by(date, ps_above_20) %>%
-                  summarise(total_mcap = sum(mcap)) %>%
+                  summarise(total_mcap = sum(mcap),
+                            n_companies = n()) %>%
                   ungroup() %>%
                   filter(ps_above_20 == "P/S > 20")
 
