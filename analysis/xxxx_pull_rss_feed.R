@@ -14,7 +14,7 @@ library(stringr)
 library(tidyRSS)
 library(tidyverse)
 
-folder_name <- "xxxx_tidy_rss"
+folder_name <- "xxxx_pull_rss_feed"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
