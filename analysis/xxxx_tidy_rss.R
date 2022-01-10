@@ -20,6 +20,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+#Change site feed to allow for more posts to be grabbed before running
+
 df <- tidyfeed(
   "https://ofdollarsanddata.com/feed"
 ) 
@@ -33,7 +35,7 @@ to_export <- df %>%
                      link = item_link,
                      description = item_description,
                      category = item_category) %>%
-              select(post_num, pub_date, title, link, description, category)
+              select(post_num, pub_date, title, link, description)
 
 export_to_excel(to_export,
                 outfile = paste0(out_path, "/all_posts.xlsx"),
