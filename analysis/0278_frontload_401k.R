@@ -75,14 +75,19 @@ run_frontload <- function(n_years){
         df[i, "ret_frontload"] <- df[i, "value_frontload"]/df[(i-1), "value_frontload"] - 1
         df[i, "ret_average_in"] <- df[i, "value_average_in"]/df[(i-1), "value_average_in"] - 1
       }
-      df[i, "frontload_diff"] <- df[i, "value_frontload"]/df[i, "value_average_in"]
+      if(df[i, "value_frontload"] > df[i, "value_average_in"]){
+        df[i, "frontload_diff"] <- df[i, "value_frontload"]/df[i, "value_average_in"] - 1
+      } else{
+        df[i, "frontload_diff"] <- df[i, "value_average_in"]/df[i, "value_frontload"] - 1
+      }
+
     }
     final_results[counter, "start_year"] <- start_yr
     final_results[counter, "end_year"] <- start_yr + n_years - 1
     final_results[counter, "value_fronload_final"] <- df[nrow(df), "value_frontload"]
     final_results[counter, "value_average_in_final"] <- df[nrow(df), "value_average_in"]
     final_results[counter, "abs_diff"] <- final_results[counter, "value_fronload_final"] - final_results[counter, "value_average_in_final"]
-    final_results[counter, "pct_diff"] <- df[nrow(df), "frontload_diff"] - 1
+    final_results[counter, "pct_diff"] <- df[nrow(df), "frontload_diff"]
     final_results[counter, "sd_frontload"] <- sd(df$ret_frontload, na.rm = TRUE)
     final_results[counter, "sd_average_in"] <- sd(df$ret_average_in, na.rm = TRUE)
     
