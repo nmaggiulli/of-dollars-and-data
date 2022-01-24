@@ -134,6 +134,7 @@ run_frontload <- function(n_years){
 
 run_frontload(5)
 run_frontload(10)
+run_frontload(20)
 run_frontload(1)
 
 
