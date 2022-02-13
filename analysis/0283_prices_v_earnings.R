@@ -7,7 +7,6 @@ source(file.path(paste0(getwd(),"/header.R")))
 
 ########################## Load in Libraries ########################## #
 
-library(dplyr)
 library(ggplot2)
 library(reshape2)
 library(scales)
@@ -17,7 +16,7 @@ library(gridExtra)
 library(gtable)
 library(RColorBrewer)
 library(stringr)
-library(ggrepel)
+library(tidyverse)
 
 folder_name <- "0283_prices_vs_earnings"
 out_path <- paste0(exportdir, folder_name)
@@ -35,7 +34,7 @@ analysis_dates <- seq.Date(as.Date("1920-01-01"), as.Date("2000-01-01"), "10 yea
 snapshot_dates <- rep(snapshot_date, length(analysis_dates))
                     
 analysis_dates <- c(analysis_dates, snapshot_date, as.Date("2000-01-01"), as.Date("1990-01-01"))
-snapshot_dates <- c(snapshot_dates, as.Date("2021-01-01"), as.Date("2021-01-01"), as.Date("2021-01-01"))
+snapshot_dates <- c(snapshot_dates, as.Date("2021-09-01"), as.Date("2021-09-01"), as.Date("2021-09-01"))
                     
 final_results <- data.frame()
 counter <- 1
