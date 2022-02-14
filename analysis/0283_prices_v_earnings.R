@@ -25,6 +25,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 snapshot_date <- as.Date("2011-01-01")
+end_date <- as.Date("2021-09-01")
 
 sp500 <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
             filter(!is.na(real_earn_scaled), date >= "1920-01-01") %>%
@@ -34,7 +35,7 @@ analysis_dates <- seq.Date(as.Date("1920-01-01"), as.Date("2000-01-01"), "10 yea
 snapshot_dates <- rep(snapshot_date, length(analysis_dates))
                     
 analysis_dates <- c(analysis_dates, snapshot_date, as.Date("2000-01-01"), as.Date("1990-01-01"))
-snapshot_dates <- c(snapshot_dates, as.Date("2021-09-01"), as.Date("2021-09-01"), as.Date("2021-09-01"))
+snapshot_dates <- c(snapshot_dates, rep(end_date, 3))
                     
 final_results <- data.frame()
 counter <- 1
