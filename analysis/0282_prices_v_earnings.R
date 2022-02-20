@@ -18,7 +18,7 @@ library(RColorBrewer)
 library(stringr)
 library(tidyverse)
 
-folder_name <- "0283_prices_vs_earnings"
+folder_name <- "0282_prices_vs_earnings"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
