@@ -28,7 +28,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 cpi_limit <- 0.07
 
-raw <- read.csv(paste0(importdir, "/0288_sp500_vs_cpi/GrowthOfWealth_20220329113137.csv"),
+raw <- read.csv(paste0(importdir, "/xxxx_sp500_vs_cpi/GrowthOfWealth_20220329113137.csv"),
                 skip = 6,
                 col.names = c("date", "index_sp500", "index_cpi")) %>%
   filter(date != "", index_sp500 != "") %>%
