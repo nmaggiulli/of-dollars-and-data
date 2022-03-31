@@ -70,11 +70,11 @@ for(i in 1:nrow(df)){
 
 # Do grandparents opportnity cost return on home
 sp500 <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-          filter(date >= "1972-01-01", date <= "2001-12-31") %>%
+          filter(date >= "1972-01-01", date <= "2001-01-01") %>%
           select(date, price_plus_div) %>%
           mutate(ret = price_plus_div/lag(price_plus_div, 1) - 1,
                  payment = case_when(
-                   date <= as.Date("2001-12-31") ~ 280,
+                   date <= as.Date("2001-01-01") ~ 280,
                    TRUE ~ 0
                  ))
 
