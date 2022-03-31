@@ -68,27 +68,6 @@ for(i in 1:nrow(df)){
   }
 }
 
-# Do grandparents opportnity cost return on home
-sp500 <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-          filter(date >= "1972-01-01", date <= "2001-01-01") %>%
-          select(date, price_plus_div) %>%
-          mutate(ret = price_plus_div/lag(price_plus_div, 1) - 1,
-                 payment = case_when(
-                   date <= as.Date("2001-01-01") ~ 280,
-                   TRUE ~ 0
-                 ))
-
-for(i in 1:nrow(sp500)){
-  ret <- sp500[i, "ret"]
-  monthly_payment <- sp500[i, "payment"]
-  
-  if(i == 1){
-    sp500[i, "portfolio"] <- monthly_payment
-  }else{
-    sp500[i, "portfolio"] <- (sp500[(i-1), "portfolio"] * (1 + ret)) + monthly_payment
-  }
-}
-
 shiller_housing <- read_excel(paste0(importdir, "_jkb/0014_grandparent_simulation/shiller_house_data.xls"),
                               sheet = "Data",
                               skip = 6) %>%
