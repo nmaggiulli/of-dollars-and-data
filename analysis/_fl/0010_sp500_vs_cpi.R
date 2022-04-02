@@ -20,7 +20,7 @@ library(readxl)
 library(ggjoy)
 library(tidyverse)
 
-folder_name <- "xxxx_sp500_vs_cpi"
+folder_name <- "_fl/0010_sp500_vs_cpi"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -28,12 +28,13 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 cpi_limit <- 0.07
 
-raw <- read.csv(paste0(importdir, "/xxxx_sp500_vs_cpi/GrowthOfWealth_20220329113137.csv"),
+raw <- read.csv(paste0(importdir, "/_fl/0010_sp500_vs_cpi/GrowthOfWealth_20220402092218.csv"),
                 skip = 6,
-                col.names = c("date", "index_sp500", "index_cpi")) %>%
+                col.names = c("date", "index_sp500", "index_5yr", "index_cpi")) %>%
   filter(date != "", index_sp500 != "") %>%
   mutate(date = as.Date(date, format = "%m/%d/%Y") + days(1) - months(1),
          index_sp500 = as.numeric(index_sp500),
+         index_5yr = as.numeric(index_5yr),
          index_cpi = as.numeric(index_cpi))
 
 run_cpi_stats <- function(n_month_fwd){
@@ -42,7 +43,9 @@ run_cpi_stats <- function(n_month_fwd){
     mutate(cpi_1yr = index_cpi/lag(index_cpi, 12) - 1,
            fwd_cpi = (lead(index_cpi, n_month_fwd)/index_cpi - 1), 
            fwd_sp500 = (lead(index_sp500, n_month_fwd)/index_sp500 - 1),
-           fwd_sp500_real = fwd_sp500- fwd_cpi) %>%
+           fwd_5yr = (lead(index_5yr, n_month_fwd)/index_5yr - 1),
+           fwd_sp500_real = fwd_sp500- fwd_cpi,
+           fwd_5yr_real = fwd_5yr - fwd_cpi) %>%
     drop_na()
   
   for(i in 1:nrow(df)){
@@ -55,12 +58,11 @@ run_cpi_stats <- function(n_month_fwd){
     }
   }
   
-  
-  
   summary_by_limit <- df %>%
                         group_by(above_limit) %>%
                         summarise(fwd_months = n_month_fwd,
                           median_fwd_sp500_real = quantile(fwd_sp500_real, probs = 0.5),
+                          median_fwd_5yr_real = quantile(fwd_5yr_real, probs = 0.5),
                                   n_months = n()) %>%
                         ungroup()
   
@@ -73,9 +75,9 @@ run_cpi_stats <- function(n_month_fwd){
   assign("df", df, envir = .GlobalEnv)
 }
 
-run_cpi_stats(6)
-run_cpi_stats(24)
 run_cpi_stats(12)
+run_cpi_stats(24)
+
 
 
 # ############################  End  ################################## #
