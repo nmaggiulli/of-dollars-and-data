@@ -35,8 +35,7 @@ raw <- read.csv(paste0(importdir, "/_fl/0010_sp500_vs_cpi/GrowthOfWealth_2022040
   mutate(date = as.Date(date, format = "%m/%d/%Y") + days(1) - months(1),
          index_sp500 = as.numeric(index_sp500),
          index_5yr = as.numeric(index_5yr),
-         index_cpi = as.numeric(index_cpi),
-         index_sp500_real = index_sp500/index_cpi)
+         index_cpi = as.numeric(index_cpi))
 
 run_cpi_stats <- function(n_month_fwd){
   
@@ -46,7 +45,6 @@ run_cpi_stats <- function(n_month_fwd){
            fwd_sp500 = (lead(index_sp500, n_month_fwd)/index_sp500 - 1),
            fwd_5yr = (lead(index_5yr, n_month_fwd)/index_5yr - 1),
            fwd_sp500_real = fwd_sp500 - fwd_cpi,
-           fwd_sp500_real2 = (lead(index_sp500_real, n_month_fwd)/index_sp500_real - 1),
            fwd_5yr_real = fwd_5yr - fwd_cpi) %>%
     drop_na()
   
@@ -64,7 +62,6 @@ run_cpi_stats <- function(n_month_fwd){
                         group_by(above_limit) %>%
                         summarise(fwd_months = n_month_fwd,
                           median_fwd_sp500_real = quantile(fwd_sp500_real, probs = 0.5),
-                          median_fwd_sp500_real2 = quantile(fwd_sp500_real2, probs = 0.5),
                           median_fwd_5yr_real = quantile(fwd_5yr_real, probs = 0.5),
                                   n_months = n()) %>%
                         ungroup()
