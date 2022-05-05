@@ -30,17 +30,17 @@ ret_static <- 0.01
 
 my_palette <- c("#969696", "#000000")
 
-plot_sim_periods <- function(n_periods, median){
+plot_sim_days <- function(n_days, median){
 
   n_simulations <- 1000
-  sampled <- sample(nums, n_periods*n_simulations, replace = TRUE)
+  sampled <- sample(nums, n_days*n_simulations, replace = TRUE)
   
-  mat <- matrix(nrow = n_simulations*n_periods, ncol = 4)
+  mat <- matrix(nrow = n_simulations*n_days, ncol = 4)
   
   counter <- 1
   for(j in 1:n_simulations){
     print(j)
-    for(i in 1:n_periods){
+    for(i in 1:n_days){
       mat[counter, 1] <- i
       ret_dynamic <- ifelse(sampled[counter] == 50, ret_dynamic_neg, ret_dynamic_pos)
       
@@ -77,7 +77,7 @@ plot_sim_periods <- function(n_periods, median){
     title_string <- "Average"
   }
   
-  file_path <- paste0(out_path, "/asset_simulation_comp_", n_periods, "_", title_string, ".jpeg")
+  file_path <- paste0(out_path, "/asset_simulation_", n_days, "_days_", title_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=period, y=value, col = key)) +
     geom_line() +
@@ -86,19 +86,19 @@ plot_sim_periods <- function(n_periods, median){
     of_dollars_and_data_theme +
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
-    ggtitle(paste0(title_string, " Outcome by Period")) +
-    labs(x="Period", y=paste0(title_string, " Portfolio Value"))
+    ggtitle(paste0(title_string, " Outcome by Day")) +
+    labs(x="Day", y=paste0(title_string, " Portfolio Value"))
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
 # Plot medians
-plot_sim_periods(50, 1)
-plot_sim_periods(100, 1)
-plot_sim_periods(1000, 1)
+plot_sim_days(50, 1)
+plot_sim_days(100, 1)
+plot_sim_days(1000, 1)
 
 # Plot averages
-plot_sim_periods(1000, 0)
+plot_sim_days(1000, 0)
 
 # ############################  End  ################################## #
