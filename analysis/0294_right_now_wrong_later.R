@@ -187,7 +187,7 @@ plot_date <- function(start_date, end_date){
     
     
     # Reset file path
-    file_path <- paste0(out_path, "/reasonable_timing_dd_", dd_pct_string, "_", n_days_string, "_days_", start_string, "_", end_string, ".jpeg")
+    file_path <- paste0(out_path, "/r_timing_dd_", dd_pct_string, "_", n_days_string, "_days_", start_string, "_", end_string, ".jpeg")
     
     # Set source/note
     source_string <- paste0("Source: YCharts (OfDollarsAndData.com)")
@@ -219,14 +219,19 @@ plot_date <- function(start_date, end_date){
   
 }
 
-plot_date(as.Date("1950-01-01"), as.Date("1960-01-01"))
-plot_date(as.Date("1960-01-01"), as.Date("1970-01-01"))
-plot_date(as.Date("1970-01-01"), as.Date("1980-01-01"))
-plot_date(as.Date("1980-01-01"), as.Date("1990-01-01"))
-plot_date(as.Date("1990-01-01"), as.Date("2000-01-01"))
-plot_date(as.Date("2000-01-01"), as.Date("2010-01-01"))
-plot_date(as.Date("2010-01-01"), as.Date("2020-01-01"))
-plot_date(as.Date("1950-01-01"), as.Date("2020-01-01"))
+start_seq <- seq.Date(as.Date("1950-01-01"), as.Date("2010-01-01"), "10 years")
+end_seq <- seq.Date(as.Date("1959-12-31"), as.Date("2019-12-31"), "10 years")
+
+for(i in 1:length(start_seq)){
+  st_dt <- start_seq[i]
+  end_dt <- end_seq[i]
+  
+  plot_date(st_dt, end_dt)
+}
+
+
+
+plot_date(as.Date("1950-01-01"), as.Date("2019-12-31"))
 
  
 
