@@ -82,14 +82,23 @@ bls_cx_expenditures <-  bls_cx_expenditures %>%
                             filter(item_name %in% item_list)
                             
 to_plot <- bls_cx_expenditures %>%
-              select(year, characteristics_name, share) %>%
+              select(year, characteristics_name, value, income, share) %>%
               filter(year > 1990) %>%
-              mutate(inc_bracket = str_replace(characteristics_name, " income quintile", ""))
+              mutate(inc_bracket = str_replace(characteristics_name, " income quintile", "")) %>%
+              select(-characteristics_name)
+
+export_to_excel(df = to_plot, 
+                outfile = paste0(out_path, "/bls_cex_gas_by_income.xlsx"),
+                sheetname = "bls_cex",
+                new_file = 1,
+                fancy_formatting = 0)
               
 to_plot$inc_bracket <- factor(to_plot$inc_bracket, 
                               levels = c("Lowest 20 percent", "Second 20 percent",
                                                               "Third 20 percent", "Fourth 20 percent", 
                                                               "Highest 20 percent"))
+
+
 
 file_path <- paste0(out_path, "/bls_cex_gas_share_by_income.jpeg")
 source_string <- paste0("Source: BLS")
