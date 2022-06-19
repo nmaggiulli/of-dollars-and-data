@@ -18,13 +18,13 @@ library(lemon)
 library(readxl)
 library(tidyverse)
 
-folder_name <- "0301_stocks_bonds_following_inflation"
+folder_name <- "0300_stocks_bonds_following_inflation"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-df <- read.csv(paste0(importdir, "/0301_bond_stock_cpi/DFA_GrowthOfWealth_20220613095224.csv"), skip = 7,
+df <- read.csv(paste0(importdir, "/0300_bond_stock_cpi/DFA_GrowthOfWealth_20220613095224.csv"), skip = 7,
                col.names = c("date", "index_bond", "index_sp500", "index_cpi")) %>%
             filter(!is.na(index_bond)) %>%
             mutate(date = as.Date(date, format = "%m/%d/%Y"),
