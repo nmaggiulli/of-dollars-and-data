@@ -69,13 +69,13 @@ for(i in 1:length(all_years)){
 
 inflation_years <- c(1942, 1947, 1951, 1974, 1979)
 
-all_yr_avg <- stacked %>%
+all_yr_median <- stacked %>%
                 group_by(year) %>%
-                summarise(`S&P 500` = mean(index_sp500_real),
-                          `5YR Treasuries` = mean(index_bond_real),
-                  `60/40 Portfolio` = mean(index_60_40_real)) %>%
+                summarise(`S&P 500` = quantile(index_sp500_real, probs = 0.5),
+                          `5YR Treasuries` = quantile(index_bond_real, probs = 0.5),
+                  `60/40 Portfolio` = quantile(index_60_40_real, probs = 0.5)) %>%
                 ungroup() %>%
-                mutate(year_start = "Average (1926-2019)") %>%
+                mutate(year_start = "Median (1926-2019)") %>%
                 gather(-year_start, -year, key=key, value=value)
 
 long <- stacked %>%
@@ -89,8 +89,17 @@ long <- stacked %>%
 plot_asset <- function(key_name, file_stub, title_string){
   to_plot <- long %>%
               filter(key == key_name) %>%
-              select(year, year_start, key, value) %>%
-              bind_rows(all_yr_avg %>% filter(key == key_name))
+              select(year, year_start, key, value) 
+  
+  median <- to_plot %>%
+            filter(year == max(to_plot$year)) %>%
+            summarise(val = quantile(value, probs = 0.5)) %>%
+            pull(val)
+  
+  print(median)
+  
+  to_plot <- to_plot %>%
+    bind_rows(all_yr_median %>% filter(key == key_name))
   
   file_path <- paste0(out_path, "/pct_changes_", file_stub, ".jpeg")
   source_string <- paste0("Source: Returns 2.0 (OfDollarsAndData.com)")
