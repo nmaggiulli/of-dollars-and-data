@@ -25,8 +25,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 initial_portfolio <- 10^6
-withdrawal_rate <- 0.03
-n_years <- 
+withdrawal_rate <- 0.04
 
 df <- read.csv(paste0(importdir, "/0300_bond_stock_cpi/DFA_GrowthOfWealth_20220613095224.csv"), skip = 7,
                col.names = c("date", "index_bond", "index_sp500", "index_cpi")) %>%
@@ -130,7 +129,7 @@ to_plot <- stacked_final %>%
 text_labels <- to_plot %>%
   mutate(label = paste0(100*round(port_qtr_win, 2), "%"))
 
-file_path <- paste0(out_path, "/sell_slowly_win_rate.jpeg")
+file_path <- paste0(out_path, "/sell_slowly_win_rate_", 100*withdrawal_rate, "_pct.jpg")
 source_string <- paste0("Source: Returns 2.0 (OfDollarsAndData.com)")
 note_string <- str_wrap(paste0("Note: Assumes a portfolio invested in 100% U.S. stocks and a ", 100*withdrawal_rate, "% withdrawal rate.  ",
                                "All figures have include reinvested dividends and have been adjusted inflation."),
