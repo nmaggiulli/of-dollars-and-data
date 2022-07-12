@@ -93,17 +93,17 @@ calc_jan_vs_qtr <- function(n_years){
   
   qtr_win <- final_results %>%
                               filter(port_qtr_win == 1) %>%
-                              summarise(final_port_diff = (1+quantile(final_port_diff, probs = 0.5))^(1/n_years) - 1) %>%
+                              summarise(final_port_diff = quantile(final_port_diff, probs = 0.5)) %>%
                               pull(final_port_diff)
   
   jan_win <- final_results %>%
     filter(port_qtr_win == 0) %>%
-    summarise(final_port_diff = (1+quantile(final_port_diff, probs = 0.5))^(1/n_years) - 1) %>%
+    summarise(final_port_diff = quantile(final_port_diff, probs = 0.5)) %>%
     pull(final_port_diff)
   
   print(paste0("Quarterly withdrawals beat Jan withdrawals in ", 100*round(mean(final_results$port_qtr_win), 2), "% of ", n_years, "-year simulations."))
-  print(paste0("Quarterly typically wins by ", 100*round(qtr_win, 4), "% on an annualized basis."))
-  print(paste0("Jan-only typically wins by ", -100*round(jan_win, 4), "% on an annualized basis."))
+  print(paste0("Quarterly typically wins by ", 100*round(qtr_win, 4), "%."))
+  print(paste0("Jan-only typically wins by ", -100*round(jan_win, 4), "%."))
   return(final_results)
 }
 
