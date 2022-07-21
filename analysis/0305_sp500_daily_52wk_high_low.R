@@ -76,6 +76,8 @@ plot_data <- function(index_name){
            high = lag(high_52wk),
            n_days_to_low = date - high_date) 
   
+  assign(paste0("highs_lows_", index_name), highs_lows, envir = .GlobalEnv)
+  
   high_to_low <- highs_lows %>%
     filter(!is.na(low_52wk), !is.na(lag(high_52wk)), date > high_date) %>%
     select(-high_52wk) %>%
@@ -98,7 +100,7 @@ plot_data <- function(index_name){
                 summarise(n_lows = n()) %>%
                 ungroup()
   
-  print(paste0("Number of stocks that bottomed in early 2020 for ", index_name, ":", sum(to_plot$n_lows)))
+  print(paste0("Number of stocks that hit 52-week lows in early 2020 for ", index_name, ":", sum(to_plot$n_lows)))
   
   max_y_limit <- round_to_nearest(max(to_plot$n_lows), "up", 20)
   
@@ -112,7 +114,7 @@ plot_data <- function(index_name){
     geom_bar(stat = "identity", fill = chart_standard_color) +
     scale_y_continuous(label = comma, limits = c(0, max_y_limit)) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("When Stocks Bottomed in Early 2020\n", proper_name)) +
+    ggtitle(paste0("When Stocks First Hit 52-Week Lows in Early 2020\n", proper_name)) +
     labs(x = "Date", y = "Number of Stocks",
          caption = paste0(source_string, "\n", note_string))
   
@@ -125,31 +127,16 @@ plot_data <- function(index_name){
     summarise(n_lows = n()) %>%
     ungroup()
   
-  print(paste0("Number of stocks that bottomed in 2022 for ", index_name, ":", sum(to_plot$n_lows)))
+  print(paste0("Number of stocks that hit 52-week lows in 2022 for ", index_name, ":", sum(to_plot$n_lows)))
   
-  if(index_name == "sp500"){
-    file_path <- paste0(out_path, "/", index_name, "_stocks_lows_2022.jpg")
-    
-    plot <- ggplot(data = to_plot, aes(x=low_date, y=n_lows)) +
-      geom_bar(stat = "identity", fill = chart_standard_color) +
-      scale_y_continuous(label = comma, limits = c(0, max_y_limit)) +
-      of_dollars_and_data_theme +
-      ggtitle(paste0("When Stocks Bottomed in 2022\n", proper_name)) +
-      labs(x = "Date", y = "Number of Stocks",
-           caption = paste0(source_string, "\n", note_string))
-    
-    # Save the plot
-    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-  }
-  
-  # Un-fix the scale
-  file_path <- paste0(out_path, "/", index_name, "_stocks_lows_2022_dynamic_scale.jpg")
+  # do 2022
+  file_path <- paste0(out_path, "/", index_name, "_stocks_lows_2022.jpg")
   
   plot <- ggplot(data = to_plot, aes(x=low_date, y=n_lows)) +
     geom_bar(stat = "identity", fill = chart_standard_color) +
     scale_y_continuous(label = comma) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("When Stocks Bottomed in 2022\n", proper_name)) +
+    ggtitle(paste0("When Stocks First Hit 52-Week Lows in 2022\n", proper_name)) +
     labs(x = "Date", y = "Number of Stocks",
          caption = paste0(source_string, "\n", note_string))
   
@@ -158,7 +145,7 @@ plot_data <- function(index_name){
 }
 
 plot_data("sp500")
-plot_data("russell3000")
+#plot_data("russell3000")
 
 # Plot S&P 500 drawdowns since 2013
 raw <- read.csv(paste0(importdir, "/0305_ycharts_stocks_daily_2018/SPX_data.csv")) %>%
