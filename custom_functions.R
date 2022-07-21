@@ -186,6 +186,23 @@ drawdown_path <- function(vp, dd_counts = 0){
   }
 }
 
+add_dd_counter <- function(df){
+  dd_counter <- 1
+  for(i in 1:nrow(df)){
+    if(i == 1){
+      df[i, "dd_counter"] <- dd_counter    
+    } else{
+      if(df[i, "pct"] == 0){
+        dd_counter <- dd_counter + 1
+        df[i, "dd_counter"] <- dd_counter
+      } else{
+        df[i, "dd_counter"] <- dd_counter
+      }
+    }
+  }
+  return(df)
+}
+
 date_to_string <- function(x){
   require(stringr)
   str_replace_all(paste0(x), "-", "_")

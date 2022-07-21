@@ -28,7 +28,7 @@ plot_data <- function(index_name){
     proper_name <- "Russell 3000"
   }
   
-  raw <- read.csv(paste0(importdir, "/0305_ycharts_stocks_daily_2018/timeseries_7-15-2022_", index_name, ".csv"),
+  raw <- read.csv(paste0(importdir, "/0305_ycharts_stocks_daily_2018/timeseries_7-20-2022_", index_name, ".csv"),
                    skip = 6) %>%
     select(-Metric, -Name) %>%
     rename(symbol = Symbol) %>%
@@ -59,6 +59,8 @@ plot_data <- function(index_name){
                  low_52wk = fnrollminmax(price, "min")) %>%
           ungroup()
   
+  assign(paste0("df_", index_name), df, envir = .GlobalEnv)
+  
   highs <- df %>%
     filter(price == high_52wk) %>%
     select(symbol, date, high_52wk)
@@ -81,6 +83,8 @@ plot_data <- function(index_name){
            high_52wk = high) %>%
     select(symbol, high_date, high_52wk, low_date, low_52wk, n_days_to_low)
   
+  assign(paste0("high_to_low_", index_name), high_to_low, envir = .GlobalEnv)
+  
   lows_march_2020 <- high_to_low %>%
                       filter(low_date >= "2020-02-24", low_date <= "2020-03-23") %>%
                       arrange(low_date)
@@ -93,6 +97,8 @@ plot_data <- function(index_name){
                 group_by(low_date) %>%
                 summarise(n_lows = n()) %>%
                 ungroup()
+  
+  print(paste0("Number of stocks that bottomed in early 2020 for ", index_name, ":", sum(to_plot$n_lows)))
   
   max_y_limit <- round_to_nearest(max(to_plot$n_lows), "up", 20)
   
@@ -119,18 +125,22 @@ plot_data <- function(index_name){
     summarise(n_lows = n()) %>%
     ungroup()
   
-  file_path <- paste0(out_path, "/", index_name, "_stocks_lows_2022.jpg")
+  print(paste0("Number of stocks that bottomed in 2022 for ", index_name, ":", sum(to_plot$n_lows)))
   
-  plot <- ggplot(data = to_plot, aes(x=low_date, y=n_lows)) +
-    geom_bar(stat = "identity", fill = chart_standard_color) +
-    scale_y_continuous(label = comma, limits = c(0, max_y_limit)) +
-    of_dollars_and_data_theme +
-    ggtitle(paste0("When Stocks Bottomed in 2022\n", proper_name)) +
-    labs(x = "Date", y = "Number of Stocks",
-         caption = paste0(source_string, "\n", note_string))
-  
-  # Save the plot
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  if(index_name == "sp500"){
+    file_path <- paste0(out_path, "/", index_name, "_stocks_lows_2022.jpg")
+    
+    plot <- ggplot(data = to_plot, aes(x=low_date, y=n_lows)) +
+      geom_bar(stat = "identity", fill = chart_standard_color) +
+      scale_y_continuous(label = comma, limits = c(0, max_y_limit)) +
+      of_dollars_and_data_theme +
+      ggtitle(paste0("When Stocks Bottomed in 2022\n", proper_name)) +
+      labs(x = "Date", y = "Number of Stocks",
+           caption = paste0(source_string, "\n", note_string))
+    
+    # Save the plot
+    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  }
   
   # Un-fix the scale
   file_path <- paste0(out_path, "/", index_name, "_stocks_lows_2022_dynamic_scale.jpg")
@@ -150,7 +160,51 @@ plot_data <- function(index_name){
 plot_data("sp500")
 plot_data("russell3000")
 
+# Plot S&P 500 drawdowns since 2013
+raw <- read.csv(paste0(importdir, "/0305_ycharts_stocks_daily_2018/SPX_data.csv")) %>%
+          mutate(date = as.Date(Period),
+                 index_sp500 = `S.P.500...SPX..Level`) %>%
+          select(date, index_sp500) %>%
+          arrange(date)
 
+dd <- drawdown_path(raw)
+dd <- add_dd_counter(dd)
 
+dd_10pct_plus <- dd %>%
+            group_by(dd_counter) %>%
+            summarise(max_dd = min(pct),
+                      min_date = min(date)) %>%
+            ungroup() %>%
+            filter(max_dd < -0.1) %>%
+            select(dd_counter, max_dd, min_date)
+
+to_plot <- dd %>%
+            inner_join(dd_10pct_plus) %>%
+            group_by(dd_counter) %>%
+            mutate(day = row_number(),
+                   dd_start_date = as.Date(paste0(year(min_date), "-", month(min_date), "-01")),
+                   dd_start_date_string = format.Date(dd_start_date, "%Y (%b)")) %>%
+            ungroup() %>%
+            select(date, day, pct, dd_start_date_string)
+
+file_path <- paste0(out_path, "/aligned_sp500_dd_since_2013_dd_gt_10pct.jpg")
+source_string <- paste0("Source: YCharts")
+note_string <- str_wrap(paste0("Note: Does not include dividends and is not adjusted for inflation."), 
+                        width = 85)
+
+plot <- ggplot(data = to_plot, aes(x=day, y=pct, col=as.factor(dd_start_date_string),
+                                   size = as.factor(dd_start_date_string))) +
+  geom_line() +
+  scale_y_continuous(label = percent_format(accuracy = 0.1)) +
+  scale_size_manual(values = c(rep(0.5, 4), 1.5)) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("All S&P 500 Drawdowns\nGreater Than 10% Since 2013")) +
+  labs(x = "Trading Days", y = "Percentage Decline",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")           
 
 # ############################  End  ################################## #
