@@ -20,12 +20,18 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-plot_data <- function(index_name){
+plot_data <- function(index_name, start_dt, end_dt, yr){
   
   if(index_name == "sp500"){
     proper_name <- "S&P 500"
-  } else if(index_name == "russell3000"){
-    proper_name <- "Russell 3000"
+  } else if(index_name == "russell2000"){
+    proper_name <- "Russell 2000"
+  }
+  
+  if(yr == 2020){
+    yr_string <- "March 2020"
+  } else {
+    yr_string <- yr
   }
   
   raw <- read.csv(paste0(importdir, "/0305_ycharts_stocks_daily_2018/timeseries_7-20-2022_", index_name, ".csv"),
@@ -87,26 +93,20 @@ plot_data <- function(index_name){
   
   assign(paste0("high_to_low_", index_name), high_to_low, envir = .GlobalEnv)
   
-  lows_march_2020 <- high_to_low %>%
-                      filter(low_date >= "2020-02-24", low_date <= "2020-03-23") %>%
-                      arrange(low_date)
-  
-  lows_2022 <- high_to_low %>%
-                filter(low_date >= "2022-01-18") %>%
-                arrange(low_date)
-  
-  to_plot <- lows_march_2020 %>%
+  to_plot <- high_to_low %>%
+                filter(low_date >= start_dt, low_date <= end_dt) %>%
+                arrange(low_date) %>%
                 group_by(low_date) %>%
                 summarise(n_lows = n()) %>%
                 ungroup()
   
-  print(paste0("Number of stocks that hit 52-week lows in early 2020 for ", index_name, ":", sum(to_plot$n_lows)))
+  print(paste0("Number of stocks that hit 52-week lows in ", yr, " for ", index_name, ":", sum(to_plot$n_lows)))
   
-  max_y_limit <- round_to_nearest(max(to_plot$n_lows), "up", 20)
+  max_y_limit <- round_to_nearest(max(to_plot$n_lows), "up", 10)
   
-  file_path <- paste0(out_path, "/", index_name, "_stocks_lows_march_2020.jpg")
+  file_path <- paste0(out_path, "/", index_name, "_stocks_52wk_lows_march_", yr, ".jpg")
   source_string <- paste0("Source: YCharts (OfDollarsAndData.com)")
-  note_string <- str_wrap(paste0("Note: Shows number of stocks in the ", proper_name, " that hit 52-week lows. ",
+  note_string <- str_wrap(paste0("Note: Shows number of stocks in the ", proper_name, " that first hit 52-week lows. ",
                           "Does not include dividends and is not adjusted for inflation."), 
                           width = 85)
   
@@ -114,29 +114,31 @@ plot_data <- function(index_name){
     geom_bar(stat = "identity", fill = chart_standard_color) +
     scale_y_continuous(label = comma, limits = c(0, max_y_limit)) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("When Stocks First Hit 52-Week Lows in Early 2020\n", proper_name)) +
+    ggtitle(paste0("When Stocks First Hit Their 52-Week Lows\n", proper_name, " (", yr_string, ")")) +
     labs(x = "Date", y = "Number of Stocks",
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
-  # Plot 2022
-  to_plot <- lows_2022 %>%
-    group_by(low_date) %>%
-    summarise(n_lows = n()) %>%
+  #Plot number of stocks at 52-week lows
+  to_plot <- df %>%
+    filter(price == low_52wk, date >= start_dt, date <= end_dt) %>%
+    group_by(date) %>%
+    summarise(n_stocks = n()) %>%
     ungroup()
   
-  print(paste0("Number of stocks that hit 52-week lows in 2022 for ", index_name, ":", sum(to_plot$n_lows)))
+  file_path <- paste0(out_path, "/", index_name, "_stocks_number_52wk_lows_", yr, ".jpg")
+  source_string <- paste0("Source: YCharts (OfDollarsAndData.com)")
+  note_string <- str_wrap(paste0("Note: Shows number of stocks in the ", proper_name, " that are at 52-week lows. ",
+                                 "Does not include dividends and is not adjusted for inflation."), 
+                          width = 85)
   
-  # do 2022
-  file_path <- paste0(out_path, "/", index_name, "_stocks_lows_2022.jpg")
-  
-  plot <- ggplot(data = to_plot, aes(x=low_date, y=n_lows)) +
+  plot <- ggplot(data = to_plot, aes(x=date, y=n_stocks)) +
     geom_bar(stat = "identity", fill = chart_standard_color) +
     scale_y_continuous(label = comma) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("When Stocks First Hit 52-Week Lows in 2022\n", proper_name)) +
+    ggtitle(paste0("Number of Stocks At Their 52-Week Lows\n", proper_name, " (", yr_string, ")")) +
     labs(x = "Date", y = "Number of Stocks",
          caption = paste0(source_string, "\n", note_string))
   
@@ -144,8 +146,12 @@ plot_data <- function(index_name){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-plot_data("sp500")
-#plot_data("russell3000")
+indices <- c("sp500", "russell2000")
+
+for(index in indices){
+  plot_data(index, as.Date("2020-02-19"), as.Date("2020-03-23"), "2020")
+  plot_data(index, as.Date("2022-01-18"), as.Date("2022-12-31"), "2022")
+}
 
 # Plot S&P 500 drawdowns since 2013
 raw <- read.csv(paste0(importdir, "/0305_ycharts_stocks_daily_2018/SPX_data.csv")) %>%
