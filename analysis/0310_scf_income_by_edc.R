@@ -97,15 +97,13 @@ create_eligibility_group <- function(name, filter_string){
 create_eligibility_group("debt_college", "edcl == 'College Degree' & payedu > 0")
 create_eligibility_group("debt_college_some", "edcl == 'Some College' & payedu > 0")
 create_eligibility_group("nodebt_college", "edcl == 'College Degree' & payedu == 0")
-create_eligibility_group("nodebt_college_some", "edcl == 'Some College' & payedu == 0")
-create_eligibility_group("nodebt_nocollege", "!(edcl %in% c('College Degree', 'Some College'))")
+create_eligibility_group("nodebt_nocollege", "edcl != 'College Degree' & payedu == 0")
 
-all_hh_wgt <- debt_college_hhs$sum_wgt + debt_college_some_hhs$sum_wgt + nodebt_college_hhs$sum_wgt + nodebt_college_some_hhs$sum_wgt + nodebt_nocollege_hhs$sum_wgt
+all_hh_wgt <- debt_college_hhs$sum_wgt + debt_college_some_hhs$sum_wgt + nodebt_college_hhs$sum_wgt  + nodebt_nocollege_hhs$sum_wgt
 
 export_inc <- debt_college_inc_nw %>%
               left_join(debt_college_some_inc_nw) %>%
               left_join(nodebt_college_inc_nw) %>%
-              left_join(nodebt_college_some_inc_nw) %>%
               left_join(nodebt_nocollege_inc_nw) %>%
               rename(measure = key) %>%
               gather(-measure, key=key, value=value) %>%
@@ -114,7 +112,6 @@ export_inc <- debt_college_inc_nw %>%
                 key == "debt_college" ~ debt_college_hhs$sum_wgt/all_hh_wgt,
                 key == "debt_college_some" ~ debt_college_some_hhs$sum_wgt/all_hh_wgt,
                 key == "nodebt_college" ~ nodebt_college_hhs$sum_wgt/all_hh_wgt,
-                key == "nodebt_college_some" ~ nodebt_college_some_hhs$sum_wgt/all_hh_wgt,
                 key == "nodebt_nocollege" ~ nodebt_nocollege_hhs$sum_wgt/all_hh_wgt,
                 TRUE ~ debt_college_hhs$sum_wgt/all_hh_wgt
               )) %>%
@@ -124,7 +121,6 @@ export_inc <- debt_college_inc_nw %>%
 export_nw <- debt_college_inc_nw %>%
   left_join(debt_college_some_inc_nw) %>%
   left_join(nodebt_college_inc_nw) %>%
-  left_join(nodebt_college_some_inc_nw) %>%
   left_join(nodebt_nocollege_inc_nw) %>%
   rename(measure = key) %>%
   gather(-measure, key=key, value=value) %>%
@@ -133,7 +129,6 @@ export_nw <- debt_college_inc_nw %>%
     key == "debt_college" ~ debt_college_hhs$sum_wgt/all_hh_wgt,
     key == "debt_college_some" ~ debt_college_some_hhs$sum_wgt/all_hh_wgt,
     key == "nodebt_college" ~ nodebt_college_hhs$sum_wgt/all_hh_wgt,
-    key == "nodebt_college_some" ~ nodebt_college_some_hhs$sum_wgt/all_hh_wgt,
     key == "nodebt_nocollege" ~ nodebt_nocollege_hhs$sum_wgt/all_hh_wgt,
     TRUE ~ debt_college_hhs$sum_wgt/all_hh_wgt
   )) %>%
