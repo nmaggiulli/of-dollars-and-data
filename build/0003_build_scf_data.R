@@ -34,6 +34,7 @@ for (x in year_list){
   # homeeq = value of home equity
   # reteq = retirement equity
   # hdebt = dummy, 1 if has debt, 0 if no debt
+  # payedu1-7 = student loans
   # fin = total finanical assets (LIQ+CDS+NMMF+STOCKS+BOND+RETQLIQ+SAVBND+CASHLI+OTHMA+OTHFIN)
   # nfin = total non-financial assets (VEHIC+HOUSES+ORESRE+NNRESRE+BUS+OTHNFIN)
   # vehic = value of all vehicles
@@ -54,6 +55,7 @@ for (x in year_list){
   # kids = number of kids
   
   vars_to_keep <- c('y1', 'yy1', 'networth', 'debt', 'asset', 'liq', 'reteq',
+                    'payedu1', 'payedu2', 'payedu3', 'payedu4', 'payedu5', 'payedu6', 'payedu7',
                     'homeeq', 'rent', 'hdebt', 'fin', 'nfin', 'vehic', 'bus', 'oresre', 'othnfin', 'mrthel', 'resdbt', 'ccbal', 
                     'income', 'wageinc', 'intdivinc', 'bussefarminc', 'equitinc', 'ssretinc',
                     'agecl', 'age', 'hhsex', 'race', 'racecl4', 'edcl', 'married', 'kids', 'wgt')
@@ -102,7 +104,9 @@ scf_stack_final <- mutate(scf_stack, married = married %% 2,
                                       edcl == 2 ~ "High School",
                                       edcl == 3 ~ "Some College",
                                       edcl == 4 ~ "College Degree",
-                                      TRUE ~ "99"))
+                                      TRUE ~ "99"),
+                     payedu = payedu1 + payedu2 + payedu3 + payedu4 + payedu5 + payedu6 + payedu7) %>%
+              select(-payedu1, -payedu2, -payedu3, -payedu4, -payedu5, -payedu6, -payedu7)
 
 # Make edcl into a factor
 scf_stack_final$edcl <- factor(scf_stack_final$edcl,levels = c("No High School", 
