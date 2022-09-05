@@ -14,20 +14,20 @@ library(zoo)
 library(readxl)
 library(tidyverse)
 
-folder_name <- "0311_return_after_dd"
+folder_name <- "0312_return_after_dd"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-raw_1926 <- read.csv(paste0(importdir, "/0310_sp500_acwi/GrowthOfWealth_20220823141917.csv"),
+raw_1926 <- read.csv(paste0(importdir, "/0312_sp500_acwi/GrowthOfWealth_20220823141917.csv"),
                      skip = 7, 
                      row.names = NULL,
                      col.names = c("date", "index_sp500")) %>%
                     filter(!is.na(index_sp500)) %>%
                   mutate(date = as.Date(date, format = "%m/%d/%Y"))
 
-raw_1988 <- read.csv(paste0(importdir, "/0310_sp500_acwi/GrowthOfWealth_20220823122405.csv"),
+raw_1988 <- read.csv(paste0(importdir, "/0312_sp500_acwi/GrowthOfWealth_20220823122405.csv"),
                 skip = 7, 
                 row.names = NULL,
                 col.names = c("date", "index_acwi", "index_sp500"))  %>%
