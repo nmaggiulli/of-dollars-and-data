@@ -27,20 +27,21 @@ raw_1926 <- read.csv(paste0(importdir, "/0312_sp500_acwi/GrowthOfWealth_20220823
                     filter(!is.na(index_sp500)) %>%
                   mutate(date = as.Date(date, format = "%m/%d/%Y"))
 
-raw_1988 <- read.csv(paste0(importdir, "/0312_sp500_acwi/GrowthOfWealth_20220823122405.csv"),
+raw_1970 <- read.csv(paste0(importdir, "/0312_sp500_acwi/GrowthOfWealth_20220823122405.csv"),
                 skip = 7, 
                 row.names = NULL,
-                col.names = c("date", "index_acwi", "index_sp500"))  %>%
-          select(date, index_acwi) %>%
-          filter(!is.na(index_acwi)) %>%
+                col.names = c("date", "index_sp500", "index_msci"))  %>%
+          select(date, index_msci) %>%
+          filter(!is.na(index_msci)) %>%
           mutate(date = as.Date(date, format = "%m/%d/%Y"))
                  
 raw <- raw_1926 %>%
-          left_join(raw_1988) %>%
+          filter(year(date) >= 1970) %>%
+          left_join(raw_1970) %>%
           mutate(
-                 ret_acwi_1yr = lead(index_acwi, 12)/index_acwi - 1,
-                 ret_acwi_3yr = (lead(index_acwi, 36)/index_acwi)^(1/3) - 1,
-                 ret_acwi_5yr = (lead(index_acwi, 60)/index_acwi)^(1/5) - 1,
+                 ret_acwi_1yr = lead(index_msci, 12)/index_msci - 1,
+                 ret_acwi_3yr = (lead(index_msci, 36)/index_msci)^(1/3) - 1,
+                 ret_acwi_5yr = (lead(index_msci, 60)/index_msci)^(1/5) - 1,
                  ret_sp500_1yr = lead(index_sp500, 12)/index_sp500 - 1,
                  ret_sp500_3yr = (lead(index_sp500, 36)/index_sp500)^(1/3) - 1,
                  ret_sp500_5yr = (lead(index_sp500, 60)/index_sp500)^(1/5) - 1,
@@ -51,7 +52,7 @@ dd_sp500 <- drawdown_path(select(raw, date, index_sp500)) %>%
               rename(dd_sp500 = pct,
                      dd_counter_sp500 = dd_counter)
 
-dd_acwi <- drawdown_path(select(raw, date, index_acwi) %>% drop_na()) %>%
+dd_acwi <- drawdown_path(select(raw, date, index_msci) %>% drop_na()) %>%
   add_dd_counter() %>%
   rename(dd_acwi = pct,
          dd_counter_acwi = dd_counter)
