@@ -14,13 +14,13 @@ library(zoo)
 library(readxl)
 library(tidyverse)
 
-folder_name <- "0318_global_port_dca"
+folder_name <- "0322_global_port_dca"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-raw_1970 <- read.csv(paste0(importdir, "/0318_global_port/GrowthOfWealth_20221021164443.csv"),
+raw_1970 <- read.csv(paste0(importdir, "/0322_global_port/GrowthOfWealth_20221021164443.csv"),
                 skip = 7, 
                 row.names = NULL,
                 col.names = c("date", "index_sp500",	"index_world", "index_bond", "cpi"))  %>%
@@ -44,8 +44,10 @@ df <- raw_1970 %>%
                  index_bond_real = index_bond/cpi) %>%
           select(date, contains("_real"))
 
-calc_dca <- function(start_dt, end_dt, weight_s){
+calc_dca <- function(start_dt, end_dt, weight_s, dca){
+
   monthly_payment <- 10000/12
+  
   pay_s <- monthly_payment * weight_s
   pay_b <- monthly_payment - pay_s
   
@@ -128,10 +130,11 @@ plot_global_dca <- function(n_years, s_weight){
   
   s_weight_fname <- ifelse(s_weight == 1, "100", paste0("0", s_weight_label))
   
-  file_path <- paste0(out_path, "/global_", s_weight_fname, "_decade_", n_years, "_years.jpg")
+  file_path <- paste0(out_path, "/global_us_", s_weight_fname, "_dca_", n_years, "_years.jpg")
   source_string <- paste0("Source: Returns2.0 (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note: Includes dividends and adjusted for inflation. ", 
-                                  "Bonds are represented by 5-Year U.S. Treasuries."), 
+                                  "Bonds are represented by 5-Year U.S. Treasuries. ",
+                                 "The portfolio is rebalanced each January."), 
                           width = 80)
   
   basis <- n_years*10000
@@ -144,8 +147,8 @@ plot_global_dca <- function(n_years, s_weight){
     of_dollars_and_data_theme +
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
-    ggtitle(paste0("Real Value of ", format_as_dollar(basis), " DCA Investment\nAfter ", n_years, " Years\nU.S. vs. World ", s_weight_label, "/", b_weight_label)) +
-    labs(x = "Decade Ending", y = "Final Portfolio Value",
+    ggtitle(paste0("Real Value of ", format_as_dollar(basis), " DCA Investment\nOver ", n_years, " Years\nU.S. vs. World ", s_weight_label, "/", b_weight_label)) +
+    labs(x = paste0(n_years, " Years Ending"), y = "Final Portfolio Value",
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
@@ -159,5 +162,6 @@ for(y in years){
   plot_global_dca(y, 0.8)
 }
 
- 
+
+
 # ############################  End  ################################## #
