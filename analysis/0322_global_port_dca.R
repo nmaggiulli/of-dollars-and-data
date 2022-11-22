@@ -14,16 +14,16 @@ library(zoo)
 library(readxl)
 library(tidyverse)
 
-folder_name <- "0322_global_port_dca"
+folder_name <- "0323_global_port_dca"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-raw_1970 <- read.csv(paste0(importdir, "/0322_global_port/GrowthOfWealth_20221021164443.csv"),
+raw_1970 <- read.csv(paste0(importdir, "/0323_global_port/GrowthOfWealth_20221021164443.csv"),
                 skip = 7, 
                 row.names = NULL,
-                col.names = c("date", "index_sp500",	"index_world", "index_bond", "cpi"))  %>%
+                col.names = c("date", "index_sp500",	"index_world", "cpi", "index_bond"))  %>%
           filter(!is.na(index_sp500)) %>%
           mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
           mutate(date = as.Date(paste0(year(date), "-", month(date), "-01"), format = "%Y-%m-%d")) %>%
@@ -134,7 +134,7 @@ plot_global_dca <- function(n_years, s_weight){
   source_string <- paste0("Source: Returns2.0 (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note: Includes dividends and adjusted for inflation. ", 
                                   "Bonds are represented by 5-Year U.S. Treasuries. ",
-                                 "The portfolio is rebalanced each January."), 
+                                 "The portfolio is rebalanced every January."), 
                           width = 80)
   
   basis <- n_years*10000
@@ -153,12 +153,19 @@ plot_global_dca <- function(n_years, s_weight){
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  if(n_years == 30){
+    export_to_excel(df = to_plot,
+                    outfile = paste0(out_path, "/dca_", n_years, "_results.xlsx"),
+                    sheetname = "results",
+                    new_file = 1,
+                    fancy_formatting = 0)
+  }
 }
 
 years <- seq(10, 30, 10)
 
 for(y in years){
-  plot_global_dca(y, 0.6)
   plot_global_dca(y, 0.8)
 }
 
