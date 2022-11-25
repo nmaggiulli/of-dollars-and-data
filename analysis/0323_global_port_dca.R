@@ -126,11 +126,13 @@ plot_global_dca <- function(n_years, s_weight){
                 mutate(key = case_when(
                   key == "port_us" ~ paste0("U.S. ", s_weight_label, "/", b_weight_label),
                   key == "port_world" ~ paste0("Global ", s_weight_label, "/", b_weight_label),
-                ))
+                  TRUE ~ "Error"),
+                  total_growth = value/(n_years*10000)
+                )
   
   s_weight_fname <- ifelse(s_weight == 1, "100", paste0("0", s_weight_label))
   
-  file_path <- paste0(out_path, "/global_us_", s_weight_fname, "_dca_", n_years, "_years.jpg")
+  file_path <- paste0(out_path, "/global_v_us_", s_weight_fname, "_dca_", n_years, "_years.jpg")
   source_string <- paste0("Source: Returns2.0 (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note: Includes dividends and adjusted for inflation. ", 
                                   "Bonds are represented by 5-Year U.S. Treasuries. ",
@@ -147,28 +149,69 @@ plot_global_dca <- function(n_years, s_weight){
     of_dollars_and_data_theme +
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
-    ggtitle(paste0("Real Value of ", format_as_dollar(basis), " DCA Investment\nOver ", n_years, " Years\nU.S. vs. World ", s_weight_label, "/", b_weight_label)) +
+    ggtitle(paste0("Real Value of ", format_as_dollar(basis), " DCA Investment\nOver ", n_years, " Years\nU.S. vs. Global ", s_weight_label, "/", b_weight_label)) +
     labs(x = paste0(n_years, " Years Ending"), y = "Final Portfolio Value",
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-  
-  if(n_years == 30){
-    export_to_excel(df = to_plot,
-                    outfile = paste0(out_path, "/dca_", n_years, "_results.xlsx"),
-                    sheetname = "results",
-                    new_file = 1,
-                    fancy_formatting = 0)
+    
+  if(n_years == 10){
+    new_f <- 1
+  } else{
+    new_f <- 0
   }
+  
+  assign(paste0("final_results_", n_years), to_plot %>% mutate(n_years = n_years), envir = .GlobalEnv)
+  
+  to_plot_summary <- to_plot %>%
+                        group_by(key) %>%
+                        summarise(min_growth = min(total_growth),
+                                  median_growth = quantile(total_growth, probs = 0.5),
+                                  max_growth = max(total_growth)
+                        ) %>%
+                        ungroup() %>%
+                        mutate(n_years = n_years)
+  
+
+  
+  export_to_excel(df = to_plot_summary,
+                  outfile = paste0(out_path, "/dca_global_results.xlsx"),
+                  sheetname = paste0("results_", n_years),
+                  new_file = new_f,
+                  fancy_formatting = 0)
 }
 
-years <- seq(10, 30, 10)
+years <- seq(10, 40, 10)
 
 for(y in years){
   plot_global_dca(y, 0.8)
 }
 
+all_results <- final_results_10 %>%
+                  bind_rows(final_results_20, final_results_30, final_results_40) %>%
+                  filter(grepl("Global", key))
+
+file_path <- paste0(out_path, "/all_global_results_8020_dca.jpg")
+source_string <- paste0("Source: Returns2.0 (OfDollarsAndData.com)")
+note_string <- str_wrap(paste0("Note: Includes dividends and adjusted for inflation. ", 
+                               "Bonds are represented by 5-Year U.S. Treasuries. ",
+                               "The portfolio is rebalanced every January."), 
+                        width = 80)
+
+y_max <- round_to_nearest(max(all_results$total_growth), "up", 1)
+
+plot <- ggplot(data = all_results, aes(x=as.factor(n_years), y=total_growth)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  scale_y_continuous(label = comma, breaks = seq(1, y_max, 1), limits = c(0, y_max)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Total Growth of DCA into Global 80/20 Portfolio\nBy Time Horizon")) +
+  labs(x = paste0("Years Invested"), y = "Total Growth (Value/Basis)",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 
 # ############################  End  ################################## #
