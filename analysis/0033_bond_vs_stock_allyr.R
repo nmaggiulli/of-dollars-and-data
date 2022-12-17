@@ -57,7 +57,7 @@ for (r in 1:nrow(hist_bond_stock)){
 }
 
 # Number of years to calculate returns over
-n_years_seq <- seq(1, 30, 1)
+n_years_seq <- c(1, 3, 5, 10, 15, 20, 30)
 
 for (n_years in n_years_seq){  
   # Create a date sequence that corresponds to each year
@@ -142,7 +142,7 @@ for (n_years in n_years_seq){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-create_gif(out_path, "sp500*.jpeg", 30, out_name = "bonds_vs_stocks_allyr.gif")
+create_gif(out_path, "sp500*.jpeg", 120, out_name = "gif_bonds_vs_stocks_limit_yrs.gif")
 
 
 # ############################  End  ################################## #

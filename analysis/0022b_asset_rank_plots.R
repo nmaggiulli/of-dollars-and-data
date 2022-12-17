@@ -16,12 +16,15 @@ library(gridExtra)
 library(gtable)
 library(lubridate)
 
+out_path <- paste0(exportdir, "0022_bv_network_and_rank_plots")
+
 ########################## Start Program Here ######################### #
 
 # Read in BV data
 bv <- readRDS(paste0(localdir, "0006_bv_returns.Rds")) %>%
         mutate(`10 Year Treasury Bonds` = `Treasury 10yr`,
-               `3 Month T-Bills` = `Tbill 3m`) %>%
+               `3 Month T-Bills` = `Tbill 3m`,
+               year = as.Date(year, format = "%m/%d/%y")) %>%
           select(-`Treasury 10yr`, -`Tbill 3m`)
 
 # Create min and max years for plots
@@ -48,7 +51,7 @@ for (k in 1:length(varlist)){
             mutate(c = ifelse(key == varlist[k], "1", "0"))
   
   # Set the file_path for the next output
-  file_path = paste0(exportdir, "0022_bv_network_and_rank_plots/rank-", varlist[k] ,"-by-year.jpeg")
+  file_path = paste0(out_path ,"/rank-", varlist[k] ,"-by-year.jpeg")
   
   plot <-ggplot(mapping = aes(year, y = rank, group = key, color = c)) +
           geom_line(size = 1.7, alpha = 0.25, data = df) +
@@ -61,7 +64,7 @@ for (k in 1:length(varlist)){
           ylab("Rank") +
           of_dollars_and_data_theme +
           scale_y_continuous(trans =  "reverse", breaks = seq(1, length(varlist), 1)) +
-          scale_x_datetime(breaks=seq(as.POSIXct("1980-01-02 00:00:00",tz="CET"),as.POSIXct("2015-01-02 00:00:00",tz="CET"),"5 years"),
+          scale_x_date(breaks=seq(as.Date("1980-01-02"),as.Date("2015-01-02"),"5 years"),
                            labels=date_format("%Y"))
   
   # Add a source and note string for the plots
@@ -85,12 +88,6 @@ for (k in 1:length(varlist)){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-# Instead of creating these images as a GIF in R, do it in Bash
-# I use Git Bash + magick because this is way faster than creating the GIF in R
-# After navigating to the correct folder, use this command:
-#
-# magick convert -delay 220 loop -0 *.jpeg all_assets_rank.gif
-#
-# 
+create_gif(out_path, "rank-*.jpeg", 120, out_name = "gif_all_asset_ranks.gif")
 
 # ############################  End  ################################## #
