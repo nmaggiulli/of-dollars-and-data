@@ -20,6 +20,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+down_pct <- -0.15
+
 # Load in S&P data from Shiller
 sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                     filter(year(date) >= 1900) %>%
@@ -30,12 +32,12 @@ year_rets <- sp500_ret_pe %>%
               filter(month(date) == 1) %>%
               drop_na() %>%
               mutate(decade = floor(year(date)/10) * 10,
-                     pos_ret = ifelse(ret_1yr > 0, 1, 0)) %>%
-              filter(decade < 2020)
+                     pos_ret = ifelse(ret_1yr > 0, 1, 0))
 
 overall_pos <- mean(year_rets$pos_ret)
 
 to_plot <- year_rets %>%
+                filter(decade < 2020) %>%
                 group_by(decade) %>%
                 summarise(pos_ret = mean(pos_ret)) %>%
                 ungroup()
@@ -56,21 +58,24 @@ plot <- ggplot(data = to_plot, aes(x=as.factor(decade), y=pos_ret)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+down_pct_label <- paste0(-100*down_pct, "%")
+
 #Now do same for all years after 10% losses
 to_plot <- year_rets %>%
-                      filter(lag(ret_1yr) < -0.1) %>%
-              mutate(category = "After a Big Down Year (>10%)") %>%
+                      filter(lag(ret_1yr) < down_pct) %>%
+              mutate(category = paste0("After a Big Down Year (>", down_pct_label,")")) %>%
           select(category, ret_1yr) %>%
           bind_rows(year_rets %>% filter(lag(ret_1yr) >= -0.1) %>% mutate(category = "All Other Years") %>% select(category, ret_1yr))
 
-to_plot$category <- factor(to_plot$category, levels = c("All Other Years", "After a Big Down Year (>10%)"))
+to_plot$category <- factor(to_plot$category, levels = c("All Other Years", paste0("After a Big Down Year (>", down_pct_label,")")))
 
 min_year <- min(year(year_rets$date))
 max_year <- max(year(year_rets$date))
 
-file_path <- paste0(out_path, "/dist_rets_after_neg_10pct_year.jpg")
+file_path <- paste0(out_path, "/dist_rets_after_neg_", -100*down_pct,"pct_year.jpg")
 source_string <- paste0("Source: Shiller data (OfDollarsAndData.com)")
-note_string <- str_wrap(paste0("Note: Includes dividends and is adjusted for inflation. Shows calendar year returns only."), 
+note_string <- str_wrap(paste0("Note: Includes dividends and is adjusted for inflation. Shows calendar year returns only. ",
+                               "A big down year is defined as any calendar year where the market drops more than ", down_pct_label, "."), 
                         width = 80)
 
 plot <- ggplot(data = to_plot, aes(x=ret_1yr, fill = category)) +
@@ -89,6 +94,38 @@ plot <- ggplot(data = to_plot, aes(x=ret_1yr, fill = category)) +
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Do all annual returns ranked
+to_plot <- year_rets%>%
+              mutate(year = year(date)) %>%
+              select(year, ret_1yr) %>%
+              bind_rows(data.frame(year = 2022, 
+                                   ret_1yr = -0.18)) %>%
+              mutate(yr_2022 = ifelse(year == 2022, 1, 0))
+
+min_year <- min(to_plot$year)
+max_year <- max(to_plot$year)
+
+file_path <- paste0(out_path, "/all_calendar_year_rets_sp500.jpg")
+source_string <- paste0("Source: Shiller data (OfDollarsAndData.com)")
+note_string <- str_wrap(paste0("Note: Includes dividends and is adjusted for inflation. ",
+                               "Assumes that 2022 (red) has a calendar year return of -18%."), 
+                        width = 80)
+
+plot <- ggplot(data = to_plot, aes(x=reorder(year, -ret_1yr), y = ret_1yr, fill = as.factor(yr_2022))) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("black", "red"), guide = "none") +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  of_dollars_and_data_theme +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) +
+  ggtitle(paste0("Calendar Year Returns of U.S. Stocks\n", min_year, "-", max_year,"*")) +
+  labs(x = "All Years", y = "Annual Return (%)",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 
 # Test yield curve inversions
 raw_10y_2y <- read_excel(paste0(importdir, "0328_sp500_year_losses/T10Y2Y.xls"),
