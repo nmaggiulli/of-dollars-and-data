@@ -61,9 +61,12 @@ to_plot <- year_rets %>%
                       filter(lag(ret_1yr) < -0.1) %>%
               mutate(category = "After a Big Down Year (>10%)") %>%
           select(category, ret_1yr) %>%
-          bind_rows(year_rets %>% mutate(category = "All Years") %>% select(category, ret_1yr))
+          bind_rows(year_rets %>% filter(lag(ret_1yr) >= -0.1) %>% mutate(category = "All Other Years") %>% select(category, ret_1yr))
 
-to_plot$category <- factor(to_plot$category, levels = c("All Years", "After a Big Down Year (>10%)"))
+to_plot$category <- factor(to_plot$category, levels = c("All Other Years", "After a Big Down Year (>10%)"))
+
+min_year <- min(year(year_rets$date))
+max_year <- max(year(year_rets$date))
 
 file_path <- paste0(out_path, "/dist_rets_after_neg_10pct_year.jpg")
 source_string <- paste0("Source: Shiller data (OfDollarsAndData.com)")
@@ -80,7 +83,7 @@ plot <- ggplot(data = to_plot, aes(x=ret_1yr, fill = category)) +
         axis.text.y = element_blank(),
         legend.title = element_blank(),
         legend.position = "bottom") +
-  ggtitle(paste0("Annual Return of U.S. Stocks\nFor All Years and After Big Down Years")) +
+  ggtitle(paste0("Annual Return of U.S. Stocks\nAfter a Big Down Year and For All Other Years\n", min_year, "-", max_year)) +
   labs(x = "Annual Return", y = "Frequency",
        caption = paste0(source_string, "\n", note_string))
 
@@ -139,6 +142,9 @@ to_plot <- sp500_ret_pe %>%
 
 to_plot$category <- factor(to_plot$category, levels = c("All Other Years", "Year After Inversion"))
 
+min_year <- min(year(to_plot$date))
+max_year <- max(year(to_plot$date))
+
 file_path <- paste0(out_path, "/dist_rets_after_yc_inversion.jpg")
 source_string <- paste0("Source: Shiller data, FRED (OfDollarsAndData.com)")
 note_string <- str_wrap(paste0("Note: Includes dividends and is adjusted for inflation. Shows the distribution of ",
@@ -156,7 +162,7 @@ plot <- ggplot(data = to_plot, aes(x=lead_ret_1yr, fill = category)) +
         axis.text.y = element_blank(),
         legend.title = element_blank(),
         legend.position = "bottom") +
-  ggtitle(paste0("Annual Return of U.S. Stocks\nAfter a Yield Curve Inversion\nAnd for All Other Years")) +
+  ggtitle(paste0("Annual Return of U.S. Stocks\nAfter a Yield Curve Inversion & For All Other Years\n", min_year, "-", max_year)) +
   labs(x = "Annual Return", y = "Frequency",
        caption = paste0(source_string, "\n", note_string))
 
