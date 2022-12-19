@@ -20,7 +20,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-down_pct <- -0.15
+down_pct <- -0.20
 
 # Load in S&P data from Shiller
 sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
@@ -75,7 +75,7 @@ max_year <- max(year(year_rets$date))
 file_path <- paste0(out_path, "/dist_rets_after_neg_", -100*down_pct,"pct_year.jpg")
 source_string <- paste0("Source: Shiller data (OfDollarsAndData.com)")
 note_string <- str_wrap(paste0("Note: Includes dividends and is adjusted for inflation. Shows calendar year returns only. ",
-                               "A big down year is defined as any calendar year where the market drops more than ", down_pct_label, "."), 
+                               "A big down year is defined as any calendar year where the market drops more than ", down_pct_label, " (in real terms)."), 
                         width = 80)
 
 plot <- ggplot(data = to_plot, aes(x=ret_1yr, fill = category)) +
@@ -100,16 +100,16 @@ to_plot <- year_rets%>%
               mutate(year = year(date)) %>%
               select(year, ret_1yr) %>%
               bind_rows(data.frame(year = 2022, 
-                                   ret_1yr = -0.18)) %>%
+                                   ret_1yr = -0.24)) %>%
               mutate(yr_2022 = ifelse(year == 2022, 1, 0))
 
 min_year <- min(to_plot$year)
 max_year <- max(to_plot$year)
 
-file_path <- paste0(out_path, "/all_calendar_year_rets_sp500.jpg")
+file_path <- paste0(out_path, "/all_calendar_year_rets_sp500_2022.jpg")
 source_string <- paste0("Source: Shiller data (OfDollarsAndData.com)")
 note_string <- str_wrap(paste0("Note: Includes dividends and is adjusted for inflation. ",
-                               "Assumes that 2022 (red) has a calendar year return of -18%."), 
+                               "Assumes that 2022 (red) has a calendar year return of -24% (in real terms)."), 
                         width = 80)
 
 plot <- ggplot(data = to_plot, aes(x=reorder(year, -ret_1yr), y = ret_1yr, fill = as.factor(yr_2022))) +
