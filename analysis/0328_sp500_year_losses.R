@@ -100,7 +100,7 @@ to_plot <- year_rets%>%
               mutate(year = year(date)) %>%
               select(year, ret_1yr) %>%
               bind_rows(data.frame(year = 2022, 
-                                   ret_1yr = -0.24)) %>%
+                                   ret_1yr = -0.26)) %>%
               mutate(yr_2022 = ifelse(year == 2022, 1, 0))
 
 min_year <- min(to_plot$year)
@@ -109,7 +109,7 @@ max_year <- max(to_plot$year)
 file_path <- paste0(out_path, "/all_calendar_year_rets_sp500_2022.jpg")
 source_string <- paste0("Source: Shiller data (OfDollarsAndData.com)")
 note_string <- str_wrap(paste0("Note: Includes dividends and is adjusted for inflation. ",
-                               "Assumes that 2022 (red) has a calendar year return of -24% (in real terms)."), 
+                               "Assumes that 2022 (red) has a calendar year return of -26% (in real terms)."), 
                         width = 80)
 
 plot <- ggplot(data = to_plot, aes(x=reorder(year, -ret_1yr), y = ret_1yr, fill = as.factor(yr_2022))) +
