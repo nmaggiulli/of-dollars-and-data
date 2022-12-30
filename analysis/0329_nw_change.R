@@ -52,8 +52,9 @@ to_plot <- nw_changes %>%
             ))
 
 file_path <- paste0(out_path, "/nm_nw_changes_with_attribution.jpg")
-note_string <- str_wrap(paste0("Note: Investment change is assumed to be the annual return in an 80/20 portfolio. ",
-                               width = 80))
+source_string <- paste0("Source: My life (OfDollarsAndData.com)")
+note_string <- str_wrap(paste0("Note: Investment change is assumed to be the annual return in an 80/20 portfolio. "),
+                        width = 80)
 
 plot <- ggplot(data = to_plot, aes(x=year, y=value, fill = key)) +
   geom_bar(stat = "identity", position = "dodge") +
@@ -82,8 +83,9 @@ to_plot <- nw_changes %>%
   ))
 
 file_path <- paste0(out_path, "/nm_nw_changes_with_attribution_stacked.jpg")
-note_string <- str_wrap(paste0("Note: Investment change is assumed to be the annual return in an 80/20 portfolio. ",
-                               width = 80))
+source_string <- paste0("Source: My life (OfDollarsAndData.com)")
+note_string <- str_wrap(paste0("Note: Investment change is assumed to be the annual return in an 80/20 portfolio. "),
+                               width = 80)
 
 plot <- ggplot(data = to_plot, aes(x=year, y=value, fill = key)) +
   geom_bar(stat = "identity") +
