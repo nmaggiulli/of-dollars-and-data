@@ -45,9 +45,9 @@ x_upper <- 0.08
 y_lower <- -0.5
 y_upper <- 3
 
-file_path <- paste0(out_path, "/rate_change_5yr_vs_sp500_change_prior_5yr_fixed.jpg")
+file_path <- paste0(out_path, "/rate_change_5yr_vs_sp500_change_prior_5yr_fix.jpg")
 source_string <- paste0("Source: Shiller data, 1914-2022 (OfDollarsAndData.com)")
-note_string <- str_wrap(paste0("Note: The performance of U.S. stocks included dividends and is adjusted for inflation. "),
+note_string <- str_wrap(paste0("Note: The performance of U.S. stocks includes dividends and is adjusted for inflation. "),
                                width = 80)
 
 plot <- ggplot(data = to_plot, aes(x=rate_change_5yr, y=ret_prior_5yr)) +
@@ -63,7 +63,7 @@ plot <- ggplot(data = to_plot, aes(x=rate_change_5yr, y=ret_prior_5yr)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Show 1980s highlighted
-file_path <- paste0(out_path, "/rate_change_5yr_vs_sp500_5yr_1980_highlight.jpg")
+file_path <- paste0(out_path, "/rate_change_5yr_vs_sp500_5yr_1980_highlight_fix.jpg")
 
 plot <- ggplot(data = to_plot, aes(x=rate_change_5yr, y=ret_prior_5yr, col = as.factor(decade_1980))) +
   geom_point() +
@@ -83,8 +83,8 @@ cf_all <- coef(mod_all)
 r2_all <- summary(mod_all)$r.squared
 
 # Remove 1980s highlighted
-file_path <- paste0(out_path, "/rate_change_5yr_vs_sp500_5yr_1980_remove.jpg")
-note_string <- str_wrap(paste0("Note: The performance of U.S. stocks included dividends and is adjusted for inflation. ",
+file_path <- paste0(out_path, "/rate_change_5yr_vs_sp500_5yr_1980_remove_fix.jpg")
+note_string <- str_wrap(paste0("Note: The performance of U.S. stocks includes dividends and is adjusted for inflation. ",
                                "Data from the mid-1970s to mid-1980s have been removed from the plot above."),
                         width = 80)
 
@@ -109,8 +109,8 @@ cf_no_1980s <- coef(mod_no_1980s)
 r2_no_1980s <- summary(mod_no_1980s)$r.squared
 
 # Do returns over the next 5 years for S&P 500
-file_path <- paste0(out_path, "/rate_change_5yr_vs_sp500_change_next_5yr_fixed.jpg")
-note_string <- str_wrap(paste0("Note: The performance of U.S. stocks included dividends and is adjusted for inflation. "),
+file_path <- paste0(out_path, "/_check_rate_change_5yr_vs_sp500_change_next_5yr_fix.jpg")
+note_string <- str_wrap(paste0("Note: The performance of U.S. stocks includes dividends and is adjusted for inflation. "),
                         width = 80)
 
 plot <- ggplot(data = to_plot, aes(x=rate_change_5yr, y=ret_next_5yr)) +
@@ -126,7 +126,7 @@ plot <- ggplot(data = to_plot, aes(x=rate_change_5yr, y=ret_next_5yr)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 ## As a check look at stock returns over next 1yr and rate changes over prior 1yr
-file_path <- paste0(out_path, "/rate_change_5yr_vs_sp500_change_next_1yr_fixed.jpg")
+file_path <- paste0(out_path, "/_check_rate_change_5yr_vs_sp500_change_next_1yr.jpg")
 
 plot <- ggplot(data = to_plot, aes(x=rate_change_5yr, y=ret_next_1yr)) +
   geom_point() +
@@ -141,7 +141,7 @@ plot <- ggplot(data = to_plot, aes(x=rate_change_5yr, y=ret_next_1yr)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Do rate change 1yr vs next year stocks
-file_path <- paste0(out_path, "/rate_change_1yr_vs_sp500_change_next_1yr_fixed.jpg")
+file_path <- paste0(out_path, "/_check_rate_change_1yr_vs_sp500_change_next_1yr.jpg")
 
 plot <- ggplot(data = to_plot, aes(x=rate_change_1yr, y=ret_next_1yr)) +
   geom_point() +
@@ -156,36 +156,16 @@ plot <- ggplot(data = to_plot, aes(x=rate_change_1yr, y=ret_next_1yr)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 ## Check done
 
-# Plot real earnings since 1980
-first_value <- sp500_ret_pe %>% filter(date == "1980-01-01") %>% pull(real_earn_scaled)
-
-to_plot_1980s <- sp500_ret_pe %>%
-            filter(date >= "1980-01-01") %>%
-            mutate(value = real_earn_scaled/first_value)
-
-file_path <- paste0(out_path, "/sp500_real_earn_since_1980.jpg")
-source_string <- paste0("Source: Shiller data, 1980-2022 (OfDollarsAndData.com)")
-
-plot <- ggplot(data = to_plot_1980s, aes(x=date, y=value)) +
-  geom_line() +
-  scale_y_continuous(label = dollar) +
-  of_dollars_and_data_theme +
-  ggtitle(paste0("Growth of Real Earnings in U.S. Stocks")) +
-  labs(x = "Year", y = "Growth of Real Earnings",
-       caption = paste0(source_string))
-
-# Save the plot
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Plot Treasury Rate
 to_plot <- sp500_ret_pe 
 
-file_path <- paste0(out_path, "/long_irate_1914_2022.jpg")
+file_path <- paste0(out_path, "/long_irate_1914_2022_fix.jpg")
 source_string <- paste0("Source: Shiller data, 1914-2022 (OfDollarsAndData.com)")
 
 plot <- ggplot(data = to_plot, aes(x=date, y=long_irate)) +
   geom_line() +
-  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 0.16, 0.02)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("10-Year Treasury Rate Since 1914")) +
   labs(x = "Year", y = "10-Year Rate",
@@ -224,7 +204,7 @@ to_plot <- first_values %>%
                 TRUE ~ "Error"
               ))
 
-file_path <- paste0(out_path, "/long_irate_vs_sp500_ret_by_decades.jpg")
+file_path <- paste0(out_path, "/long_irate_vs_sp500_ret_by_decades_fix.jpg")
 source_string <- paste0("Source: Shiller data, 1920-2019 (OfDollarsAndData.com)")
 
 plot <- ggplot(data = to_plot, aes(x=as.factor(decade), y=value, fill = key)) +
