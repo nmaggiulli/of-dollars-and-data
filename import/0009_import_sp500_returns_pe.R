@@ -29,6 +29,7 @@ sp500_ret_pe <- sp500_ret_pe[7:nrow(sp500_ret_pe),]
 # Convert vars to numeric
 sp500_ret_pe$real_price <- as.numeric(sp500_ret_pe$real_price)
 sp500_ret_pe$real_div <- as.numeric(sp500_ret_pe$real_div)
+sp500_ret_pe$real_tr <- as.numeric(sp500_ret_pe$real_tr)
 sp500_ret_pe$date <- as.numeric(sp500_ret_pe$date)
 sp500_ret_pe$cpi <- as.numeric(sp500_ret_pe$cpi)
 sp500_ret_pe$cape <- as.numeric(sp500_ret_pe$cape)
@@ -41,7 +42,7 @@ end_date <- year(Sys.Date()) + month(Sys.Date())/100
 
 # Filter out missing dividends
 sp500_ret_pe <- sp500_ret_pe %>%
-                  select(date, real_price, real_div, real_earn, real_earn_scaled, long_irate, cape, cpi) %>%
+                  select(date, real_price, real_div, real_earn, real_earn_scaled, real_tr, long_irate, cape, cpi) %>%
                   filter(!is.na(date), date < end_date) %>%
                   mutate(real_div = ifelse(is.na(real_div), 0, real_div))
 
