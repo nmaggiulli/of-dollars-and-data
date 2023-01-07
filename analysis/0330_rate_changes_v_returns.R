@@ -156,7 +156,6 @@ plot <- ggplot(data = to_plot, aes(x=rate_change_1yr, y=ret_next_1yr)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 ## Check done
 
-
 # Plot Treasury Rate
 to_plot <- sp500_ret_pe 
 
