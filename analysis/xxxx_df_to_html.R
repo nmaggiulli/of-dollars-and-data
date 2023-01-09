@@ -12,6 +12,7 @@ library(readxl)
 library(lubridate)
 library(stringr)
 library(htmlTable)
+library(xtable)
 library(tidyverse)
 
 folder_name <- "xxxx_df_to_html"
@@ -22,6 +23,6 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 to_html <- mtcars
 
-htmlTable(to_html)
+print(xtable(to_html), type="html", file=paste0(out_path, "/example.html"))
 
 # ############################  End  ################################## #
