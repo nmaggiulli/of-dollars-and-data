@@ -16,6 +16,7 @@ library(survey)
 library(lemon)
 library(mitools)
 library(Hmisc)
+library(xtable)
 library(tidyverse)
 
 folder_name <- "0331_income_by_age_edc"
@@ -186,6 +187,7 @@ create_stack <- function(var_name, var_title){
   create_percentile_chart(var_name, paste0("75th Percentile ", var_title), 0.75)
   create_percentile_chart(var_name, paste0("Average ", var_title), 0)
   create_percentile_chart(var_name, paste0("90th Percentile ", var_title), 0.9)
+  create_percentile_chart(var_name, paste0("95th Percentile ", var_title), 0.95)
   create_percentile_chart(var_name, paste0("99th Percentile ", var_title), 0.99)
 }
 
