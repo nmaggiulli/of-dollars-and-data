@@ -26,4 +26,4 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 ddi <- read_ipums_ddi(paste0(importdir, "xxxx_ipums_data/cps_00001.xml"))
-data <- read_ipums_micro(ddi)
+ipums <- read_ipums_micro(ddi)
