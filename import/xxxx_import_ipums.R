@@ -25,5 +25,15 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-ddi <- read_ipums_ddi(paste0(importdir, "xxxx_ipums_data/cps_00001.xml"))
-ipums <- read_ipums_micro(ddi)
+ddi <- read_ipums_ddi(paste0(importdir, "xxxx_ipums_data/cps_00002.xml"))
+ipums <- read_ipums_micro(ddi) %>%
+            clean_cols() %>%
+            filter(inctot != 999999999,
+                   pernum == 1) %>%
+            select(year, serial, asecwt, inctot, pernum) %>%
+            distinct()
+
+summary <- ipums %>%
+  summarise(pct = wtd.quantile(inctot, weights = asecwt, probs=c(0.95)))
+
+              
