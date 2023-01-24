@@ -57,8 +57,11 @@ to_plot$key <- factor(to_plot$key, levels = c("Small Cap Stocks", "S&P 500"))
 file_path <- paste0(out_path, "/dd_sc_vs_sp500_1927_2022.jpeg")
 source_string <- str_wrap(paste0("Source: Returns 2.0 (OfDollarsAndData.com)"),
                           width = 85)
-note_string <- str_wrap(paste0("Note: Returns include dividends and are adjusted for inflation."),
+note_string <- str_wrap(paste0("Note: Returns include dividends and are adjusted for inflation. ",
+                               "Small cap stocks are represented by the Fama/French US Small Cap Research Index which 
+                                contains the lower 50% market equity range of NYSE firms."),
                         width = 85)
+
 
 plot <- ggplot(to_plot, aes(x=date, y=pct, fill = key)) +
   geom_area(position = "identity") +
@@ -170,7 +173,7 @@ plot_n_year_net_diff(10,
                      .15,
                      as.Date("1980-01-01"),
                      -0.1, 
-                    -0.08,
+                    -0.09,
                      as.Date("1980-01-01"))
 
 plot_n_year_net_diff(20, 
@@ -178,7 +181,7 @@ plot_n_year_net_diff(20,
                      .09,
                      as.Date("1985-01-01"),
                      -0.05, 
-                     -0.04,
+                     -0.05,
                      as.Date("1985-01-01"))
 
 # ############################  End  ################################## #
