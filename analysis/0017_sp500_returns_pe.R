@@ -37,11 +37,9 @@ sp500_ret_pe <- filter(sp500_ret_pe, !is.na(cape), date < "2017-01-01")
 first_year <- min(sp500_ret_pe$date)
 last_year <- max(sp500_ret_pe$date)
 
-
-
 # Setup a vector of different returns to calculate
 # This will be for 5 year, 10 year, 20 year, and 30 year returns
-returns_to_calc <- seq(5, 30, by = 1)
+returns_to_calc <- seq(5, 30, by = 5)
 
 # Calculate returns over different time frames
 for (i in 1:nrow(sp500_ret_pe)){
@@ -152,8 +150,8 @@ plot_ret_pe(30)
 
 create_gif(out_path, 
            paste0("returns-*.jpeg"), 
-           40, 
-           out_name = paste0("_gif_returns.gif"))
+           80, 
+           out_name = paste0("_gif_returns_reduced.gif"))
 
 
 # ############################  End  ################################## #

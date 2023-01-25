@@ -273,7 +273,7 @@ remove_and_recreate_folder <- function(path){
 }
 
 # Run simulation for all buying periods
-months_to_run <- seq(2, 60, 2)
+months_to_run <- seq(6, 60, 6)
 results <- data.frame()
 
 for (j in c(60, 100, 0)){
@@ -302,25 +302,25 @@ for (j in c(60, 100, 0)){
   
   assign(paste0("final_results_", j, "_sw"), results, envir = .GlobalEnv)
   
-  gif_ms <- 50
+  gif_ms <- 80
   
   create_gif(folder_time,
              paste0("dca_perf_time_sw_", j,"_*.jpeg"),
              gif_ms,
              0,
-             paste0("_gif_dca_perf_time_sw_", j, ".gif"))
+             paste0("_gif_dca_perf_time_sw_", j,"_reduced.gif"))
   
   create_gif(folder_compare,
              paste0("dca_ls_time_sw_", j,"_*.jpeg"),
              gif_ms,
              0,
-             paste0("_gif_dca_ls_sw_", j, ".gif"))
+             paste0("_gif_dca_ls_sw_", j, "_reduced.gif"))
 
   create_gif(folder_dist,
              paste0("dca_dist_sw_", j,"_*.jpeg"),
              gif_ms,
              0,
-             paste0("_gif_dist_sw_", j,".gif"))
+             paste0("_gif_dist_sw_", j,"_reduced.gif"))
 }
 
 # ############################  End  ################################## #

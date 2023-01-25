@@ -36,8 +36,10 @@ full_bv_returns$year <- as.Date(full_bv_returns$year, "%d/%m/%y")
 min_year <- min(year(full_bv_returns$year))
 max_year <- max(year(full_bv_returns$year))
 
+yrs_seq <- c(1, 5, 10, 15, 20)
+
 # Loop over the years 1-20 and 21 which is a repeat loop
-for (yr in 1:21){
+for (yr in yrs_seq){
   
   to_plot <- gather(full_bv_returns, key=key, value=value, -year)
   
@@ -109,8 +111,8 @@ for (yr in 1:21){
 
 create_gif(path = paste0(out_path),
            file_stub = "*-joyplot.jpeg",
-           speed_milliseconds = 100,
-           out_name = paste0("/_gif_asset_class_joyplots.gif"))
+           speed_milliseconds = 120,
+           out_name = paste0("/_gif_asset_class_joyplots_reduced.gif"))
 
 # ############################  End  ################################## #
 
