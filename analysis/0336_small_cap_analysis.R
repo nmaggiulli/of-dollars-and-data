@@ -44,6 +44,18 @@ df <- raw %>%
                index_real_sp500 = index_real_sp500/first_sp500) %>%
         select(-merge_key, -first_sc, -first_sp500)
 
+nrow_df <- nrow(df)
+
+sc_lifetime_ret <- (df[nrow_df, "index_real_sc"]/df[1, "index_real_sc"])^(1/(nrow_df/12)) - 1
+sp500_lifetime_ret <- (df[nrow_df, "index_real_sp500"]/df[1, "index_real_sp500"])^(1/(nrow_df/12)) - 1
+
+summary <- df %>%
+            mutate(ret_sc = index_real_sc/lag(index_real_sc, 12) - 1,
+                   ret_sp500 = index_real_sp500/lag(index_real_sp500, 12) - 1) %>%
+            summarise(sd_sc = sd(ret_sc, na.rm = TRUE),
+                      sd_sp500 = sd(ret_sp500, na.rm = TRUE))
+  
+
 dd_sc <- drawdown_path(df %>% select(date, index_real_sc)) %>%
               mutate(key = "Small Cap Stocks")
 dd_sp500 <- drawdown_path(df %>% select(date, index_real_sp500)) %>%

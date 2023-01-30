@@ -21,6 +21,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+today_string <- date_to_string(Sys.Date())
+
 remove_and_recreate_folder <- function(path){
   unlink(path)
   dir.create(file.path(paste0(path)), showWarnings = FALSE)
@@ -38,7 +40,7 @@ ProperCase <- function(InputString){
 
 plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
   
-  file_path <- paste0(f_out,"/ls_v_dca2_", var, "_", n_month_dca, "m_", asset, ".jpeg")
+  file_path <- paste0(f_out,"/ls_v_dca2_", var, "_", n_month_dca, "m_", asset, "_", today_string, ".jpeg")
   
   if(invest_dca_cash == 1){
     additional_note <- paste0("For DCA, cash receives the return on the Bloomberg Barclays US 1-3 Month Treasury Bill Index before being invested.")
@@ -141,7 +143,7 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
   # Do CAPE chart for U.S. Stocks only
   if(asset == "U.S. Stocks" & var == "outperformance"){
     
-    file_path <- paste0(f_out,"/ls_v_dca_", var, "_", n_month_dca, "m_cape_", asset, ".jpeg")
+    file_path <- paste0(f_out,"/ls_v_dca_", var, "_", n_month_dca, "m_cape_", asset, "_", today_string, ".jpeg")
     
     to_plot <- to_plot %>%
       left_join(select(sp500_ret_pe, date, cape))
@@ -374,7 +376,7 @@ run_asset <- function(a, invest_dca_cash){
 }
 
 all_assets <- unique(df$name)
-invest_dca_cash <- 1
+invest_dca_cash <- 0
 
 if(invest_dca_cash == 1){
   out_path <- paste0(out_path, "/_invest_dca_cash")
@@ -424,7 +426,7 @@ if(invest_dca_cash == 0){
   to_plot <- to_plot %>%
               mutate(asset = ifelse(asset == "Portfolio 60-40", "Lump Sum into 60-40", "DCA into S&P 500"))
   
-  file_path <- paste0(out_path,"/_sp500_dca2_vs_6040_ls_sd_", n_month_dca, "m.jpeg")
+  file_path <- paste0(out_path,"/_sp500_dca2_vs_6040_ls_sd_", n_month_dca, "m_", today_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
     geom_line() +
@@ -455,7 +457,7 @@ if(invest_dca_cash == 0){
   to_plot <- to_plot %>%
     mutate(asset = ifelse(asset == "Portfolio 60-40", "Lump Sum into 60-40", "DCA into S&P 500"))
   
-  file_path <- paste0(out_path,"/_sp500_dca2_vs_6040_ls_ret_", n_month_dca, "m.jpeg")
+  file_path <- paste0(out_path,"/_sp500_dca2_vs_6040_ls_ret_", n_month_dca, "m_", today_string, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = asset)) +
     geom_line() +
