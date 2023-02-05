@@ -14,14 +14,14 @@ library(stringr)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "xxxx_doubling_with_dca"
+folder_name <- "0337_doubling_with_dca"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
 # Do some data analysis to establish a long-term growth rate
-raw_1970 <- read.csv(paste0(importdir, "/xxxx_doubling_with_dca/GrowthOfWealth_20230203114912.csv"),
+raw_1970 <- read.csv(paste0(importdir, "/0337_doubling_with_dca/GrowthOfWealth_20230203114912.csv"),
                      skip = 7, 
                      row.names = NULL,
                      col.names = c("date", "index_sp500",	"index_world", "cpi", "index_bond"))  %>%
