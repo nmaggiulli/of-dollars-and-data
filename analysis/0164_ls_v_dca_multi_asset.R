@@ -21,6 +21,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+invest_dca_cash <- 1
 today_string <- date_to_string(Sys.Date())
 
 remove_and_recreate_folder <- function(path){
@@ -85,7 +86,7 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
   }
   
   first_yr <- min(year(to_plot$date))
-  last_yr <- max(year(to_plot$date))
+  last_yr <- year(max(to_plot$date) + years(n_month_dca/12))
   
   if(asset != "U.S. Stocks"){
     source_string <- paste0("Source:  YCharts, ", first_yr, "-", last_yr, " (OfDollarsAndData.com)")
@@ -225,7 +226,7 @@ raw <- read.csv(paste0(importdir, "0164_ycharts_multi_asset/timeseries_1-22-2020
   arrange(name, date) %>%
   select(date, name, value) %>%
   mutate(ret = ifelse(name == lag(name), value/lag(value) - 1, NA)) %>%
-  filter(!is.na(ret))
+  filter(!is.na(ret), year(date) <= 2022)
 
 min_all <- min(raw$date)
 max_all <- max(raw$date)
@@ -376,7 +377,7 @@ run_asset <- function(a, invest_dca_cash){
 }
 
 all_assets <- unique(df$name)
-invest_dca_cash <- 0
+
 
 if(invest_dca_cash == 1){
   out_path <- paste0(out_path, "/_invest_dca_cash")
