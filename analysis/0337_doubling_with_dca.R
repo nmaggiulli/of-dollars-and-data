@@ -120,8 +120,8 @@ final_results <- final_results %>%
 file_path <- paste0(out_path, "/dd_sc_vs_sp500_1927_2022.jpeg")
 source_string <- str_wrap(paste0("Source: Simulated data (OfDollarsAndData.com)"),
                           width = 85)
-note_string <- str_wrap(paste0("Note: Contribution % is the expected savings amount divided by the starting amount of assets. ",
-                               "Assumes that the contribution amount does not change over time."),
+note_string <- str_wrap(paste0("Note: Savings % is the expected annual savings amount over the starting assets. ",
+                               "Simulation assumes that the starting savings amount is consistent over time."),
                           width = 85)
 
 plot <- ggplot(final_results, aes(x=pmt_pct, y=doubling_years, col = as.factor(ret_pct))) +
@@ -130,9 +130,9 @@ plot <- ggplot(final_results, aes(x=pmt_pct, y=doubling_years, col = as.factor(r
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
-  ggtitle(paste0("Number of Years to Double Your Money\nBased on Contribution % and Annual Return")) +
-  labs(x = "Contribution %" , y = "Doubling Time (in Years)",
-       caption = paste0("\n", source_string))
+  ggtitle(paste0("Number of Years to Double Your Money\nBased on Savings Rate and Annual Return")) +
+  labs(x = "Savings Rate (%)" , y = "Doubling Time (in Years)",
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
