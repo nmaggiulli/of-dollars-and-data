@@ -12,6 +12,7 @@ library(readxl)
 library(lubridate)
 library(stringr)
 library(ggrepel)
+library(xtable)
 library(tidyverse)
 
 folder_name <- "0337_doubling_with_dca"
@@ -98,8 +99,8 @@ calculate_doubling_time <- function(annual_ret, pmt_percent){
   return(n_months/12)
 }
 
-all_pmt_pcts <- c(seq(0, 0.1, 0.01), 0.15, 0.2, 0.3, 0.4, 0.5)
-all_rets <- seq(0.04, 0.07, 0.01)
+all_pmt_pcts <- c(seq(0, 0.1, 0.01), 0.15, 0.2, 0.3)
+all_rets <- seq(0.05, 0.07, 0.01)
 
 final_results <- data.frame()
 counter <- 1
@@ -116,29 +117,39 @@ for(i in 1:length(all_pmt_pcts)){
 
 final_results <- final_results %>%
                   arrange(ret_pct, pmt_pct)
+  
 
-file_path <- paste0(out_path, "/dd_sc_vs_sp500_1927_2022.jpeg")
+file_path <- paste0(out_path, "/doubling_time_by_wsr_returns.jpeg")
 source_string <- str_wrap(paste0("Source: Simulated data (OfDollarsAndData.com)"),
                           width = 85)
-note_string <- str_wrap(paste0("Note: Savings % is the expected annual savings amount over the starting assets. ",
-                               "Simulation assumes that the starting savings amount is consistent over time."),
+note_string <- str_wrap(paste0("Note: Wealth savings rate is your expected annual savings amount over your starting assets. ",
+                               "Simulation assumes that the annual savings amount does not change over time."),
                           width = 85)
 
 plot <- ggplot(final_results, aes(x=pmt_pct, y=doubling_years, col = as.factor(ret_pct))) +
   geom_line() +
   scale_color_discrete() +
+  scale_y_continuous(breaks = seq(0, 16, 2), limits = c(0, 16)) +
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
-  ggtitle(paste0("Number of Years to Double Your Money\nBased on Savings Rate and Annual Return")) +
-  labs(x = "Savings Rate (%)" , y = "Doubling Time (in Years)",
+  ggtitle(paste0("Number of Years to Double Your Money\nBased on Wealth Savings Rate and Annual Return")) +
+  labs(x = "Wealth Savings Rate (%)" , y = "Doubling Time (in Years)",
        caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Create wide table for article
-wide <- spread(final_results, key =ret_pct, value = doubling_years)
+wide <- final_results %>%
+        mutate(doubling_years = paste0(round(doubling_years, 1))) %>%
+        spread(key=ret_pct, value = doubling_years) %>%
+          mutate(`Wealth Savings Rate` = paste0(pmt_pct, "%")) %>%
+          select(`Wealth Savings Rate`, contains("Real"))
 
+print(xtable(wide), 
+      include.rownames=FALSE,
+      type="html", 
+      file=paste0(out_path, "/doubling_time_by_wsr.html"))
 
 # ############################  End  ################################## #
