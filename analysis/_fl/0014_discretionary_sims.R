@@ -21,7 +21,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 # Simulation input
-n_yrs <- 30
+n_yrs <- 40
 
 # Do some data analysis to establish a long-term growth rate
 raw <- read.csv(paste0(importdir, "/", folder_name, "/GrowthOfWealth_20230206173453.csv"),
