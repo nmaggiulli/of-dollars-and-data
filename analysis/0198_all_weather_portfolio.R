@@ -20,6 +20,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+data_year <- 2022
+
 raw <- read.csv(paste0(importdir, "0198_all_weather_historical/PeriodicReturns_20200808115926.csv"),
                 skip = 6, col.names = c("date", "ret_bond_lt", "ret_bond_it", "ret_sp500", "ret_gld", "ret_cpi", "drop")) %>%
         select(-drop) %>%
@@ -110,7 +112,7 @@ to_plot <- dec_aw %>%
             bind_rows(dec_sp500) %>%
             filter(decade < 2020)
 
-file_path <- paste0(out_path, "/all_weather_rl_rets_by_decade.jpeg")
+file_path <- paste0(out_path, "/all_weather_rl_rets_by_decade_", data_year, ".jpeg")
 source_string <- paste0("Source:  Returns 2.0, 1973-2019 (OfDollarsAndData.com)")
 note_string <- str_wrap(paste0("Note: The 'All Weather Portfolio' uses a 15% allocation to Gold instead of a 7.5% allocation to Gold and a 7.5% allocation to Commodities.  Returns include dividends and have been adjusted for inflation."),
                         width = 85)
@@ -133,8 +135,8 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 
 # Plot growth of $1
-file_path <- paste0(out_path, "/all_weather_rl_growth_of_dollar.jpeg")
-source_string <- paste0("Source:  Returns 2.0, 1973-2020 (OfDollarsAndData.com)")
+file_path <- paste0(out_path, "/all_weather_rl_growth_of_dollar_", data_year, ".jpeg")
+source_string <- paste0("Source:  Returns 2.0, 1973-2022 (OfDollarsAndData.com)")
 
 to_plot <- all_weather %>%
               bind_rows(port_6040) %>%
@@ -163,8 +165,8 @@ plot <- ggplot(to_plot, aes(x = date, y = value_port, col = name)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Plot DD
-file_path <- paste0(out_path, "/all_weather_rl_dd.jpeg")
-source_string <- paste0("Source:  Returns 2.0, 1973-2020 (OfDollarsAndData.com)")
+file_path <- paste0(out_path, "/all_weather_rl_dd_", data_year, ".jpeg")
+source_string <- paste0("Source:  Returns 2.0, 1973-2022 (OfDollarsAndData.com)")
 
 to_plot <- drawdown_path(select(all_weather, date, value_port))
 
