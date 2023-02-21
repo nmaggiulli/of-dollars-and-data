@@ -20,6 +20,9 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+# Simulation input
+n_yrs <- 30
+
 # Do some data analysis to establish a long-term growth rate
 raw <- read.csv(paste0(importdir, "/", folder_name, "/GrowthOfWealth_20230206173453.csv"),
                      skip = 7, 
@@ -143,7 +146,7 @@ withdrawal_rates <- seq(0.03, 0.06, 0.01)
 for(d in discretionary_pcts){
   for(w in withdrawal_rates){
     print(paste0("Discretionary = ", d, ", Withdrawal = ", w))
-    fr <- run_retirement_sim(40, w, d)
+    fr <- run_retirement_sim(n_yrs, w, d)
     
     if(w == min(withdrawal_rates) & d == min(discretionary_pcts)){
       final_results_disc <- fr
@@ -155,8 +158,21 @@ for(d in discretionary_pcts){
 
 summary <- final_results_disc %>%
               mutate(survival = ifelse(final_port > 0, 1, 0)) %>%
-              group_by(withdrawal_rate, discretionary_pct) %>%
-              summarise(survival_pct = mean(survival)) %>%
+              group_by(withdrawal_rate, discretionary_pct, n_years) %>%
+              summarise(n_simulations = n(),
+                        n_survivals = sum(survival),
+                survival_pct = mean(survival)) %>%
+              rename(withdrawal_pct = withdrawal_rate) %>%
               ungroup()
+
+today_string <- date_to_string(Sys.Date())
+
+export_to_excel(
+  df = summary,
+  outfile = paste0(out_path, "/discretionary_sims_", n_yrs, "_years_", today_string, ".xlsx"),
+  sheetname = "results",
+  new_file = 1,
+  fancy_formatting = 1
+)
 
 # ############################  End  ################################## #
