@@ -44,6 +44,13 @@ for (x in year_list){
   # mrthel = mortgage debt
   # resdbt = other residential debt
   # ccbal = credit card balance
+  # income = total household income
+  # wageinc = Wage and salary income
+  # intdivinc = 	Interest (taxable and nontaxable) and dividend income
+  # bussefarminc = 	Income from business, sole proprietorship, and farm
+  # rentinc = Net rental income
+  # kginc = Capital gain or loss income
+  # ssretinc = Social security and pension income
   # agecl = age class, 1:<35, 2:35-44, 3:45-54, 4:55-64, 5:65-74, 6:>=75
   # age = age,
   # hhsex = gender, 1 = male , 2 = female
@@ -57,7 +64,7 @@ for (x in year_list){
   vars_to_keep <- c('y1', 'yy1', 'networth', 'debt', 'asset', 'liq', 'reteq',
                     'payedu1', 'payedu2', 'payedu3', 'payedu4', 'payedu5', 'payedu6', 'payedu7',
                     'homeeq', 'rent', 'hdebt', 'fin', 'nfin', 'vehic', 'bus', 'oresre', 'othnfin', 'mrthel', 'resdbt', 'ccbal', 
-                    'income', 'wageinc', 'intdivinc', 'bussefarminc', 'equitinc', 'ssretinc',
+                    'income', 'wageinc', 'intdivinc', 'bussefarminc', 'kginc', 'ssretinc',
                     'agecl', 'age', 'hhsex', 'race', 'racecl4', 'edcl', 'married', 'kids', 'wgt')
   
   # Write a function to subset our data
