@@ -20,6 +20,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+run_sims <- 0
+
 run_sim <- function(n_yrs, s_weight){
 
   # Do some data analysis to establish a long-term growth rate
@@ -163,20 +165,40 @@ run_sim <- function(n_yrs, s_weight){
   return(summary)
 }
 
-results_60_base <- run_sim(40, 0.6) %>%
-                    rename(stock_60_pct = survival_pct)
-results_80_base <- run_sim(40, 0.8) %>%
-                        rename(stock_80_pct = survival_pct)
+if(run_sims == 1){
+  results_60_base <- run_sim(40, 0.6) %>%
+    rename(stock_60_pct = survival_pct)
+  results_80_base <- run_sim(40, 0.8) %>%
+    rename(stock_80_pct = survival_pct)
+  
+  summary <- results_60_base %>%
+    left_join(results_80_base)
+  
+  export_to_excel(
+    df = summary,
+    outfile = paste0(out_path, "/all_discretionary_sims_qtr_pcts.xlsx"),
+    sheetname = "results",
+    new_file = 1,
+    fancy_formatting = 1
+  )
+} else{
+  summary <- read_excel(paste0(out_path, "/all_discretionary_sims_qtr_pcts.xlsx"),
+                        sheet = "results")
+  
+  wide <- summary %>%
+            select(-n_years, -n_simulations, -stock_60_pct) %>%
+            spread(key = discretionary_pct, value = stock_80_pct)
+  
+  export_to_excel(
+    df = wide,
+    outfile = paste0(out_path, "/all_discretionary_sims_qtr_pcts.xlsx"),
+    sheetname = "heatmap",
+    new_file = 0,
+    fancy_formatting = 0
+  )
+}
 
-summary <- results_60_base %>%
-            left_join(results_80_base)
 
-export_to_excel(
-  df = summary,
-  outfile = paste0(out_path, "/all_discretionary_sims_qtr_pcts.xlsx"),
-  sheetname = "results",
-  new_file = 1,
-  fancy_formatting = 1
-)
+
 
 # ############################  End  ################################## #
