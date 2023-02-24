@@ -22,7 +22,77 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 run_sims <- 0
 
-run_sim <- function(n_yrs, s_weight){
+run_retirement_sim <- function(n_years, withdrawal_rate, discretionary_spend_pct){
+  start_year <- year(min(raw$date))
+  end_year <- year(max(raw$date)) - n_years + 1
+  all_years <- seq(start_year, end_year)
+  
+  final_results <- data.frame()
+  counter <- 1
+  for(year in all_years){
+    end_yr <- year+ n_years - 1
+    
+    df <- raw %>%
+      filter(yr >= year, yr <= end_yr) %>%
+      select(date, yr, change_in_cpi, ret_port)
+    
+    dd_years <- dd %>%
+      filter(yr >= year, yr <= end_yr)
+    
+    start_port <- 1* 10^6
+    for(i in 1:nrow(df)){
+      ret_port <- df[i, "ret_port"]
+      
+      if(i == 1){
+        current_year <- df[i, "yr"]
+        
+        current_discretionary_pct <- dd_years %>%
+          filter(yr == current_year) %>%
+          pull(discretionary_pct)
+        
+        required_spend <- start_port * (withdrawal_rate - withdrawal_rate*discretionary_spend_pct)
+        disc_spend <- start_port * (withdrawal_rate*discretionary_spend_pct) * (current_discretionary_pct)
+        monthly_spend <- (required_spend + disc_spend)/12
+        
+        df[i, "port"] <- (start_port - monthly_spend) * (1 + ret_port)
+      } else{
+        mt <- month(df[i, "date"])
+        
+        if(mt == 1){
+          current_year <- df[i, "yr"]
+          
+          current_discretionary_pct <- dd_years %>%
+            filter(yr == current_year) %>%
+            pull(discretionary_pct)
+          
+          change_in_cpi <- df[i, "change_in_cpi"]
+          
+          required_spend <- required_spend * (1 + change_in_cpi)
+          disc_spend <- start_port * (withdrawal_rate*discretionary_spend_pct) * (current_discretionary_pct)
+          monthly_spend <- (required_spend + disc_spend)/12
+          
+          df[i, "port"] <- (df[(i-1), "port"] - monthly_spend) * (1 + ret_port)
+        } else{
+          df[i, "port"] <- (df[(i-1), "port"] - monthly_spend) * (1 + ret_port)
+        }
+      }
+      if(df[i, "port"] < 0){
+        df[i, "port"] <- 0
+      }
+    }
+    final_results[counter, "withdrawal_rate"] <- withdrawal_rate
+    final_results[counter, "discretionary_pct"] <- discretionary_spend_pct
+    final_results[counter, "n_years"] <- n_years
+    final_results[counter, "start_year"] <- year
+    final_results[counter, "end_year"] <- end_yr
+    final_results[counter, "final_port"] <- df[nrow(df), "port"]
+    
+    counter <- counter + 1
+  }
+  return(final_results)
+}
+
+run_full_sim <- function(n_yrs, s_weight){
 
   # Do some data analysis to establish a long-term growth rate
   raw <- read.csv(paste0(importdir, "/", folder_name, "/GrowthOfWealth_20230206173453.csv"),
@@ -69,76 +139,6 @@ run_sim <- function(n_yrs, s_weight){
           bind_rows(data.frame(yr = 1926, discretionary_pct = 1)) %>%
           arrange(yr)
   
-  run_retirement_sim <- function(n_years, withdrawal_rate, discretionary_spend_pct){
-    start_year <- year(min(raw$date))
-    end_year <- year(max(raw$date)) - n_years + 1
-    all_years <- seq(start_year, end_year)
-    
-    final_results <- data.frame()
-    counter <- 1
-    for(year in all_years){
-      end_yr <- year+ n_years - 1
-      
-      df <- raw %>%
-        filter(yr >= year, yr <= end_yr) %>%
-        select(date, yr, change_in_cpi, ret_port)
-      
-      dd_years <- dd %>%
-        filter(yr >= year, yr <= end_yr)
-      
-      start_port <- 1* 10^6
-      for(i in 1:nrow(df)){
-        ret_port <- df[i, "ret_port"]
-        
-        if(i == 1){
-          current_year <- df[i, "yr"]
-          
-          current_discretionary_pct <- dd_years %>%
-            filter(yr == current_year) %>%
-            pull(discretionary_pct)
-          
-          required_spend <- start_port * (withdrawal_rate - withdrawal_rate*discretionary_spend_pct)
-          disc_spend <- start_port * (withdrawal_rate*discretionary_spend_pct) * (current_discretionary_pct)
-          monthly_spend <- (required_spend + disc_spend)/12
-          
-          df[i, "port"] <- (start_port - monthly_spend) * (1 + ret_port)
-        } else{
-          mt <- month(df[i, "date"])
-          
-          if(mt == 1){
-            current_year <- df[i, "yr"]
-            
-            current_discretionary_pct <- dd_years %>%
-              filter(yr == current_year) %>%
-              pull(discretionary_pct)
-            
-            change_in_cpi <- df[i, "change_in_cpi"]
-            
-            required_spend <- required_spend * (1 + change_in_cpi)
-            disc_spend <- start_port * (withdrawal_rate*discretionary_spend_pct) * (current_discretionary_pct)
-            monthly_spend <- (required_spend + disc_spend)/12
-            
-            df[i, "port"] <- (df[(i-1), "port"] - monthly_spend) * (1 + ret_port)
-          } else{
-            df[i, "port"] <- (df[(i-1), "port"] - monthly_spend) * (1 + ret_port)
-          }
-        }
-        if(df[i, "port"] < 0){
-          df[i, "port"] <- 0
-        }
-      }
-      final_results[counter, "withdrawal_rate"] <- withdrawal_rate
-      final_results[counter, "discretionary_pct"] <- discretionary_spend_pct
-      final_results[counter, "n_years"] <- n_years
-      final_results[counter, "start_year"] <- year
-      final_results[counter, "end_year"] <- end_yr
-      final_results[counter, "final_port"] <- df[nrow(df), "port"]
-      
-      counter <- counter + 1
-    }
-    return(final_results)
-  }
-  
   discretionary_pcts <- seq(0, 0.7, 0.1)
   withdrawal_rates <- seq(0.04, 0.07, 0.0025)
   
@@ -166,9 +166,9 @@ run_sim <- function(n_yrs, s_weight){
 }
 
 if(run_sims == 1){
-  results_60_base <- run_sim(40, 0.6) %>%
+  results_60_base <- run_full_sim(40, 0.6) %>%
     rename(stock_60_pct = survival_pct)
-  results_80_base <- run_sim(40, 0.8) %>%
+  results_80_base <- run_full_sim(40, 0.8) %>%
     rename(stock_80_pct = survival_pct)
   
   summary <- results_60_base %>%
