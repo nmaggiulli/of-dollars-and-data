@@ -20,12 +20,12 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 # Bring in JPY data
-fred_jpy_mcap_to_gdp <- read_excel(paste0(importdir, "0128_bubble_data/fred_mcap_to_gdp_DDDM01JPA156NWDB.xls"),
+fred_jpy_mcap_to_gdp <- read_excel(paste0(importdir, "0129_bubble_data/fred_mcap_to_gdp_DDDM01JPA156NWDB.xls"),
                                    skip = 10)
 
 colnames(fred_jpy_mcap_to_gdp) <- c("date", "mcap_to_gdp")
 
-fred_jpy_real_gdp <- read_excel(paste0(importdir, "0128_bubble_data/fred_japan_realgdp_JPNRGDPR.xls"),
+fred_jpy_real_gdp <- read_excel(paste0(importdir, "0129_bubble_data/fred_japan_realgdp_JPNRGDPR.xls"),
                                    skip = 10)
 
 colnames(fred_jpy_real_gdp) <- c("date", "real_gdp")
@@ -37,17 +37,19 @@ jpy <- fred_jpy_mcap_to_gdp %>%
           filter(!is.na(mcap_billions)) %>%
           select(date, mcap_billions)
 
-jpy_index <- read.csv(paste0(importdir, "0114_japan_nikkei/nikk.csv"), skip = 1) %>%
+jpy_index <- read.csv(paste0(importdir, "0182_japan_nikkei/nikk.csv"), skip = 1) %>%
             rename(date = Date,
                    index = Close) %>%
             mutate(date = as.Date(date, "%m/%d/%Y")) %>%
             select(date, index) 
 
 # Bring in Bitcoin data
-bcoin_mcap <- read_excel(paste0(importdir, "0128_bubble_data/bitcoin_coin_market_cap.xlsx")) %>%
+bcoin_mcap <- read.csv(paste0(importdir, "0129_bubble_data/IBMC_data.csv"),
+                       col.names = c("date", "mcap")) %>%
                 mutate(mcap_billions = mcap/(10^9),
                        date = as.Date(date)) %>%
                 select(date, mcap_billions) %>%
+                filter(year(date) >= 2013) %>%
                 arrange(date)
 
 # Bring in data for 1929
@@ -101,14 +103,14 @@ plot <- ggplot(to_plot, aes(x=date, y=mcap_billions)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Reset file path
-file_path <- paste0(out_path, "/bcoin_mcap_loss.jpeg")
+file_path <- paste0(out_path, "/bcoin_mcap_loss_2021.jpeg")
 
 # Set source/note
 source_string <- paste0("Source:  CoinMarketCap.com (OfDollarsAndData.com)")
 
 # Dates of interest for Bitcoin
-bubble_high <- as.Date("2017-12-16")
-bubble_low <- as.Date("2018-12-15")
+bubble_high <- as.Date("2021-11-16")
+bubble_low <- as.Date("2023-01-03")
 
 text_labels <- data.frame(date = c(bubble_high, bubble_low))
 
@@ -130,10 +132,10 @@ plot <- ggplot(bcoin_mcap, aes(x=date, y=mcap_billions)) +
                   family = "my_font",
                   max.iter = 1,
                   segment.colour = "transparent",
-                  nudge_y = ifelse(text_labels$date == bubble_high, 0, -15),
-                  nudge_x = ifelse(text_labels$date == bubble_high, -100, 0)) +
+                  nudge_y = ifelse(text_labels$date == bubble_high, 0, -70),
+                  nudge_x = ifelse(text_labels$date == bubble_high, 220, 0)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Bitcoin Lost Over $250 Billion\nFollowing Its 2017 Peak")) +
+  ggtitle(paste0("Bitcoin Lost Over $800 Billion\nFollowing Its 2021 Peak")) +
   labs(x="Date", y="Market Capitalization\n(in billions)",
        caption = paste0("\n", source_string))
 
@@ -141,7 +143,7 @@ plot <- ggplot(bcoin_mcap, aes(x=date, y=mcap_billions)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Bring in DotCom data for NASDAQ
-nq <- read.csv(paste0(importdir, "0128_bubble_data/IXIC_data.csv")) %>%
+nq <- read.csv(paste0(importdir, "0129_bubble_data/IXIC_data.csv")) %>%
   rename(index = `NASDAQ.Composite.Level`) %>%
   mutate(date = as.Date(Period)) %>%
   arrange(date) %>%
