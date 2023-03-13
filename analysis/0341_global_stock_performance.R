@@ -15,7 +15,7 @@ library(ggrepel)
 library(xtable)
 library(tidyverse)
 
-folder_name <- "0340_global_stock_performance"
+folder_name <- "0341_global_stock_performance"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
