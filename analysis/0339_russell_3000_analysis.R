@@ -74,6 +74,12 @@ plot_growth_of_dollar <- function(start_date, end_date, outname){
   to_plot_all <- to_plot %>%
                   filter(symbol != "^RUATR")
   
+  last <- to_plot_all %>% filter(date == max(to_plot_all$date))
+  
+  print(paste0("25th Percentile = ", last %>% summarise(prob = quantile(value, probs = 0.25)) %>% pull(prob)))
+  print(paste0("50th Percentile = ", last %>% summarise(prob = quantile(value, probs = 0.5)) %>% pull(prob)))
+  print(paste0("75th Percentile = ", last %>% summarise(prob = quantile(value, probs = 0.75)) %>% pull(prob)))
+  
   n_symbols <- to_plot_all %>%
                   select(symbol) %>%
                   distinct()
