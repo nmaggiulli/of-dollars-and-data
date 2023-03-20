@@ -15,7 +15,7 @@ library(ggrepel)
 library(xtable)
 library(tidyverse)
 
-folder_name <- "0341_global_stock_performance"
+folder_name <- "0342_global_stock_performance"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -42,7 +42,7 @@ my_colors <- c("black",
                 "#ff7f00",
                 "#cab2d6")
 
-raw <- read.csv(paste0(importdir, "/0340_global_stock_performance/GrowthOfWealth_20230305183049.csv"),
+raw <- read.csv(paste0(importdir, "/0342_global_stock_performance/GrowthOfWealth_20230305183049.csv"),
                 skip = 7,
                 col.names = c("date", countries)) %>%
         filter(!is.na(US)) %>%
