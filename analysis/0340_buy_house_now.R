@@ -22,7 +22,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 # Do some data analysis to establish a long-term growth rate
-raw <- read.csv(paste0(importdir, "/0339_housing_data/IUSEHMSP_IUS30YMR_data.csv"),
+raw <- read.csv(paste0(importdir, "/0340_housing_data/IUSEHMSP_IUS30YMR_data.csv"),
                 col.names = c("date", "median_price", "mortgage_rate")) %>%
         mutate(date = as.Date(date, format = "%Y-%m-%d"),
                mt = month(date),
@@ -53,7 +53,7 @@ note_string <- str_wrap(paste0("Note: Assumes a 20% down payment and a 30-year f
 
 plot <- ggplot(to_plot, aes(x=date, y=monthly_payment)) +
   geom_line() +
-  scale_y_continuous(label = dollar) +
+  scale_y_continuous(label = dollar, breaks = seq(1000, 2000, 100)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Monthly Mortgage Payment Required to\nPurchase the Median U.S. Home")) +
   labs(x = "Month" , y = "Mortgage Payment ($)",
