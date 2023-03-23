@@ -19,10 +19,6 @@ library(Hmisc)
 library(ipumsr)
 library(tidyverse)
 
-folder_name <- "0331_income_by_age_edc"
-out_path <- paste0(exportdir, folder_name)
-dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
-
 ########################## Start Program Here ######################### #
 
 ddi <- read_ipums_ddi(paste0(importdir, "xxxx_ipums_data/cps_00002.xml"))
