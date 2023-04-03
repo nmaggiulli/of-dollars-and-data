@@ -41,4 +41,15 @@ plot <- ggplot(to_plot, aes(x=amazon_rank, y=copies_sold)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+summary <- to_plot %>%
+            rename(`Amazon Book Rank` = amazon_rank,
+                   `Daily Sales` = copies_sold) %>%
+            mutate(`Amazon Book Rank` =  formatC(`Amazon Book Rank`, digits = 0, format = "f", big.mark = ","),
+                   `Daily Sales` =  formatC(`Daily Sales`, digits = 0, format = "f", big.mark = ","))
+
+print(xtable(summary), 
+      include.rownames=FALSE,
+      type="html", 
+      file=paste0(out_path, "/amazon_sales_by_rank.html"))
+
 # ############################  End  ################################## #
