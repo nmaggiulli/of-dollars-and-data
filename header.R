@@ -20,21 +20,24 @@ highlight_standard_color <- "#D6E6F1"
 chart_standard_color     <- "#003C68" 
 
 # Set my font for MAC (just download and install OTF fonts then use quartzFonts)
-quartzFonts(my_font = quartzFont(c("Libre Baskerville", 
-                                 "Libre Baskerville Bold", 
-                                 "Libre Baskerville Italic",
-                                 "Libre Baskerville Bold")))
+# quartzFonts(my_font = quartzFont(c("Libre Baskerville", 
+#                                  "Libre Baskerville Bold", 
+#                                  "Libre Baskerville Italic",
+#                                  "Libre Baskerville Bold")))
+#all_fonts <- data.frame(systemfonts::system_fonts())
 require(ggplot2)
+
+my_font <- "Libre Baskerville"
 
 # Make a theme that matches the OfDollarsAndData.com blog
 of_dollars_and_data_theme <- theme(
-                  plot.title       = element_text(family = "my_font", size = 14, face = "bold", hjust = 0.5, margin = ggplot2::margin(0, 0, 10, 0)),
-                  axis.title.y     = element_text(face = "bold", size = 10, family = "my_font", margin = ggplot2::margin(0, 10, 0, 0)),
+                  plot.title       = element_text(family = my_font, size = 14, face = "bold", hjust = 0.5, margin = ggplot2::margin(0, 0, 10, 0)),
+                  axis.title.y     = element_text(face = "bold", size = 10, family = my_font, margin = ggplot2::margin(0, 10, 0, 0)),
                   axis.text.y      = element_text(color = "black"), 
                   axis.ticks.y     = element_line(color = "black"),
                   axis.text.x      = element_text(color = "black"),
                   axis.ticks.x     = element_line(color = "black"),
-                  axis.title.x     = element_text(face = "bold", size = 10, family = "my_font", margin = ggplot2::margin(10, 0, 0, 0)),
+                  axis.title.x     = element_text(face = "bold", size = 10, family = my_font, margin = ggplot2::margin(10, 0, 0, 0)),
                   axis.line.x      = element_line(color = "black"),
                   axis.line.y      = element_line(color = "black"),
                   legend.key       = element_blank(),
@@ -42,7 +45,7 @@ of_dollars_and_data_theme <- theme(
                   panel.grid.minor = element_blank(),
                   panel.border     = element_blank(),
                   panel.background = element_blank(),
-                  plot.caption     = element_text(hjust = 0, family = "my_font", size = 8))
+                  plot.caption     = element_text(hjust = 0, family = my_font, size = 8))
 
 # Read in custom functions
 source("custom_functions.R")
