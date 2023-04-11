@@ -44,6 +44,8 @@ for (x in year_list){
   # mrthel = mortgage debt
   # resdbt = other residential debt
   # ccbal = credit card balance
+  # INSTALL = installment loan
+  # ODEBT = Other debt
   # income = total household income
   # wageinc = Wage and salary income
   # intdivinc = 	Interest (taxable and nontaxable) and dividend income
@@ -63,7 +65,7 @@ for (x in year_list){
   
   vars_to_keep <- c('y1', 'yy1', 'networth', 'debt', 'asset', 'liq', 'reteq',
                     'payedu1', 'payedu2', 'payedu3', 'payedu4', 'payedu5', 'payedu6', 'payedu7',
-                    'homeeq', 'rent', 'hdebt', 'fin', 'nfin', 'vehic', 'bus', 'oresre', 'othnfin', 'mrthel', 'resdbt', 'ccbal', 
+                    'homeeq', 'rent', 'hdebt', 'fin', 'nfin', 'vehic', 'bus', 'oresre', 'othnfin', 'mrthel', 'resdbt', 'ccbal', 'install', 'odebt', 
                     'income', 'wageinc', 'intdivinc', 'bussefarminc', 'kginc', 'ssretinc',
                     'agecl', 'age', 'hhsex', 'race', 'racecl4', 'edcl', 'married', 'kids', 'wgt')
   
