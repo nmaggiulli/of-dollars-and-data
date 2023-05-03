@@ -72,7 +72,7 @@ calculate_retire_time_diff <- function(yr_retire, ret, s_rate1, s_rate2){
 
 all_time_horizons <- seq(10, 30, 10)
 all_savings_rates <- seq(0.05, 0.4, 0.05)
-delta_savings <- c(0.01, 0.1)
+delta_savings <- c(0.01, 0.05, 0.1)
 final_results <- data.frame()
 counter <- 1
 
