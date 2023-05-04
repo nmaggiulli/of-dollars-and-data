@@ -144,7 +144,7 @@ plot_time_saved <- function(n_years){
     mutate(years_saved = round(months_saved/12, 1)) %>%
     select(-months_saved) %>%
     spread(key=change_in_savings_rate, value=years_saved) %>%
-    mutate(`Original Savings Rate` = paste0(100*orig_savings_rate, "%"),
+    mutate(`Current Savings Rate` = paste0(100*orig_savings_rate, "%"),
            `Save 1% More` = `0.01`,
            `Save 5% More` = `0.05`,
            `Save 10% More` = `0.1`) %>%
