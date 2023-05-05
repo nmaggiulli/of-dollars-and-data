@@ -26,7 +26,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 annual_income <- 100000
-
+ret <- 0.05
 
 calculate_retire_time_diff <- function(yr_retire, ret, s_rate1, s_rate2){
   mt_retire <- yr_retire*12
@@ -66,7 +66,7 @@ counter <- 1
 for(t in all_time_horizons){
   for(a in all_savings_rates){
     for(d in delta_savings){
-      diff <- calculate_retire_time_diff(t, 0.05, a, a+d)
+      diff <- calculate_retire_time_diff(t, ret, a, a+d)
       final_results[counter, "time_horizon"] <- t
       final_results[counter, "orig_savings_rate"] <- a
       final_results[counter, "change_in_savings_rate"] <- d
@@ -81,6 +81,8 @@ plot_time_saved <- function(n_years){
 
   file_path <- paste0(out_path, "/savings_rate_vs_months_saved_", n_years, "_years.jpeg")
   source_string <- paste0("Source:  Simulated data (OfDollarsAndData.com)")
+  note_string <- str_wrap(paste0("Note:  Assumes a ", 100*ret, "% annual return on all invested savings."),
+                          width = 80)
   
   text_labels <- data.frame()
   
@@ -129,16 +131,43 @@ plot_time_saved <- function(n_years){
     geom_line() +
     geom_text(data=text_labels, aes(x=orig_savings_rate, y=years_saved, col = change_in_savings_rate,
               label = label), family = my_font, size = 4) +
-    scale_x_continuous(label = percent_format(accuracy = 1)) +
+    scale_x_continuous(label = percent_format(accuracy = 1), breaks = seq(0.05, 0.5, 0.05)) +
     scale_y_continuous(label = comma, limits = c(y_min, y_max), breaks = seq(y_min, y_max, y_breaks)) +
     scale_color_discrete(guide = "none") +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Months Saved Toward Retirement\nBased on Change in Savings Rate\nOver ", n_years, " Years")) +
-    labs(x = "Original Savings Rate" , y = "Years Saved",
-         caption = paste0(source_string))
+    ggtitle(paste0("How Much Earlier You Can Retire\nBased on Change in Savings Rate\nWhen ", n_years, " Years From Retirement")) +
+    labs(x = "Current Savings Rate" , y = "Years",
+         caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  if(n_years == 10){
+    file_path <- paste0(out_path, "/savings_rate_vs_months_saved_", n_years, "_years_1pct_only.jpeg")
+    
+    to_plot <- to_plot %>%
+                filter(change_in_savings_rate == "1%") %>%
+                mutate(months_saved = years_saved*12)
+    
+    assign("tp", to_plot, envir = .GlobalEnv)
+    
+    text_labels <- text_labels %>%
+                      head(1) %>%
+                      mutate(months_saved = years_saved*12)
+    
+    plot <- ggplot(to_plot, aes(x=orig_savings_rate, y=months_saved)) +
+      geom_line(col = "black") +
+      scale_x_continuous(label = percent_format(accuracy = 1), breaks = seq(0.05, 0.5, 0.05)) +
+      scale_y_continuous(label = comma, limits = c(0, 18), breaks = seq(0, 18, 6)) +
+      scale_color_discrete(guide = "none") +
+      of_dollars_and_data_theme +
+      ggtitle(paste0("How Much Earlier You Can Retire\nWhen Saving 1% More Annually\nWhile ", n_years, " Years From Retirement")) +
+      labs(x = "Current Savings Rate" , y = "Months",
+           caption = paste0(source_string, "\n", note_string))
+    
+    # Save the plot
+    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  }
   
   to_export <- final_results %>%
     mutate(years_saved = round(months_saved/12, 1)) %>%
@@ -148,7 +177,7 @@ plot_time_saved <- function(n_years){
            `Save 1% More` = `0.01`,
            `Save 5% More` = `0.05`,
            `Save 10% More` = `0.1`) %>%
-    select(time_horizon, `Original Savings Rate`, `Save 1% More`, `Save 5% More`, `Save 10% More`)
+    select(time_horizon, `Current Savings Rate`, `Save 1% More`, `Save 5% More`, `Save 10% More`)
   
   print(xtable(to_export %>% filter(time_horizon == n_years) %>% select(-time_horizon)), 
         include.rownames=FALSE,
