@@ -19,7 +19,7 @@ library(Hmisc)
 library(xtable)
 library(tidyverse)
 
-folder_name <- "0350_sideways_markets"
+folder_name <- "0350_down_sideways_markets"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -31,7 +31,6 @@ sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 dd <- sp500_ret_pe %>%
           select(date, price_plus_div) %>%
           drawdown_path()
-                      
 
 first <- pull(sp500_ret_pe[1, "price_plus_div"])
 
@@ -49,6 +48,32 @@ df <- sp500_ret_pe %>%
                     lead_ret_12m = lead(growth_of_dollar, 12)/growth_of_dollar - 1, 
                     lead_ret_60m = lead(growth_of_dollar, 60)/growth_of_dollar - 1, 
                      )
+
+#Plot the down then sideways market
+first <- df %>%
+          filter(date == "2021-12-01") %>%
+          pull(growth_of_dollar)
+
+to_plot <- df %>%
+            filter(date >= "2021-12-01") %>%
+            mutate(growth_of_dollar = growth_of_dollar/first)
+
+file_path <- paste0(out_path, "/down_sideways_2021_12_01.jpeg")
+source_string <- str_wrap(paste0("Source: http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"),
+                          width = 85)
+note_string <- str_wrap(paste0("Note: Returns include dividends and are adjusted for inflation."),
+                        width = 80)
+
+plot <- ggplot(to_plot, aes(x=date, y=growth_of_dollar)) +
+  geom_line(col = "black") +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("The Down & Sideways Market of\n2022 & 2023")) +
+  labs(x = "Date" , y = "Growth of $1",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 all_down_sideways_markets <- df %>%
                         filter(down_sideways == 1)
@@ -114,7 +139,6 @@ non_na_sideways <- df %>%
 plot_fwd_months <- function(n_months, title){
   
   for(i in 1:nrow(non_na_sideways)){
-    print(i)
     dt <- pull(non_na_sideways[i, "date"])
     
     tmp <- df %>%
@@ -145,11 +169,18 @@ plot_fwd_months <- function(n_months, title){
   to_plot <- stack %>%
     bind_rows(avg)
   
+  # For plot titles
+  if(title == "One"){
+    year_years <- "Year" 
+  } else{
+    year_years <- "Years"
+  }
+  
   file_path <- paste0(out_path, "/growth_of_dollar_", n_months, "m_sideways_down_markets.jpeg")
   source_string <- str_wrap(paste0("Source: http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"),
                             width = 85)
   note_string <- str_wrap(paste0("Note: Returns include dividends and are adjusted for inflation. ",
-                                 "Down and sideways markets are defined as anytime where the market was down at least 20% and flat (<2% change) over the prior 9 months."),
+                                 "Down & sideways markets are defined as anytime where the market was down at least 20% and flat (<2% change) over the prior 9 months."),
                           width = 80)
   
   plot <- ggplot(to_plot, aes(x=month, y=growth_of_dollar, col = start_date)) +
@@ -158,7 +189,7 @@ plot_fwd_months <- function(n_months, title){
     scale_y_continuous(label = dollar) +
     scale_color_manual(values = c(rep("gray", n_periods), "red"), guide = "none") +
     of_dollars_and_data_theme +
-    ggtitle(paste0("How U.S. Stocks Perform ", title, " After\nBeing Down and Sideways")) +
+    ggtitle(paste0("How U.S. Stocks Perform ", title, " ", year_years, " After\nBeing Down & Sideways")) +
     labs(x = "Month" , y = "Growth of $1",
          caption = paste0(source_string, "\n", note_string))
   
@@ -171,7 +202,7 @@ plot_fwd_months <- function(n_months, title){
               rename_(.dots = setNames(paste0("lead_ret_", n_months, "m"), "ret")) %>%
               mutate(group = ifelse(down_sideways == 1, "Down & Sideways", "All Other Times"))
   
-  file_path <- paste0(out_path, "/dist_", n_months, "m_down_sideways_markets.jpeg")
+  file_path <- paste0(out_path, "/future_dist_", n_months, "m_down_sideways_markets.jpeg")
   
   plot <- ggplot(to_plot, aes(ret, fill = group)) +
     geom_density(alpha = 0.7) +
@@ -179,19 +210,24 @@ plot_fwd_months <- function(n_months, title){
     scale_fill_manual(values = c("grey", "red")) +
     of_dollars_and_data_theme +
     theme(legend.title = element_blank(),
-          legend.position = "bottom") +
-    ggtitle(paste0("U.S. Market Performance Over ", title, "\nWhen Down & Sideways vs. All Other Times")) +
-    labs(x = paste0("Total Return") , y = "Density",
+          legend.position = "bottom",
+          axis.ticks.y = element_blank(),
+          axis.text.y = element_blank()) +
+    ggtitle(paste0("U.S. Market Performance Over ", title, " ", year_years, "\nWhen Down & Sideways vs. All Other Times")) +
+    labs(x = paste0(title, "-Year Future Return") , y = "Density",
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-plot_fwd_months(12, "One Year")
-plot_fwd_months(60, "Five Years")
+plot_fwd_months(12, "One")
+plot_fwd_months(60, "Five")
 
 sideways_and_down_sideways <- df %>%
                               filter(sideways == 1, down_sideways == 1)
+
+t.test(df %>% filter(down_sideways == 1) %>% pull(lead_ret_60m),
+       df %>% filter(down_sideways == 0) %>% pull(lead_ret_60m))
 
 # ############################  End  ################################## #
