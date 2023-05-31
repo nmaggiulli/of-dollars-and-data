@@ -23,7 +23,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 # Do some data analysis to establish a long-term growth rate
 raw <- read.csv(paste0(importdir, "/0340_housing_data/IUSEHMSP_IUS30YMR_data.csv"),
-                col.names = c("date", "median_price", "mortgage_rate")) %>%
+                col.names = c("date", "mortgage_rate", "median_price")) %>%
         mutate(date = as.Date(date, format = "%Y-%m-%d"),
                mt = month(date),
                yr = year(date)) %>%
@@ -31,7 +31,7 @@ raw <- read.csv(paste0(importdir, "/0340_housing_data/IUSEHMSP_IUS30YMR_data.csv
 
 by_month <- raw %>%
               filter(date >= "2020-01-01",
-                     date < "2023-02-01") %>%
+                     date < "2023-05-01") %>%
               group_by(yr, mt) %>%
               summarise(median_price = max(median_price, na.rm = TRUE),
                         mortgage_rate = mean(mortgage_rate, na.rm = TRUE)/100) %>%
