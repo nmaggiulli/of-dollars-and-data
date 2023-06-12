@@ -129,7 +129,7 @@ clean_cols <- function(df){
   
   # Clean the varnames
   for (i in 1:length(var_names)){
-    var_names[i] <- str_replace_all(tolower(var_names[i]), "\\.", "_")
+    var_names[i] <- str_replace_all(tolower(var_names[i]), "\\.|\\s|\\/", "_")
   }
   
   # Replace the names with the clean names
