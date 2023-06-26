@@ -14,7 +14,7 @@ library(stringr)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "_fl/0014_discretionary_sims"
+folder_name <- "0354_discretionary_sims"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -95,7 +95,7 @@ run_retirement_sim <- function(n_years, withdrawal_rate, discretionary_spend_pct
 run_full_sim <- function(n_yrs, s_weight){
 
   # Do some data analysis to establish a long-term growth rate
-  raw <- read.csv(paste0(importdir, "/", folder_name, "/GrowthOfWealth_20230206173453.csv"),
+  raw <- read.csv(paste0(importdir, "/_fl/0014_discretionary_sims/GrowthOfWealth_20230206173453.csv"),
                        skip = 7, 
                        row.names = NULL,
                        col.names = c("date", "index_bond",	"index_sp500", "cpi"))  %>%
@@ -170,13 +170,10 @@ run_full_sim <- function(n_yrs, s_weight){
 }
 
 if(run_sims == 1){
-  results_60_base <- run_full_sim(40, 0.6) %>%
-    rename(stock_60_pct = survival_pct)
-  results_80_base <- run_full_sim(40, 0.8) %>%
+  results_80_base <- run_full_sim(30, 0.8) %>%
     rename(stock_80_pct = survival_pct)
   
-  summary <- results_60_base %>%
-    left_join(results_80_base)
+  summary <- results_80_base
   
   export_to_excel(
     df = summary,
@@ -190,7 +187,7 @@ if(run_sims == 1){
                         sheet = "results")
   
   wide <- summary %>%
-            select(-n_years, -n_simulations, -stock_60_pct) %>%
+            select(-n_years, -n_simulations) %>%
             spread(key = discretionary_pct, value = stock_80_pct)
   
   export_to_excel(
