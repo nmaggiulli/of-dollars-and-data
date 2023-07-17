@@ -46,19 +46,6 @@ sp500_ret_pe <- sp500_ret_pe %>%
                   filter(!is.na(date), date < end_date) %>%
                   mutate(real_div = ifelse(is.na(real_div), 0, real_div))
 
-# Calculate returns for the S&P data
-for (i in 1:nrow(sp500_ret_pe)){
-  if (i == 1){
-    sp500_ret_pe[i, "n_shares"]       <- 1
-    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
-    sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
-  } else{
-    sp500_ret_pe[i, "n_shares"]       <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "real_price"]
-    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_div"]
-    sp500_ret_pe[i, "price_plus_div"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "real_price"]
-  }
-}
-
 # Change the Date to a Date type for plotting the S&P data
 sp500_ret_pe <- sp500_ret_pe %>%
   mutate(date = as.Date(paste0(
@@ -68,7 +55,7 @@ sp500_ret_pe <- sp500_ret_pe %>%
     "-01", 
     "%Y-%m-%d")),
     long_irate = long_irate/100) %>%
-  filter(real_div > 0)
+    rename(price_plus_div = real_tr)
 
 # Save down the data
 saveRDS(sp500_ret_pe, paste0(localdir, "0009_sp500_ret_pe.Rds"))
