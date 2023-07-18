@@ -42,7 +42,7 @@ create_period_return <- function(start_year, end_year){
   initial_value     <- filter(sp500_ret_pe, date == start_year) %>%
     pull(price_plus_div)
   
-  ret_yr            <- filter(sp500_ret_pe, date >= start_year, date < end_year) %>%
+  ret_yr            <- filter(sp500_ret_pe, date >= start_year, date <= end_year) %>%
                         mutate(price = price_plus_div/initial_value, 
                                period = row_number(),
                                start_date = start_year) %>%
@@ -50,7 +50,7 @@ create_period_return <- function(start_year, end_year){
   return(ret_yr)
 }
 
-ret_1900 <- create_period_return("1900-01-01", "2000-01-01")
+ret_1900 <- create_period_return("1900-01-01", "1999-12-01")
 ret_2000 <- create_period_return("2000-01-01", max(sp500_ret_pe$date))
 
 max_year <- year(max(ret_2000$date))
