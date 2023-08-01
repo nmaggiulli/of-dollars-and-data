@@ -56,7 +56,7 @@ df[7, "name"] <- "Real Estate Rentals"
 
 df[8, "difficulty"] <- 10
 df[8, "return"] <- 0.12
-df[8, "name"] <- "Staring Your\nOwn Business"
+df[8, "name"] <- "Starting Your\nOwn Business"
 
 to_plot <- df
 
@@ -73,7 +73,7 @@ text_labels <- to_plot %>%
                     TRUE ~ difficulty
                   ))
 
-file_path <- paste0(out_path, "/return_on_hassle_spectrum_2023.jpeg")
+file_path <- paste0(out_path, "/return_on_hassle_spectrum_2023_final.jpeg")
 source_string <- paste0("Source: Simulated data (OfDollarsAndData.com)")
 
 plot <- ggplot(data = to_plot, aes(x = difficulty, y = return)) +
