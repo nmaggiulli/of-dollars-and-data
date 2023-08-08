@@ -51,7 +51,7 @@ while(current_bal < retire_bal){
       
       monthly_cont <- monthly_cont * (1 + cpi)
       
-      cont[i, "balance"] <- cont[(i-1), "balance"] * (1 + ret) + monthly_cont
+      cont[i, "balance"] <- cont[(i-1), "balance"] * (1 + ret + cpi) + monthly_cont
       cont[i, "monthly_cont"] <- monthly_cont
     }
   }
