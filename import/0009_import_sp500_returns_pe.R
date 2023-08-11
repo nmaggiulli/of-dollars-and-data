@@ -13,6 +13,11 @@ library(tidyverse)
 
 ########################## Start Program Here ######################### #
 
+url <- "http://www.econ.yale.edu/~shiller/data/ie_data.xls"
+dest_file <- paste0(importdir, "0009_sp500_returns_pe/ie_data.xls") 
+
+download.file(url, dest_file, mode = "wb")
+
 # Bring in the data Shiller uses on his website
 # Build the data in this step
 # Also drop the 2017 data as the dividends are missing
@@ -42,7 +47,7 @@ end_date <- year(Sys.Date()) + month(Sys.Date())/100
 
 # Filter out missing dividends
 sp500_ret_pe <- sp500_ret_pe %>%
-                  select(date, real_price, real_div, real_earn, real_earn_scaled, real_tr, long_irate, cape, cpi) %>%
+                  select(date, price, div, real_price, real_div, real_earn, real_earn_scaled, real_tr, long_irate, cape, cpi) %>%
                   filter(!is.na(date), date < end_date) %>%
                   mutate(real_div = ifelse(is.na(real_div), 0, real_div))
 
@@ -55,7 +60,8 @@ sp500_ret_pe <- sp500_ret_pe %>%
     "-01", 
     "%Y-%m-%d")),
     long_irate = long_irate/100) %>%
-    rename(price_plus_div = real_tr)
+    rename(price_plus_div = real_tr) %>%
+  select(date, price, div, real_price, price_plus_div, cape, cpi)
 
 # Save down the data
 saveRDS(sp500_ret_pe, paste0(localdir, "0009_sp500_ret_pe.Rds"))
