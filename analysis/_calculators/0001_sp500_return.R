@@ -58,13 +58,26 @@ sp500_ret_pe <- sp500_ret_pe %>%
     "%Y-%m-%d"))) %>%
   rename(month = date,
     realPrice = real_price,
-    realPricePlusDividend = real_tr) %>%
-  select(month, price, dividend, realPrice, realPricePlusDividend)
+    realPricePlusDividend = real_tr)
 
 sp500_ret_pe$dividend <- na.locf(sp500_ret_pe$dividend)
 
+# Calculate returns for the S&P data
+for (i in 1:nrow(sp500_ret_pe)){
+  if (i == 1){
+    sp500_ret_pe[i, "n_shares"]       <- 1
+    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "dividend"]
+    sp500_ret_pe[i, "nominalPricePlusDividend"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "price"]
+  } else{
+    sp500_ret_pe[i, "n_shares"]       <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "price"]
+    sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "dividend"]
+    sp500_ret_pe[i, "nominalPricePlusDividend"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "price"]
+  }
+}
+
 to_calc <- sp500_ret_pe %>%
-              filter(month >= "2023-01-01")
+              filter(month >= "2000-01-01") %>%
+              select(month, price, nominalPricePlusDividend, realPrice, realPricePlusDividend)
 
 # Send data to JSON
 json_data <- toJSON(to_calc, dataframe = "rows", pretty = TRUE)
@@ -87,13 +100,11 @@ function calculateReturns() {
     const end = data[endIndex];
     const n = (new Date(endMonth) - new Date(startMonth)) / (1000 * 60 * 60 * 24 * 365.25);  // Number of years
 
-    const dividends = data.slice(startIndex, endIndex + 1).reduce((acc, item) => acc + item.dividend, 0);
-
     const nominalPriceReturn = ((end.price - start.price) / start.price) * 100;
     const annualizedNominalPriceReturn = (Math.pow(end.price / start.price, 1 / n) - 1) * 100;
-    const monthlyDividends = data.slice(startIndex, endIndex + 1).reduce((acc, item) => acc + item.dividend/12, 0);
-    const nominalTotalReturn = ((end.price + monthlyDividends - start.price) / start.price) * 100;
-    const annualizedNominalTotalReturn = (Math.pow((end.price + monthlyDividends) / start.price, 1 / n) - 1) * 100;
+    const nominalTotalReturn = ((end.nominalPricePlusDividend - start.nominalPricePlusDividend) / start.nominalPricePlusDividend) * 100;
+    const nominalTotalReturnProportion = (end.nominalPricePlusDividend - start.nominalPricePlusDividend) / start.nominalPricePlusDividend; // This is a proportion, not percentage.
+    const annualizedNominalTotalReturn = (Math.pow(1 + nominalTotalReturnProportion, 1 / n) - 1) * 100; // This will be in percentage.
     const realPriceReturn = ((end.realPrice - start.realPrice) / start.realPrice) * 100;
     const annualizedRealPriceReturn = (Math.pow(end.realPrice / start.realPrice, 1 / n) - 1) * 100;
     const realTotalReturn = ((end.realPricePlusDividend - start.realPricePlusDividend) / start.realPricePlusDividend) * 100;
