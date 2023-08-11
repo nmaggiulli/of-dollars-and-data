@@ -134,87 +134,83 @@ html_start <- '
     <title>Your Calculator</title>
 
     <style>
+        .calculator {
+            font-family: Arial, sans-serif;
+            width: 100%;
+            max-width: 500px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
 
-    body {
-        font-family: Arial, sans-serif;
-    }
+        .calculator div {
+            margin-bottom: 10px;
+        }
 
-    #calculator-container {
-        max-width: 500px;  /* Maximum width of the calculator */
-        margin: 0 auto;  /* Center the calculator */
-        padding: 15px;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
 
-    div {
-        display: flex;
-        justify-content: space-between;  /* Distribute space between label and input */
-        margin-bottom: 10px;
-    }
+        button {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
 
-    label {
-        flex: 1;  /* Take up 1 part of the available space */
-        margin-right: 10px;
-        white-space: nowrap; /* Prevent label from wrapping to the next line */
-    }
-    
-    input {
-        flex: 2;  /* Take up 2 parts of the available space */
-        min-width: 150px;  /* Minimum width for date inputs */
-    }
+        button:hover {
+            background-color: #0056b3;
+        }
 
-    button {
-        width: 100%;
-        padding: 10px;
-        background-color: #007BFF;
-        color: #FFF;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-    }
+        #results p {
+            margin-bottom: 8px;
+        }
+        
+        .divider {
+            border-bottom: 1px solid #ddd;
+            margin: 15px 0;
+        }
 
-    button:hover {
-        background-color: #0056b3;
-    }
-
-    #results {
-        margin-top: 15px;
-    }
-
-    #results p {
-        margin-bottom: 8px;
-    }
-
+        .inflation-label {
+            font-weight: bold;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
 
     <!-- Your HTML content goes here -->
-<div class="calculator">
-    <h2>Return Calculator</h2>
+ <div class="calculator">
+        <h2>Return Calculator</h2>
+        <div>
+            <label for="start-month">Start Month:</label>
+            <input type="month" id="start-month">
+        </div>
 
-    <label for="start-month">Start Month:</label>
-    <input type="month" id="start-month">
+        <div>
+            <label for="end-month">End Month:</label>
+            <input type="month" id="end-month">
+        </div>
 
-    <label for="end-month">End Month:</label>
-    <input type="month" id="end-month">
+        <button onclick="calculateReturns()">Calculate</button>
 
-    <button onclick="calculateReturns()">Calculate</button>
+        <div id="results">
+            <p><strong>Nominal Price Return:</strong> <span id="nominal-price-return"></span>%</p>
+            <p><strong>Annualized Nominal Price Return:</strong> <span id="annualized-nominal-price-return"></span>%</p>
+            <p><strong>Nominal Total Return (price + dividends):</strong> <span id="nominal-total-return"></span>%</p>
+            <p><strong>Annualized Nominal Total Return:</strong> <span id="annualized-nominal-total-return"></span>%</p>
+            
+            <div class="divider"></div>
 
-    <div class="results">
-        <p><strong>Nominal Price Return:</strong> <span id="nominal-price-return"></span>%</p>
-        <p><strong>Annualized Nominal Price Return:</strong> <span id="annualized-nominal-price-return"></span>%</p>
-        <p><strong>Nominal Total Return (price + dividends):</strong> <span id="nominal-total-return"></span>%</p>
-        <p><strong>Annualized Nominal Total Return:</strong> <span id="annualized-nominal-total-return"></span>%</p>
-        <p><strong>Real Price Return:</strong> <span id="real-price-return"></span>%</p>
-        <p><strong>Annualized Real Price Return:</strong> <span id="annualized-real-price-return"></span>%</p>
-        <p><strong>Real Total Return (price + dividends):</strong> <span id="real-total-return"></span>%</p>
-        <p><strong>Annualized Real Total Return:</strong> <span id="annualized-real-total-return"></span>%</p>
+            <p><strong>Real Price Return:</strong> <span id="real-price-return"></span>%</p>
+            <p><strong>Annualized Real Price Return:</strong> <span id="annualized-real-price-return"></span>%</p>
+            <p><strong>Real Total Return (price + dividends):</strong> <span id="real-total-return"></span>%</p>
+            <p><strong>Annualized Real Total Return:</strong> <span id="annualized-real-total-return"></span>%</p>
+        </div>
     </div>
-</div>
 <script>
 '
 
