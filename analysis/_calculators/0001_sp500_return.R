@@ -18,6 +18,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+filter_date <- "1871-01-01"
 url <- "http://www.econ.yale.edu/~shiller/data/ie_data.xls"
 dest_file <- paste0(importdir, "0009_sp500_returns_pe/ie_data.xls") 
 
@@ -76,21 +77,33 @@ for (i in 1:nrow(sp500_ret_pe)){
 }
 
 to_calc <- sp500_ret_pe %>%
-              filter(month >= "2000-01-01") %>%
+              filter(month >= filter_date) %>%
               select(month, price, nominalPricePlusDividend, realPrice, realPricePlusDividend)
+
+end_year <- year(max(to_calc$month))
 
 # Send data to JSON
 json_data <- toJSON(to_calc, dataframe = "rows", pretty = TRUE)
 
 #Create function string
 js_function_string <- '
+function formatNumber(num) {
+    return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 function calculateReturns() {
     const startMonth = document.getElementById("start-month").value;
+    const startYear = document.getElementById("start-year").value;
     const endMonth = document.getElementById("end-month").value;
-
-    const startIndex = data.findIndex(item => item.month === startMonth + "-01");
-    const endIndex = data.findIndex(item => item.month === endMonth + "-01");
-
+    const endYear = document.getElementById("end-year").value;
+    
+    // Combine the year and month to get the full date in YYYY-MM-DD format
+    const startFullDate = `${startYear}-${startMonth}-01`;
+    const endFullDate = `${endYear}-${endMonth}-01`;
+    
+    const startIndex = data.findIndex(item => item.month === startFullDate);
+    const endIndex = data.findIndex(item => item.month === endFullDate);
+    
     if (startIndex === -1 || endIndex === -1) {
         alert("Invalid month selection.");
         return;
@@ -98,7 +111,7 @@ function calculateReturns() {
 
     const start = data[startIndex];
     const end = data[endIndex];
-    const n = (new Date(endMonth) - new Date(startMonth)) / (1000 * 60 * 60 * 24 * 365.25);  // Number of years
+    const n = (new Date(endFullDate) - new Date(startFullDate)) / (1000 * 60 * 60 * 24 * 365.25);  // Number of years
 
     const nominalPriceReturn = ((end.price - start.price) / start.price) * 100;
     const annualizedNominalPriceReturn = (Math.pow(end.price / start.price, 1 / n) - 1) * 100;
@@ -112,105 +125,91 @@ function calculateReturns() {
     const annualizedRealTotalReturn = (Math.pow(Math.abs(realTotalReturnRatio), 1 / n) - 1) * 100 * (realTotalReturnRatio < 0 ? -1 : 1);
 
     // Display the results
-    document.getElementById("nominal-price-return").innerText = nominalPriceReturn.toFixed(2);
-    document.getElementById("annualized-nominal-price-return").innerText = annualizedNominalPriceReturn.toFixed(2);
-    document.getElementById("nominal-total-return").innerText = nominalTotalReturn.toFixed(2);
-    document.getElementById("annualized-nominal-total-return").innerText = annualizedNominalTotalReturn.toFixed(2);
-    document.getElementById("real-price-return").innerText = realPriceReturn.toFixed(2);
-    document.getElementById("annualized-real-price-return").innerText = annualizedRealPriceReturn.toFixed(2);
-    document.getElementById("real-total-return").innerText = realTotalReturn.toFixed(2);
-    document.getElementById("annualized-real-total-return").innerText = annualizedRealTotalReturn.toFixed(2);
+    document.getElementById("nominal-price-return").innerText = formatNumber(nominalPriceReturn);
+    document.getElementById("annualized-nominal-price-return").innerText = formatNumber(annualizedNominalPriceReturn);
+    document.getElementById("nominal-total-return").innerText = formatNumber(nominalTotalReturn);
+    document.getElementById("annualized-nominal-total-return").innerText = formatNumber(annualizedNominalTotalReturn);
+    document.getElementById("real-price-return").innerText = formatNumber(realPriceReturn);
+    document.getElementById("annualized-real-price-return").innerText = formatNumber(annualizedRealPriceReturn);
+    document.getElementById("real-total-return").innerText = formatNumber(realTotalReturn);
+    document.getElementById("annualized-real-total-return").innerText = formatNumber(annualizedRealTotalReturn);
 }
 '
 
-#Create HTML string
-html_start <- '
+#Create HTML string start
+html_start1 <- '
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Calculator</title>
+    <title>S&P 500 Historical Performance Calculator</title>
+    '
 
-    <style>
-        .calculator {
-            font-family: Arial, sans-serif;
-            width: 100%;
-            max-width: 500px;
-            padding: 10px;
-            border: 1px solid #ddd;
-        }
-
-        .calculator div {
-            margin-bottom: 10px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        button {
-            display: block;
-            width: 100%;
-            padding: 8px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        #results p {
-            margin-bottom: 8px;
-        }
-        
-        .divider {
-            border-bottom: 1px solid #ddd;
-            margin: 15px 0;
-        }
-
-        .inflation-label {
-            font-weight: bold;
-            margin-top: 15px;
-        }
-    </style>
-</head>
-<body>
-
+html_start2 <- '</head>
+                <body>
     <!-- Your HTML content goes here -->
  <div class="calculator">
-        <h2>Return Calculator</h2>
-        <div>
-            <label for="start-month">Start Month:</label>
-            <input type="month" id="start-month">
+ <div class ="date-container">
+ <label>Start Month:</label>
+ <div class="date-selector">
+ <select id="start-month">'
+
+
+month_html <- paste0('<option value="', sprintf("%02d", 1:12), '">', month.name, '</option>', collapse = "")
+
+start_month <- "01"
+start_month_html <- str_replace_all(month_html, paste0('"', start_month, '\"'), paste0('"', start_month, '\" selected'))
+
+html_mid1 <- 
+                '</select>
+                <select id="start-year">'
+
+# Create dynamic year string
+year_html <- paste0('<option value="', seq(year(filter_date), end_year, 1), '">', seq(year(filter_date), end_year, 1), '</option>', collapse = "")
+start_year_html <- str_replace_all(year_html, paste0('"', end_year, '\"'), paste0('"', end_year, '\" selected'))
+
+# Do rest of HTML string
+html_mid2 <- '</select>
+          </div>
+        <label>End Month:</label>
+        <div class="date-selector">
+        <select id="end-month">
+'
+
+end_month <- format.Date(max(to_calc$month), "%m")
+end_month_html <- str_replace_all(month_html, paste0('"', end_month, '\"'), paste0('"', end_month, '\" selected'))
+
+html_mid3 <- '
+              </select>
+               <select id="end-year">
+                    <!-- Adjust the years as needed -->'
+
+end_year_html <- str_replace_all(year_html, paste0('"', end_year, '\"'), paste0('"', end_year, '\" selected'))
+
+html_mid4 <- '</select>
+          </div>
         </div>
-
-        <div>
-            <label for="end-month">End Month:</label>
-            <input type="month" id="end-month">
-        </div>
-
-        <button onclick="calculateReturns()">Calculate</button>
-
-        <div id="results">
+      </div>
+      <button onclick="calculateReturns()">Calculate</button>
+      
+      <hr>
+      
+        <div class="results">
             <p><strong>Nominal Price Return:</strong> <span id="nominal-price-return"></span>%</p>
-            <p><strong>Annualized Nominal Price Return:</strong> <span id="annualized-nominal-price-return"></span>%</p>
-            <p><strong>Nominal Total Return (price + dividends):</strong> <span id="nominal-total-return"></span>%</p>
-            <p><strong>Annualized Nominal Total Return:</strong> <span id="annualized-nominal-total-return"></span>%</p>
+            <p class="indented"><strong>Annualized:</strong> <span id="annualized-nominal-price-return"></span>%</p>
+            <p><strong>Nominal Total Return (with dividend reinvestment):</strong> <span id="nominal-total-return"></span>%</p>
+            <p class="indented"><strong>Annualized:</strong> <span id="annualized-nominal-total-return"></span>%</p>
             
-            <div class="divider"></div>
+            <hr>
 
             <p><strong>Real Price Return:</strong> <span id="real-price-return"></span>%</p>
-            <p><strong>Annualized Real Price Return:</strong> <span id="annualized-real-price-return"></span>%</p>
-            <p><strong>Real Total Return (price + dividends):</strong> <span id="real-total-return"></span>%</p>
-            <p><strong>Annualized Real Total Return:</strong> <span id="annualized-real-total-return"></span>%</p>
+            <p class="indented"><strong>Annualized:</strong> <span id="annualized-real-price-return"></span>%</p>
+            <p><strong>Real Total Return (with dividend reinvestment):</strong> <span id="real-total-return"></span>%</p>
+            <p class="indented"><strong>Annualized:</strong> <span id="annualized-real-total-return"></span>%</p>
         </div>
-    </div>
+        <hr>
 <script>
 '
 
@@ -222,7 +221,42 @@ html_end <-
 '
 
 # Write the HTML string to a file
-writeLines(paste(html_start, " const data = ", json_data, ";", js_function_string, html_end), 
+writeLines(paste(html_start1, 
+                 html_start2,
+                 start_month_html,
+                 html_mid1,
+                 start_year_html, 
+                 html_mid2, 
+                 end_month_html,
+                 html_mid3, 
+                 end_year_html, 
+                 html_mid4,
+                 " const data = ", json_data, ";", 
+                 js_function_string, 
+                 html_end), 
+           paste0(out_path, "/_test_calc.html"))
+
+writeLines(paste(" const data = ", json_data, ";", 
+                 js_function_string), 
+           paste0(out_path, "/sp500_calculator.js"))
+
+
+html_mid4_wp <- str_replace_all(html_mid4, "<script>", "")
+html_end <- str_replace_all(html_end, "</script>", "")
+
+# Now write code for the HTML to work on Wordpress
+html_start2_wp <- str_replace_all(html_start2, "</head>", "")
+html_start2_wp <- str_replace_all(html_start2_wp, "<body>", "")
+
+writeLines(paste(trimws(html_start2_wp),
+                 start_month_html,
+                 html_mid1,
+                 start_year_html, 
+                 html_mid2, 
+                 end_month_html,
+                 html_mid3, 
+                 end_year_html, 
+                 html_mid4_wp), 
            paste0(out_path, "/sp500_calculator.html"))
 
 # ############################  End  ################################## #
