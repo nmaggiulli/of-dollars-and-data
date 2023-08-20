@@ -91,6 +91,14 @@ function formatNumber(num) {
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function formatDollar(value) {
+    // Convert percentage to a multiplication factor (e.g., 100% -> 2)
+    let dollarGrowth = (value / 100) + 1;
+
+    // Return the formatted string
+    return "$" + formatNumber(dollarGrowth);
+}
+
 function calculateReturns() {
     const startMonth = document.getElementById("start-month").value;
     const startYear = document.getElementById("start-year").value;
@@ -127,12 +135,16 @@ function calculateReturns() {
     // Display the results
     document.getElementById("nominal-price-return").innerText = formatNumber(nominalPriceReturn);
     document.getElementById("annualized-nominal-price-return").innerText = formatNumber(annualizedNominalPriceReturn);
+    document.getElementById("nominal-price-dollar").innerText = formatDollar(nominalPriceReturn);
     document.getElementById("nominal-total-return").innerText = formatNumber(nominalTotalReturn);
     document.getElementById("annualized-nominal-total-return").innerText = formatNumber(annualizedNominalTotalReturn);
+    document.getElementById("nominal-total-dollar").innerText = formatDollar(nominalTotalReturn);
     document.getElementById("real-price-return").innerText = formatNumber(realPriceReturn);
     document.getElementById("annualized-real-price-return").innerText = formatNumber(annualizedRealPriceReturn);
+    document.getElementById("real-price-dollar").innerText = formatDollar(realPriceReturn);
     document.getElementById("real-total-return").innerText = formatNumber(realTotalReturn);
     document.getElementById("annualized-real-total-return").innerText = formatNumber(annualizedRealTotalReturn);
+    document.getElementById("real-total-dollar").innerText = formatDollar(realTotalReturn);
 }
 '
 
@@ -159,7 +171,7 @@ html_start2 <- '</head>
 
 month_html <- paste0('<option value="', sprintf("%02d", 1:12), '">', month.name, '</option>', collapse = "")
 
-start_month <- "01"
+start_month <- "12"
 start_month_html <- str_replace_all(month_html, paste0('"', start_month, '\"'), paste0('"', start_month, '\" selected'))
 
 html_mid1 <- 
@@ -168,7 +180,7 @@ html_mid1 <-
 
 # Create dynamic year string
 year_html <- paste0('<option value="', seq(year(filter_date), end_year, 1), '">', seq(year(filter_date), end_year, 1), '</option>', collapse = "")
-start_year_html <- str_replace_all(year_html, paste0('"', end_year, '\"'), paste0('"', end_year, '\" selected'))
+start_year_html <- str_replace_all(year_html, paste0('"', end_year-1, '\"'), paste0('"', end_year-1, '\" selected'))
 
 # Do rest of HTML string
 html_mid2 <- '</select>
@@ -191,23 +203,24 @@ end_year_html <- str_replace_all(year_html, paste0('"', end_year, '\"'), paste0(
 html_mid4 <- '</select>
           </div>
         </div>
-      </div>
       <button onclick="calculateReturns()">Calculate</button>
-      
-      <hr>
-      
+      </div>
         <div class="results">
             <p><strong>Nominal Price Return:</strong> <span id="nominal-price-return"></span>%</p>
             <p class="indented"><strong>Annualized:</strong> <span id="annualized-nominal-price-return"></span>%</p>
-            <p><strong>Nominal Total Return (with dividend reinvestment):</strong> <span id="nominal-total-return"></span>%</p>
+            <p class="indented"><strong>$1 Grew To:</strong> <span id="nominal-price-dollar"></span></p>
+            <p><strong>Nominal Total Return (with dividends reinvested):</strong> <span id="nominal-total-return"></span>%</p>
             <p class="indented"><strong>Annualized:</strong> <span id="annualized-nominal-total-return"></span>%</p>
+            <p class="indented"><strong>$1 Grew To:</strong> <span id="nominal-total-dollar"></span></p>
             
             <hr>
 
-            <p><strong>Real Price Return:</strong> <span id="real-price-return"></span>%</p>
+            <p><strong>Inflation-Adjusted Price Return:</strong> <span id="real-price-return"></span>%</p>
             <p class="indented"><strong>Annualized:</strong> <span id="annualized-real-price-return"></span>%</p>
-            <p><strong>Real Total Return (with dividend reinvestment):</strong> <span id="real-total-return"></span>%</p>
+            <p class="indented"><strong>$1 Grew To:</strong> <span id="real-price-dollar"></span></p>
+            <p><strong>Inflation-Adjusted Total Return (with dividends reinvested):</strong> <span id="real-total-return"></span>%</p>
             <p class="indented"><strong>Annualized:</strong> <span id="annualized-real-total-return"></span>%</p>
+            <p class="indented"><strong>$1 Grew To:</strong> <span id="real-total-dollar"></span></p>
         </div>
         <hr>
 <script>
@@ -256,7 +269,7 @@ writeLines(paste(trimws(html_start2_wp),
                  end_month_html,
                  html_mid3, 
                  end_year_html, 
-                 html_mid4_wp), 
+                 trimws(html_mid4_wp)), 
            paste0(out_path, "/sp500_calculator.html"))
 
 # ############################  End  ################################## #
