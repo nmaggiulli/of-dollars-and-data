@@ -21,11 +21,11 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 raw <- read.csv(paste0(importdir, "0296_ycharts_spx/SPX_data.csv")) %>%
   mutate(date = as.Date(Period),
-         index_sp500 = `S.P.500.Level`) %>%
+         index_sp500 = `S.P.500...SPX..Level`) %>%
   arrange(date) 
 
 start_dates <- c("2015-07-20", "2015-12-01", "2018-10-03", "2020-02-19", "2022-01-03")
-end_dates <- c("2015-11-03", "2016-04-19", "2019-04-23", "2020-08-12", "2022-05-19")
+end_dates <- c("2015-11-03", "2016-04-19", "2019-04-23", "2020-08-12", "2023-08-22")
 crash_years <- c(2015, 2016, 2018, 2020, 2022)
 
 for(s in 1:length(start_dates)){
