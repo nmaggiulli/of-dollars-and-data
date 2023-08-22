@@ -10,6 +10,7 @@ source(file.path(paste0(getwd(),"/header.R")))
 library(jsonlite)
 library(zoo)
 library(readxl)
+library(lubridate)
 library(tidyverse)
 
 folder_name <- "_calculators/0001_sp500_return"
@@ -205,6 +206,7 @@ end_year_html <- str_replace_all(year_html, paste0('"', end_year, '\"'), paste0(
 html_mid4 <- '</select>
           </div>
         </div>
+        <hr>
       <div class="initial-investment">
     <label for="initialInvestment">Initial Investment:</label>
     <input type="number" id="initialInvestment" name="initialInvestment" value="1">
