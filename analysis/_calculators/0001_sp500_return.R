@@ -91,9 +91,9 @@ function formatNumber(num) {
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function formatDollar(value) {
+function formatDollar(value, initial) {
     // Convert percentage to a multiplication factor (e.g., 100% -> 2)
-    let dollarGrowth = (value / 100) + 1;
+    let dollarGrowth = ((value / 100) + 1)*initial;
 
     // Return the formatted string
     return "$" + formatNumber(dollarGrowth);
@@ -104,6 +104,7 @@ function calculateReturns() {
     const startYear = document.getElementById("start-year").value;
     const endMonth = document.getElementById("end-month").value;
     const endYear = document.getElementById("end-year").value;
+    const initialInvestment = document.getElementById("initialInvestment").value;
     
     // Combine the year and month to get the full date in YYYY-MM-DD format
     const startFullDate = `${startYear}-${startMonth}-01`;
@@ -135,16 +136,17 @@ function calculateReturns() {
     // Display the results
     document.getElementById("nominal-price-return").innerText = formatNumber(nominalPriceReturn);
     document.getElementById("annualized-nominal-price-return").innerText = formatNumber(annualizedNominalPriceReturn);
-    document.getElementById("nominal-price-dollar").innerText = formatDollar(nominalPriceReturn);
+    document.getElementById("nominal-price-dollar").innerText = formatDollar(nominalPriceReturn, initialInvestment);
     document.getElementById("nominal-total-return").innerText = formatNumber(nominalTotalReturn);
     document.getElementById("annualized-nominal-total-return").innerText = formatNumber(annualizedNominalTotalReturn);
-    document.getElementById("nominal-total-dollar").innerText = formatDollar(nominalTotalReturn);
+    document.getElementById("nominal-total-dollar").innerText = formatDollar(nominalTotalReturn, initialInvestment);
     document.getElementById("real-price-return").innerText = formatNumber(realPriceReturn);
     document.getElementById("annualized-real-price-return").innerText = formatNumber(annualizedRealPriceReturn);
-    document.getElementById("real-price-dollar").innerText = formatDollar(realPriceReturn);
+    document.getElementById("real-price-dollar").innerText = formatDollar(realPriceReturn, initialInvestment);
     document.getElementById("real-total-return").innerText = formatNumber(realTotalReturn);
     document.getElementById("annualized-real-total-return").innerText = formatNumber(annualizedRealTotalReturn);
-    document.getElementById("real-total-dollar").innerText = formatDollar(realTotalReturn);
+    document.getElementById("real-total-dollar").innerText = formatDollar(realTotalReturn, initialInvestment);
+    
 }
 '
 
@@ -203,24 +205,28 @@ end_year_html <- str_replace_all(year_html, paste0('"', end_year, '\"'), paste0(
 html_mid4 <- '</select>
           </div>
         </div>
+      <div class="initial-investment">
+    <label for="initialInvestment">Initial Investment:</label>
+    <input type="number" id="initialInvestment" name="initialInvestment" value="1">
+    </div>
       <button onclick="calculateReturns()">Calculate</button>
       </div>
         <div class="results">
             <p><strong>Nominal Price Return:</strong> <span id="nominal-price-return"></span>%</p>
             <p class="indented"><strong>Annualized:</strong> <span id="annualized-nominal-price-return"></span>%</p>
-            <p class="indented"><strong>$1 Grew To:</strong> <span id="nominal-price-dollar"></span></p>
+            <p class="indented"><strong>Investment Grew To:</strong> <span id="nominal-price-dollar"></span></p>
             <p><strong>Nominal Total Return (with dividends reinvested):</strong> <span id="nominal-total-return"></span>%</p>
             <p class="indented"><strong>Annualized:</strong> <span id="annualized-nominal-total-return"></span>%</p>
-            <p class="indented"><strong>$1 Grew To:</strong> <span id="nominal-total-dollar"></span></p>
+            <p class="indented"><strong>Investment Grew To:</strong> <span id="nominal-total-dollar"></span></p>
             
             <hr>
 
             <p><strong>Inflation-Adjusted Price Return:</strong> <span id="real-price-return"></span>%</p>
             <p class="indented"><strong>Annualized:</strong> <span id="annualized-real-price-return"></span>%</p>
-            <p class="indented"><strong>$1 Grew To:</strong> <span id="real-price-dollar"></span></p>
+            <p class="indented"><strong>Investment Grew To:</strong> <span id="real-price-dollar"></span></p>
             <p><strong>Inflation-Adjusted Total Return (with dividends reinvested):</strong> <span id="real-total-return"></span>%</p>
             <p class="indented"><strong>Annualized:</strong> <span id="annualized-real-total-return"></span>%</p>
-            <p class="indented"><strong>$1 Grew To:</strong> <span id="real-total-dollar"></span></p>
+            <p class="indented"><strong>Investment Grew To:</strong> <span id="real-total-dollar"></span></p>
         </div>
         <hr>
 <script>
