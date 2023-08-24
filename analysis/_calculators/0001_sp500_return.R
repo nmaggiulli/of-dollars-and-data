@@ -280,4 +280,7 @@ writeLines(paste(trimws(html_start2_wp),
                  trimws(html_mid4_wp)), 
            paste0(out_path, "/sp500_calculator.html"))
 
+print(end_year)
+print(end_month)
+
 # ############################  End  ################################## #
