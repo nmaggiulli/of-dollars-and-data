@@ -13,18 +13,18 @@ library(readxl)
 library(lubridate)
 library(tidyverse)
 
-folder_name <- "_calculators/0001_sp500_return"
+folder_name <- "_calculators/0002_sp500_dca_return"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-download_data <- 1
+download_file <- 0
 filter_date <- "1871-01-01"
 url <- "http://www.econ.yale.edu/~shiller/data/ie_data.xls"
 dest_file <- paste0(importdir, "0009_sp500_returns_pe/ie_data.xls") 
 
-if(download_data == 1){
+if(download_file == 1){
   download.file(url, dest_file, mode = "wb")
 }
 
@@ -43,6 +43,7 @@ sp500_ret_pe$price <- as.numeric(sp500_ret_pe$price)
 sp500_ret_pe$dividend <- as.numeric(sp500_ret_pe$dividend)
 sp500_ret_pe$real_price <- as.numeric(sp500_ret_pe$real_price)
 sp500_ret_pe$real_tr <- as.numeric(sp500_ret_pe$real_tr)
+sp500_ret_pe$cpi <- as.numeric(sp500_ret_pe$cpi)
 sp500_ret_pe$date <- as.numeric(sp500_ret_pe$date)
 
 # Create a numeric end date based on the closest start of month to today's date
@@ -50,7 +51,7 @@ end_date <- year(Sys.Date()) + month(Sys.Date())/100
 
 # Filter out missing dividends
 sp500_ret_pe <- sp500_ret_pe %>%
-  select(date, price, dividend, real_price, real_tr) %>%
+  select(date, price, dividend, real_price, real_tr, cpi) %>%
   filter(!is.na(date), date < end_date)
 
 # Change the Date to a Date type for plotting the S&P data
@@ -73,16 +74,22 @@ for (i in 1:nrow(sp500_ret_pe)){
     sp500_ret_pe[i, "n_shares"]       <- 1
     sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "dividend"]
     sp500_ret_pe[i, "nominalPricePlusDividend"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "price"]
+    
+    sp500_ret_pe[i, "nominalMonthlyReturn"] <- 0
+    sp500_ret_pe[i, "realMonthlyReturn"] <- 0
   } else{
     sp500_ret_pe[i, "n_shares"]       <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "price"]
     sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "dividend"]
     sp500_ret_pe[i, "nominalPricePlusDividend"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "price"]
+    
+    sp500_ret_pe[i, "nominalMonthlyReturn"] <- sp500_ret_pe[i, "nominalPricePlusDividend"]/sp500_ret_pe[(i-1), "nominalPricePlusDividend"] - 1
+    sp500_ret_pe[i, "realMonthlyReturn"] <- sp500_ret_pe[i, "realPricePlusDividend"]/sp500_ret_pe[(i-1), "realPricePlusDividend"] - 1
   }
 }
 
 to_calc <- sp500_ret_pe %>%
               filter(month >= filter_date) %>%
-              select(month, price, nominalPricePlusDividend, realPrice, realPricePlusDividend)
+              select(month, nominalMonthlyReturn, realMonthlyReturn, cpi)
 
 end_year <- year(max(to_calc$month))
 
@@ -95,12 +102,9 @@ function formatNumber(num) {
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function formatDollar(value, initial) {
-    // Convert percentage to a multiplication factor (e.g., 100% -> 2)
-    let dollarGrowth = ((value / 100) + 1)*initial;
-
+function formatDollar(value) {
     // Return the formatted string
-    return "$" + formatNumber(dollarGrowth);
+    return "$" + formatNumber(value);
 }
 
 function calculateReturns() {
@@ -108,7 +112,15 @@ function calculateReturns() {
     const startYear = document.getElementById("start-year").value;
     const endMonth = document.getElementById("end-month").value;
     const endYear = document.getElementById("end-year").value;
-    const initialInvestment = document.getElementById("initialInvestment").value;
+    
+    const initialInvestment = parseFloat(document.getElementById("initial-investment").value);
+    const monthlyInvestment = parseFloat(document.getElementById("monthly-investment").value);
+    const adjustForInflation = document.getElementById("adjust-for-inflation").checked;
+
+    if (initialInvestment < 0 || monthlyInvestment < 0) {
+        alert("Initial investment and monthly contribution amounts must be non-negative.");
+        return; // exit the function early
+    }
     
     const startMonthInt = parseInt(document.getElementById("start-month").value, 10);
     const startYearInt = parseInt(document.getElementById("start-year").value, 10);
@@ -119,7 +131,7 @@ function calculateReturns() {
         alert("The end month must be AFTER the start month.");
         return; // exit the function early
     }
-    
+
     // Combine the year and month to get the full date in YYYY-MM-DD format
     const startFullDate = `${startYear}-${startMonth}-01`;
     const endFullDate = `${endYear}-${endMonth}-01`;
@@ -128,39 +140,76 @@ function calculateReturns() {
     const endIndex = data.findIndex(item => item.month === endFullDate);
     
     if (startIndex === -1 || endIndex === -1) {
-        alert("Invalid month selection. Data does not exist for these dates.");
+        alert("Invalid month selection.");
         return;
     }
 
     const start = data[startIndex];
     const end = data[endIndex];
-    const n = (new Date(endFullDate) - new Date(startFullDate)) / (1000 * 60 * 60 * 24 * 365.25);  // Number of years
-
-    const nominalPriceReturn = ((end.price - start.price) / start.price) * 100;
-    const annualizedNominalPriceReturn = (Math.pow(end.price / start.price, 1 / n) - 1) * 100;
-    const nominalTotalReturn = ((end.nominalPricePlusDividend - start.nominalPricePlusDividend) / start.nominalPricePlusDividend) * 100;
-    const nominalTotalReturnProportion = (end.nominalPricePlusDividend - start.nominalPricePlusDividend) / start.nominalPricePlusDividend; // This is a proportion, not percentage.
-    const annualizedNominalTotalReturn = (Math.pow(1 + nominalTotalReturnProportion, 1 / n) - 1) * 100; // This will be in percentage.
-    const realPriceReturn = ((end.realPrice - start.realPrice) / start.realPrice) * 100;
-    const annualizedRealPriceReturn = (Math.pow(end.realPrice / start.realPrice, 1 / n) - 1) * 100;
-    const realTotalReturn = ((end.realPricePlusDividend - start.realPricePlusDividend) / start.realPricePlusDividend) * 100;
-    const realTotalReturnRatio = end.realPricePlusDividend / start.realPricePlusDividend;
-    const annualizedRealTotalReturn = (Math.pow(Math.abs(realTotalReturnRatio), 1 / n) - 1) * 100 * (realTotalReturnRatio < 0 ? -1 : 1);
-
-    // Display the results
-    document.getElementById("nominal-price-return").innerText = formatNumber(nominalPriceReturn);
-    document.getElementById("annualized-nominal-price-return").innerText = formatNumber(annualizedNominalPriceReturn);
-    document.getElementById("nominal-price-dollar").innerText = formatDollar(nominalPriceReturn, initialInvestment);
-    document.getElementById("nominal-total-return").innerText = formatNumber(nominalTotalReturn);
-    document.getElementById("annualized-nominal-total-return").innerText = formatNumber(annualizedNominalTotalReturn);
-    document.getElementById("nominal-total-dollar").innerText = formatDollar(nominalTotalReturn, initialInvestment);
-    document.getElementById("real-price-return").innerText = formatNumber(realPriceReturn);
-    document.getElementById("annualized-real-price-return").innerText = formatNumber(annualizedRealPriceReturn);
-    document.getElementById("real-price-dollar").innerText = formatDollar(realPriceReturn, initialInvestment);
-    document.getElementById("real-total-return").innerText = formatNumber(realTotalReturn);
-    document.getElementById("annualized-real-total-return").innerText = formatNumber(annualizedRealTotalReturn);
-    document.getElementById("real-total-dollar").innerText = formatDollar(realTotalReturn, initialInvestment);
     
+    const selectedData = data.slice(startIndex, endIndex + 1);
+    
+    const totalMonths = ((endYear - startYear) * 12) + (endMonth - startMonth);
+    
+    let finalValueNominalDollars = initialInvestment;
+    let finalValueRealDollars = initialInvestment;
+    let inflationAdjustedMonthlyContribution = monthlyInvestment;
+    let totalContributions = initialInvestment;
+    
+    // Loop through each month
+    for (let i = 0; i < selectedData.length; i++) {
+        const currentItem = selectedData[i];
+    
+      // Update the nominal and real values with returns
+      finalValueNominalDollars *= (1 + currentItem.nominalMonthlyReturn);
+      finalValueRealDollars *= (1 + currentItem.realMonthlyReturn);
+      
+      // If the "Adjust Contributions for Inflation" toggle is on, adjust the monthly contribution
+      if (adjustForInflation && i > 0) {
+          inflationAdjustedMonthlyContribution = monthlyInvestment * (currentItem.cpi / selectedData[0].cpi);
+      }
+      
+      // Add the monthly contributions to the final values
+      finalValueNominalDollars += inflationAdjustedMonthlyContribution;
+      finalValueRealDollars += inflationAdjustedMonthlyContribution;
+      totalContributions += inflationAdjustedMonthlyContribution;
+    }
+    
+    // Format and display the results
+    document.getElementById("total-contributions").innerText = formatDollar(totalContributions);
+    document.getElementById("final-value-nominal-dollars").innerText = formatDollar(finalValueNominalDollars);
+    document.getElementById("final-value-real-dollars").innerText = formatDollar(finalValueRealDollars);
+    
+  //const irr = calculateIRR(initialInvestment, monthlyInvestment, finalValueNominalDollars, totalMonths);
+  document.getElementById("irr-result").innerText = "IRR: " + (irr * 100).toFixed(2) + "%";
+}
+
+function calculateIRR(initialInvestment, monthlyInvestment, finalValue, totalMonths) {
+  let cashFlows = [-initialInvestment];
+  for (let i = 0; i < totalMonths; i++) {
+    cashFlows.push(-monthlyInvestment); // Monthly investments are considered outflows
+  }
+  cashFlows.push(finalValue); // The final value is considered an inflow
+  
+  let rate = 0.07, // initial guess rate of 10%
+      maxIter = 5000,
+      tol = 0.00000001;
+  
+  for (let i = 0; i < maxIter; i++) {
+    let f = 0,
+        df = 0;
+    for (let t = 0; t < cashFlows.length; t++) {
+      let val = cashFlows[t];
+      f += val / Math.pow(1 + rate, t);
+      df -= t * val / Math.pow(1 + rate, t + 1);
+    }
+    let newRate = rate - f / df;
+    if (Math.abs(newRate - rate) < tol) {
+      return newRate;
+    }
+    rate = newRate;
+  }
+  return NaN; // Did not converge to a solution
 }
 '
 
@@ -222,27 +271,18 @@ html_mid4 <- '</select>
         <hr>
       <div class="initial-investment">
     <label for="initialInvestment">Initial Investment:</label>
-    <input type="number" id="initialInvestment" name="initialInvestment" value="1">
+    <input type="number" id="initial-investment" name="initialInvestment" value="1">
     </div>
+    <label for="monthly-investment">Monthly Investment:</label>
+    <input type="number" id="monthly-investment" value="0">
+    <label for="adjust-for-inflation">Adjust Monthly Contributions for Inflation?</label>
+    <input type="checkbox" id="adjust-for-inflation">
       <button onclick="calculateReturns()">Calculate</button>
       </div>
         <div class="results">
-            <p><strong>Nominal Price Return:</strong> <span id="nominal-price-return"></span>%</p>
-            <p class="indented"><strong>Annualized:</strong> <span id="annualized-nominal-price-return"></span>%</p>
-            <p class="indented"><strong>Investment Grew To:</strong> <span id="nominal-price-dollar"></span></p>
-            <p><strong>Nominal Total Return (with dividends reinvested):</strong> <span id="nominal-total-return"></span>%</p>
-            <p class="indented"><strong>Annualized:</strong> <span id="annualized-nominal-total-return"></span>%</p>
-            <p class="indented"><strong>Investment Grew To:</strong> <span id="nominal-total-dollar"></span></p>
-            
-            <hr>
-
-            <p><strong>Inflation-Adjusted Price Return:</strong> <span id="real-price-return"></span>%</p>
-            <p class="indented"><strong>Annualized:</strong> <span id="annualized-real-price-return"></span>%</p>
-            <p class="indented"><strong>Investment Grew To:</strong> <span id="real-price-dollar"></span></p>
-            <p><strong>Inflation-Adjusted Total Return (with dividends reinvested):</strong> <span id="real-total-return"></span>%</p>
-            <p class="indented"><strong>Annualized:</strong> <span id="annualized-real-total-return"></span>%</p>
-            <p class="indented"><strong>Investment Grew To:</strong> <span id="real-total-dollar"></span></p>
-        </div>
+            <p>Total Nominal Contributions (Initial + Monthly): <span id="total-contributions"></span></p>
+            <p>Final Nominal Value (with dividends reinvested): <span id="final-value-nominal-dollars"></span></p>
+            <p>Final Inflation-Adjusted Value (with dividends reinvested): <span id="final-value-real-dollars"></span></p>
         <hr>
 <script>
 '
@@ -268,11 +308,11 @@ writeLines(paste(html_start1,
                  " const data = ", json_data, ";", 
                  js_function_string, 
                  html_end), 
-           paste0(out_path, "/_test_calc.html"))
+           paste0(out_path, "/_test_dca_calc.html"))
 
 writeLines(paste(" const data = ", json_data, ";", 
                  js_function_string), 
-           paste0(out_path, "/sp500_calculator.js"))
+           paste0(out_path, "/sp500_dca_calculator.js"))
 
 
 html_mid4_wp <- str_replace_all(html_mid4, "<script>", "")
@@ -291,7 +331,7 @@ writeLines(paste(trimws(html_start2_wp),
                  html_mid3, 
                  end_year_html, 
                  trimws(html_mid4_wp)), 
-           paste0(out_path, "/sp500_calculator.html"))
+           paste0(out_path, "/sp500_dca_calculator.html"))
 
 print(end_year)
 print(end_month)
