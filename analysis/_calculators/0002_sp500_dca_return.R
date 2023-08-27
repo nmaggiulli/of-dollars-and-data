@@ -102,12 +102,63 @@ function formatNumber(num) {
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function formatDollar(value) {
+function formatDCADollar(value) {
     // Return the formatted string
     return "$" + formatNumber(value);
 }
 
-function calculateReturns() {
+function calculateIRR(cashflows) {
+  let min = -0.5;
+  let max = 1.0;
+  let guess, NPV;
+  const maxIterations = 1000;  // Set a maximum number of iterations
+  let iteration = 0;  // Initialize iteration count
+
+  do {
+    guess = (min + max) / 2;
+    NPV = 0;
+
+    for (let j = 0; j < cashflows.length; j++) {
+      NPV += cashflows[j] / Math.pow((1 + guess), j);
+    }
+
+    if (NPV > 0) {
+      min = guess;
+    } else {
+      max = guess;
+    }
+    iteration++;  // Increment iteration count
+  
+    if (iteration >= maxIterations) {
+      return "IRR did not converge";  // Exit if maximum iterations reached
+    }
+  } while (Math.abs(NPV) > 0.000001);
+
+  // Convert the monthly IRR to annualized IRR
+  const annualizedIRR = (Math.pow(1 + guess, 12) - 1);
+
+  return annualizedIRR;
+}
+
+function dynamicCeil(number) {
+  if (number === 0) return 0;
+  
+  const magnitude = Math.pow(10, Math.floor(Math.log10(Math.abs(number))));
+  return Math.ceil(number / magnitude) * magnitude;
+}
+
+function calculateDCAReturns() {
+    //Remove old chart
+    document.getElementById("myChart").remove();
+    
+    // Create a new canvas element
+      var newCanvas = document.createElement("canvas");
+      newCanvas.setAttribute("id", "myChart");
+      newCanvas.setAttribute("width", "400");
+      newCanvas.setAttribute("height", "200");
+    
+    document.getElementById("chart-container").appendChild(newCanvas);
+
     const startMonth = document.getElementById("start-month").value;
     const startYear = document.getElementById("start-year").value;
     const endMonth = document.getElementById("end-month").value;
@@ -136,18 +187,15 @@ function calculateReturns() {
     const startFullDate = `${startYear}-${startMonth}-01`;
     const endFullDate = `${endYear}-${endMonth}-01`;
     
-    const startIndex = data.findIndex(item => item.month === startFullDate);
-    const endIndex = data.findIndex(item => item.month === endFullDate);
+    const startIndex = dca_data.findIndex(item => item.month === startFullDate);
+    const endIndex = dca_data.findIndex(item => item.month === endFullDate);
     
     if (startIndex === -1 || endIndex === -1) {
         alert("Invalid month selection.");
         return;
     }
-
-    const start = data[startIndex];
-    const end = data[endIndex];
     
-    const selectedData = data.slice(startIndex, endIndex + 1);
+    const selectedData = dca_data.slice(startIndex, endIndex + 1);
     
     const totalMonths = ((endYear - startYear) * 12) + (endMonth - startMonth);
     
@@ -155,6 +203,14 @@ function calculateReturns() {
     let finalValueRealDollars = initialInvestment;
     let inflationAdjustedMonthlyContribution = monthlyInvestment;
     let totalContributions = initialInvestment;
+    let cashflows = [-initialInvestment];
+    
+    //Start and seed the arrays
+    let totalContributionsArray = [];
+    let finalValueNominalDollarsArray = [];
+    
+    totalContributionsArray.push(totalContributions);
+    finalValueNominalDollarsArray.push(finalValueNominalDollars);
     
     // Loop through each month
     for (let i = 0; i < selectedData.length; i++) {
@@ -169,48 +225,101 @@ function calculateReturns() {
           inflationAdjustedMonthlyContribution = monthlyInvestment * (currentItem.cpi / selectedData[0].cpi);
       }
       
-      // Add the monthly contributions to the final values
-      finalValueNominalDollars += inflationAdjustedMonthlyContribution;
-      finalValueRealDollars += inflationAdjustedMonthlyContribution;
-      totalContributions += inflationAdjustedMonthlyContribution;
+      if (i > 0) {
+        cashflows.push(-inflationAdjustedMonthlyContribution);
+        finalValueNominalDollars += inflationAdjustedMonthlyContribution;
+        finalValueRealDollars += inflationAdjustedMonthlyContribution;
+        totalContributions += inflationAdjustedMonthlyContribution;
+        
+        totalContributionsArray.push(totalContributions);
+        finalValueNominalDollarsArray.push(finalValueNominalDollars);
+      }
     }
+    
+    cashflows.push(finalValueNominalDollars);
     
     // Format and display the results
-    document.getElementById("total-contributions").innerText = formatDollar(totalContributions);
-    document.getElementById("final-value-nominal-dollars").innerText = formatDollar(finalValueNominalDollars);
-    document.getElementById("final-value-real-dollars").innerText = formatDollar(finalValueRealDollars);
+    document.getElementById("total-contributions").innerText = formatDCADollar(totalContributions);
+    document.getElementById("final-value-nominal-dollars").innerText = formatDCADollar(finalValueNominalDollars);
+    document.getElementById("final-value-real-dollars").innerText = formatDCADollar(finalValueRealDollars);
     
-  //const irr = calculateIRR(initialInvestment, monthlyInvestment, finalValueNominalDollars, totalMonths);
-  document.getElementById("irr-result").innerText = "IRR: " + (irr * 100).toFixed(2) + "%";
+    const irr = calculateIRR(cashflows);
+    document.getElementById("irr").innerText = (irr * 100).toFixed(2) + "%";
+    
+    // Find the maximum value in finalValueNominalDollarsArray and totalContributionsArray
+    const maxFinalValue = Math.max(...finalValueNominalDollarsArray);
+    const maxTotalContributions = Math.max(...totalContributionsArray);
+    
+    // Calculate a suitable maximum value for the y-axis. You can adjust this as needed.
+    const yAxisMax = dynamicCeil(Math.max(maxFinalValue, maxTotalContributions));
+    
+    var ctx = document.getElementById("myChart").getContext("2d");
+    const dateLabels = selectedData.map(item => item.month);
+    const myChart = new Chart(ctx, {
+      type: "line",
+      data: {
+          labels: dateLabels, // Add your date labels here
+          datasets: [{
+              label: "Total Contributions",
+              data: totalContributionsArray, // your total contributions array
+              borderColor: "#000000",  // Black color
+              fill: false,
+              tension: 0 // Make the line straight
+          }, 
+          {
+              label: "Final Nominal Value (with dividends reinvested)",
+              data: finalValueNominalDollarsArray, // your final value in nominal dollars array
+              borderColor: "#349800",  // Green color
+              fill: false,
+              tension: 0 // Make the line straight
+          }]
+      },
+      options: {
+          scales: {
+              xAxes: [{
+                type: "time",
+                time: {
+                    unit: "month",
+                    displayFormats: {
+                        month: "MM/YYYY"
+                    }
+                },
+                scaleLabel: {
+                    display: true,
+                    labelString: "Date"
+                }
+            }],
+              yAxes: [{
+                ticks: {
+                  beginAtZero: true,
+                  max: yAxisMax,  // Set the max value here
+                  callback: function(value, index, values) {
+                    if (yAxisMax < 10) {
+                      return "$" + value.toFixed(2);
+                    } else {
+                      return "$" + value.toLocaleString();
+                    }
+                  }
+                }
+              }]
+          },
+           tooltips: {
+            callbacks: {
+                label: function(tooltipItem, data) {
+                    let label = data.datasets[tooltipItem.datasetIndex].label || "";
+                    if (label) {
+                        label += ": ";
+                    }
+                    let numberValue = parseFloat(tooltipItem.yLabel).toFixed(2);
+                    label += "$" + parseFloat(numberValue).toLocaleString();
+                    return label;
+                }
+            }
+          }
+      }
+  });
 }
 
-function calculateIRR(initialInvestment, monthlyInvestment, finalValue, totalMonths) {
-  let cashFlows = [-initialInvestment];
-  for (let i = 0; i < totalMonths; i++) {
-    cashFlows.push(-monthlyInvestment); // Monthly investments are considered outflows
-  }
-  cashFlows.push(finalValue); // The final value is considered an inflow
-  
-  let rate = 0.07, // initial guess rate of 10%
-      maxIter = 5000,
-      tol = 0.00000001;
-  
-  for (let i = 0; i < maxIter; i++) {
-    let f = 0,
-        df = 0;
-    for (let t = 0; t < cashFlows.length; t++) {
-      let val = cashFlows[t];
-      f += val / Math.pow(1 + rate, t);
-      df -= t * val / Math.pow(1 + rate, t + 1);
-    }
-    let newRate = rate - f / df;
-    if (Math.abs(newRate - rate) < tol) {
-      return newRate;
-    }
-    rate = newRate;
-  }
-  return NaN; // Did not converge to a solution
-}
 '
 
 #Create HTML string start
@@ -269,21 +378,29 @@ html_mid4 <- '</select>
           </div>
         </div>
         <hr>
-      <div class="initial-investment">
-    <label for="initialInvestment">Initial Investment:</label>
-    <input type="number" id="initial-investment" name="initialInvestment" value="1">
+    <div class="investment-amounts">
+      <label for="initialInvestment">Initial Investment:</label>
+      <input type="number" id="initial-investment" name="initialInvestment" value="1">
+      <label for="monthly-investment">Monthly Investment:</label>
+      <input type="number" id="monthly-investment" value="0">
     </div>
-    <label for="monthly-investment">Monthly Investment:</label>
-    <input type="number" id="monthly-investment" value="0">
     <label for="adjust-for-inflation">Adjust Monthly Contributions for Inflation?</label>
     <input type="checkbox" id="adjust-for-inflation">
-      <button onclick="calculateReturns()">Calculate</button>
+    <button onclick="calculateDCAReturns()">Calculate</button>
       </div>
         <div class="results">
             <p>Total Nominal Contributions (Initial + Monthly): <span id="total-contributions"></span></p>
             <p>Final Nominal Value (with dividends reinvested): <span id="final-value-nominal-dollars"></span></p>
+            <p class = "indented">IRR (Nominal): <span id="irr"></span></p>
             <p>Final Inflation-Adjusted Value (with dividends reinvested): <span id="final-value-real-dollars"></span></p>
         <hr>
+        <div id="chart-container">
+          <canvas id="myChart" width="400" height="200"></canvas>
+        </div>'
+
+html_js_script <- '
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
 <script>
 '
 
@@ -305,17 +422,16 @@ writeLines(paste(html_start1,
                  html_mid3, 
                  end_year_html, 
                  html_mid4,
-                 " const data = ", json_data, ";", 
+                 html_js_script,
+                 " const dca_data = ", json_data, ";", 
                  js_function_string, 
                  html_end), 
            paste0(out_path, "/_test_dca_calc.html"))
 
-writeLines(paste(" const data = ", json_data, ";", 
+writeLines(paste(" const dca_data = ", json_data, ";", 
                  js_function_string), 
            paste0(out_path, "/sp500_dca_calculator.js"))
 
-
-html_mid4_wp <- str_replace_all(html_mid4, "<script>", "")
 html_end <- str_replace_all(html_end, "</script>", "")
 
 # Now write code for the HTML to work on Wordpress
@@ -330,7 +446,7 @@ writeLines(paste(trimws(html_start2_wp),
                  end_month_html,
                  html_mid3, 
                  end_year_html, 
-                 trimws(html_mid4_wp)), 
+                 trimws(html_mid4)), 
            paste0(out_path, "/sp500_dca_calculator.html"))
 
 print(end_year)

@@ -10,7 +10,6 @@ source(file.path(paste0(getwd(),"/header.R")))
 
 ########################## Load in Libraries ########################## #
 
-library(RGA)
 library(scales)
 library(RColorBrewer)
 library(quantmod)
@@ -26,7 +25,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-end_analysis_date <- "2022-01-01"
+end_analysis_date <- "2022-12-31"
 run_sim <- 0
 
 spx <- read.csv(paste0(importdir, "0097_spx_daily/spx_daily.csv")) %>%
@@ -46,12 +45,14 @@ max_year <- max(spx$year)
 mcrib_dates <- data.frame(start = c("2010-11-02", "2011-10-24", "2012-12-17",
                                     "2013-10-15", "2014-11-05", "2015-09-15",
                                     "2016-11-09", "2017-11-09", "2018-10-29",
-                                    "2019-10-07", "2020-12-02", "2021-11-01"
+                                    "2019-10-07", "2020-12-02", "2021-10-08",
+                                    "2022-10-17"
                                     ),
                           end = c("2010-12-05", "2011-11-14", "2013-01-15",
                                   "2013-12-15", "2014-12-31", "2015-11-30", 
                                   "2016-12-31", "2017-12-31", "2018-12-31",
-                                  "2019-12-31", "2020-12-31", "2021-12-31"
+                                  "2019-12-31", "2020-12-31", "2022-01-23",
+                                  "2022-12-31"
                                   )) %>%
                           mutate(n_days = as.Date(end)-as.Date(start),
                                  sim_start = as.Date(paste0(year(start), "-01-01")),
