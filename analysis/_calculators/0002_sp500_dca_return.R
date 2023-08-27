@@ -266,9 +266,9 @@ function calculateDCAReturns() {
     // Calculate a suitable maximum value for the y-axis. You can adjust this as needed.
     const yAxisMax = dynamicCeil(Math.max(maxFinalValue, maxTotalContributions));
     
-    const canvas = document.getElementById("myChart");
+    let maintainAspectRatio = true;
     if (window.innerWidth <= 767) {
-      canvas.style.height = "200px";
+        maintainAspectRatio = false;
     }
     
     var ctx = document.getElementById("myChart").getContext("2d");
@@ -302,6 +302,7 @@ function calculateDCAReturns() {
       },
       options: {
           responsive: true,
+          maintainAspectRatio: maintainAspectRatio,
           scales: {
               xAxes: [{
                 type: "time",
@@ -364,13 +365,13 @@ function calculateDCAReturns() {
   });
   
   window.addEventListener("resize", function() {
-      if (window.innerWidth <= 767) {
-        canvas.style.height = "200px";
-      } else {
-        canvas.style.height = "auto";
-      }
-      myChart.resize();
-  });
+    if (window.innerWidth <= 767) {
+        myChart.options.maintainAspectRatio = false;
+    } else {
+        myChart.options.maintainAspectRatio = true;
+    }
+    myChart.resize();
+});
 }
 
 '
