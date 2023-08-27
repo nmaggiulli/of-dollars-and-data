@@ -266,6 +266,11 @@ function calculateDCAReturns() {
     // Calculate a suitable maximum value for the y-axis. You can adjust this as needed.
     const yAxisMax = dynamicCeil(Math.max(maxFinalValue, maxTotalContributions));
     
+    const canvas = document.getElementById("myChart");
+    if (window.innerWidth <= 767) {
+      canvas.style.height = "200px";
+    }
+    
     var ctx = document.getElementById("myChart").getContext("2d");
     const dateLabels = selectedData.map(item => item.month);
     const myChart = new Chart(ctx, {
@@ -296,6 +301,7 @@ function calculateDCAReturns() {
           ]
       },
       options: {
+          responsive: true,
           scales: {
               xAxes: [{
                 type: "time",
@@ -334,6 +340,12 @@ function calculateDCAReturns() {
                   // Format the date using Moment.js
                   return date.format("MM/YYYY");
                 },
+                labelColor: function(tooltipItem, chart) {
+                  return {
+                    borderColor: chart.data.datasets[tooltipItem.datasetIndex].borderColor,
+                    backgroundColor: chart.data.datasets[tooltipItem.datasetIndex].borderColor
+                  };
+                },
                 label: function(tooltipItem, data) {
                     let label = data.datasets[tooltipItem.datasetIndex].label || "";
                     if (label) {
@@ -349,6 +361,15 @@ function calculateDCAReturns() {
             }
           }
       }
+  });
+  
+  window.addEventListener("resize", function() {
+      if (window.innerWidth <= 767) {
+        canvas.style.height = "200px";
+      } else {
+        canvas.style.height = "auto";
+      }
+      myChart.resize();
   });
 }
 
