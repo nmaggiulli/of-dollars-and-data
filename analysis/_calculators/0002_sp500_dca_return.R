@@ -285,14 +285,14 @@ function calculateDCAReturns() {
               tension: 0 // Make the line straight
           }, 
           {
-              label: "Final Nominal Value (with dividends reinvested)",
+              label: "Nominal Value (with dividends reinvested)",
               data: finalValueNominalDollarsArray, // your final value in nominal dollars array
               borderColor: "#349800",  // Green color
               fill: false,
               tension: 0 // Make the line straight
           },
           {
-              label: "Final Inflation-Adjusted Value (with dividends reinvested)",
+              label: "Inflation-Adjusted Value (with dividends reinvested)",
               data: finalValueRealDollarsArray, // your final value in real dollars array
               borderColor: "#d95f02",
               fill: false,
@@ -449,7 +449,7 @@ html_mid4 <- '</select>
             <p>Final Nominal Value (with dividends reinvested): <span id="final-value-nominal-dollars"></span></p>
             <p class = "indented">IRR (Nominal): <span id="nom_irr"></span></p>
             <p>Final Inflation-Adjusted Value (with dividends reinvested): <span id="final-value-real-dollars"></span></p>
-            <p class = "indented">IRR (Real): <span id="real_irr"></span></p>
+            <p class = "indented">IRR (Inflation-Adjusted): <span id="real_irr"></span></p>
         </div>
         <hr>
         <div id="chart-container">
