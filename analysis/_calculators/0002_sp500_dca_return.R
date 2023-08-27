@@ -178,8 +178,8 @@ function calculateDCAReturns() {
     const endMonthInt = parseInt(document.getElementById("end-month").value, 10);
     const endYearInt = parseInt(document.getElementById("end-year").value, 10);
     
-    if (startYearInt > endYearInt || (startYearInt === endYearInt && startMonthInt >= endMonthInt)) {
-        alert("The end month must be AFTER the start month.");
+    if (startYearInt > endYearInt || (startYearInt === endYearInt && startMonthInt > endMonthInt)) {
+        alert("The End Month must be greater than or equal to the Start Month.");
         return; // exit the function early
     }
 
@@ -203,47 +203,61 @@ function calculateDCAReturns() {
     let finalValueRealDollars = initialInvestment;
     let inflationAdjustedMonthlyContribution = monthlyInvestment;
     let totalContributions = initialInvestment;
-    let cashflows = [-initialInvestment];
+    let nominalCashflows = [-initialInvestment];
+    let realCashflows = [-initialInvestment];
     
     //Start and seed the arrays
     let totalContributionsArray = [];
     let finalValueNominalDollarsArray = [];
+    let finalValueRealDollarsArray = [];
     
     totalContributionsArray.push(totalContributions);
-    finalValueNominalDollarsArray.push(finalValueNominalDollars);
     
     // Loop through each month
-    for (let i = 1; i < selectedData.length; i++) {
+    for (let i = 0; i < selectedData.length; i++) {
         const currentItem = selectedData[i];
-    
-      // Update the nominal and real values with returns
-      finalValueNominalDollars *= (1 + currentItem.nominalMonthlyReturn);
-      finalValueRealDollars *= (1 + currentItem.realMonthlyReturn);
       
-      // If the "Adjust Contributions for Inflation" toggle is on, adjust the monthly contribution
-      if (adjustForInflation && i > 0) {
-          inflationAdjustedMonthlyContribution = monthlyInvestment * (currentItem.cpi / selectedData[0].cpi);
+      if(i == 0){
+        // Update the nominal and real values with returns
+        finalValueNominalDollars *= (1 + currentItem.nominalMonthlyReturn);
+        finalValueRealDollars *= (1 + currentItem.realMonthlyReturn);
+        finalValueNominalDollarsArray.push(finalValueNominalDollars);
+        finalValueRealDollarsArray.push(finalValueRealDollars);
+      } else{
+         // If the "Adjust Contributions for Inflation" toggle is on, adjust the monthly contribution
+          if (adjustForInflation && i > 0) {
+              inflationAdjustedMonthlyContribution = monthlyInvestment * (currentItem.cpi / selectedData[0].cpi);
+          }
+          nominalCashflows.push(-inflationAdjustedMonthlyContribution);
+          realCashflows.push(-inflationAdjustedMonthlyContribution);
+          
+          finalValueNominalDollars += inflationAdjustedMonthlyContribution;
+          finalValueRealDollars += inflationAdjustedMonthlyContribution;
+          totalContributions += inflationAdjustedMonthlyContribution;
+          
+          // Update the nominal and real values with returns
+          finalValueNominalDollars *= (1 + currentItem.nominalMonthlyReturn);
+          finalValueRealDollars *= (1 + currentItem.realMonthlyReturn);
+          
+          totalContributionsArray.push(totalContributions);
+          finalValueNominalDollarsArray.push(finalValueNominalDollars);
+          finalValueRealDollarsArray.push(finalValueRealDollars);
       }
-      
-      cashflows.push(-inflationAdjustedMonthlyContribution);
-      finalValueNominalDollars += inflationAdjustedMonthlyContribution;
-      finalValueRealDollars += inflationAdjustedMonthlyContribution;
-      totalContributions += inflationAdjustedMonthlyContribution;
-      
-      totalContributionsArray.push(totalContributions);
-      finalValueNominalDollarsArray.push(finalValueNominalDollars);
-
     }
     
-    cashflows.push(finalValueNominalDollars);
+    nominalCashflows.push(finalValueNominalDollars);
+    realCashflows.push(finalValueRealDollars);
     
     // Format and display the results
     document.getElementById("total-contributions").innerText = formatDCADollar(totalContributions);
     document.getElementById("final-value-nominal-dollars").innerText = formatDCADollar(finalValueNominalDollars);
     document.getElementById("final-value-real-dollars").innerText = formatDCADollar(finalValueRealDollars);
     
-    const irr = calculateIRR(cashflows);
-    document.getElementById("irr").innerText = (irr * 100).toFixed(2) + "%";
+    const nom_irr = calculateIRR(nominalCashflows);
+    document.getElementById("nom_irr").innerText = (nom_irr * 100).toFixed(2) + "%";
+    
+    const real_irr = calculateIRR(realCashflows);
+    document.getElementById("real_irr").innerText = (real_irr * 100).toFixed(2) + "%";
     
     // Find the maximum value in finalValueNominalDollarsArray and totalContributionsArray
     const maxFinalValue = Math.max(...finalValueNominalDollarsArray);
@@ -271,7 +285,15 @@ function calculateDCAReturns() {
               borderColor: "#349800",  // Green color
               fill: false,
               tension: 0 // Make the line straight
-          }]
+          },
+          {
+              label: "Final Inflation-Adjusted Value (with dividends reinvested)",
+              data: finalValueRealDollarsArray, // your final value in real dollars array
+              borderColor: "#d95f02",
+              fill: false,
+              tension: 0 // Make the line straight
+          }
+          ]
       },
       options: {
           scales: {
@@ -394,21 +416,24 @@ html_mid4 <- '</select>
       <label for="monthly-investment">Monthly Investment:</label>
       <input type="number" id="monthly-investment" value="0">
     </div>
-    <div class="inflation-checkbox">
-    <label for="adjust-for-inflation">Adjust Monthly Investments for Inflation?</label>
-    <input type="checkbox" id="adjust-for-inflation">
-    </div>
-    <button onclick="calculateDCAReturns()">Calculate</button>
+      <div class="inflation-checkbox">
+      <label for="adjust-for-inflation">Adjust Monthly Investments for Inflation?</label>
+      <input type="checkbox" id="adjust-for-inflation">
       </div>
+    <button onclick="calculateDCAReturns()">Calculate</button>
+    </div>
         <div class="results">
             <p>Total Nominal Contributions (Initial + Monthly): <span id="total-contributions"></span></p>
             <p>Final Nominal Value (with dividends reinvested): <span id="final-value-nominal-dollars"></span></p>
-            <p class = "indented">IRR (Nominal): <span id="irr"></span></p>
+            <p class = "indented">IRR (Nominal): <span id="nom_irr"></span></p>
             <p>Final Inflation-Adjusted Value (with dividends reinvested): <span id="final-value-real-dollars"></span></p>
+            <p class = "indented">IRR (Real): <span id="real_irr"></span></p>
+        </div>
         <hr>
         <div id="chart-container">
           <canvas id="myChart" width="400" height="200"></canvas>
-        </div>'
+        </div>
+        <hr>'
 
 html_js_script <- '
         <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
