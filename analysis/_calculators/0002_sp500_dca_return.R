@@ -169,7 +169,7 @@ function calculateDCAReturns() {
     const adjustForInflation = document.getElementById("adjust-for-inflation").checked;
 
     if (initialInvestment < 0 || monthlyInvestment < 0) {
-        alert("Initial investment and monthly contribution amounts must be non-negative.");
+        alert("Initial and monthly investment amounts must be non-negative.");
         return; // exit the function early
     }
     
@@ -213,7 +213,7 @@ function calculateDCAReturns() {
     finalValueNominalDollarsArray.push(finalValueNominalDollars);
     
     // Loop through each month
-    for (let i = 0; i < selectedData.length; i++) {
+    for (let i = 1; i < selectedData.length; i++) {
         const currentItem = selectedData[i];
     
       // Update the nominal and real values with returns
@@ -225,15 +225,14 @@ function calculateDCAReturns() {
           inflationAdjustedMonthlyContribution = monthlyInvestment * (currentItem.cpi / selectedData[0].cpi);
       }
       
-      if (i > 0) {
-        cashflows.push(-inflationAdjustedMonthlyContribution);
-        finalValueNominalDollars += inflationAdjustedMonthlyContribution;
-        finalValueRealDollars += inflationAdjustedMonthlyContribution;
-        totalContributions += inflationAdjustedMonthlyContribution;
-        
-        totalContributionsArray.push(totalContributions);
-        finalValueNominalDollarsArray.push(finalValueNominalDollars);
-      }
+      cashflows.push(-inflationAdjustedMonthlyContribution);
+      finalValueNominalDollars += inflationAdjustedMonthlyContribution;
+      finalValueRealDollars += inflationAdjustedMonthlyContribution;
+      totalContributions += inflationAdjustedMonthlyContribution;
+      
+      totalContributionsArray.push(totalContributions);
+      finalValueNominalDollarsArray.push(finalValueNominalDollars);
+
     }
     
     cashflows.push(finalValueNominalDollars);
@@ -305,13 +304,20 @@ function calculateDCAReturns() {
           },
            tooltips: {
             callbacks: {
+                title: function(tooltipItem, data) {
+                  // Convert the tooltip label to a Moment.js object
+                  let label = tooltipItem[0]?.xLabel;
+                  let date = moment(label);
+          
+                  // Format the date using Moment.js
+                  return date.format("MM/YYYY");
+                },
                 label: function(tooltipItem, data) {
                     let label = data.datasets[tooltipItem.datasetIndex].label || "";
                     if (label) {
                         label += ": ";
                     }
-                    let numberValue = parseFloat(tooltipItem.yLabel).toFixed(2);
-                    label += "$" + parseFloat(numberValue).toLocaleString();
+                    label += "$" + parseFloat(tooltipItem.yLabel).toFixed(2).toLocaleString();
                     return label;
                 }
             }
