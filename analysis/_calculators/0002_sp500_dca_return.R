@@ -384,8 +384,10 @@ html_mid4 <- '</select>
       <label for="monthly-investment">Monthly Investment:</label>
       <input type="number" id="monthly-investment" value="0">
     </div>
-    <label for="adjust-for-inflation">Adjust Monthly Contributions for Inflation?</label>
+    <div class="inflation-checkbox">
+    <label for="adjust-for-inflation">Adjust Monthly Investments for Inflation?</label>
     <input type="checkbox" id="adjust-for-inflation">
+    </div>
     <button onclick="calculateDCAReturns()">Calculate</button>
       </div>
         <div class="results">
