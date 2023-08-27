@@ -317,7 +317,11 @@ function calculateDCAReturns() {
                     if (label) {
                         label += ": ";
                     }
-                    label += "$" + parseFloat(tooltipItem.yLabel).toFixed(2).toLocaleString();
+                    let formattedNumber = parseFloat(tooltipItem.yLabel).toLocaleString("en-US", {
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2 
+                    });
+                    label += "$" + formattedNumber;
                     return label;
                 }
             }
