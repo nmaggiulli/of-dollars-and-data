@@ -19,7 +19,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-download_file <- 1
+download_file <- 0
 filter_date <- "1871-01-01"
 url <- "http://www.econ.yale.edu/~shiller/data/ie_data.xls"
 dest_file <- paste0(importdir, "0009_sp500_returns_pe/ie_data.xls") 
@@ -328,6 +328,20 @@ function calculatePortReturns() {
       }
   });
   
+  var stockPercent = parseFloat(document.getElementById("percentage-in-stocks").value);  // Fetch the value from your input field
+  
+  // Calculate the bond percentage
+  var bondPercent = 100 - stockPercent;
+
+  myChart.options.title = {
+      display: true,
+      text: `${stockPercent}/${bondPercent} Portfolio (U.S. Stock/Bond)`,
+      fontSize: 16
+  };
+
+// You may need to update the chart to see the new title
+  myChart.update();
+  
   window.addEventListener("resize", function() {
     if (window.innerWidth <= 767) {
         myChart.options.maintainAspectRatio = false;
@@ -335,7 +349,7 @@ function calculatePortReturns() {
         myChart.options.maintainAspectRatio = true;
     }
     myChart.resize();
-});
+  });
 }
 
 '
