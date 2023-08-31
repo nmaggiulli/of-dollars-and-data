@@ -106,6 +106,11 @@ function formatNumberNoDecimals(number) {
     return number.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0});
 }
 
+function monthNumberToName(monthNumber) {
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    return monthNames[monthNumber - 1];
+}
+
 function formatDCADollar(value) {
     // Return the formatted string
     return "$" + formatNumber(value);
@@ -374,9 +379,16 @@ function calculateDCAReturns() {
   var initialIFormatted = formatNumberNoDecimals(initialI);
   var monthlyIFormatted = formatNumberNoDecimals(monthlyI);
   
+  // Convert month numbers to full month names
+  var startMonthName = monthNumberToName(startMonthInt);
+  var endMonthName = monthNumberToName(endMonthInt);
+  
   myChart.options.title = {
     display: true,
-    text: [`U.S. Stock DCA Calculator`, `Initial Investment: $${initialIFormatted}`, `Monthly Investment: $${monthlyIFormatted}`],
+    text: [`U.S. Stock DCA Calculator`, 
+    `Initial Investment: $${initialIFormatted}`, 
+    `Monthly Investment: $${monthlyIFormatted}`,
+    `${startMonthName} ${startYearInt} - ${endMonthName} ${endYearInt}`],
     fontSize: 16
   };
 

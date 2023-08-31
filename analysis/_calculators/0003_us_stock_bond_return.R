@@ -121,6 +121,15 @@ function formatPortDollar(value) {
     return "$" + formatNumber(value);
 }
 
+function formatNumberNoDecimals(number) {
+    return number.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
+
+function monthNumberToName(monthNumber) {
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    return monthNames[monthNumber - 1];
+}
+
 function dynamicCeil(number) {
   if (number === 0) return 0;
   
@@ -332,10 +341,20 @@ function calculatePortReturns() {
   
   // Calculate the bond percentage
   var bondPercent = 100 - stockPercent;
+  
+  var initialI = parseFloat(document.getElementById("initial-investment").value);
+  var initialIFormatted = formatNumberNoDecimals(initialI);
+  
+  // Convert month numbers to full month names
+  var startMonthName = monthNumberToName(startMonthInt);
+  var endMonthName = monthNumberToName(endMonthInt);
 
   myChart.options.title = {
       display: true,
-      text: `${stockPercent}/${bondPercent} Portfolio (U.S. Stock/Bond)`,
+      text: [`${stockPercent}/${bondPercent} Portfolio (U.S. Stock/Bond)`,
+      `Initial Investment: $${initialIFormatted}`, 
+      `${startMonthName} ${startYearInt} - ${endMonthName} ${endYearInt}`
+      ],
       fontSize: 16
   };
 
