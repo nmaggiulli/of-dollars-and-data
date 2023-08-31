@@ -19,7 +19,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-download_file <- 0
+download_file <- 1
 filter_date <- "1871-01-01"
 url <- "http://www.econ.yale.edu/~shiller/data/ie_data.xls"
 dest_file <- paste0(importdir, "0009_sp500_returns_pe/ie_data.xls") 
@@ -224,11 +224,11 @@ function calculatePortReturns() {
     // Output the calculated results
     document.getElementById("nom-total-return").innerText = formatNumber(Number(((nominalAmount / initialInvestment - 1) * 100).toFixed(2)));
     document.getElementById("nom-annualized").innerText = formatNumber(Number((nominalAnnualized * 100).toFixed(2)));
-    document.getElementById("nom-total").innerText = formatPortDollar(nominalAmount.toFixed(2));
+    document.getElementById("nom-total").innerText = formatPortDollar(nominalAmount);
   
     document.getElementById("real-total-return").innerText = formatNumber(Number(((realAmount / initialInvestment - 1) * 100).toFixed(2)));
     document.getElementById("real-annualized").innerText = formatNumber(Number((realAnnualized * 100).toFixed(2)));
-    document.getElementById("real-total").innerText = formatPortDollar(realAmount.toFixed(2));
+    document.getElementById("real-total").innerText = formatPortDollar(realAmount);
     
     // Find the maximum value in finalValueNominalDollarsArray and totalContributionsArray
     const maxNominalDollars = Math.max(...finalValueNominalDollarsArray);
@@ -396,11 +396,9 @@ html_mid4 <- '</select>
           </div>
         </div>
         <hr>
-    <div class="initial-investment">
+    <div class="investment-amounts">
     <label for="initialInvestment">Initial Investment:</label>
     <input type="number" id="initial-investment" name="initial-investment" value="1">
-    </div>
-    <div class="stock-percent">
     <label for="percentage-in-stocks">Percentage in Stocks:</label>
     <input type="number" id="percentage-in-stocks" min="0" max="100" value="60">
     </div>
