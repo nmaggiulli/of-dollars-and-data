@@ -13,13 +13,13 @@ library(readxl)
 library(lubridate)
 library(tidyverse)
 
-folder_name <- "_calculators/0002_sp500_dca_return"
+folder_name <- "_calculators/0003_us_stock_bond_return"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-download_file <- 1
+download_file <- 0
 filter_date <- "1871-01-01"
 url <- "http://www.econ.yale.edu/~shiller/data/ie_data.xls"
 dest_file <- paste0(importdir, "0009_sp500_returns_pe/ie_data.xls") 
@@ -33,7 +33,8 @@ sp500_ret_pe <- read_excel(paste0(importdir, "0009_sp500_returns_pe/ie_data.xls"
 
 colnames(sp500_ret_pe) <- c("date", "price", "dividend", "earnings", "cpi", "date_frac", 
                             "long_irate", "real_price", "real_div", "real_tr",
-                            "real_earn", "real_earn_scaled", "cape", "blank", "cape_tr", "blank2")
+                            "real_earn", "real_earn_scaled", "cape", "blank", "cape_tr", "blank2",
+                            "excess_cape", "orig_nom_bond_ret", "real_bond_index")
 
 #Remove first 6 rows
 sp500_ret_pe <- sp500_ret_pe[7:nrow(sp500_ret_pe),]
@@ -45,14 +46,18 @@ sp500_ret_pe$real_price <- as.numeric(sp500_ret_pe$real_price)
 sp500_ret_pe$real_tr <- as.numeric(sp500_ret_pe$real_tr)
 sp500_ret_pe$cpi <- as.numeric(sp500_ret_pe$cpi)
 sp500_ret_pe$date <- as.numeric(sp500_ret_pe$date)
+sp500_ret_pe$orig_nom_bond_ret <- as.numeric(sp500_ret_pe$orig_nom_bond_ret)
+sp500_ret_pe$real_bond_index <- as.numeric(sp500_ret_pe$real_bond_index)
 
 # Create a numeric end date based on the closest start of month to today's date
 end_date <- year(Sys.Date()) + month(Sys.Date())/100
 
 # Filter out missing dividends
 sp500_ret_pe <- sp500_ret_pe %>%
-  select(date, price, dividend, real_price, real_tr, cpi) %>%
-  filter(!is.na(date), date < end_date)
+  select(date, price, dividend, real_price, real_tr, cpi, orig_nom_bond_ret, real_bond_index) %>%
+  filter(!is.na(date), date < end_date) %>%
+  mutate(real_bond_ret = real_bond_index/lag(real_bond_index, 1) - 1,
+         orig_nom_bond_ret = orig_nom_bond_ret - 1)
 
 # Change the Date to a Date type for plotting the S&P data
 sp500_ret_pe <- sp500_ret_pe %>%
@@ -75,21 +80,30 @@ for (i in 1:nrow(sp500_ret_pe)){
     sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "dividend"]
     sp500_ret_pe[i, "nominalPricePlusDividend"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "price"]
     
-    sp500_ret_pe[i, "nominalMonthlyReturn"] <- 0
-    sp500_ret_pe[i, "realMonthlyReturn"] <- 0
+    sp500_ret_pe[i, "nom_sp500_ret"] <- 0
+    sp500_ret_pe[i, "real_sp500_ret"] <- 0
+    
+    sp500_ret_pe[i, "nom_bond_index"] <- 1
+    sp500_ret_pe[i, "nom_bond_ret"] <- 0
+    sp500_ret_pe[i, "real_bond_ret"] <- 0
   } else{
     sp500_ret_pe[i, "n_shares"]       <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "price"]
     sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "dividend"]
     sp500_ret_pe[i, "nominalPricePlusDividend"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "price"]
     
-    sp500_ret_pe[i, "nominalMonthlyReturn"] <- sp500_ret_pe[i, "nominalPricePlusDividend"]/sp500_ret_pe[(i-1), "nominalPricePlusDividend"] - 1
-    sp500_ret_pe[i, "realMonthlyReturn"] <- sp500_ret_pe[i, "realPricePlusDividend"]/sp500_ret_pe[(i-1), "realPricePlusDividend"] - 1
+    sp500_ret_pe[i, "nom_sp500_ret"] <- sp500_ret_pe[i, "nominalPricePlusDividend"]/sp500_ret_pe[(i-1), "nominalPricePlusDividend"] - 1
+    sp500_ret_pe[i, "real_sp500_ret"] <- sp500_ret_pe[i, "realPricePlusDividend"]/sp500_ret_pe[(i-1), "realPricePlusDividend"] - 1
+    
+    sp500_ret_pe[i, "nom_bond_index"] <- sp500_ret_pe[(i-1), "nom_bond_index"] * (1 + sp500_ret_pe[(i-1), "orig_nom_bond_ret"])
   }
 }
 
 to_calc <- sp500_ret_pe %>%
               filter(month >= filter_date) %>%
-              select(month, nominalMonthlyReturn, realMonthlyReturn, cpi)
+              mutate(nom_bond_ret = case_when(
+                row_number() == 1 ~ nom_bond_ret,
+                TRUE ~ nom_bond_index/lag(nom_bond_index,1) - 1)) %>%
+              select(month, nom_sp500_ret, real_sp500_ret, nom_bond_ret, real_bond_ret, cpi)
 
 end_year <- year(max(to_calc$month))
 
@@ -102,42 +116,9 @@ function formatNumber(num) {
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function formatDCADollar(value) {
+function formatPortDollar(value) {
     // Return the formatted string
     return "$" + formatNumber(value);
-}
-
-function calculateIRR(cashflows) {
-  let min = -0.5;
-  let max = 1.0;
-  let guess, NPV;
-  const maxIterations = 1000;  // Set a maximum number of iterations
-  let iteration = 0;  // Initialize iteration count
-
-  do {
-    guess = (min + max) / 2;
-    NPV = 0;
-
-    for (let j = 0; j < cashflows.length; j++) {
-      NPV += cashflows[j] / Math.pow((1 + guess), j);
-    }
-
-    if (NPV > 0) {
-      min = guess;
-    } else {
-      max = guess;
-    }
-    iteration++;  // Increment iteration count
-  
-    if (iteration >= maxIterations) {
-      return "IRR did not converge";  // Exit if maximum iterations reached
-    }
-  } while (Math.abs(NPV) > 0.000001);
-
-  // Convert the monthly IRR to annualized IRR
-  const annualizedIRR = (Math.pow(1 + guess, 12) - 1);
-
-  return annualizedIRR;
 }
 
 function dynamicCeil(number) {
@@ -147,15 +128,15 @@ function dynamicCeil(number) {
   return Math.ceil(number / magnitude) * magnitude;
 }
 
-function calculateDCAReturns() {
+function calculatePortReturns() {
     //Remove old chart
     document.getElementById("myChart").remove();
     
     // Create a new canvas element
-      var newCanvas = document.createElement("canvas");
-      newCanvas.setAttribute("id", "myChart");
-      newCanvas.setAttribute("width", "400");
-      newCanvas.setAttribute("height", "200");
+    var newCanvas = document.createElement("canvas");
+    newCanvas.setAttribute("id", "myChart");
+    newCanvas.setAttribute("width", "400");
+    newCanvas.setAttribute("height", "200");
     
     document.getElementById("chart-container").appendChild(newCanvas);
 
@@ -165,12 +146,28 @@ function calculateDCAReturns() {
     const endYear = document.getElementById("end-year").value;
     
     const initialInvestment = parseFloat(document.getElementById("initial-investment").value);
-    const monthlyInvestment = parseFloat(document.getElementById("monthly-investment").value);
-    const adjustForInflation = document.getElementById("adjust-for-inflation").checked;
-
-    if (initialInvestment < 0 || monthlyInvestment < 0) {
-        alert("Initial and monthly investment amounts must be non-negative.");
+    const stockPercentage = parseFloat(document.getElementById("percentage-in-stocks").value) / 100;
+    
+    if (initialInvestment < 0) {
+        alert("Initial investment amount must be non-negative.");
         return; // exit the function early
+    }
+    
+    if (stockPercentage < 0 || stockPercentage > 100) {
+        alert("Stock percentage must be between 0 and 100.");
+        return; // exit the function early
+    }
+    
+    // Combine the year and month to get the full date in YYYY-MM-DD format
+    const startFullDate = `${startYear}-${startMonth}-01`;
+    const endFullDate = `${endYear}-${endMonth}-01`;
+    
+    const startIndex = port_data.findIndex(item => item.month === startFullDate);
+    const endIndex = port_data.findIndex(item => item.month === endFullDate);
+    
+    if (startIndex === -1 || endIndex === -1) {
+        alert("Invalid month selection. Data does not exist for these dates.");
+        return;  // exit the function early
     }
     
     const startMonthInt = parseInt(document.getElementById("start-month").value, 10);
@@ -182,89 +179,63 @@ function calculateDCAReturns() {
         alert("The End Month must be greater than or equal to the Start Month.");
         return; // exit the function early
     }
-
-    // Combine the year and month to get the full date in YYYY-MM-DD format
-    const startFullDate = `${startYear}-${startMonth}-01`;
-    const endFullDate = `${endYear}-${endMonth}-01`;
     
-    const startIndex = dca_data.findIndex(item => item.month === startFullDate);
-    const endIndex = dca_data.findIndex(item => item.month === endFullDate);
-    
-    if (startIndex === -1 || endIndex === -1) {
-        alert("Invalid month selection.");
-        return;
-    }
-    
-    const selectedData = dca_data.slice(startIndex, endIndex + 1);
-    
-    const totalMonths = ((endYear - startYear) * 12) + (endMonth - startMonth);
-    
-    let finalValueNominalDollars = initialInvestment;
-    let finalValueRealDollars = initialInvestment;
-    let inflationAdjustedMonthlyContribution = monthlyInvestment;
-    let totalContributions = initialInvestment;
-    let nominalCashflows = [-initialInvestment];
-    let realCashflows = [-initialInvestment];
+    let months = (endYearInt - startYearInt) * 12 + (endMonthInt - startMonthInt) + 1;
+    let nominalAmount = initialInvestment;
+    let realAmount = initialInvestment;
+    let nominalStockAmount = nominalAmount * stockPercentage;
+    let nominalBondAmount = nominalAmount * (1 - stockPercentage);
+    let realStockAmount = realAmount * stockPercentage;
+    let realBondAmount = realAmount * (1 - stockPercentage);
     
     //Start and seed the arrays
-    let totalContributionsArray = [];
-    let finalValueNominalDollarsArray = [];
-    let finalValueRealDollarsArray = [];
+    const finalValueNominalDollarsArray = [];
+    const finalValueRealDollarsArray = [];
     
-    totalContributionsArray.push(totalContributions);
+    const selectedData = port_data.slice(startIndex, endIndex + 1);
     
-    // Loop through each month
-    for (let i = 0; i < selectedData.length; i++) {
-        const currentItem = selectedData[i];
-      
-      if(i == 0){
-        // Update the nominal and real values with returns
-        finalValueNominalDollars *= (1 + currentItem.nominalMonthlyReturn);
-        finalValueRealDollars *= (1 + currentItem.realMonthlyReturn);
-        finalValueNominalDollarsArray.push(finalValueNominalDollars);
-        finalValueRealDollarsArray.push(finalValueRealDollars);
-      } else{
-         // If the "Adjust Contributions for Inflation" toggle is on, adjust the monthly contribution
-          if (adjustForInflation && i > 0) {
-              inflationAdjustedMonthlyContribution = monthlyInvestment * (currentItem.cpi / selectedData[0].cpi);
-          }
-          nominalCashflows.push(-inflationAdjustedMonthlyContribution);
-          realCashflows.push(-inflationAdjustedMonthlyContribution);
-          
-          finalValueNominalDollars += inflationAdjustedMonthlyContribution;
-          finalValueRealDollars += inflationAdjustedMonthlyContribution;
-          totalContributions += inflationAdjustedMonthlyContribution;
-          
-          // Update the nominal and real values with returns
-          finalValueNominalDollars *= (1 + currentItem.nominalMonthlyReturn);
-          finalValueRealDollars *= (1 + currentItem.realMonthlyReturn);
-          
-          totalContributionsArray.push(totalContributions);
-          finalValueNominalDollarsArray.push(finalValueNominalDollars);
-          finalValueRealDollarsArray.push(finalValueRealDollars);
+    for (let i = 0; i < months; i++) {
+      const currentItem = selectedData[i];
+    
+      if (i % 12 === 0) {
+        // Rebalance every 12 months
+        nominalStockAmount = nominalAmount * stockPercentage;
+        nominalBondAmount = nominalAmount * (1 - stockPercentage);
+        realStockAmount = realAmount * stockPercentage;
+        realBondAmount = realAmount * (1 - stockPercentage);
       }
+      
+      nominalStockAmount *= (1 + currentItem.nom_sp500_ret);
+      nominalBondAmount *= (1 + currentItem.nom_bond_ret);
+      nominalAmount = nominalStockAmount + nominalBondAmount;
+  
+      realStockAmount *= (1 + currentItem.real_sp500_ret);
+      realBondAmount *= (1 + currentItem.real_bond_ret);
+      realAmount = realStockAmount + realBondAmount;
+      
+    // Push the current values into the arrays
+    finalValueNominalDollarsArray.push(nominalAmount);
+    finalValueRealDollarsArray.push(realAmount);
     }
     
-    nominalCashflows.push(finalValueNominalDollars);
-    realCashflows.push(finalValueRealDollars);
-    
-    // Format and display the results
-    document.getElementById("total-contributions").innerText = formatDCADollar(totalContributions);
-    document.getElementById("final-value-nominal-dollars").innerText = formatDCADollar(finalValueNominalDollars);
-    document.getElementById("final-value-real-dollars").innerText = formatDCADollar(finalValueRealDollars);
-    
-    const nom_irr = calculateIRR(nominalCashflows);
-    document.getElementById("nom_irr").innerText = (nom_irr * 100).toFixed(2) + "%";
-    
-    const real_irr = calculateIRR(realCashflows);
-    document.getElementById("real_irr").innerText = (real_irr * 100).toFixed(2) + "%";
+    const nominalAnnualized = Math.pow(nominalAmount / initialInvestment, 1 / (months / 12)) - 1;
+    const realAnnualized = Math.pow(realAmount / initialInvestment, 1 / (months / 12)) - 1;
+  
+    // Output the calculated results
+    document.getElementById("nom-total-return").innerText = formatNumber(Number(((nominalAmount / initialInvestment - 1) * 100).toFixed(2)));
+    document.getElementById("nom-annualized").innerText = formatNumber(Number((nominalAnnualized * 100).toFixed(2)));
+    document.getElementById("nom-total").innerText = formatPortDollar(nominalAmount.toFixed(2));
+  
+    document.getElementById("real-total-return").innerText = formatNumber(Number(((realAmount / initialInvestment - 1) * 100).toFixed(2)));
+    document.getElementById("real-annualized").innerText = formatNumber(Number((realAnnualized * 100).toFixed(2)));
+    document.getElementById("real-total").innerText = formatPortDollar(realAmount.toFixed(2));
     
     // Find the maximum value in finalValueNominalDollarsArray and totalContributionsArray
-    const maxFinalValue = Math.max(...finalValueNominalDollarsArray);
-    const maxTotalContributions = Math.max(...totalContributionsArray);
+    const maxNominalDollars = Math.max(...finalValueNominalDollarsArray);
+    const maxRealDollars = Math.max(...finalValueRealDollarsArray);
     
     // Calculate a suitable maximum value for the y-axis. You can adjust this as needed.
-    const yAxisMax = dynamicCeil(Math.max(maxFinalValue, maxTotalContributions));
+    const yAxisMax = dynamicCeil(Math.max(maxNominalDollars, maxRealDollars));
     
     let maintainAspectRatio = true;
     if (window.innerWidth <= 767) {
@@ -278,13 +249,6 @@ function calculateDCAReturns() {
       data: {
           labels: dateLabels, // Add your date labels here
           datasets: [{
-              label: "Total Contributions",
-              data: totalContributionsArray, // your total contributions array
-              borderColor: "#000000",  // Black color
-              fill: false,
-              tension: 0 // Make the line straight
-          }, 
-          {
               label: "Nominal Value (with dividends reinvested)",
               data: finalValueNominalDollarsArray, // your final value in nominal dollars array
               borderColor: "#349800",  // Green color
@@ -384,7 +348,7 @@ html_start1 <- '
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S&P 500 DCA Calculator</title>
+    <title>U.S. Stock/Bond Historical Performance Calculator</title>
     '
 
 html_start2 <- '</head>
@@ -432,24 +396,26 @@ html_mid4 <- '</select>
           </div>
         </div>
         <hr>
-    <div class="investment-amounts">
-      <label for="initialInvestment">Initial Investment:</label>
-      <input type="number" id="initial-investment" name="initialInvestment" value="1">
-      <label for="monthly-investment">Monthly Investment:</label>
-      <input type="number" id="monthly-investment" value="0">
+    <div class="initial-investment">
+    <label for="initialInvestment">Initial Investment:</label>
+    <input type="number" id="initial-investment" name="initial-investment" value="1">
     </div>
-      <div class="inflation-checkbox">
-      <label for="adjust-for-inflation">Adjust Monthly Investments for Inflation?</label>
-      <input type="checkbox" id="adjust-for-inflation">
+    <div class="stock-percent">
+    <label for="percentage-in-stocks">Percentage in Stocks:</label>
+    <input type="number" id="percentage-in-stocks" min="0" max="100" value="60">
+    </div>
+      <button onclick="calculatePortReturns()">Calculate</button>
       </div>
-    <button onclick="calculateDCAReturns()">Calculate</button>
-    </div>
         <div class="results">
-            <p>Total Nominal Contributions (Initial + Monthly): <span id="total-contributions"></span></p>
-            <p>Final Nominal Value (with dividends reinvested): <span id="final-value-nominal-dollars"></span></p>
-            <p class = "indented">IRR (Nominal): <span id="nom_irr"></span></p>
-            <p>Final Inflation-Adjusted Value (with dividends reinvested): <span id="final-value-real-dollars"></span></p>
-            <p class = "indented">IRR (Inflation-Adjusted): <span id="real_irr"></span></p>
+            <p><strong>Nominal Total Return (with dividends reinvested):</strong> <span id="nom-total-return"></span>%</p>
+            <p class="indented"><strong>Annualized:</strong> <span id="nom-annualized"></span>%</p>
+            <p class="indented"><strong>Investment Grew To:</strong> <span id="nom-total"></span></p>
+            
+            <hr>
+            
+            <p><strong>Inflation-Adjusted Total Return (with dividends reinvested):</strong> <span id="real-total-return"></span>%</p>
+            <p class="indented"><strong>Annualized:</strong> <span id="real-annualized"></span>%</p>
+            <p class="indented"><strong>Investment Grew To:</strong> <span id="real-total"></span></p>
         </div>
         <hr>
         <div id="chart-container">
@@ -482,14 +448,14 @@ writeLines(paste(html_start1,
                  end_year_html, 
                  html_mid4,
                  html_js_script,
-                 " const dca_data = ", json_data, ";", 
+                 " const port_data = ", json_data, ";", 
                  js_function_string, 
                  html_end), 
-           paste0(out_path, "/_test_dca_calc.html"))
+           paste0(out_path, "/_test_stock_bond_calc.html"))
 
-writeLines(paste(" const dca_data = ", json_data, ";", 
+writeLines(paste(" const port_data = ", json_data, ";", 
                  js_function_string), 
-           paste0(out_path, "/sp500_dca_calculator.js"))
+           paste0(out_path, "/us_stock_bond_calculator.js"))
 
 html_end <- str_replace_all(html_end, "</script>", "")
 
@@ -506,7 +472,7 @@ writeLines(paste(trimws(html_start2_wp),
                  html_mid3, 
                  end_year_html, 
                  trimws(html_mid4)), 
-           paste0(out_path, "/sp500_dca_calculator.html"))
+           paste0(out_path, "/us_stock_bond_calculator.html"))
 
 print(end_year)
 print(end_month)
