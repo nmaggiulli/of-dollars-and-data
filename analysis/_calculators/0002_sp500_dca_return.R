@@ -102,6 +102,10 @@ function formatNumber(num) {
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function formatNumberNoDecimals(number) {
+    return number.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
+
 function formatDCADollar(value) {
     // Return the formatted string
     return "$" + formatNumber(value);
@@ -363,6 +367,21 @@ function calculateDCAReturns() {
           }
       }
   });
+  
+  var initialI = parseFloat(document.getElementById("initial-investment").value);
+  var monthlyI = parseFloat(document.getElementById("monthly-investment").value);
+  
+  var initialIFormatted = formatNumberNoDecimals(initialI);
+  var monthlyIFormatted = formatNumberNoDecimals(monthlyI);
+  
+  myChart.options.title = {
+    display: true,
+    text: [`U.S. Stock DCA Calculator`, `Initial Investment: $${initialIFormatted}`, `Monthly Investment: $${monthlyIFormatted}`],
+    fontSize: 16
+  };
+
+// You may need to update the chart to see the new title
+  myChart.update();
   
   window.addEventListener("resize", function() {
     if (window.innerWidth <= 767) {
