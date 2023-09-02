@@ -210,7 +210,6 @@ html_start1 <- '
 html_start2 <- '
   <!-- Your HTML content goes here -->
   <div class="calculator">
-  <div class="calculator">
   <div class="age-amounts">
   <div class ="ages">
     <label for="current-age">Current Age:</label>
