@@ -476,11 +476,11 @@ html_mid4 <- '</select>
     <button onclick="calculateDCAReturns()">Calculate</button>
     </div>
         <div class="results">
-            <p>Total Nominal Contributions (Initial + Monthly): <span id="total-contributions"></span></p>
-            <p>Final Nominal Value (with dividends reinvested): <span id="final-value-nominal-dollars"></span></p>
-            <p class = "indented">IRR (Nominal): <span id="nom_irr"></span></p>
-            <p>Final Inflation-Adjusted Value (with dividends reinvested): <span id="final-value-real-dollars"></span></p>
-            <p class = "indented">IRR (Inflation-Adjusted): <span id="real_irr"></span></p>
+            <p><strong>Total Nominal Contributions (Initial + Monthly): </strong><span id="total-contributions"></span></p>
+            <p><strong>Final Nominal Value (with dividends reinvested): </strong><span id="final-value-nominal-dollars"></span></p>
+            <p class = "indented"><strong>IRR (Nominal): </strong><span id="nom_irr"></span></p>
+            <p><strong>Final Inflation-Adjusted Value (with dividends reinvested): </strong><span id="final-value-real-dollars"></span></p>
+            <p class = "indented"><strong>IRR (Inflation-Adjusted): </strong><span id="real_irr"></span></p>
         </div>
         <hr>
         <div id="chart-container">

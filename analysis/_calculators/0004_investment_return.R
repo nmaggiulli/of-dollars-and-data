@@ -28,7 +28,14 @@ function dynamicCeil(number) {
   return Math.ceil(number / magnitude) * magnitude;
 }
 
+function formatNumber(num) {
+    return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+let myChart = null;
+
 function calculate() {
+
   const currentAge = parseInt(document.getElementById('current-age').value);
   const retirementAge = parseInt(document.getElementById('retirement-age').value);
   const currentAmount = parseFloat(document.getElementById('current-amount').value);
@@ -50,6 +57,29 @@ function calculate() {
     alert('Retirement age must be at least 1 year greater than the Current age.');
     return; // Exit the function early
   }
+  
+   // Error handling for expected percentage return
+  if (expectedReturn < 0 || expectedReturn > 50) {
+    alert('Expected annual return must be between 0% and 50%.');
+    return;
+  }
+
+  // Error handling for starting investment and monthly contributions
+  if (currentAmount < 0) {
+    alert('Current investment amount must be greater than or equal to 0.');
+    return;
+  }
+
+  if (monthlyContributions < 0) {
+    alert('Monthly contributions must be greater than or equal to 0.');
+    return;
+  }
+  
+    // Error handling for number inputs
+  if (isNaN(currentAge) || isNaN(retirementAge) || isNaN(currentAmount) || isNaN(monthlyContributions) || isNaN(expectedReturn)) {
+    alert('All inputs must be numbers.');
+    return;
+  }
 
   const numberOfMonths = (retirementAge - currentAge) * 12;
   let totalContributions = 0;
@@ -57,13 +87,21 @@ function calculate() {
   const monthlyReturn = Math.pow(1 + expectedReturn, 1 / 12) - 1;
 
   const data = [];
+  const labels = [];
 
   for (let i = 0; i <= numberOfMonths; i++) {
-    if (i % 12 === 0) {
-      totalContributions += monthlyContributions * 12;
+    // If i is 0, skip adding the monthly contribution
+    if (i === 0) {
+      totalAmount = totalAmount * (1 + monthlyReturn);
+    } else {
+      totalAmount = (totalAmount + monthlyContributions) * (1 + monthlyReturn); // Monthly contribution added here
+      totalContributions += monthlyContributions;
     }
-    totalAmount = (totalAmount + monthlyContributions) * (1 + monthlyReturn);
-    data.push(totalAmount);
+    
+    if (i % 12 === 0) {
+      labels.push(`Age ${currentAge + i / 12}`); // Add the age label when we're at a year boundary
+      data.push(totalAmount);  // Push data at each year boundary
+    }
   }
   
   const yAxisMax = dynamicCeil(totalAmount);
@@ -74,15 +112,20 @@ function calculate() {
   }
 
   const ctx = document.getElementById('myChart').getContext('2d');
-  const myChart = new Chart(ctx, {
+  if (myChart !== null) {
+    myChart.destroy();  // Destroy the existing chart
+  }
+  
+  myChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: Array.from({ length: numberOfMonths + 1 }, (_, i) => 'Age ' + (currentAge + Math.floor(i / 12))),
+      labels: labels,
       datasets: [{
-        label: 'Projected Invested Amount',
-        data: data, // your data array
-        borderColor: 'black',
-        backgroundColor: 'black'
+        label: 'Estimated Investment Amount',
+        data: data,  // Added a comma here
+        borderColor: '#349800',
+        backgroundColor: '#349800',
+        fill: false
       }],
     },
     options: {
@@ -125,6 +168,24 @@ function calculate() {
   document.getElementById('total-contributions').innerText = `$${totalContributions.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
   document.getElementById('final-amount').innerText = `$${totalAmount.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
 
+  var currentAmountFormatted = formatNumber(currentAmount);
+  var monthlyContributionsFormatted = formatNumber(monthlyContributions);
+  var expectedReturnFormatted = expectedReturn*100;
+
+  myChart.options.title = {
+      display: true,
+      text: [`Investment Return Calculator`,
+      `Age: ${currentAge}—${retirementAge}`, 
+      `Current Amount Invested: $${currentAmountFormatted}`,
+      `Monthly Contribution: $${monthlyContributionsFormatted}`, 
+      `Expected Annual Return: ${expectedReturnFormatted}%`, 
+      ],
+      fontSize: 16
+  };
+
+  // You may need to update the chart to see the new title
+  myChart.update();
+
   window.addEventListener('resize', function() {
     if (window.innerWidth <= 767) {
         myChart.options.maintainAspectRatio = false;
@@ -133,52 +194,55 @@ function calculate() {
     }
     myChart.resize();
   });
+
 }
 "
 
 #Create HTML string start
-html_start <- '
+html_start1 <- '
 <!DOCTYPE html>
 <html>
 <head>
 <title>Investment Return Calculator</title>
 </head>
-<body>
+<body>'
 
-  <div class="current-age">
+html_start2 <- '
+  <div class="calculator">
+  <div class="calculator">
+  <div class="age-amounts">
+  <div class ="ages">
     <label for="current-age">Current Age:</label>
     <input type="number" id="current-age" name="current-age" value="30">
-  </div>
-
-  <div class="retirement-age">
     <label for="retirement-age">Retirement Age:</label>
     <input type="number" id="retirement-age" name="retirement-age" value="65">
   </div>
-
-  <div class="current-amount">
+  <div class ="amounts">
     <label for="current-amount">Current Amount Invested:</label>
     <input type="number" id="current-amount" name="current-amount" value="1">
-  </div>
-
-  <div class="monthly-amount">
     <label for="monthly-contributions">Monthly Contributions:</label>
     <input type="number" id="monthly-contributions" name="monthly-contribution" value="0">
   </div>
+  </div>
 
-  <div class="expected-ret-label">
+  <div class="expected-return">
     <label for="expected-return">Expected Annual Return (%):</label>
-    <input type="number" id="expected-return" name="expected-return" value="5">
+    <input type="number" id="expected-return" name="expected-return" value="4">
   </div>
 
   <button onclick="calculate()">Calculate</button>
-
-  <h2>Results:</h2>
-  <p>Total Contributions: <span id="total-contributions"></span></p>
-  <p>Final Investment Amount: <span id="final-amount"></span></p>
+  </div>
+  
+  <div class="results">
+    <p><strong>Total Contributions: </strong><span id="total-contributions"></span></p>
+    <p><strong>Estimated Final Amount: </strong><span id="final-amount"></span></p>
+  </div>
+  <hr>
 
   <div id="chart-container">
           <canvas id="myChart" width="400" height="200"></canvas>
   </div>
+  <hr>
 '
 
 html_js_script <- '
@@ -194,7 +258,7 @@ html_end <-
 '
 
 # Write the HTML string to a file
-writeLines(paste(html_start, html_js_script, js_function_string, html_end), 
+writeLines(paste(trimws(html_start1), trimws(html_start2), html_js_script, js_function_string, html_end), 
            paste0(out_path, "/_test_investment_calc.html"))
 
 writeLines(paste(js_function_string), 
@@ -202,7 +266,7 @@ writeLines(paste(js_function_string),
 
 html_end <- str_replace_all(html_end, "</script>", "")
 
-writeLines(paste(html_start), 
+writeLines(paste(trimws(html_start2)), 
            paste0(out_path, "/investment_return_calculator.html"))
 
 # ############################  End  ################################## #
