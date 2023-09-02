@@ -208,6 +208,7 @@ html_start1 <- '
 <body>'
 
 html_start2 <- '
+  <!-- Your HTML content goes here -->
   <div class="calculator">
   <div class="calculator">
   <div class="age-amounts">
