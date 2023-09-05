@@ -58,6 +58,12 @@ function calculate() {
     return; // Exit the function early
   }
   
+    // Error handling for blank return
+  if (!expectedReturn) {
+    alert('Please enter the Expected Annual Return (i.e. 2 = 2%, 4.1 = 4.1%, etc.)');
+    return;  // Exit the function
+  }
+  
    // Error handling for expected percentage return
   if (expectedReturn < 0 || expectedReturn > 50) {
     alert('Expected annual return must be between 0% and 50%.');
@@ -227,7 +233,7 @@ html_start2 <- '
 
   <div class="expected-return">
     <label for="expected-return">Expected Annual Return (%):</label>
-    <input type="number" id="expected-return" name="expected-return" value="4">
+    <input type="number" id="expected-return" name="expected-return">
   </div>
 
   <button onclick="calculate()">Calculate</button>
