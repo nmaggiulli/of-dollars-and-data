@@ -25,7 +25,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 # Data is only through May 31, 2023 NOT 12/31/23
-raw <- read.csv(paste0(importdir, "/", folder_name, "/sp500_mcap_2017_2023_6-13-2023.csv"),
+raw <- read.csv(paste0(importdir, "/", folder_name, "/sp500_mcap_2017_2023_9-17-2023.csv"),
                 skip = 6, col.names = c("symbol", "name", "metric", "value_2023_12_31", "value_2022_12_31", "value_2021_12_31",
                                         "value_2020_12_31", "value_2019_12_31", 
                                         "value_2018_12_31", "value_2017_12_31", "value_2016_12_31")) %>%
@@ -33,7 +33,9 @@ raw <- read.csv(paste0(importdir, "/", folder_name, "/sp500_mcap_2017_2023_6-13-
                      value_add_2021 = value_2021_12_31 - value_2020_12_31,
                      value_add_2020 = value_2020_12_31 - value_2019_12_31,
                      value_add_2019 = value_2019_12_31 - value_2018_12_31,
-                     value_add_2017 = value_2017_12_31 - value_2016_12_31)
+                     value_add_2017 = value_2017_12_31 - value_2016_12_31) %>%
+                filter(symbol != "GOOGL",
+                       !is.na(value_2022_12_31))
 
 overall_by_year <- raw %>%
                     summarize(value_add_2023 = sum(value_add_2023, na.rm = TRUE),
