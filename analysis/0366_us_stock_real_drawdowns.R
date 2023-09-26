@@ -190,7 +190,7 @@ for(i in 1:length(all_dates)){
     counter <- counter - 1
     final_results[i, "n_stocks_gain"] <- counter
   } else{
-    final_results[i, "n_stocks_gain"] <- 0
+    final_results[i, "n_stocks_gain"] <- NA
   }
 }
 
@@ -198,15 +198,17 @@ to_plot <- final_results
 
 file_path <- paste0(out_path, "/russell_3000_stocks_rep_gain.jpeg")
 source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
+note_string <- str_wrap("Note: When there is no gain in the Russell 3000, the number of stocks listed is not shown.",
+                        width = 80)
 
 plot <- ggplot(data = to_plot, aes(x = date, y = n_stocks_gain)) +
   geom_line() +
   scale_y_continuous(label = comma) +
   scale_x_date(date_labels = "%m/%y") +
-  ggtitle("Number of Stocks Representing the Gain in\nthe Russell 3000") +
+  ggtitle("Number of Stocks Representing\nthe Gain in the Russell 3000\nin 2023") +
   of_dollars_and_data_theme +
   labs(x = "Date" , y = "Number of Stocks",
-       caption = paste0(source_string))
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the gtable
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
