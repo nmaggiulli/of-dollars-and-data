@@ -103,7 +103,7 @@ plot_dd_comparison<- function(n_months){
                dd_year == 2021 ~ 1,
                TRUE ~ 0
              )) %>%
-      filter(flag_2021 == 1 | max_dd < -0.5) %>%
+      filter(flag_2021 == 1 | dd_year == 2000 | dd_year == 1937) %>%
       select(dd_month, pct, dd_year, flag_2021)
     
     file_path <- paste0(out_path, "/select_drawdowns_", n_months, "_months.jpeg")
