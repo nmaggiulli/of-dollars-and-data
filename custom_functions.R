@@ -145,6 +145,11 @@ fix_salesforce_date <- function(x){
              gsub("\\d\\d?/\\d\\d?/(.*)", "\\1", x)))
 }
 
+convert_date_to_monthly <- function(dt__1){
+  dt__2 <- as.Date(paste0(year(dt__1), "-", month(dt__1), "-01"))
+  return(dt__2)
+}
+
 # Create GIF function accepts path, filename, and speed argument
 create_gif <- function(path, file_stub, speed_milliseconds, n_loops = 0, out_name = "all_plots.gif"){
   path <- gsub(" ", "\\\ ", path, fixed = TRUE)
