@@ -26,7 +26,8 @@ sp500_ret_pe <- read_excel(paste0(importdir, "0009_sp500_returns_pe/ie_data.xls"
 
 colnames(sp500_ret_pe) <- c("date", "price", "div", "earnings", "cpi", "date_frac", 
                             "long_irate", "real_price", "real_div", "real_tr",
-                            "real_earn", "real_earn_scaled", "cape", "blank", "cape_tr", "blank2")
+                            "real_earn", "real_earn_scaled", "cape", "blank", "cape_tr", "blank2",
+                            "excess_cape", "blank", "bond_real")
 
 #Remove first 6 rows
 sp500_ret_pe <- sp500_ret_pe[7:nrow(sp500_ret_pe),]
@@ -40,14 +41,17 @@ sp500_ret_pe$cpi <- as.numeric(sp500_ret_pe$cpi)
 sp500_ret_pe$cape <- as.numeric(sp500_ret_pe$cape)
 sp500_ret_pe$long_irate <- as.numeric(sp500_ret_pe$long_irate)
 sp500_ret_pe$real_earn <- as.numeric(sp500_ret_pe$real_earn)
+sp500_ret_pe$price <- as.numeric(sp500_ret_pe$price)
+sp500_ret_pe$div <- as.numeric(sp500_ret_pe$div)
 sp500_ret_pe$real_earn_scaled <- as.numeric(sp500_ret_pe$real_earn_scaled)
+sp500_ret_pe$bond_real <- as.numeric(sp500_ret_pe$bond_real)
 
 # Create a numeric end date based on the closest start of month to today's date
 end_date <- year(Sys.Date()) + month(Sys.Date())/100
 
 # Filter out missing dividends
 sp500_ret_pe <- sp500_ret_pe %>%
-                  select(date, price, div, real_price, real_div, real_earn, real_earn_scaled, real_tr, long_irate, cape, cpi) %>%
+                  select(date, price, div, real_price, real_div, real_earn, real_earn_scaled, real_tr, long_irate, cape, cpi, bond_real) %>%
                   filter(!is.na(date), date < end_date) %>%
                   mutate(real_div = ifelse(is.na(real_div), 0, real_div))
 
@@ -59,9 +63,10 @@ sp500_ret_pe <- sp500_ret_pe %>%
     ifelse(substring(as.character(date), 6, 7) == "1", "10", substring(as.character(date), 6, 7)),
     "-01", 
     "%Y-%m-%d")),
-    long_irate = long_irate/100) %>%
+    long_irate = long_irate/100,
+    ret_bond_real = bond_real/lag(bond_real, 1) - 1) %>%
     rename(price_plus_div = real_tr) %>%
-  select(date, price, div, real_price, price_plus_div, cape, cpi)
+  select(date, price, div, real_price, real_div, real_earn, long_irate, cape, cpi, price_plus_div,  ret_bond_real)
 
 # Save down the data
 saveRDS(sp500_ret_pe, paste0(localdir, "0009_sp500_ret_pe.Rds"))

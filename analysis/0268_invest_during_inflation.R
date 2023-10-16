@@ -47,9 +47,9 @@ to_plot <- all_data %>%
              mutate(value_capped = case_when(value > limit ~ limit,
                                       value < -limit ~ -limit,
                                       TRUE ~ value),
-                      value_real = case_when(value - cpi > limit ~ limit,
-                                             value - cpi < -limit ~ -limit,
-                                             TRUE ~ value - cpi)) 
+                      value_real = case_when((1+value)/(1+cpi) - 1 > limit ~ limit,
+                                             (1+value)/(1+cpi) - 1 < -limit ~ -limit,
+                                             TRUE ~ (1+value)/(1+cpi) - 1)) 
 
 file_path <- paste0(out_path, "/asset_real_return_grid.jpeg")
 source_string <- paste0("Source: BullionVault, ", min_year, "-", max_year, " (OfDollarsAndData.com)")
@@ -97,7 +97,7 @@ plot <- ggplot(data = to_plot, aes(x = cpi, y = value_capped, col = key, fill = 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 table1 <- all_data %>%
-            mutate(value_real = value - cpi) %>%
+            mutate(value_real = (1+value)/(1+cpi) - 1) %>%
             group_by(key) %>%
             summarise(value_real = mean(value_real)) %>%
             ungroup() %>%
@@ -112,7 +112,7 @@ export_to_excel(df = table1,
                 fancy_formatting = 1)
             
 table2 <- all_data %>%
-          mutate(value_real = value - cpi) %>%
+          mutate(value_real = (1+value)/(1+cpi) - 1) %>%
           filter(cpi > 0.04) %>%
           group_by(key) %>%
             summarise(n_obs = n(),
