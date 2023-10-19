@@ -32,6 +32,9 @@ df <- scf_stack %>%
              networth, income, debt, liq, wgt) %>%
       arrange(year, hh_id, imp_id)
 
+year_min <- min(df$year)
+year_max <- max(df$year)
+
 create_time_series_chart <- function(var, var_title, quantile_prob){
   
   if(quantile_prob != 0){
@@ -79,6 +82,7 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
   plot <- ggplot(to_plot, aes(x=year, y=value)) +
     geom_line() +
     scale_y_continuous(label = comma) +
+    scale_x_continuous(breaks = seq(year_min, year_max, 3), limits = c(year_min, year_max)) +
     of_dollars_and_data_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     ggtitle(paste0("White ", var_title, " Over\nBlack ", var_title , "\nby Year")) +
