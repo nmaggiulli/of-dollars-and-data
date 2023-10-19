@@ -28,8 +28,8 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds"))
 
 df <- scf_stack %>%
       filter(race %in% c("White", "Black")) %>%
-      select(year, hh_id, imp_id, agecl, edcl, race,
-             networth, income, debt, homeeq, liq, wgt) %>%
+      select(year, hh_id, imp_id, race,
+             networth, income, debt, liq, wgt) %>%
       arrange(year, hh_id, imp_id)
 
 create_time_series_chart <- function(var, var_title, quantile_prob){
@@ -87,84 +87,17 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-  
-  #Now do by Age class
-  # Now do age only and then education only
-  for(i in 1:2){
-    if(i == 1){
-      group_var <- "agecl"
-      end_filename <- "age"
-      x_var <- "Age"
-    } else{
-      group_var <- "edcl"
-      end_filename <- "edc"
-      x_var <- "Education Level"
-    }
-    
-    if(quantile_prob != 0){
-      to_plot <- df %>%
-        rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
-        rename_(.dots = setNames(paste0(group_var), "group_var")) %>%
-        group_by(year, race, group_var) %>%
-        summarise(
-          percentile = wtd.quantile(var_for_qtile, weights = wgt, probs=quantile_prob)
-        ) %>%
-        ungroup() %>%
-        gather(-year, -race, -group_var, key=key, value=value) %>%
-        arrange(year, race, group_var) %>%
-        mutate(wealth_gap = case_when(
-          lag(race) != race ~ value/lag(value, 1),
-          TRUE ~ NA
-        )) %>%
-        filter(race == "White") %>%
-        select(-value) %>%
-        rename(value = wealth_gap)
-    } else{
-      to_plot <- df %>%
-        rename_(.dots = setNames(paste0(var), "var_for_qtile")) %>%
-        rename_(.dots = setNames(paste0(group_var), "group_var")) %>%
-        group_by(year, race, group_var) %>%
-        summarise(
-          percentile = wtd.mean(var_for_qtile, weights = wgt)
-        ) %>%
-        ungroup() %>%
-        gather(-year,-race, -group_var, key=key, value=value) %>%
-        arrange(year, race, group_var) %>%
-        mutate(wealth_gap = case_when(
-          lag(race) != race ~ value/lag(value, 1),
-          TRUE ~ NA
-        )) %>%
-        filter(race == "White") %>%
-        select(-value) %>%
-        rename(value = wealth_gap)
-    }
-    
-    file_path <- paste0(out_path, "/", var, "_", quantile_prob_string, "_wb_gap_by_year_", end_filename, ".jpeg")
-  
-    plot <- ggplot(to_plot, aes(x=year, y=value)) +
-      geom_line() +
-      facet_rep_wrap(group_var ~ ., repeat.tick.labels = c("left", "bottom")) +
-      scale_y_continuous(label = comma) +
-      of_dollars_and_data_theme +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-      ggtitle(paste0(var_title, "\nby Year & ", x_var)) +
-      labs(x="Year", y=paste0("White/Black Ratio of\n", var_title),
-           caption = paste0(source_string, "\n", note_string))
-    
-    # Save the plot
-    ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-  }
 }
 
 
 create_time_series_chart("networth", "25th Percentile Real Net Worth", 0.25)
 create_time_series_chart("networth", "Real Median Net Worth", 0.5)
 create_time_series_chart("networth", "75th Percentile Real Net Worth", 0.75)
+create_time_series_chart("networth", "90th Percentile Real Net Worth", 0.9)
+create_time_series_chart("networth", "99th Percentile Real Net Worth", 0.99)
 create_time_series_chart("networth", "Real Average Net Worth", 0)
 create_time_series_chart("income", "Real Median Income", 0.5)
 create_time_series_chart("debt", "Real Median Debt", 0.5)
 create_time_series_chart("liq", "Real Median Liquid Net Worth", 0.5)
-create_time_series_chart("homeeq", "Real Median Home Equity", 0.5)
-
 
 # ############################  End  ################################## #
