@@ -17,7 +17,7 @@ library(lodown)
 
 in_path <- paste0(importdir, "0003_scf_data")
 
-download_data <- 0
+download_data <- 1
 if(download_data == 1){
   lodown( "scf" , output_dir = file.path(in_path , "SCF" ) )
 }

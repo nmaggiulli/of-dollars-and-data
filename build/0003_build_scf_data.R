@@ -14,7 +14,7 @@ library(dplyr)
 in_path <- paste0(importdir, "0003_scf_data/SCF")
 
 # Create a year list to loop through
-year_list <- seq(1989, 2019, 3)
+year_list <- seq(1989, 2022, 3)
 
 for (x in year_list){
   print(paste0("Now processing: ", x))

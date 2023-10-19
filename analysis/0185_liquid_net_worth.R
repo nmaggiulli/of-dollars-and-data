@@ -24,7 +24,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-data_year <- 2016
+data_year <- 2022
 
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
               filter(year == data_year)

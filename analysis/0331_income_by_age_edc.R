@@ -25,7 +25,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-data_year <- 2019
+data_year <- 2022
+dir.create(file.path(paste0(out_path, "/", data_year)), showWarnings = FALSE)
 
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
               filter(year == data_year)
@@ -76,7 +77,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   
   print(paste0("Overall ", var_title, " is: $", formatC(percentile_var, digits = 0, format = "f", big.mark = ",")))
   
-  file_path <- paste0(out_path, "/", var, "_", quantile_prob_string, "_age_edc_comb_scf_", data_year, ".jpeg")
+  file_path <- paste0(out_path, "/", data_year, "/", var, "_", quantile_prob_string, "_age_edc_comb_scf_", data_year, ".jpeg")
   source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
   note_string <-  str_wrap(paste0("Note:  Calculations based on weighted data from ", 
                                   formatC(n_hh, digits = 0, format = "f", big.mark = ","), 
@@ -87,7 +88,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   
   export_to_excel(to_plot %>%
                     mutate(value = paste0("$", formatC(value, big.mark = ",", format="f", digits = 0))), 
-                  paste0(out_path, "/all_var_summaries.xlsx"), 
+                  paste0(out_path, "/", data_year, "/all_var_summaries.xlsx"), 
                   paste0("age_edc_", var, "_", quantile_prob_string),
                   create_new_file,
                   0)
@@ -151,7 +152,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
         gather(-group_var, key=key, value=value)
     }
     
-    file_path <- paste0(out_path, "/", var, "_", quantile_prob_string, "_", end_filename, "_scf_", data_year, ".jpeg")
+    file_path <- paste0(out_path, "/", data_year,  "/", var, "_", quantile_prob_string, "_", end_filename, "_scf_", data_year, ".jpeg")
     source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
     note_string <-  str_wrap(paste0("Note:  Percentiles are calculated using data based on ", 
                                     formatC(n_hh, digits = 0, format = "f", big.mark = ","), 
@@ -221,7 +222,7 @@ rich_table_by_age_html <- df %>%
 print(xtable(rich_table_by_age_html), 
       include.rownames=FALSE,
       type="html", 
-      file=paste0(out_path, "/income_by_agecl_table_rich.html"))
+      file=paste0(out_path, "/", data_year, "/income_by_agecl_table_rich.html"))
 
 
 # ############################  End  ################################## #
