@@ -60,7 +60,7 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
   
   file_path <- paste0(out_path, "/", var, "_", quantile_prob_string, "_by_year.jpeg")
   source_string <- paste0("Source:  Survey of Consumer Finances (OfDollarsAndData.com)")
-  note_string <- paste0("Note: All figures are in 2022 dollars.")
+  note_string <- paste0("Note: All figures are adjusted for inflation (2022 dollars).")
   
   plot <- ggplot(to_plot, aes(x=year, y=value)) +
     geom_line() +
@@ -186,6 +186,59 @@ create_time_series_chart("income", "Real Median Income", 0.5)
 create_time_series_chart("debt", "Real Median Debt", 0.5)
 create_time_series_chart("liq", "Real Median Liquid Net Worth", 0.5)
 create_time_series_chart("homeeq", "Real Median Home Equity", 0.5)
+
+#Plot all percentiles by age for given year
+data_year <- 2022
+
+df_year <- scf_stack %>%
+  filter(data_year == data_year) %>%
+  select(year, hh_id, imp_id, agecl, wgt,
+         networth) %>%
+  arrange(year, hh_id, imp_id)
+
+to_plot <- df_year %>%
+  group_by(agecl) %>%
+  summarise(
+    value = wtd.quantile(networth, weights = wgt, probs=c(0.25, 0.5, 0.75, 0.9))
+  ) %>%
+  ungroup() %>%
+  mutate(key = case_when(
+    row_number() %% 4 == 0 ~ "90th Percentile",
+    row_number() %% 4 == 3 ~ "75th Percentile",
+    row_number() %% 4 == 2  ~ "50th Percentile",
+    row_number() %% 4 == 1 ~ "25th Percentile",
+    TRUE ~ "Error"
+  ))
+
+file_path <- paste0(out_path, "/2022_all_networth_percentiles_by_agecl.jpeg")
+source_string <- paste0("Source:  Survey of Consumer Finances (OfDollarsAndData.com)")
+note_string <- paste0("Note: All figures are in 2022 dollars.")
+
+text_labels <- to_plot %>%
+  mutate(label = case_when(
+    value > 10^6 ~ paste0("$", formatC(round(value/1000000, 2), big.mark=",", format="f", digits=1), "M"),
+    value > 0 ~ paste0("$", formatC(round(value/1000, 0), big.mark=",", format="f", digits=0), "k"),
+    TRUE ~ paste0("$0"))
+    )
+
+max_y <- max(to_plot$value)
+
+plot <- ggplot(to_plot, aes(x=agecl, y=value)) +
+  geom_bar(stat = "identity", fill = chart_standard_color) +
+  geom_text(data=text_labels, aes(x=agecl, y=value, label = label),
+            col = chart_standard_color,
+            vjust = ifelse(text_labels$value >0, 0, 1),
+            size = 1.8) +
+  facet_rep_wrap(key ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle(paste0("Net Worth Percentiles by Age\n", data_year)) +
+  labs(x="Age", y=paste0("Net Worth"),
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 
 # ############################  End  ################################## #
