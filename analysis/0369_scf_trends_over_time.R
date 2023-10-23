@@ -28,7 +28,9 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds"))
 
 df <- scf_stack %>%
       select(year, hh_id, imp_id, agecl, edcl,
-             networth, income, debt, homeeq, liq, wgt) %>%
+             networth, income, asset, debt, homeeq, liq, fin, nfin, vehic,
+             ccbal, install, resdbt,
+             wgt) %>%
       arrange(year, hh_id, imp_id)
 
 year_min <- min(df$year)
@@ -54,6 +56,10 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
       ) %>%
       ungroup() %>%
       gather(-year, key=key, value=value)
+  }
+  
+  if(quantile_prob == 0.5 & var == "networth"){
+    assign("to_plot_nw_year_median", to_plot, envir = .GlobalEnv)
   }
   
   quantile_prob_string <- str_pad(100*quantile_prob, side = "left", width = 3, pad = "0")
@@ -177,22 +183,24 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
   }
 }
 
-
 create_time_series_chart("networth", "25th Percentile Real Net Worth", 0.25)
 create_time_series_chart("networth", "Real Median Net Worth", 0.5)
+create_time_series_chart("homeeq", "Real 75th Percentile Home Equity", 0.75)
 create_time_series_chart("networth", "75th Percentile Real Net Worth", 0.75)
 create_time_series_chart("networth", "Real Average Net Worth", 0)
 create_time_series_chart("income", "Real Median Income", 0.5)
 create_time_series_chart("debt", "Real Median Debt", 0.5)
-create_time_series_chart("liq", "Real Median Liquid Net Worth", 0.5)
-create_time_series_chart("homeeq", "Real Median Home Equity", 0.5)
+create_time_series_chart("fin", "Real Median Financial Assets", 0.5)
+create_time_series_chart("nfin", "Real Median Non-Financial Assets", 0.5)
+create_time_series_chart("vehic", "Real Median Vehicle Value", 0.5)
+create_time_series_chart("asset", "Real Median Assets", 0.5)
 
 #Plot all percentiles by age for given year
 data_year <- 2022
 
 df_year <- scf_stack %>%
-  filter(data_year == data_year) %>%
-  select(year, hh_id, imp_id, agecl, wgt,
+  filter(year == data_year) %>%
+  select(year, hh_id, imp_id, agecl, wgt, age,
          networth) %>%
   arrange(year, hh_id, imp_id)
 
@@ -216,7 +224,7 @@ note_string <- paste0("Note: All figures are in 2022 dollars.")
 
 text_labels <- to_plot %>%
   mutate(label = case_when(
-    value > 10^6 ~ paste0("$", formatC(round(value/1000000, 2), big.mark=",", format="f", digits=1), "M"),
+    value > 10^6 ~ paste0("$", formatC(round(value/1000000, 3), big.mark=",", format="f", digits=2), "M"),
     value > 0 ~ paste0("$", formatC(round(value/1000, 0), big.mark=",", format="f", digits=0), "k"),
     TRUE ~ paste0("$0"))
     )
@@ -229,7 +237,7 @@ plot <- ggplot(to_plot, aes(x=agecl, y=value)) +
             col = chart_standard_color,
             vjust = ifelse(text_labels$value >0, 0, 1),
             size = 1.8) +
-  facet_rep_wrap(key ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
+  facet_rep_wrap(key ~ ., repeat.tick.labels = c("left", "bottom")) +
   scale_y_continuous(label = dollar) +
   of_dollars_and_data_theme +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -240,5 +248,32 @@ plot <- ggplot(to_plot, aes(x=agecl, y=value)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+# Now do average and median for table
+wealth_table_by_age_html <- df_year %>%
+  filter(age >= 20, age<=80) %>%
+  mutate(agecl_new = case_when(age < 25 ~ "20-24",
+                               age < 30 ~ "25-29",
+                               age < 35 ~ "30-34",
+                               age < 40 ~ "35-39",
+                               age < 45 ~ "40-44",
+                               age < 50 ~ "45-49",
+                               age < 55 ~ "50-54",
+                               age < 60 ~ "55-59",
+                               age < 65 ~ "60-64",
+                               age < 70 ~ "65-69",
+                               age < 75 ~ "70-74",
+                               TRUE ~ "75-80")) %>%
+  group_by(agecl_new) %>%
+  summarise(
+    pct_50 = format_as_dollar(wtd.quantile(networth, weights = wgt, probs=c(0.5))),
+    avg = format_as_dollar(wtd.mean(networth, weights = wgt))
+  ) %>%
+  ungroup() %>%
+  select(agecl_new, avg, pct_50)
+
+print(xtable(wealth_table_by_age_html), 
+      include.rownames=FALSE,
+      type="html", 
+      file=paste0(out_path, "/", data_year, "_wealth_by_agecl_table.html"))
 
 # ############################  End  ################################## #

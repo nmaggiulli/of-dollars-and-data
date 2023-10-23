@@ -65,7 +65,7 @@ for (x in year_list){
   
   vars_to_keep <- c('y1', 'yy1', 'networth', 'debt', 'asset', 'liq', 'reteq',
                     'payedu1', 'payedu2', 'payedu3', 'payedu4', 'payedu5', 'payedu6', 'payedu7',
-                    'homeeq', 'rent', 'hdebt', 'fin', 'nfin', 'vehic', 'bus', 'oresre', 'othnfin', 'mrthel', 'resdbt', 'ccbal', 'install', 'odebt', 
+                    'homeeq', 'rent', 'hdebt', 'fin', 'nfin', 'houses', 'vehic', 'bus', 'oresre', 'othnfin', 'mrthel', 'resdbt', 'ccbal', 'install', 'odebt', 
                     'income', 'wageinc', 'intdivinc', 'bussefarminc', 'kginc', 'ssretinc',
                     'agecl', 'age', 'hhsex', 'race', 'racecl4', 'edcl', 'married', 'kids', 'wgt')
   

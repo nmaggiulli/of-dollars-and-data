@@ -190,7 +190,7 @@ create_stack <- function(var_name, var_title){
   create_percentile_chart(var_name, paste0("90th Percentile ", var_title), 0.9)
   create_percentile_chart(var_name, paste0("95th Percentile ", var_title), 0.95)
   create_percentile_chart(var_name, paste0("99th Percentile ", var_title), 0.99)
-  create_percentile_chart(var_name, paste0("99.9999th Percentile ", var_title), 0.999999)
+  create_percentile_chart(var_name, paste0("99.9th Percentile ", var_title), 0.999)
 }
 
 create_stack("income", "Income")

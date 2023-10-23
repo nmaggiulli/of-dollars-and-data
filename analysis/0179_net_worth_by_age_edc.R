@@ -24,7 +24,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-data_year <- 2019
+data_year <- 2022
 dir.create(file.path(paste0(out_path, "/", data_year)), showWarnings = FALSE)
 
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
@@ -188,7 +188,9 @@ create_percentile_chart("networth", "90th Percentile Net Worth", 0.9)
 create_percentile_chart("networth", "95th Percentile Net Worth", 0.95)
 create_percentile_chart("networth", "96th Percentile Net Worth", 0.96)
 create_percentile_chart("networth", "97th Percentile Net Worth", 0.97)
+create_percentile_chart("networth", "98th Percentile Net Worth", 0.98)
 create_percentile_chart("networth", "99th Percentile Net Worth", 0.99)
+create_percentile_chart("networth", "99.9th Percentile Net Worth", 0.999)
 
 
 # ############################  End  ################################## #
