@@ -27,8 +27,9 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds"))
 
 df <- scf_stack %>%
-      filter(race %in% c("White", "Black")) %>%
+      filter(race %in% c("White", "Black"), year >= 2001) %>%
       select(year, hh_id, imp_id, race,
+             nfin, fin,
              networth, income, debt, liq, wgt) %>%
       arrange(year, hh_id, imp_id)
 
@@ -96,6 +97,8 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
 
 create_time_series_chart("networth", "25th Percentile Real Net Worth", 0.25)
 create_time_series_chart("networth", "Real Median Net Worth", 0.5)
+create_time_series_chart("nfin", "Real Median Non-Financial Assets", 0.5)
+create_time_series_chart("fin", "Real Median Financial Assets", 0.5)
 create_time_series_chart("networth", "75th Percentile Real Net Worth", 0.75)
 create_time_series_chart("networth", "90th Percentile Real Net Worth", 0.9)
 create_time_series_chart("networth", "99th Percentile Real Net Worth", 0.99)

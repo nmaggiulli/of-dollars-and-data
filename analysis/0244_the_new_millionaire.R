@@ -80,12 +80,12 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Bring in CPI data
 cpi <- readRDS(paste0(localdir, "0021_FRED_cpi.Rds")) %>%
-          filter(year>= 2001, year <= 2019) %>%
+          filter(year>= 2001, year <= 2022) %>%
           select(year, index_cpi)
 
-cpi_2019 <- cpi %>%
-          mutate(cpi_2019 = index_cpi/cpi[nrow(cpi), "index_cpi"]) %>%
-          select(year, cpi_2019)
+cpi_latest <- cpi %>%
+          mutate(cpi_latest = index_cpi/cpi[nrow(cpi), "index_cpi"]) %>%
+          select(year, cpi_latest)
 
 zillow_middle <- read.csv(paste0(importdir, import_folder, "Metro_zhvi_uc_sfrcondo_tier_0.33_0.67_raw_mon.csv")) %>%
                       rename(region_name = RegionName) %>%
@@ -136,8 +136,8 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
   filter(year >= 2001) %>%
   select(year, wgt, networth) %>%
-  left_join(cpi_2019) %>%
-  mutate(networth_nominal = networth * cpi_2019)
+  left_join(cpi_latest) %>%
+  mutate(networth_nominal = networth * cpi_latest)
 
 to_plot <- scf_stack %>%
   group_by(year) %>%
@@ -153,7 +153,7 @@ source_string <- paste0("Source: Survey of Consumer Finances")
 plot <- ggplot(to_plot, aes(x= year, y = value, col = key)) +
   geom_line() +
   scale_color_manual(values = c("black")) +
-  scale_y_continuous(label = dollar, breaks = seq(0, 1.8*10^6, 10^5)) +
+  scale_y_continuous(label = dollar, breaks = seq(0, 2.8*10^6, 2*10^5)) +
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
