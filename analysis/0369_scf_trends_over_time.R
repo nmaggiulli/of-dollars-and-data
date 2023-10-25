@@ -16,6 +16,7 @@ library(survey)
 library(lemon)
 library(mitools)
 library(Hmisc)
+library(xtable)
 library(tidyverse)
 
 folder_name <- "0369_scf_trends_over_time"
@@ -201,7 +202,7 @@ data_year <- 2022
 df_year <- scf_stack %>%
   filter(year == data_year) %>%
   select(year, hh_id, imp_id, agecl, wgt, age,
-         networth) %>%
+         networth, homeeq) %>%
   arrange(year, hh_id, imp_id)
 
 to_plot <- df_year %>%
@@ -275,5 +276,33 @@ print(xtable(wealth_table_by_age_html),
       include.rownames=FALSE,
       type="html", 
       file=paste0(out_path, "/", data_year, "_wealth_by_agecl_table.html"))
+
+#Now do home equity
+homeeq_table_by_age_html <- df_year %>%
+  filter(age >= 20, age<=80) %>%
+  mutate(agecl_new = case_when(age < 25 ~ "20-24",
+                               age < 30 ~ "25-29",
+                               age < 35 ~ "30-34",
+                               age < 40 ~ "35-39",
+                               age < 45 ~ "40-44",
+                               age < 50 ~ "45-49",
+                               age < 55 ~ "50-54",
+                               age < 60 ~ "55-59",
+                               age < 65 ~ "60-64",
+                               age < 70 ~ "65-69",
+                               age < 75 ~ "70-74",
+                               TRUE ~ "75-80")) %>%
+  group_by(agecl_new) %>%
+  summarise(
+    pct_50 = format_as_dollar(wtd.quantile(homeeq, weights = wgt, probs=c(0.5))),
+    avg = format_as_dollar(wtd.mean(homeeq, weights = wgt))
+  ) %>%
+  ungroup() %>%
+  select(agecl_new, avg, pct_50)
+
+print(xtable(homeeq_table_by_age_html), 
+      include.rownames=FALSE,
+      type="html", 
+      file=paste0(out_path, "/", data_year, "_homeeq_by_agecl_table.html"))
 
 # ############################  End  ################################## #

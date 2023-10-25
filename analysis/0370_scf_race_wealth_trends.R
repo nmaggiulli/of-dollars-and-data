@@ -27,7 +27,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds"))
 
 df <- scf_stack %>%
-      filter(race %in% c("White", "Black"), year >= 2001) %>%
+      filter(race %in% c("White", "Black"), year >= 1992) %>%
       select(year, hh_id, imp_id, race,
              nfin, fin,
              networth, income, debt, liq, wgt) %>%
@@ -78,7 +78,7 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
   
   file_path <- paste0(out_path, "/", var, "_", quantile_prob_string, "_wb_gap_by_year.jpeg")
   source_string <- paste0("Source:  Survey of Consumer Finances (OfDollarsAndData.com)")
-  note_string <- paste0("Note: All figures are in 2022 dollars. The racial gap ")
+  note_string <- paste0("Note: All figures are in 2022 dollars.")
   
   plot <- ggplot(to_plot, aes(x=year, y=value)) +
     geom_line() +
@@ -87,24 +87,16 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
     of_dollars_and_data_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     ggtitle(paste0("White ", var_title, " Over\nBlack ", var_title , "\nby Year")) +
-    labs(x="Year", y=paste0("White/Black Ratio of\n", var_title),
+    labs(x="Year", y=paste0("Ratio of White/Black\n", var_title),
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-
 create_time_series_chart("networth", "25th Percentile Real Net Worth", 0.25)
 create_time_series_chart("networth", "Real Median Net Worth", 0.5)
-create_time_series_chart("nfin", "Real Median Non-Financial Assets", 0.5)
-create_time_series_chart("fin", "Real Median Financial Assets", 0.5)
 create_time_series_chart("networth", "75th Percentile Real Net Worth", 0.75)
-create_time_series_chart("networth", "90th Percentile Real Net Worth", 0.9)
-create_time_series_chart("networth", "99th Percentile Real Net Worth", 0.99)
 create_time_series_chart("networth", "Real Average Net Worth", 0)
-create_time_series_chart("income", "Real Median Income", 0.5)
-create_time_series_chart("debt", "Real Median Debt", 0.5)
-create_time_series_chart("liq", "Real Median Liquid Net Worth", 0.5)
 
 # ############################  End  ################################## #

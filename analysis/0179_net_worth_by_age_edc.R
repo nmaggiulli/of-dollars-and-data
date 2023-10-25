@@ -32,7 +32,7 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
 
 df <- scf_stack %>%
       select(hh_id, imp_id, 
-             networth, wgt, 
+             networth, homeeq, fin, wgt, 
              agecl, edcl) %>%
       arrange(hh_id, imp_id)
 
@@ -182,15 +182,17 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
 create_new_file <- 1
 create_percentile_chart("networth", "25th Percentile Net Worth", 0.25)
 create_percentile_chart("networth", "Median Net Worth", 0.5)
+create_percentile_chart("homeeq", "Median Home Equity", 0.5)
+create_percentile_chart("fin", "Median Financial Assets", 0.5)
 create_percentile_chart("networth", "75th Percentile Net Worth", 0.75)
 create_percentile_chart("networth", "Average Net Worth", 0)
 create_percentile_chart("networth", "90th Percentile Net Worth", 0.9)
+create_percentile_chart("networth", "93rd Percentile Net Worth", 0.93)
 create_percentile_chart("networth", "95th Percentile Net Worth", 0.95)
 create_percentile_chart("networth", "96th Percentile Net Worth", 0.96)
 create_percentile_chart("networth", "97th Percentile Net Worth", 0.97)
 create_percentile_chart("networth", "98th Percentile Net Worth", 0.98)
 create_percentile_chart("networth", "99th Percentile Net Worth", 0.99)
-create_percentile_chart("networth", "99.9th Percentile Net Worth", 0.999)
 
 
 # ############################  End  ################################## #

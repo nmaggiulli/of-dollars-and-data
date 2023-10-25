@@ -39,18 +39,18 @@ income_quartiles <- scf_stack %>%
 
 df <- scf_stack %>%
       select(hh_id, imp_id, 
-             networth, income, wgt, 
+             networth, income, nfin, debt, wgt,
              race, agecl, edcl) %>%
       arrange(hh_id, imp_id) %>%
-      mutate(inccl = case_when(income < 25000 ~ "Income (<$25k)",
-                                income < 50000 ~ "Income ($25k-$50k)",
-                                income < 100000 ~ "Income ($50k-$100k)",
-                                TRUE ~ "Income ($100k+)"))
+      mutate(inccl = case_when(income < 35000 ~ "Income (<$35k)",
+                                income < 70000 ~ "Income ($35k-$70k)",
+                                income < 100000 ~ "Income ($70k-$130k)",
+                                TRUE ~ "Income ($130k+)"))
 
-df$inccl <- factor(df$inccl,levels = c("Income (<$25k)", 
-                                       "Income ($25k-$50k)", 
-                                       "Income ($50k-$100k)", 
-                                       "Income ($100k+)"))
+df$inccl <- factor(df$inccl,levels = c("Income (<$35k)", 
+                                       "Income ($35k-$70k)", 
+                                       "Income ($70k-$130k)", 
+                                       "Income ($130k+)"))
 
 n_hh <- length(unique(df$hh_id))
 
@@ -283,11 +283,11 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
 create_new_file <- 1
 create_percentile_chart("networth", "Median Net Worth", 0.5)
 create_percentile_chart("networth", "Average Net Worth", 0)
+create_percentile_chart("networth", "25th Percentile Net Worth", 0.25)
 create_percentile_chart("networth", "75th Percentile Net Worth", 0.75)
 create_percentile_chart("networth", "82nd Percentile Net Worth", 0.82)
-create_percentile_chart("networth", "25th Percentile Net Worth", 0.25)
 create_percentile_chart("networth", "90th Percentile Net Worth", 0.9)
-
-
+create_percentile_chart("debt", "Median Debt", 0.5)
+create_percentile_chart("nfin", "Median Non-Financial Assets", 0.5)
 
 # ############################  End  ################################## #
