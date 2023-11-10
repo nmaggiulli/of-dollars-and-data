@@ -222,7 +222,7 @@ note_string <- str_wrap("Note: Returns shown are adjusted for inflation.",
 
 plot <- ggplot(data = to_plot, aes(x = year, y = fwd_real_cagr_10yr)) +
   geom_line() +
-  scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 0.14, 0.02)) +
+  scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(-0.02, 0.16, 0.02), limits = c(-0.02, 0.16)) +
   scale_x_continuous(breaks = seq(min(to_plot$year), 2020, 10)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("AIVSX 10-Year Inflation-Adjusted CAGR\nBy Year")) +
@@ -241,7 +241,7 @@ plot <- ggplot(data = to_plot, aes(x = year, y = fwd_real_cagr_10yr)) +
   geom_line() +
   geom_point(data = to_plot, aes(x = year, y = fwd_real_cagr_10yr, col = as.factor(gt_zero))) +
   scale_color_manual(values = c("red", "green"), guide = "none") +
-  scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 0.14, 0.02)) +
+  scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(-0.02, 0.16, 0.02), limits = c(-0.02, 0.16)) +
   scale_x_continuous(breaks = seq(min(to_plot$year), 2020, 10)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("AIVSX 10-Year Inflation-Adjusted CAGR\nBy Year\nWith Survival Information")) +
