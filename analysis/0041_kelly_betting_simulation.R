@@ -158,7 +158,7 @@ file_path <- paste0(exportdir, "0041_kelly_betting_simulation/optimal_portfolio_
 ##Plot the bars
 plot <- ggplot(to_plot, aes(x=year, y=value, fill=key)) +
           geom_bar(stat="identity", position="dodge") +
-          ggtitle("Even The Optimal Portfolio\nLoses Money 25% of the Time")  +
+          ggtitle("Even The Optimal Portfolio\nLoses Money Over 20% of the Time")  +
           of_dollars_and_data_theme + 
           scale_y_continuous(label = percent) +
           scale_fill_discrete(guide = FALSE) +

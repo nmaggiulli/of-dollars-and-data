@@ -18,13 +18,13 @@ library(mitools)
 library(Hmisc)
 library(tidyverse)
 
-folder_name <- "0372_downsides_of_diversification"
+folder_name <- "0373_downsides_of_diversification"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-raw <- read.csv(paste0(importdir, "/0372_downsides_of_diversification/ycharts_port_data.csv"),
+raw <- read.csv(paste0(importdir, "/0373_downsides_of_diversification/ycharts_port_data.csv"),
                 col.names = c("date", "NM Portfolio", "US Stocks", "US REIT", "Developed Stocks", "EM Stocks", "Small-Cap Value Stocks", "Intermediate Bonds")) %>%
         drop_na() %>%
         mutate(date = as.Date(date)) %>%
@@ -35,7 +35,7 @@ to_plot <- raw %>%
           mutate(value = value/100,
                  key = str_replace_all(key, "\\.", " ")) 
 
-file_path <- paste0(out_path, "/russell_3000_stocks_rep_gain.jpeg")
+file_path <- paste0(out_path, "/nm_port_since_aug_2012.jpeg")
 source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
 note_string <- str_wrap("Note: Performance includes dividends, but is not adjusted for inflation.",
                         width = 80)
