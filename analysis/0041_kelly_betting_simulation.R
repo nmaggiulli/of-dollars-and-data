@@ -116,11 +116,8 @@ for (i in 1:nrow(simulations_to_run)){
 ## Part 2, find the equal weighted portfolio and how often it underperforms
 
 # Load in BV returns and only keep assets in optimal portfolio
-full_bv_returns <- readRDS(paste0(localdir, "06-bv-returns.Rds")) %>%
-                      select(year, `S&P 500`, `Int. Stocks`, `REIT`, `Treasury 10yr`, `Gold`)
-
-# Convert year to a date object
-full_bv_returns$year <- as.Date(full_bv_returns$year, "%d/%m/%y")
+full_bv_returns <- readRDS(paste0(localdir, "0006_bv_returns.Rds")) %>%
+                      select(year, `S&P 500`, `U.S. Home Price`, `REIT`, `Treasury 10yr`, `Gold`)
 
 min_year <- min(year(full_bv_returns$year))
 max_year <- max(year(full_bv_returns$year))
@@ -128,11 +125,11 @@ max_year <- max(year(full_bv_returns$year))
 # Create the optimal portfolio
 # The weights come from analysis #6
 # This was done manually for simplicity
-full_bv_returns$port_optimal <- 0.34*full_bv_returns$`Treasury 10yr` +
-                                0.29*full_bv_returns$`S&P 500` +
-                                0.24*full_bv_returns$`REIT` +
-                                0.10*full_bv_returns$`Gold` +
-                                0.03*full_bv_returns$`Int. Stocks`
+full_bv_returns$port_optimal <- 0.38*full_bv_returns$`U.S. Home Price` +
+                                0.24*full_bv_returns$`S&P 500` +
+                                0.18*full_bv_returns$`Treasury 10yr` +
+                                0.16*full_bv_returns$`REIT` +
+                                0.04*full_bv_returns$`Gold`
                                 
 
 ## Count the number of assets with negative returns in a given year
@@ -161,15 +158,15 @@ file_path <- paste0(exportdir, "0041_kelly_betting_simulation/optimal_portfolio_
 ##Plot the bars
 plot <- ggplot(to_plot, aes(x=year, y=value, fill=key)) +
           geom_bar(stat="identity", position="dodge") +
-          ggtitle("Even An Optimal Portfolio Can\nLose Money 25% of the Time")  +
+          ggtitle("Even The Optimal Portfolio\nLoses Money 25% of the Time")  +
           of_dollars_and_data_theme + 
           scale_y_continuous(label = percent) +
           scale_fill_discrete(guide = FALSE) +
           scale_color_discrete(guide = FALSE) +
           labs(x = "Year" , y = "Annual Real Return (%)") +
           geom_text_repel(data = filter(to_plot, year == as.Date("1993-01-01", format="%Y-%m-%d"), key == "port_optimal"),
-                  aes(x = as.Date("1993-01-01", format="%Y-%m-%d"), 
-                      y = -0.10,
+                  aes(x = as.Date("1990-01-01", format="%Y-%m-%d"), 
+                      y = -0.15,
                       col = key,
                       label = "Optimal\nPortfolio",
                       family = "my_font"),
@@ -187,8 +184,8 @@ plot <- ggplot(to_plot, aes(x=year, y=value, fill=key)) +
 # Turn plot into a gtable for adding text grobs
 my_gtable   <- ggplot_gtable(ggplot_build(plot))
 
-source_string <- paste0("Source:  BullionVault U.S. Asset Class Performance Data, ", min_year, "-", max_year," (OfDollarsAndData.com)")
-note_string   <- paste0("Note:  Returns are adjusted using the U.S. Consumer Price Index.") 
+source_string <- paste0("Source: BullionVault U.S. Asset Class Performance Data, ", min_year, "-", max_year," (OfDollarsAndData.com)")
+note_string   <- paste0("Note: Returns are adjusted using the U.S. Consumer Price Index.") 
 
 # Make the source and note text grobs
 source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),

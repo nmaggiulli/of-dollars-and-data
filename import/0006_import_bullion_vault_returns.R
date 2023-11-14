@@ -40,6 +40,8 @@ for (x in var_list){
 # Remove CPI as it is not an asset
 bv_returns[, "CPI"] <- NULL
 
+bv_returns$year <- as.Date(bv_returns$year, "%d/%m/%y")
+
 # Save down the data
 saveRDS(bv_returns, paste0(localdir, "0006_bv_returns.Rds"))
 

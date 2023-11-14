@@ -7,10 +7,6 @@ source(file.path(paste0(getwd(),"/header.R")))
 
 ########################## Load in Libraries ########################## #
 
-
-########################## Start Program Here ######################### #
-
-library(dplyr)
 library(ggplot2)
 library(reshape2)
 library(scales)
@@ -23,14 +19,12 @@ library(ggrepel)
 library(quadprog)
 library(lubridate)
 library(fTrading)
+library(tidyverse)
 
-# ############################  End  ################################## #
+########################## Start Program Here ######################### #
 
 # Load in BV returns
 full_bv_returns <- readRDS(paste0(localdir, "0006_bv_returns.Rds"))
-
-# Convert year to a date object
-full_bv_returns$year <- as.Date(full_bv_returns$year, "%d/%m/%y")
 
 # Define the number of simulations (this will be used later)
 n_simulations <- 1000
@@ -479,7 +473,7 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
     ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm") 
     
     # Set the file_path based on the function input 
-    file_path = paste0(exportdir, "06-simulate-bv-returns/bv-drawdowns-more-risky.jpeg")
+    file_path = paste0(exportdir, "0006_simulate_bv_returns/bv_drawdowns_more_risky.jpeg")
     
     top_title <- "The Optimal Portfolio Has Far Less Risk\n For A Similar Level of Return"
     
@@ -570,3 +564,27 @@ melted_returns <- melt(full_bv_returns ,  id.vars = 'year', variable.name = 'ass
   }
   
   write.csv(results_df, paste0(exportdir, "0006_simulate_bv_returns/portfolio-stats.csv"))
+  
+#Final plot
+to_plot <- melted_returns %>%
+            filter(asset %in% c("S&P 500", "REIT", "Treasury 10yr", "Gold", "U.S. Home Price")) %>%
+            mutate(pos = ifelse(value > 0, 1, 0)) %>%
+            group_by(year) %>%
+            summarise(n_neg = 5 - sum(pos)) %>%
+            ungroup()
+
+# Set the file_path based on the function input 
+file_path <- paste0(exportdir, "0006_simulate_bv_returns/neg_returns.jpeg")
+source_string <- "Source:  Simulated returns, BullionVault (OfDollarsAndData.com)"
+
+plot <- ggplot(to_plot, aes(x = year, y = n_neg)) +
+  geom_bar(stat = "identity", fill = chart_standard_color) +
+  scale_y_continuous(limits = c(0, 5), breaks = seq(0, 5, 1)) +
+  of_dollars_and_data_theme +
+  theme(legend.title = element_blank(),
+        legend.position = "bottom") +
+  ggtitle(paste0("At Least One Asset in the Optimal Portfolio\nLoses Money in 88% of All Years")) +
+  labs(x = "Year" , y = "Number of Assets with a Negative Return",
+       caption = paste0(source_string))
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
