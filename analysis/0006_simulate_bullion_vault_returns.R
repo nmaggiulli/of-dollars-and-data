@@ -574,7 +574,7 @@ to_plot <- melted_returns %>%
             ungroup()
 
 # Set the file_path based on the function input 
-file_path <- paste0(exportdir, "0006_simulate_bv_returns/neg_returns.jpeg")
+file_path <- paste0(exportdir, "0006_simulate_bv_returns/neg_returns_op_portfolio_2022.jpeg")
 source_string <- "Source:  Simulated returns, BullionVault (OfDollarsAndData.com)"
 
 plot <- ggplot(to_plot, aes(x = year, y = n_neg)) +
