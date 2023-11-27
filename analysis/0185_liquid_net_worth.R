@@ -31,11 +31,13 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
 
 df <- scf_stack %>%
       mutate(liquid_networth = fin - reteq - debt,
+             homeeq_pct = homeeq/networth,
              diff = networth - homeeq - vehic - fin) %>%
       select(hh_id, imp_id, 
              networth,
              homeeq, 
              liquid_networth, 
+             homeeq_pct,
              fin,
              debt,
              wgt, 
@@ -80,7 +82,7 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
     quantile_prob_string <- "avg"
   }
   
-  print(paste0("Overall ", var_title, " is: $", formatC(percentile_var, digits = 0, format = "f", big.mark = ",")))
+  print(paste0("Overall ", var_title, " is: $", formatC(percentile_var, digits = 2, format = "f", big.mark = ",")))
   
   file_path <- paste0(out_path, "/", var, "_", quantile_prob_string, "_age_edc_comb_", data_year, ".jpeg")
   source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
@@ -189,6 +191,7 @@ create_new_file <- 1
 create_percentile_chart("liquid_networth", "Median Liquid Net Worth", 0.5)
 create_percentile_chart("homeeq", "Median Home Equity", 0.5)
 create_percentile_chart("fin", "Median Financial Assets", 0.5)
+create_percentile_chart("homeeq_pct", "Median Home Equity Percentage", 0.5)
 
 
 # ############################  End  ################################## #
