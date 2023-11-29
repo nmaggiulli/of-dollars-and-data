@@ -30,11 +30,13 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
               filter(year == data_year)
 
 df <- scf_stack %>%
-      mutate(liquid_networth = asset - reteq - nfin - debt,
+      mutate(liquid_assets = asset - reteq - nfin,
+        liquid_networth = liquid_assets - debt,
              homeeq_pct = homeeq/networth) %>%
       select(hh_id, imp_id, 
              networth,
              homeeq, 
+             liquid_assets,
              liquid_networth, 
              homeeq_pct,
              fin,
@@ -190,6 +192,7 @@ create_new_file <- 1
 create_percentile_chart("liquid_networth", "Median Liquid Net Worth", 0.5)
 create_percentile_chart("liquid_networth", "75th Percentile Liquid Net Worth", 0.75)
 create_percentile_chart("liquid_networth", "90th Percentile Liquid Net Worth", 0.9)
+create_percentile_chart("liquid_assets", "Median Liquid Assets", 0.5)
 create_percentile_chart("homeeq", "Median Home Equity", 0.5)
 
 
