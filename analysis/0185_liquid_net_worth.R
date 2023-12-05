@@ -192,6 +192,8 @@ create_new_file <- 1
 create_percentile_chart("liquid_networth", "Median Liquid Net Worth", 0.5)
 create_percentile_chart("liquid_networth", "75th Percentile Liquid Net Worth", 0.75)
 create_percentile_chart("liquid_networth", "90th Percentile Liquid Net Worth", 0.9)
+create_percentile_chart("liquid_assets", "25th Percentile Liquid Assets", 0.25)
+create_percentile_chart("liquid_assets", "90th Percentile Liquid Assets", 0.9)
 create_percentile_chart("liquid_assets", "Median Liquid Assets", 0.5)
 create_percentile_chart("homeeq", "Median Home Equity", 0.5)
 
