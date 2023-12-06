@@ -29,28 +29,42 @@ for (x in year_list){
   # 
   # networth = total networth (asset - debt)
   # asset = value of all assets (fin + nfin)
-  # debt = value of all debt // DEBT=MRTHEL+RESDBT+OTHLOC+CCBAL+INSTALL+ODEBT
-  # liq = all types of transactions accounts (liquid assets)
-  # homeeq = value of home equity
-  # reteq = retirement equity
-  # hdebt = dummy, 1 if has debt, 0 if no debt
-  # payedu1-7 = student loans
+  
   # fin = total finanical assets (LIQ+CDS+NMMF+STOCKS+BOND+RETQLIQ+SAVBND+CASHLI+OTHMA+OTHFIN)
+  # liq = all types of transactions accounts (liquid assets)
+  # cds = Certificate of deposit
+  # nmmf = Mutual Funds
+  # stocks = Stocks
+  # bond = Bonds
+  # retqliq = total quasi-liquid: sum of IRAs, thrift accounts, and future pensions;
+  # savbnd = savings bonds
+  # cashli = Cash life insurance
+  # othma = other managed assets (trusts, annuities and managed investment)
+  # othfin = other financial assets: includes loans from the household to someone else, future proceeds, royalties, futures, non-public stock, deferred compensation, oil/gas/mineral invest., cash;
+  # reteq = retirement equity
+  
   # nfin = total non-financial assets (VEHIC+HOUSES+ORESRE+NNRESRE+BUS+OTHNFIN)
   # vehic = value of all vehicles
+  # houses = primary residence
+  # oresre = other residential real estate
+  # nnresre = non-residential real estate
   # bus = business value
-  # ORESRE = other residential real estate
-  # OTHNFIN = other non-financial assets (jewelry)
+  # othnfin = other non-financial assets (jewelry)
+  # homeeq = value of home equity
+  
+  # debt = value of all debt // DEBT=MRTHEL+RESDBT+OTHLOC+CCBAL+INSTALL+ODEBT
   # mrthel = mortgage debt
   # resdbt = other residential debt
   # ccbal = credit card balance
-  # INSTALL = installment loan
-  # ODEBT = Other debt
+  # install = installment loan
+  # odebt = Other debt
+  # hdebt = dummy, 1 if has debt, 0 if no debt
+  # payedu1-7 = student loans
+  
   # income = total household income
   # wageinc = Wage and salary income
   # intdivinc = 	Interest (taxable and nontaxable) and dividend income
   # bussefarminc = 	Income from business, sole proprietorship, and farm
-  # rentinc = Net rental income
   # kginc = Capital gain or loss income
   # ssretinc = Social security and pension income
   # agecl = age class, 1:<35, 2:35-44, 3:45-54, 4:55-64, 5:65-74, 6:>=75
@@ -63,11 +77,14 @@ for (x in year_list){
   # married = marital status, 1 = married/living with partner, 2 = neither married nor living with partner
   # kids = number of kids
   
-  vars_to_keep <- c('y1', 'yy1', 'networth', 'debt', 'asset', 'liq', 'reteq',
+  vars_to_keep <- c('y1', 'yy1', 'networth', 'asset',
+                    'fin' , 'liq', 'cds', 'nmmf', 'stocks', 'bond', 'retqliq', 'savbnd', 'cashli', 'othma', 'othfin', 'reteq',
+                    'nfin', 'vehic', 'houses', 'oresre', 'nnresre', 'bus', 'othnfin', 'homeeq',
+                    'debt', 'mrthel','resdbt','ccbal', 'install', 'odebt', 'hdebt',
                     'payedu1', 'payedu2', 'payedu3', 'payedu4', 'payedu5', 'payedu6', 'payedu7',
-                    'homeeq', 'rent', 'hdebt', 'fin', 'nfin', 'houses', 'vehic', 'bus', 'oresre', 'othnfin', 'mrthel', 'resdbt', 'ccbal', 'install', 'odebt', 
-                    'income', 'wageinc', 'intdivinc', 'bussefarminc', 'kginc', 'ssretinc',
-                    'agecl', 'age', 'hhsex', 'race', 'racecl4', 'edcl', 'married', 'kids', 'wgt')
+                    'income', 'wageinc', 'intdivinc', 'bussefarminc',  'kginc', 'ssretinc',
+                    'agecl', 'age', 'hhsex', 'race', 'racecl4', 'edcl', 'married', 'kids', 
+                    'wgt')
   
   # Write a function to subset our data
   subset_data <- function(name){
