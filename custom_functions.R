@@ -151,9 +151,13 @@ convert_date_to_monthly <- function(dt__1){
 }
 
 # Create GIF function accepts path, filename, and speed argument
+# Before using on Mac you will need to install homebrew and imagemagick
+# homebrew: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+# then: echo "eval $(/opt/homebrew/bin/brew shellenv)" >> ~/.zshrc
+# then: brew install imagemagick
 create_gif <- function(path, file_stub, speed_milliseconds, n_loops = 0, out_name = "all_plots.gif"){
   path <- gsub(" ", "\\\ ", path, fixed = TRUE)
-  system(paste0("convert -delay ", speed_milliseconds, " -loop ", n_loops, " ", path, "/", file_stub ," ",  path, "/", out_name))
+  system2(paste0("convert -delay ", speed_milliseconds, " -loop ", n_loops, " ", path, "/", file_stub ," ",  path, "/", out_name))
 }
 
 # Create function to calculate the drawdowns over time
