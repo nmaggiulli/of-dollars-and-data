@@ -157,7 +157,7 @@ convert_date_to_monthly <- function(dt__1){
 # then: brew install imagemagick
 create_gif <- function(path, file_stub, speed_milliseconds, n_loops = 0, out_name = "all_plots.gif"){
   path <- gsub(" ", "\\\ ", path, fixed = TRUE)
-  system2(paste0("convert -delay ", speed_milliseconds, " -loop ", n_loops, " ", path, "/", file_stub ," ",  path, "/", out_name))
+  system(paste0("/opt/homebrew/bin/convert -delay ", speed_milliseconds, " -loop ", n_loops, " ", path, "/", file_stub ," ",  path, "/", out_name))
 }
 
 # Create function to calculate the drawdowns over time

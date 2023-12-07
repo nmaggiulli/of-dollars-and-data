@@ -158,7 +158,7 @@ for(s in s_weights){
     lead_zero <- ""
   }
   
-  file_path <- paste0(out_path, "/sim_results_stock_", lead_zero, 100*s, "_swr.jpeg")
+  file_path <- paste0(out_path, "/sim_results_", n_years, "_stock_", lead_zero, 100*s, "_swr.jpeg")
   source_string <- paste0("Source:  Returns 2.0 (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note: Performance data goes from 1926 to 2022, includes dividends, and is adjusted for inflation. ",
                                  "Assumes that the portfolio is rebalanced every January, spending is adjusted for inflation (annually), and that there are no taxes or transaction fees."),
@@ -193,16 +193,16 @@ for(s in s_weights){
 }
 
 export_to_excel(df = final_results,
-                outfile = paste0(out_path, "/swr_results_all_ports.xlsx"),
+                outfile = paste0(out_path, "/swr_results_all_ports_", n_years, ".xlsx"),
                 sheetname = "all_ports",
                 new_file = 1,
                 fancy_formatting = 0)
 
 create_gif(path = out_path, 
-          file_stub = "sim_results_stock_*",
+          file_stub = paste0("sim_results_", n_years, "_stock_*"),
           speed_milliseconds = 100,
           n_loops = 0,
-          out_name = paste0("_all_swr_results_1926_2022.gif"))
+          out_name = paste0("_all_swr_results_1926_2022_", n_years, ".gif"))
 
 
 # ############################  End  ################################## #
