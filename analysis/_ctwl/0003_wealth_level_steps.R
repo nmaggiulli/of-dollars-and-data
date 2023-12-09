@@ -13,7 +13,7 @@ library(lubridate)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "_ctwl/0003_wealth_steps"
+folder_name <- "_ctwl/0003_wealth_level_steps"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -25,7 +25,7 @@ df <- data.frame(wealth = c(0, w_levels),
 
 to_plot <- df
 
-file_path <- paste0(out_path, "/wealth_steps_plot_log_scale.jpeg")
+file_path <- paste0(out_path, "/wealth_steps_log_scale.jpeg")
 
 plot <- ggplot(data = to_plot, aes(x=wealth, y = level)) +
   geom_step() +

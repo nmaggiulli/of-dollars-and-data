@@ -18,7 +18,7 @@ library(mitools)
 library(Hmisc)
 library(tidyverse)
 
-folder_name <- "_ctwl/0001_asset_breakdown_by_networth_tier"
+folder_name <- "_ctwl/0001_asset_breakdown_by_wealth_level"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -41,7 +41,7 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                      `Stocks & Mutual Funds` = (nmmf + stocks)/asset, 
                      `Cash` = liq/asset,
                      `Other` = (savbnd + othfin + othnfin + cashli + othma + bond + cds)/asset,
-                     networth_tier = case_when(
+                     wealth_level = case_when(
                        networth < 10000 ~ "L1 (<$10k)",
                        floor(log10(networth)) == 4 ~ "L2 ($100k)",
                        floor(log10(networth)) == 5 ~ "L3 ($1M)",
@@ -50,17 +50,17 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                        floor(log10(networth)) > 7 ~ "L6 ($100M+)", 
                              TRUE ~ "ERROR"
                      )) %>%
-                select(networth_tier, networth, `Business Interests`, `Real Estate`,`Primary Residence`,
+                select(wealth_level, networth, `Business Interests`, `Real Estate`,`Primary Residence`,
                        `Vehicles`, `Retirement`,
                        `Stocks & Mutual Funds`, `Cash`, `Other`,
                        wgt)
 
-scf_stack$networth_tier <- factor(scf_stack$networth_tier, levels = c("L1 (<$10k)", "L2 ($100k)",
+scf_stack$wealth_level <- factor(scf_stack$wealth_level, levels = c("L1 (<$10k)", "L2 ($100k)",
                                                                       "L3 ($1M)", "L4 ($10M)",
                                                                       "L5 ($100M)", "L6 ($100M+)"))
 
 to_plot <- scf_stack %>%
-              group_by(networth_tier) %>%
+              group_by(wealth_level) %>%
               summarise(`Business Interests` = wtd.mean(`Business Interests`, weights = wgt),
                         `Real Estate` = wtd.mean(`Real Estate`, weights = wgt),
                         `Primary Residence` = wtd.mean(`Primary Residence`, weights = wgt),
@@ -71,16 +71,16 @@ to_plot <- scf_stack %>%
                         `Other` = wtd.mean(`Other`, weights = wgt)
                         ) %>%
               ungroup() %>%
-              gather(-networth_tier, key=key, value=value)
+              gather(-wealth_level, key=key, value=value)
 
-file_path <- paste0(out_path, "/_asset_breakdown_by_nw_tier_all_color.jpeg")
+file_path <- paste0(out_path, "/_asset_breakdown_by_wealth_level_all_color.jpeg")
 source_string <- paste0("Source: Survey of Consumer Finances (2022)")
 
 my_colors <- c("#1f78b4", "#a6cee3", "#33a02c", "#FFDB58", "#e31a1c", "#fb9a99",
             "purple", "#ff7f00")
 
 # Create plot 
-plot <- ggplot(data = to_plot, aes(x = networth_tier, y=value, fill = key)) +
+plot <- ggplot(data = to_plot, aes(x = wealth_level, y=value, fill = key)) +
   geom_bar(stat = "identity", position = "stack") +
   scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 1, 0.1)) +
   scale_fill_manual(values = my_colors) +
@@ -95,10 +95,10 @@ plot <- ggplot(data = to_plot, aes(x = networth_tier, y=value, fill = key)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Now do grayscale
-file_path <- paste0(out_path, "/_asset_breakdown_by_nw_tier_grayscale.jpeg")
+file_path <- paste0(out_path, "/_asset_breakdown_by_wealth_level_grayscale.jpeg")
 
 # Create plot 
-plot <- ggplot(data = to_plot, aes(x = networth_tier, y=value, fill = key)) +
+plot <- ggplot(data = to_plot, aes(x = wealth_level, y=value, fill = key)) +
   geom_bar(stat = "identity", position = "stack") +
   scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 1, 0.1)) +
   scale_fill_manual(values = my_colors) +
@@ -122,17 +122,17 @@ all_assets <- c("Business Interests", "Cash", "Stocks & Mutual Funds",
 
 for(a in all_assets){
   to_plot <- scf_stack %>%
-    group_by(networth_tier) %>%
+    group_by(wealth_level) %>%
     rename_(.dots = setNames(paste0("`", a, "`"), "var_for_qtile")) %>%
     summarise(pct_var = wtd.mean(var_for_qtile, weights = wgt)) %>%
     ungroup() %>%
     mutate(`All Other Assets` = 1 - pct_var) %>%
     rename_(.dots = setNames("pct_var", a)) %>%
-    gather(-networth_tier, key=key, value=value)
+    gather(-wealth_level, key=key, value=value)
   
   a_string <- str_replace_all(a, "\\s|&", "_")
   
-  file_path <- paste0(out_path, "/", a_string, "_by_nw_tier_grayscale.jpeg")
+  file_path <- paste0(out_path, "/", a_string, "_by_wealth_level_grayscale.jpeg")
   
   if(a == "Retirement"){
     a_title <- "Retirement Wealth"
@@ -143,7 +143,7 @@ for(a in all_assets){
   }
   
   # Create plot 
-  plot <- ggplot(data = to_plot, aes(x = networth_tier, y=value, fill = key)) +
+  plot <- ggplot(data = to_plot, aes(x = wealth_level, y=value, fill = key)) +
     geom_bar(stat = "identity", position = "stack") +
     scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 1, 0.1)) +
     scale_fill_manual(values = my_grayscale) +
