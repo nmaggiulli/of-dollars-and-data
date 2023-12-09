@@ -37,8 +37,8 @@ text_labels <- data.frame(wealth = w_levels,
 
 plot <- ggplot(data = to_plot, aes(x=wealth, y = level)) +
   geom_step() +
-  geom_point(data=text_labels, aes(x=wealth, y = level), col = "red") +
-  geom_text_repel(data=text_labels, aes(x=wealth, y = level, label = text), col = "red", size = 3, max.iter = 3000) +
+  geom_point(data=text_labels, aes(x=wealth, y = level), col = "gray") +
+  geom_text_repel(data=text_labels, aes(x=wealth, y = level, label = text), col = "gray", size = 3, max.iter = 3000) +
   scale_y_continuous(label = comma, breaks = seq(1, length(w_levels) +1)) +
   scale_x_continuous(label = dollar_format(), limits= c(NA, 10^8 *1.1), breaks = c(0, w_levels), trans = "log10") +
   of_dollars_and_data_theme +
