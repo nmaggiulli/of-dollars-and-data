@@ -18,7 +18,7 @@ library(mitools)
 library(Hmisc)
 library(tidyverse)
 
-folder_name <- "_ctwl/0001_asset_breakdown_by_wealth_level"
+folder_name <- "_ctwl/0004_age_by_wealth_level"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -50,32 +50,25 @@ scf_stack$wealth_level <- factor(scf_stack$wealth_level, levels = c("L1 (<$10k)"
 
 to_plot <- scf_stack %>%
               group_by(wealth_level) %>%
-              summarise(`Business Interests` = wtd.mean(`Business Interests`, weights = wgt),
-                        `Real Estate` = wtd.mean(`Real Estate`, weights = wgt),
-                        `Primary Residence` = wtd.mean(`Primary Residence`, weights = wgt),
-                        `Vehicles` = wtd.mean(`Vehicles`, weights = wgt),
-                        `Retirement` = wtd.mean(`Retirement`, weights = wgt),
-                        `Stocks & Mutual Funds` = wtd.mean(`Stocks & Mutual Funds`, weights = wgt),
-                        `Cash` = wtd.mean(`Cash`, weights = wgt),
-                        `Other` = wtd.mean(`Other`, weights = wgt)
-                        ) %>%
-              ungroup() %>%
-              gather(-wealth_level, key=key, value=value)
+              summarise(average_age = wtd.mean(age, weights = wgt)) %>%
+              ungroup()
 
-file_path <- paste0(out_path, "/_asset_breakdown_by_nw_tier_all_color.jpeg")
+file_path <- paste0(out_path, "/age_breakdown_by_wealth_level.jpeg")
 source_string <- paste0("Source: Survey of Consumer Finances (2022)")
 
+text_labels <- to_plot %>%
+                  mutate(label = round(average_age, 0))
 
 # Create plot 
-plot <- ggplot(data = to_plot, aes(x = wealth_level, y=value, fill = key)) +
-  geom_bar(stat = "identity", position = "stack") +
-  scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 1, 0.1)) +
-  scale_fill_manual(values = my_colors) +
+plot <- ggplot(data = to_plot, aes(x = wealth_level, y=average_age)) +
+  geom_bar(stat = "identity", position = "stack", fill = "black") +
+  geom_text(data = text_labels, aes(x = wealth_level, y=average_age, label = label),
+            vjust = 1.5,
+            color = "white") +
+  scale_y_continuous(label = comma) +
   of_dollars_and_data_theme +
-  theme(legend.title = element_blank(),
-        axis.text.x = element_text(angle = 45, vjust = 0.5)) +
-  ggtitle(paste0("Asset Breakdown by Wealth Level")) +
-  labs(x = "Wealth Level (Net Worth Tier)" , y = "Percentage of Assets",
+  ggtitle(paste0("Average Age by Wealth Level")) +
+  labs(x = "Wealth Level (Net Worth Tier)" , y = "Average Age",
        caption = paste0(source_string))
 
 # Save the plot
