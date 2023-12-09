@@ -87,8 +87,8 @@ plot <- ggplot(data = to_plot, aes(x = networth_tier, y=value, fill = key)) +
   of_dollars_and_data_theme +
   theme(legend.title = element_blank(),
         axis.text.x = element_text(angle = 45, vjust = 0.5)) +
-  ggtitle(paste0("Asset Breakdown by Networth Tier")) +
-  labs(x = "Networth Tier" , y = "Percentage of Assets",
+  ggtitle(paste0("Asset Breakdown by Wealth Level")) +
+  labs(x = "Wealth Level (Net Worth Tier)" , y = "Percentage of Assets",
        caption = paste0(source_string))
 
 # Save the plot
@@ -106,8 +106,8 @@ plot <- ggplot(data = to_plot, aes(x = networth_tier, y=value, fill = key)) +
   of_dollars_and_data_theme +
   theme(legend.title = element_blank(),
         axis.text.x = element_text(angle = 45, vjust = 0.5)) +
-  ggtitle(paste0("Asset Breakdown by Networth Tier")) +
-  labs(x = "Networth Tier" , y = "Percentage of Assets",
+  ggtitle(paste0("Asset Breakdown by Wealth Level")) +
+  labs(x = "Wealth Level" , y = "Percentage of Assets",
        caption = paste0(source_string))
 
 # Save the plot
@@ -150,8 +150,8 @@ for(a in all_assets){
     of_dollars_and_data_theme +
     theme(legend.title = element_blank(),
           axis.text.x = element_text(angle = 45, vjust = 0.5)) +
-    ggtitle(paste0(a_title, " by Networth Tier")) +
-    labs(x = "Networth Tier" , y = "Percentage of Assets",
+    ggtitle(paste0(a_title, " by Wealth Level")) +
+    labs(x = "Wealth Level (Net Worth Tier)" , y = "Percentage of Assets",
          caption = paste0(source_string))
   
   # Save the plot
