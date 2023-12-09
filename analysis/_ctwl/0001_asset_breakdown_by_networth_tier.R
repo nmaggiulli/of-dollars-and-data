@@ -42,12 +42,12 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                      `Cash` = liq/asset,
                      `Other` = (savbnd + othfin + othnfin + cashli + othma + bond + cds)/asset,
                      networth_tier = case_when(
-                       networth < 10000 ~ "<$10k (L1)",
-                       floor(log10(networth)) == 4 ~ "$100k (L2)",
-                       floor(log10(networth)) == 5 ~ "$1M (L3)",
-                       floor(log10(networth)) == 6 ~ "$10M (L4)",  
-                       floor(log10(networth)) == 7 ~ "$100M (L5)",  
-                       floor(log10(networth)) > 7 ~ "$100M+ (L6)", 
+                       networth < 10000 ~ "L1 (<$10k)",
+                       floor(log10(networth)) == 4 ~ "L2 ($100k)",
+                       floor(log10(networth)) == 5 ~ "L3 ($1M)",
+                       floor(log10(networth)) == 6 ~ "L4 ($10M)",  
+                       floor(log10(networth)) == 7 ~ "L5 ($100M)",  
+                       floor(log10(networth)) > 7 ~ "L6 ($100M+)", 
                              TRUE ~ "ERROR"
                      )) %>%
                 select(networth_tier, networth, `Business Interests`, `Real Estate`,`Primary Residence`,
@@ -55,9 +55,9 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                        `Stocks & Mutual Funds`, `Cash`, `Other`,
                        wgt)
 
-scf_stack$networth_tier <- factor(scf_stack$networth_tier, levels = c("<$10k (L1)", "$100k (L2)",
-                                                                      "$1M (L3)", "$10M (L4)",
-                                                                      "$100M (L5)", "$100M+ (L6)"))
+scf_stack$networth_tier <- factor(scf_stack$networth_tier, levels = c("L1 (<$10k)", "L2 ($100k)",
+                                                                      "L3 ($1M)", "L4 ($10M)",
+                                                                      "L5 ($100M)", "L6 ($100M+)"))
 
 to_plot <- scf_stack %>%
               group_by(networth_tier) %>%
