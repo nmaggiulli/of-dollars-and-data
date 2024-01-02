@@ -11,6 +11,7 @@ library(jsonlite)
 library(zoo)
 library(readxl)
 library(lubridate)
+library(quantmod)
 library(tidyverse)
 
 folder_name <- "_calculators/0002_sp500_dca_return"
@@ -28,34 +29,35 @@ if(download_file == 1){
   download.file(url, dest_file, mode = "wb")
 }
 
-sp500_ret_pe <- read_excel(paste0(importdir, "0009_sp500_returns_pe/ie_data.xls"),
+sp500_raw <- read_excel(paste0(importdir, "0009_sp500_returns_pe/ie_data.xls"),
                            sheet = "Data") 
 
-colnames(sp500_ret_pe) <- c("date", "price", "dividend", "earnings", "cpi", "date_frac", 
+colnames(sp500_raw) <- c("date", "price", "dividend", "earnings", "cpi", "date_frac", 
                             "long_irate", "real_price", "real_div", "real_tr",
                             "real_earn", "real_earn_scaled", "cape", "blank", "cape_tr", "blank2")
 
 #Remove first 6 rows
-sp500_ret_pe <- sp500_ret_pe[7:nrow(sp500_ret_pe),]
+sp500_raw <- sp500_raw[7:nrow(sp500_raw),]
 
 # Convert vars to numeric
-sp500_ret_pe$price <- as.numeric(sp500_ret_pe$price)
-sp500_ret_pe$dividend <- as.numeric(sp500_ret_pe$dividend)
-sp500_ret_pe$real_price <- as.numeric(sp500_ret_pe$real_price)
-sp500_ret_pe$real_tr <- as.numeric(sp500_ret_pe$real_tr)
-sp500_ret_pe$cpi <- as.numeric(sp500_ret_pe$cpi)
-sp500_ret_pe$date <- as.numeric(sp500_ret_pe$date)
+sp500_raw$price <- as.numeric(sp500_raw$price)
+sp500_raw$dividend <- as.numeric(sp500_raw$dividend)
+sp500_raw$cpi <- as.numeric(sp500_raw$cpi)
+sp500_raw$real_price <- as.numeric(sp500_raw$real_price)
+sp500_raw$real_div <- as.numeric(sp500_raw$real_div)
+sp500_raw$real_tr <- as.numeric(sp500_raw$real_tr)
+sp500_raw$date <- as.numeric(sp500_raw$date)
 
 # Create a numeric end date based on the closest start of month to today's date
 end_date <- year(Sys.Date()) + month(Sys.Date())/100
 
-# Filter out missing dividends
-sp500_ret_pe <- sp500_ret_pe %>%
-  select(date, price, dividend, real_price, real_tr, cpi) %>%
+# Select specific columns
+sp500_subset <- sp500_raw %>%
+  select(date, price, dividend, cpi, real_div) %>%
   filter(!is.na(date), date < end_date)
 
 # Change the Date to a Date type for plotting the S&P data
-sp500_ret_pe <- sp500_ret_pe %>%
+sp500_subset <- sp500_subset %>%
   mutate(date = as.Date(paste0(
     substring(as.character(date), 1, 4),
     "-", 
@@ -63,10 +65,40 @@ sp500_ret_pe <- sp500_ret_pe %>%
     "-01", 
     "%Y-%m-%d"))) %>%
   rename(month = date,
-    realPrice = real_price,
-    realPricePlusDividend = real_tr)
+         realDividend = real_div)
+
+yahoo_start <- max(sp500_subset$month)
+yahoo_end <- as.Date(paste0(year(Sys.Date()), "-", month(Sys.Date()), "-01")) - days(1)
+
+#Bring in Yahoo data
+getSymbols("^SPX", from = yahoo_start, to = yahoo_end, 
+           src="yahoo", periodicity = "daily")
+
+yahoo_daily <- data.frame(date=index(get("SPX")), coredata(get("SPX"))) %>%
+  rename(close = `SPX.Adjusted`) %>%
+  select(date, close) %>%
+  mutate(month = as.Date(paste0(year(date), "-", month(date), "-01")))
+
+yahoo_monthly <- yahoo_daily %>%
+  group_by(month) %>%
+  summarise(price = mean(close)) %>%
+  ungroup()
+
+sp500_ret_pe <- sp500_subset %>%
+  filter(month < yahoo_start) %>%
+  bind_rows(yahoo_monthly)
 
 sp500_ret_pe$dividend <- na.locf(sp500_ret_pe$dividend)
+sp500_ret_pe$realDividend <- na.locf(sp500_ret_pe$realDividend)
+
+#Estimate CPI data for the months Shiller is missing (use his formula)
+for(i in 1:nrow(sp500_ret_pe)){
+  if(is.na(sp500_ret_pe[i, "cpi"])){
+    sp500_ret_pe[i, "cpi"] <- 1.5*sp500_ret_pe[(i-1), "cpi"] - 0.5*sp500_ret_pe[(i-2), "cpi"]
+  }
+}
+
+final_cpi <- sp500_ret_pe[nrow(sp500_ret_pe), "cpi"]
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){
@@ -74,6 +106,8 @@ for (i in 1:nrow(sp500_ret_pe)){
     sp500_ret_pe[i, "n_shares"]       <- 1
     sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "dividend"]
     sp500_ret_pe[i, "nominalPricePlusDividend"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "price"]
+    sp500_ret_pe[i, "realPrice"] <- sp500_ret_pe[i, "price"] * final_cpi/sp500_ret_pe[i, "cpi"]
+    sp500_ret_pe[i, "realPricePlusDividend"] <- sp500_ret_pe[i, "realPrice"]
     
     sp500_ret_pe[i, "nominalMonthlyReturn"] <- 0
     sp500_ret_pe[i, "realMonthlyReturn"] <- 0
@@ -81,6 +115,8 @@ for (i in 1:nrow(sp500_ret_pe)){
     sp500_ret_pe[i, "n_shares"]       <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "price"]
     sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "dividend"]
     sp500_ret_pe[i, "nominalPricePlusDividend"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "price"]
+    sp500_ret_pe[i, "realPrice"] <- sp500_ret_pe[i, "price"] * final_cpi/sp500_ret_pe[i, "cpi"]
+    sp500_ret_pe[i, "realPricePlusDividend"] <- sp500_ret_pe[(i-1), "realPricePlusDividend"]*((sp500_ret_pe[i, "realPrice"] + (sp500_ret_pe[i, "realDividend"]/12))/sp500_ret_pe[(i-1), "realPrice"])
     
     sp500_ret_pe[i, "nominalMonthlyReturn"] <- sp500_ret_pe[i, "nominalPricePlusDividend"]/sp500_ret_pe[(i-1), "nominalPricePlusDividend"] - 1
     sp500_ret_pe[i, "realMonthlyReturn"] <- sp500_ret_pe[i, "realPricePlusDividend"]/sp500_ret_pe[(i-1), "realPricePlusDividend"] - 1
