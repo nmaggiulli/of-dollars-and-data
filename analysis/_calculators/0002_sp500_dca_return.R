@@ -32,7 +32,7 @@ if(download_file == 1){
 sp500_raw <- read_excel(paste0(importdir, "0009_sp500_returns_pe/ie_data.xls"),
                            sheet = "Data") 
 
-colnames(sp500_raw) <- c("date", "price", "dividend", "earnings", "cpi", "date_frac", 
+colnames(sp500_raw) <- c("date", "price", "dividend", "earnings", "cpi_shiller", "date_frac", 
                             "long_irate", "real_price", "real_div", "real_tr",
                             "real_earn", "real_earn_scaled", "cape", "blank", "cape_tr", "blank2")
 
@@ -42,7 +42,7 @@ sp500_raw <- sp500_raw[7:nrow(sp500_raw),]
 # Convert vars to numeric
 sp500_raw$price <- as.numeric(sp500_raw$price)
 sp500_raw$dividend <- as.numeric(sp500_raw$dividend)
-sp500_raw$cpi <- as.numeric(sp500_raw$cpi)
+sp500_raw$cpi_shiller <- as.numeric(sp500_raw$cpi_shiller)
 sp500_raw$real_price <- as.numeric(sp500_raw$real_price)
 sp500_raw$real_div <- as.numeric(sp500_raw$real_div)
 sp500_raw$real_tr <- as.numeric(sp500_raw$real_tr)
@@ -53,7 +53,7 @@ end_date <- year(Sys.Date()) + month(Sys.Date())/100
 
 # Select specific columns
 sp500_subset <- sp500_raw %>%
-  select(date, price, dividend, cpi, real_div) %>%
+  select(date, price, dividend, cpi_shiller, real_div) %>%
   filter(!is.na(date), date < end_date)
 
 # Change the Date to a Date type for plotting the S&P data
@@ -84,14 +84,29 @@ yahoo_monthly <- yahoo_daily %>%
   summarise(price = mean(close)) %>%
   ungroup()
 
+# Get CPI
+getSymbols('CPIAUCNS',src='FRED')
+
+cpi_monthly <- data.frame(date=index(get("CPIAUCNS")), coredata(get("CPIAUCNS"))) %>%
+  rename(cpi_fred = `CPIAUCNS`,
+         month = date) 
+
+# Join Shiller, Yahoo, and FRED
 sp500_ret_pe <- sp500_subset %>%
   filter(month < yahoo_start) %>%
-  bind_rows(yahoo_monthly)
+  bind_rows(yahoo_monthly) %>%
+  left_join(cpi_monthly) %>%
+  mutate(cpi = case_when(
+    !is.na(cpi_fred) ~ cpi_fred,
+    !is.na(cpi_shiller) ~ cpi_shiller,
+    TRUE ~ NA
+  )) %>%
+  select(-cpi_shiller, -cpi_fred)
 
 sp500_ret_pe$dividend <- na.locf(sp500_ret_pe$dividend)
 sp500_ret_pe$realDividend <- na.locf(sp500_ret_pe$realDividend)
 
-#Estimate CPI data for the months Shiller is missing (use his formula)
+#Estimate CPI data for any months Shiller/FRED is missing (use his formula)
 for(i in 1:nrow(sp500_ret_pe)){
   if(is.na(sp500_ret_pe[i, "cpi"])){
     sp500_ret_pe[i, "cpi"] <- 1.5*sp500_ret_pe[(i-1), "cpi"] - 0.5*sp500_ret_pe[(i-2), "cpi"]
