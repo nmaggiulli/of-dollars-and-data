@@ -590,7 +590,7 @@ writeLines(paste(trimws(html_start2_wp),
                  trimws(html_mid4)), 
            paste0(out_path, "/sp500_dca_calculator.html"))
 
-print(end_year)
-print(end_month)
+print(paste0("Data end month = ", end_month, "/", end_year))
+print(paste0("Shiller end month = ", format.Date(yahoo_start,"%m/%Y")))
 
 # ############################  End  ################################## #

@@ -91,6 +91,7 @@ cpi_monthly <- data.frame(date=index(get("CPIAUCNS")), coredata(get("CPIAUCNS"))
                   rename(cpi_fred = `CPIAUCNS`,
                          month = date)
 
+# Join Shiller, Yahoo, and FRED
 sp500_ret_pe <- sp500_subset %>%
                   filter(month < yahoo_start) %>%
                   bind_rows(yahoo_monthly) %>%
