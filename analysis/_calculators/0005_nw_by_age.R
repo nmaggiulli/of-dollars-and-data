@@ -142,10 +142,15 @@ function calculatePercentile() {
     
     // Find the closest net worth value for the given age
     const ageData = nw_data.filter(item => parseInt(item.age) === currentAge);
+    const eligiblePercentiles = ageData.filter(item => item.value <= netWorth);
 
-    if (ageData.length > 0) {
+    if (eligiblePercentiles.length > 0) {
         // Find the closest net worth value for the given net worth
-        const closest = ageData.reduce((prev, curr) => {
+        const closest = eligiblePercentiles.reduce((prev, curr) => {
+            if (Math.abs(curr.value - netWorth) === Math.abs(prev.value - netWorth)) {
+                // If the net worth is the same, choose the one with the higher percentile
+                return (curr.pct > prev.pct) ? curr : prev;
+            }
             return (Math.abs(curr.value - netWorth) < Math.abs(prev.value - netWorth) ? curr : prev);
         });
 

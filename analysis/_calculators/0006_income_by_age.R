@@ -140,12 +140,17 @@ function calculateIncomePercentile() {
       return; // Exit the function early
     }
     
-    // Find the closest income value for the given age
+    // Find the closest net worth value for the given age
     const ageData = income_data.filter(item => parseInt(item.age) === currentAge);
+    const eligiblePercentiles = ageData.filter(item => item.value <= income);
 
-    if (ageData.length > 0) {
-        // Find the closest income value for the given income
-        const closest = ageData.reduce((prev, curr) => {
+    if (eligiblePercentiles.length > 0) {
+        // Find the closest net worth value for the given net worth
+        const closest = eligiblePercentiles.reduce((prev, curr) => {
+            if (Math.abs(curr.value - income) === Math.abs(prev.value - income)) {
+                // If the net worth is the same, choose the one with the higher percentile
+                return (curr.pct > prev.pct) ? curr : prev;
+            }
             return (Math.abs(curr.value - income) < Math.abs(prev.value - income) ? curr : prev);
         });
 
