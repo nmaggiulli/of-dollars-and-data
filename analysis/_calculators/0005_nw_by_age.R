@@ -271,9 +271,9 @@ function calculatePercentile() {
    if (index === userPercentileIndex) {
       return { radius: 9, backgroundColor: "black", borderColor: "black", pointStyle: "circle" };
    } else if (index === percentile25Index || index === percentile50Index || index === percentile75Index) {
-      return { radius: 11, backgroundColor: "#349800", borderColor: "#349800", pointStyle: "triangle" };
+      return { radius: 9, backgroundColor: "#349800", borderColor: "#349800", pointStyle: "triangle" };
     } else {
-      return { radius: 3, backgroundColor: "#349800", borderColor: "#349800", pointStyle:"circle" };
+      return { radius: 3, backgroundColor: "transparent", borderColor: "#349800", pointStyle:"circle" };
     }
   });
   

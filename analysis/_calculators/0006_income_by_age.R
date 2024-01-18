@@ -121,6 +121,7 @@ function calculateIncomePercentile() {
 
     const currentAge = parseInt(document.getElementById("age").value);
     const income = parseInt(document.getElementById("income").value);
+    let userPercentileIndex = -1;
     let percentile = "Not Found";
     
     // Check if age input is empty or invalid
@@ -153,9 +154,16 @@ function calculateIncomePercentile() {
             }
             return (Math.abs(curr.value - income) < Math.abs(prev.value - income) ? curr : prev);
         });
+        
+        // Calculate and store the index of the users percentile for highlighting
+        userPercentileIndex = ageData.findIndex(item => item === closest);
 
         percentile = (closest.pct * 100).toFixed(0) + "%";
     }
+    
+    const percentile25Index = ageData.findIndex(item => item.pct === 0.25);
+    const percentile50Index = ageData.findIndex(item => item.pct === 0.50);
+    const percentile75Index = ageData.findIndex(item => item.pct === 0.75);
     
     // Update the result in the DOM
     document.getElementById("income-percentile").innerText = percentile;
@@ -258,6 +266,25 @@ function calculateIncomePercentile() {
     }
     myChart.resize();
 });
+
+  const pointStyles = ageData.map((item, index) => {
+   if (index === userPercentileIndex) {
+      return { radius: 9, backgroundColor: "black", borderColor: "black", pointStyle: "circle" };
+   } else if (index === percentile25Index || index === percentile50Index || index === percentile75Index) {
+      return { radius: 9, backgroundColor: "#349800", borderColor: "#349800", pointStyle: "triangle" };
+    } else {
+      return { radius: 3, backgroundColor: "transparent", borderColor: "#349800", pointStyle:"circle" };
+    }
+  });
+  
+   myChart.data.datasets[0].pointRadius = pointStyles.map(style => style.radius);
+   myChart.data.datasets[0].pointBackgroundColor = pointStyles.map(style => style.backgroundColor);
+   myChart.data.datasets[0].pointBorderColor = pointStyles.map(style => style.borderColor);
+   myChart.data.datasets[0].pointStyle = pointStyles.map(style => style.pointStyle);
+
+  if (userPercentileIndex !== -1) {
+      myChart.update();
+  }
 }
 '
   
@@ -287,7 +314,7 @@ html_start2 <- '
   </div>
 
   <div class="results">
-      <p><strong>Household Income Percentile: </strong><span id="income-percentile"></span></p>
+      <p><strong>Your Income Percentile: </strong><span id="income-percentile"></span></p>
     </div>
     <hr>
 
