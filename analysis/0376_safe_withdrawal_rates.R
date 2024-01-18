@@ -20,7 +20,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-n_years <- 30
+n_years <- 60
 min_swr <- 0.04
 max_swr <- 0.1
 
