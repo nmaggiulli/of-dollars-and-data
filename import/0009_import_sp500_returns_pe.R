@@ -66,7 +66,7 @@ sp500_ret_pe <- sp500_ret_pe %>%
     long_irate = long_irate/100,
     ret_bond_real = bond_real/lag(bond_real, 1) - 1) %>%
     rename(price_plus_div = real_tr) %>%
-  select(date, price, div, real_price, real_div, real_earn, long_irate, cape, cpi, price_plus_div,  ret_bond_real)
+  select(date, price, div, real_price, real_div, real_earn, long_irate, cape, cpi, price_plus_div,  bond_real, ret_bond_real)
 
 # Save down the data
 saveRDS(sp500_ret_pe, paste0(localdir, "0009_sp500_ret_pe.Rds"))

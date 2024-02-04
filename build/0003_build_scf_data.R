@@ -67,6 +67,7 @@ for (x in year_list){
   # bussefarminc = 	Income from business, sole proprietorship, and farm
   # kginc = Capital gain or loss income
   # ssretinc = Social security and pension income
+  # wsaved = 1=spending exceeded income, 2=spending equaled income, 3=spending less than income;
   # agecl = age class, 1:<35, 2:35-44, 3:45-54, 4:55-64, 5:65-74, 6:>=75
   # age = age,
   # hhsex = gender, 1 = male , 2 = female
@@ -131,6 +132,7 @@ scf_stack_final <- mutate(scf_stack, married = married %% 2,
                                       edcl == 3 ~ "Some College",
                                       edcl == 4 ~ "College Degree",
                                       TRUE ~ "99"),
+                    birthyear = year - age,
                      payedu = payedu1 + payedu2 + payedu3 + payedu4 + payedu5 + payedu6 + payedu7) %>%
               select(-payedu1, -payedu2, -payedu3, -payedu4, -payedu5, -payedu6, -payedu7)
 
