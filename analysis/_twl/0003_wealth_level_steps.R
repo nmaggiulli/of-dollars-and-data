@@ -13,7 +13,7 @@ library(lubridate)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "_ctwl/0003_wealth_level_steps"
+folder_name <- "_twl/0003_wealth_level_steps"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 

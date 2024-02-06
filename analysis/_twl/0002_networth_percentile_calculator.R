@@ -18,7 +18,7 @@ library(mitools)
 library(Hmisc)
 library(tidyverse)
 
-folder_name <- "_ctwl/0001_asset_breakdown_by_networth_tier"
+folder_name <- "_twl/0001_asset_breakdown_by_networth_tier"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 

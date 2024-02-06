@@ -18,7 +18,7 @@ library(mitools)
 library(Hmisc)
 library(tidyverse)
 
-folder_name <- "_ctwl/0004_age_by_wealth_level"
+folder_name <- "_twl/0004_age_by_wealth_level"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
