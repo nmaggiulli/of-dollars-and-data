@@ -19,7 +19,7 @@ library(Hmisc)
 library(xtable)
 library(tidyverse)
 
-folder_name <- "0387_scf_typical_person"
+folder_name <- "0388_scf_typical_person"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
