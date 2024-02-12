@@ -28,15 +28,18 @@ data_year <- 2022
 
 # Bring in assets and normalize percentages
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
-              filter(year == data_year) %>%
+              filter(year == data_year, age < 35) %>%
                 select(networth,wgt)
 
 # Calculate net worth percentiles
 find_percentile <- function(amount){
   
-  if(amount < 10^7){
+  if(amount < 10^6){
     p_change <- 0.01
     p_guess <- 0.5
+  } else if(amount < 10^7){
+    p_change <- 0.001
+    p_guess <- 0.7
   } else if (amount < 10^8){
     p_change <- 0.001
     p_guess <- 0.95
