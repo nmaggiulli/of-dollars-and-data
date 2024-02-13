@@ -29,7 +29,16 @@ data_year <- 2022
 # Bring in assets and normalize percentages
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
               filter(year == data_year) %>%
-                select(networth,age, wgt)
+                mutate(wealth_level = case_when(
+                  networth < 10000 ~ "L1 (<$10k)",
+                  floor(log10(networth)) == 4 ~ "L2 ($100k)",
+                  floor(log10(networth)) == 5 ~ "L3 ($1M)",
+                  floor(log10(networth)) == 6 ~ "L4 ($10M)",  
+                  floor(log10(networth)) == 7 ~ "L5 ($100M)",  
+                  floor(log10(networth)) > 7 ~ "L6 ($100M+)", 
+                  TRUE ~ "ERROR"
+                )) %>%
+                select(networth, age, wealth_level, wgt)
 
 # Calculate net worth percentiles
 find_percentile <- function(amount){
@@ -74,5 +83,18 @@ find_percentile(10^6)
 find_percentile(10^7)
 find_percentile(10^8)
 
+#Subset to millionaires and calculate distribution of ages
+millionaire_scf <- scf_stack %>%
+                    filter(networth > 10^6) 
+
+percentile_summary_millionaires <- millionaire_scf %>%
+                            summarise(wtd.quantile(age, 
+                                                   weights = wgt, 
+                                                   probs = seq(0.01, 0.99, 0.01)
+                                                   )
+                                      )
+
+average_summary_millionaire <- millionaire_scf %>%
+                            summarise(wtd.mean(age, weights = wgt))
 
 # ############################  End  ################################## #
