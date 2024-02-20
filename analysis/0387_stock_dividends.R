@@ -14,7 +14,7 @@ library(stringr)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "0386_stock_dividends"
+folder_name <- "0387_stock_dividends"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
