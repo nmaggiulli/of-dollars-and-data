@@ -74,5 +74,16 @@ plot <- ggplot(data = to_plot, aes(x = wealth_level, y=average_age)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+#Calculate the age distribution across each wealth level
+percentile_summary_millionaires <- scf_stack %>%
+  group_by(wealth_level) %>%
+  summarise(age = wtd.quantile(age, 
+                               weights = wgt, 
+                               probs = seq(0.01, 0.99, 0.01)
+  )
+  ) %>%
+  ungroup() %>%
+  mutate(percentile = rep(seq(1, 99), 6))
+
 
 # ############################  End  ################################## #

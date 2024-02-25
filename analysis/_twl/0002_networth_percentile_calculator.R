@@ -83,18 +83,4 @@ find_percentile(10^6)
 find_percentile(10^7)
 find_percentile(10^8)
 
-#Subset to millionaires and calculate distribution of ages
-millionaire_scf <- scf_stack %>%
-                    filter(networth > 10^6) 
-
-percentile_summary_millionaires <- millionaire_scf %>%
-                            summarise(wtd.quantile(age, 
-                                                   weights = wgt, 
-                                                   probs = seq(0.01, 0.99, 0.01)
-                                                   )
-                                      )
-
-average_summary_millionaire <- millionaire_scf %>%
-                            summarise(wtd.mean(age, weights = wgt))
-
 # ############################  End  ################################## #
