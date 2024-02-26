@@ -24,6 +24,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 bw_colors <- c("#969696", "#000000")
+start_year <- 1989
+start_date <- as.Date(paste0(start_year, "-01-01"))
 
 jpy <- read.csv(paste0(importdir,"/_jkb/0010_buying_during_a_crisis/NIKKEI225_fred.csv")) %>%
   mutate(date = as.Date(DATE),
@@ -31,7 +33,7 @@ jpy <- read.csv(paste0(importdir,"/_jkb/0010_buying_during_a_crisis/NIKKEI225_fr
          ret_jpy = index_jpy/lag(index_jpy, 1) - 1) %>%
   select(date, index_jpy, ret_jpy) %>%
   drop_na %>%
-  filter(date >= "1980-01-01")
+  filter(date >= start_date)
 
 final_jpy <- jpy %>% tail(1) %>% pull(index_jpy)
 
@@ -60,7 +62,7 @@ to_plot <- jpy %>%
   )
 
 # DCA into Japan
-file_path <- paste0(out_path, "/jpy_1980_onward_dca.jpeg")
+file_path <- paste0(out_path, "/jpy_", start_year, "_onward_dca.jpeg")
 
 plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) + 
   geom_line() +
