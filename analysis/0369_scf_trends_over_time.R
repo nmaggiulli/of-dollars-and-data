@@ -195,6 +195,7 @@ create_time_series_chart("fin", "Real Median Financial Assets", 0.5)
 create_time_series_chart("nfin", "Real Median Non-Financial Assets", 0.5)
 create_time_series_chart("vehic", "Real Median Vehicle Value", 0.5)
 create_time_series_chart("asset", "Real Median Assets", 0.5)
+create_time_series_chart("networth", "99th Percentile Real Net Worth", 0.99)
 
 #Plot all percentiles by age for given year
 data_year <- 2022
