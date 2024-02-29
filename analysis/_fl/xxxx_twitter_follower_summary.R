@@ -19,7 +19,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 # Dummy to pull data if needed
-pull_data <- 0
+pull_data <- 1
 
 # My app name
 appname <- "TweetScraper22"
@@ -27,10 +27,7 @@ appname <- "TweetScraper22"
 creds <- read.csv(paste0(importdir, "/0000_credentials/twitter_creds.csv"))
 
 # Login token
-twitter_token <- create_token(
-  app = appname,
-  consumer_key = creds$consumer_key,
-  consumer_secret = creds$consumer_secret)
+auth <- rtweet_app()
 
 # List of handles
 handles <- c("dollarsanddata")
@@ -39,7 +36,7 @@ if (pull_data == 1){
   for (i in 1:length(handles)){
     user <- handles[i]
     print(user)
-    followers <- get_followers(user, n = 1.5*10^6, retryonratelimit = TRUE) 
+    followers <- get_followers(user, n = 1.5*10^6, retryonratelimit = TRUE, token = auth) 
     followers$handle <- user
     followers$date <- Sys.Date()
   }
