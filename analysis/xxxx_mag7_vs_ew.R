@@ -23,7 +23,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-start_date <- "2017-01-03"
+start_date <- "2020-01-02"
 end_date <- "2024-02-23"
 
 raw <- read.csv(paste0(importdir, "xxxx_mag7_data/timeseries_2-25-2024.csv"), skip = 6) %>%
@@ -42,7 +42,7 @@ raw <- read.csv(paste0(importdir, "xxxx_mag7_data/timeseries_2-25-2024.csv"), sk
     TRUE ~ 0
   )) %>%
   drop_na() %>%
-  filter(symbol != "GOOGL")
+  filter(symbol != "GOOGL", date>=start_date, date <= end_date)
 
 first_date_stocks <- raw %>%
               filter(date == start_date) %>%
@@ -69,10 +69,10 @@ non_mag7 <- df %>%
               mutate(lead =  rollsum(x = final_value, n_stocks, align = "right", fill = NA))
 
 stocks_to_loop <- non_mag7 %>%
-                    filter(lead > mag7_value) %>%
+                    filter(growth > mag7_value) %>%
                     select(symbol)
 
-counter <- 472                  
+counter <- 0                  
 for(s in 1:nrow(stocks_to_loop)){
   stock <- stocks_to_loop[s, "symbol"]
   
@@ -84,7 +84,7 @@ for(s in 1:nrow(stocks_to_loop)){
   
   count_s <- non_mag7 %>%
               filter(row_number() > s, final_value > value_limit) %>%
-              nrow() - 1
+              nrow()
   
   print(count_s)
   
