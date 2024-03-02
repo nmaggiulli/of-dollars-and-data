@@ -19,13 +19,13 @@ library(Hmisc)
 library(xtable)
 library(tidyverse)
 
-folder_name <- "0390_pe_vc_rets"
+folder_name <- "xxxx_pe_vc_rets"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-raw <- read_excel(paste0(importdir, "/0390_cambridge_vc_pe_rets/2002_2023_pe_vc_rets.xlsx")) %>%
+raw <- read_excel(paste0(importdir, "/xxxx_cambridge_vc_pe_rets/2002_2023_pe_vc_rets.xlsx")) %>%
           arrange(type, year)
 
 df <- raw
