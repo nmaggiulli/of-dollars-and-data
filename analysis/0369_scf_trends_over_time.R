@@ -186,6 +186,7 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
 
 create_time_series_chart("networth", "25th Percentile Real Net Worth", 0.25)
 create_time_series_chart("networth", "Real Median Net Worth", 0.5)
+create_time_series_chart("homeeq", "Real Median Home Equity", 0.5)
 create_time_series_chart("homeeq", "Real 75th Percentile Home Equity", 0.75)
 create_time_series_chart("networth", "75th Percentile Real Net Worth", 0.75)
 create_time_series_chart("networth", "Real Average Net Worth", 0)
