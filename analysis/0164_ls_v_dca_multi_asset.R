@@ -21,7 +21,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-invest_dca_cash <- 1
+invest_dca_cash <- 0
 today_string <- date_to_string(Sys.Date())
 
 remove_and_recreate_folder <- function(path){
@@ -143,6 +143,12 @@ plot_ls_v_dca <- function(asset, f_out, in_df, var, var_note, invest_dca_cash){
   
   # Do CAPE chart for U.S. Stocks only
   if(asset == "U.S. Stocks" & var == "outperformance"){
+    export_to_excel(to_plot %>% select(date, perf_col), 
+                    paste0(f_out, "/_us_stock_", n_month_dca, "m_summary.xlsx"),
+                    sheetname = "to_plot",
+                    1,
+                    0)
+    
     
     file_path <- paste0(f_out,"/ls_v_dca_", var, "_", n_month_dca, "m_cape_", asset, "_", today_string, ".jpeg")
     
