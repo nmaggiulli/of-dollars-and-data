@@ -19,7 +19,7 @@ library(Hmisc)
 library(xtable)
 library(tidyverse)
 
-folder_name <- "0394_big_in_japan"
+folder_name <- "0394_japan_dca"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -27,10 +27,10 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 bw_colors <- c("#969696", "#000000")
 
-plot_jpy <- function(end_date){
+plot_jpy <- function(end_date, title1){
   
   # Bring in JPY data
-  jpy <- read.csv(paste0(importdir,"/0394_big_in_japan/NIKKEI225_fred.csv")) %>%
+  jpy <- read.csv(paste0(importdir,"/0394_japan_data/NIKKEI225_fred.csv")) %>%
     mutate(date = as.Date(DATE),
            index_jpy = as.numeric(NIKKEI225),
            ret_jpy = index_jpy/lag(index_jpy, 1) - 1) %>%
@@ -59,7 +59,7 @@ plot_jpy <- function(end_date){
     scale_y_continuous(label = comma) +
     scale_x_date(date_labels = "%Y") +
     of_dollars_and_data_theme +
-    ggtitle(paste0("The Japanese Stock Market Was\nBelow Its Highs For Over Three Decades")) +
+    ggtitle(paste0(title1)) +
     labs(x = "Date" , y = "Index Value",
          caption = paste0(source_string))  
   
@@ -73,6 +73,8 @@ plot_jpy <- function(end_date){
       key == "market_value" ~ "Market Value",
       TRUE ~ "Cost Basis"
     ))
+  
+  assign("to_plot", to_plot, envir = .GlobalEnv)
   
   # DCA into Japan
   file_path <- paste0(out_path, "/jpy_1980_dca_", end_date_string, ".jpeg")
@@ -93,7 +95,7 @@ plot_jpy <- function(end_date){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-plot_jpy("2020-12-31")
-plot_jpy("2024-03-26")
+plot_jpy("2020-12-31", "The Japanese Stock Market Was\nBelow Its Highs For Over Three Decades")
+plot_jpy("2024-03-26", "The Highs, Lows, and New Highs\nFor Japanese Stocks")
 
 # ############################  End  ################################## #
