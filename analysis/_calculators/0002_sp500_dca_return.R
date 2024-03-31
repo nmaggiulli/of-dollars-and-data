@@ -21,6 +21,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 download_file <- 0
+today <- Sys.Date() 
 filter_date <- "1871-01-01"
 url <- "http://www.econ.yale.edu/~shiller/data/ie_data.xls"
 dest_file <- paste0(importdir, "0009_sp500_returns_pe/ie_data.xls") 
@@ -49,7 +50,7 @@ sp500_raw$real_tr <- as.numeric(sp500_raw$real_tr)
 sp500_raw$date <- as.numeric(sp500_raw$date)
 
 # Create a numeric end date based on the closest start of month to today's date
-end_date <- year(Sys.Date()) + month(Sys.Date())/100
+end_date <- year(today) + month(today)/100
 
 # Select specific columns
 sp500_subset <- sp500_raw %>%
@@ -68,7 +69,7 @@ sp500_subset <- sp500_subset %>%
          realDividend = real_div)
 
 yahoo_start <- max(sp500_subset$month)
-yahoo_end <- as.Date(paste0(year(Sys.Date()), "-", month(Sys.Date()), "-01")) - days(1)
+yahoo_end <- as.Date(paste0(year(today), "-", month(today), "-01")) - days(1)
 
 #Bring in Yahoo data
 getSymbols("^SPX", from = yahoo_start, to = yahoo_end, 
