@@ -73,6 +73,17 @@ to_plot <- scf_stack %>%
               ungroup() %>%
               gather(-wealth_level, key=key, value=value)
 
+all_levels <- to_plot %>%
+                arrange(wealth_level, desc(value))
+
+assign("all_levels", all_levels, envir = .GlobalEnv)
+
+export_to_excel(df = all_levels,
+                outfile = paste0(out_path, "/asset_breakdown_by_wealth_level.xlsx"),
+                sheetname = "all_levels",
+                new_file = 1,
+                fancy_formatting = 0)
+
 file_path <- paste0(out_path, "/_asset_breakdown_by_wealth_level_all_color.jpeg")
 source_string <- paste0("Source: Survey of Consumer Finances (2022)")
 
