@@ -84,8 +84,41 @@ export_to_excel(df = all_levels,
                 new_file = 1,
                 fancy_formatting = 0)
 
-file_path <- paste0(out_path, "/_asset_breakdown_by_wealth_level_all_color.jpeg")
+income_producing_summary <- all_levels %>%
+                      mutate(key = case_when(
+                        key %in% c("Vehicles", "Cash", "Other", "Primary Residence") ~ "Non-income producing",
+                        TRUE ~ "Income-producing"
+                      )) %>%
+                    group_by(wealth_level, key) %>%
+                    summarise(value = sum(value)) %>%
+                    ungroup()
+
+income_producing_summary$key <- factor(income_producing_summary$key, levels = c("Non-income producing", "Income-producing"))
+
+assign("income_producing_summary", income_producing_summary, envir = .GlobalEnv)
+
+#Do income-producing summary
+my_grayscale <- c("#969696", "#525252")
+
+file_path <- paste0(out_path, "/_income_producing_breakdown_by_wealth_level.jpeg")
 source_string <- paste0("Source: Survey of Consumer Finances (2022)")
+
+plot <- ggplot(data = income_producing_summary, aes(x = wealth_level, y=value, fill = key)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 1, 0.1)) +
+  scale_fill_manual(values = my_grayscale) +
+  of_dollars_and_data_theme +
+  theme(legend.title = element_blank(),
+        axis.text.x = element_text(angle = 45, vjust = 0.5)) +
+  ggtitle(paste0("Income-Producing Assets by Wealth Level")) +
+  labs(x = "Wealth Level (Net Worth Tier)" , y = "Percentage of Assets",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Do overall breakdown
+file_path <- paste0(out_path, "/_asset_breakdown_by_wealth_level_all_color.jpeg")
 
 my_colors <- c("#1f78b4", "#a6cee3", "#33a02c", "#FFDB58", "#e31a1c", "#fb9a99",
             "purple", "#ff7f00")
@@ -124,13 +157,11 @@ plot <- ggplot(data = to_plot, aes(x = wealth_level, y=value, fill = key)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-# Loop through assets (in grayscale)
-my_grayscale <- c("#969696", "#525252")
-
 all_assets <- c("Business Interests", "Cash", "Stocks & Mutual Funds", 
                 "Primary Residence", "Real Estate", "Retirement",
                 "Vehicles")
 
+# Loop through assets (in grayscale)
 for(a in all_assets){
   to_plot <- scf_stack %>%
     group_by(wealth_level) %>%
