@@ -11,6 +11,8 @@ library(jsonlite)
 library(zoo)
 library(readxl)
 library(lubridate)
+library(quantmod)
+library(FinCal)
 library(tidyverse)
 
 folder_name <- "_calculators/0003_us_stock_bond_return"
@@ -20,6 +22,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 download_file <- 0
+today <- Sys.Date() 
 filter_date <- "1871-01-01"
 url <- "http://www.econ.yale.edu/~shiller/data/ie_data.xls"
 dest_file <- paste0(importdir, "0009_sp500_returns_pe/ie_data.xls") 
@@ -28,39 +31,39 @@ if(download_file == 1){
   download.file(url, dest_file, mode = "wb")
 }
 
-sp500_ret_pe <- read_excel(paste0(importdir, "0009_sp500_returns_pe/ie_data.xls"),
+sp500_raw <- read_excel(paste0(importdir, "0009_sp500_returns_pe/ie_data.xls"),
                            sheet = "Data") 
 
-colnames(sp500_ret_pe) <- c("date", "price", "dividend", "earnings", "cpi", "date_frac", 
+colnames(sp500_raw) <- c("date", "price", "dividend", "earnings", "cpi_shiller", "date_frac", 
                             "long_irate", "real_price", "real_div", "real_tr",
                             "real_earn", "real_earn_scaled", "cape", "blank", "cape_tr", "blank2",
                             "excess_cape", "orig_nom_bond_ret", "real_bond_index")
 
 #Remove first 6 rows
-sp500_ret_pe <- sp500_ret_pe[7:nrow(sp500_ret_pe),]
+sp500_raw <- sp500_raw[7:nrow(sp500_raw),]
 
 # Convert vars to numeric
-sp500_ret_pe$price <- as.numeric(sp500_ret_pe$price)
-sp500_ret_pe$dividend <- as.numeric(sp500_ret_pe$dividend)
-sp500_ret_pe$real_price <- as.numeric(sp500_ret_pe$real_price)
-sp500_ret_pe$real_tr <- as.numeric(sp500_ret_pe$real_tr)
-sp500_ret_pe$cpi <- as.numeric(sp500_ret_pe$cpi)
-sp500_ret_pe$date <- as.numeric(sp500_ret_pe$date)
-sp500_ret_pe$orig_nom_bond_ret <- as.numeric(sp500_ret_pe$orig_nom_bond_ret)
-sp500_ret_pe$real_bond_index <- as.numeric(sp500_ret_pe$real_bond_index)
+sp500_raw$price <- as.numeric(sp500_raw$price)
+sp500_raw$dividend <- as.numeric(sp500_raw$dividend)
+sp500_raw$real_div <- as.numeric(sp500_raw$real_div)
+sp500_raw$real_price <- as.numeric(sp500_raw$real_price)
+sp500_raw$real_tr <- as.numeric(sp500_raw$real_tr)
+sp500_raw$cpi_shiller <- as.numeric(sp500_raw$cpi_shiller)
+sp500_raw$date <- as.numeric(sp500_raw$date)
+sp500_raw$orig_nom_bond_ret <- as.numeric(sp500_raw$orig_nom_bond_ret)
+sp500_raw$real_bond_index <- as.numeric(sp500_raw$real_bond_index)
 
 # Create a numeric end date based on the closest start of month to today's date
 end_date <- year(Sys.Date()) + month(Sys.Date())/100
 
 # Filter out missing dividends
-sp500_ret_pe <- sp500_ret_pe %>%
-  select(date, price, dividend, real_price, real_tr, cpi, orig_nom_bond_ret, real_bond_index) %>%
+sp500_subset <- sp500_raw %>%
+  select(date, price, dividend, real_div, real_price, real_tr, cpi_shiller, orig_nom_bond_ret, real_bond_index) %>%
   filter(!is.na(date), date < end_date) %>%
-  mutate(real_bond_ret = real_bond_index/lag(real_bond_index, 1) - 1,
-         orig_nom_bond_ret = orig_nom_bond_ret - 1)
+  mutate(orig_nom_bond_ret = orig_nom_bond_ret - 1)
 
 # Change the Date to a Date type for plotting the S&P data
-sp500_ret_pe <- sp500_ret_pe %>%
+sp500_subset <- sp500_subset %>%
   mutate(date = as.Date(paste0(
     substring(as.character(date), 1, 4),
     "-", 
@@ -71,7 +74,61 @@ sp500_ret_pe <- sp500_ret_pe %>%
     realPrice = real_price,
     realPricePlusDividend = real_tr)
 
+yahoo_start <- max(sp500_subset$month)
+yahoo_end <- as.Date(paste0(year(today), "-", month(today), "-01")) - days(1)
+
+#Bring in Yahoo data
+getSymbols("^SPX", from = yahoo_start, to = yahoo_end, 
+           src="yahoo", periodicity = "daily")
+
+yahoo_daily <- data.frame(date=index(get("SPX")), coredata(get("SPX"))) %>%
+  rename(close = `SPX.Adjusted`) %>%
+  select(date, close) %>%
+  mutate(month = as.Date(paste0(year(date), "-", month(date), "-01")))
+
+yahoo_monthly <- yahoo_daily %>%
+  group_by(month) %>%
+  summarise(price = mean(close)) %>%
+  ungroup()
+
+# Get CPI
+getSymbols('CPIAUCNS',src='FRED')
+
+cpi_monthly <- data.frame(date=index(get("CPIAUCNS")), coredata(get("CPIAUCNS"))) %>%
+  rename(cpi_fred = `CPIAUCNS`,
+         month = date) 
+
+# Get GS10
+getSymbols('GS10',src='FRED')
+
+gs10_monthly <- data.frame(date=index(get("GS10")), coredata(get("GS10"))) %>%
+  rename(gs10 = `GS10`,
+         month = date) 
+
+# Join Shiller, Yahoo, and FRED
+sp500_ret_pe <- sp500_subset %>%
+  filter(month < yahoo_start) %>%
+  bind_rows(yahoo_monthly) %>%
+  left_join(cpi_monthly) %>%
+  left_join(gs10_monthly) %>%
+  mutate(cpi = case_when(
+    !is.na(cpi_fred) ~ cpi_fred,
+    !is.na(cpi_shiller) ~ cpi_shiller,
+    TRUE ~ NA
+  )) %>%
+  select(-cpi_shiller, -cpi_fred)
+
 sp500_ret_pe$dividend <- na.locf(sp500_ret_pe$dividend)
+sp500_ret_pe$real_div <- na.locf(sp500_ret_pe$real_div)
+
+#Estimate CPI data for any months Shiller/FRED is missing (use his formula)
+for(i in 1:nrow(sp500_ret_pe)){
+  if(is.na(sp500_ret_pe[i, "cpi"])){
+    sp500_ret_pe[i, "cpi"] <- 1.5*sp500_ret_pe[(i-1), "cpi"] - 0.5*sp500_ret_pe[(i-2), "cpi"]
+  }
+}
+
+final_cpi <- sp500_ret_pe[nrow(sp500_ret_pe), "cpi"]
 
 # Calculate returns for the S&P data
 for (i in 1:nrow(sp500_ret_pe)){
@@ -79,30 +136,45 @@ for (i in 1:nrow(sp500_ret_pe)){
     sp500_ret_pe[i, "n_shares"]       <- 1
     sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "dividend"]
     sp500_ret_pe[i, "nominalPricePlusDividend"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "price"]
+    sp500_ret_pe[i, "realPrice"] <- sp500_ret_pe[i, "price"] * final_cpi/sp500_ret_pe[i, "cpi"]
+    sp500_ret_pe[i, "realPricePlusDividend"] <- sp500_ret_pe[i, "realPrice"]
     
     sp500_ret_pe[i, "nom_sp500_ret"] <- 0
     sp500_ret_pe[i, "real_sp500_ret"] <- 0
     
-    sp500_ret_pe[i, "nom_bond_index"] <- 1
-    sp500_ret_pe[i, "nom_bond_ret"] <- 0
+    sp500_ret_pe[i, "nom_bond_ret"] <- sp500_ret_pe[i, "orig_nom_bond_ret"]
     sp500_ret_pe[i, "real_bond_ret"] <- 0
   } else{
     sp500_ret_pe[i, "n_shares"]       <- sp500_ret_pe[(i - 1), "n_shares"] + sp500_ret_pe[(i-1), "new_div"]/ 12 / sp500_ret_pe[i, "price"]
     sp500_ret_pe[i, "new_div"]        <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "dividend"]
     sp500_ret_pe[i, "nominalPricePlusDividend"] <- sp500_ret_pe[i, "n_shares"] * sp500_ret_pe[i, "price"]
+    sp500_ret_pe[i, "realPrice"] <- sp500_ret_pe[i, "price"] * final_cpi/sp500_ret_pe[i, "cpi"]
+    sp500_ret_pe[i, "realPricePlusDividend"] <- sp500_ret_pe[(i-1), "realPricePlusDividend"]*((sp500_ret_pe[i, "realPrice"] + (sp500_ret_pe[i, "real_div"]/12))/sp500_ret_pe[(i-1), "realPrice"])
     
     sp500_ret_pe[i, "nom_sp500_ret"] <- sp500_ret_pe[i, "nominalPricePlusDividend"]/sp500_ret_pe[(i-1), "nominalPricePlusDividend"] - 1
     sp500_ret_pe[i, "real_sp500_ret"] <- sp500_ret_pe[i, "realPricePlusDividend"]/sp500_ret_pe[(i-1), "realPricePlusDividend"] - 1
-    
-    sp500_ret_pe[i, "nom_bond_index"] <- sp500_ret_pe[(i-1), "nom_bond_index"] * (1 + sp500_ret_pe[(i-1), "orig_nom_bond_ret"])
+    if(is.na(sp500_ret_pe[i, "orig_nom_bond_ret"])){
+      pv <- pv(r =  sp500_ret_pe[i, "gs10"]/100,
+                       n = 10,
+                       fv = 100,
+                       pmt = sp500_ret_pe[(i-1), "gs10"],
+                       type = 0)
+      sp500_ret_pe[i, "nom_bond_ret"] <- (-pv/100 - 1) + (sp500_ret_pe[(i-1), "gs10"]/100 + 1)^(1/12) - 1
+      
+      sp500_ret_pe[i, "real_bond_index"] <- sp500_ret_pe[(i-1), "real_bond_index"] * (1 + sp500_ret_pe[(i-1), "nom_bond_ret"]) * (sp500_ret_pe[i, "cpi"]/sp500_ret_pe[(i-1), "cpi"])
+    } else{
+      sp500_ret_pe[i, "nom_bond_ret"] <- sp500_ret_pe[i, "orig_nom_bond_ret"]
+    }
   }
 }
 
+# Final out
 to_calc <- sp500_ret_pe %>%
               filter(month >= filter_date) %>%
-              mutate(nom_bond_ret = case_when(
-                row_number() == 1 ~ nom_bond_ret,
-                TRUE ~ nom_bond_index/lag(nom_bond_index,1) - 1)) %>%
+              mutate(real_bond_ret = case_when(
+                row_number() == 1 ~ real_bond_ret,
+                TRUE ~ real_bond_index/lag(real_bond_index, 1) - 1)
+                ) %>%
               select(month, nom_sp500_ret, real_sp500_ret, nom_bond_ret, real_bond_ret, cpi)
 
 end_year <- year(max(to_calc$month))
@@ -505,7 +577,7 @@ writeLines(paste(trimws(html_start2_wp),
                  trimws(html_mid4)), 
            paste0(out_path, "/us_stock_bond_calculator.html"))
 
-print(end_year)
-print(end_month)
+print(paste0("Data end month = ", end_month, "/", end_year))
+print(paste0("Shiller end month = ", format.Date(yahoo_start,"%m/%Y")))
 
 # ############################  End  ################################## #
