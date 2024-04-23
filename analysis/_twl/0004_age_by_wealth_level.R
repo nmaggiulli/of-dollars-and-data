@@ -34,19 +34,19 @@ data_year <- 2022
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
               filter(year == data_year) %>%
               mutate(wealth_level = case_when(
-                       networth < 10000 ~ "L1 (<$10k)",
-                       floor(log10(networth)) == 4 ~ "L2 ($100k)",
-                       floor(log10(networth)) == 5 ~ "L3 ($1M)",
-                       floor(log10(networth)) == 6 ~ "L4 ($10M)",  
-                       floor(log10(networth)) == 7 ~ "L5 ($100M)",  
-                       floor(log10(networth)) > 7 ~ "L6 ($100M+)", 
-                             TRUE ~ "ERROR"
-                     )) %>%
+                            networth < 10000 ~ "L1 (<$10k)",
+                            floor(log10(networth)) == 4 ~ "L2 ($10k)",
+                            floor(log10(networth)) == 5 ~ "L3 ($100k)",
+                            floor(log10(networth)) == 6 ~ "L4 ($1M)",  
+                            floor(log10(networth)) == 7 ~ "L5 ($10M)",  
+                            floor(log10(networth)) > 7 ~ "L6 ($100M+)", 
+                            TRUE ~ "ERROR"
+                          )) %>%
                 select(wealth_level, age, wgt)
 
-scf_stack$wealth_level <- factor(scf_stack$wealth_level, levels = c("L1 (<$10k)", "L2 ($100k)",
-                                                                      "L3 ($1M)", "L4 ($10M)",
-                                                                      "L5 ($100M)", "L6 ($100M+)"))
+scf_stack$wealth_level <- factor(scf_stack$wealth_level, levels = c("L1 (<$10k)", "L2 ($10k)",
+                                                                    "L3 ($100k)", "L4 ($1M)",
+                                                                    "L5 ($10M)", "L6 ($100M+)"))
 
 to_plot <- scf_stack %>%
               group_by(wealth_level) %>%
