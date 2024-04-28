@@ -156,7 +156,7 @@ plot <- ggplot(to_plot_avg, aes(x=day, y=pct_change, col = as.factor(election_ye
             aes(x=day, y=pct_change, col = as.factor(election_year),
                 label = label)) +
   scale_color_manual(values = c("red", "gray"), guide = "none") +
-  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  scale_y_continuous(label = percent_format(accuracy = 0.1)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Average U.S. Stock Performance (Post Election)\nElection vs. Non-Election Year")) +
   labs(x="Days After Election Day", y="Percentage Change",
