@@ -23,7 +23,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 # Do some data analysis to establish a long-term growth rate
 raw <- read.csv(paste0(importdir, "/0340_housing_data/IUSEHMSP_IUS30YMR_data.csv"),
-                col.names = c("date", "mortgage_rate", "median_price")) %>%
+                col.names = c("date", "median_price", "mortgage_rate")) %>%
         mutate(date = as.Date(date, format = "%Y-%m-%d"),
                mt = month(date),
                yr = year(date)) %>%
@@ -31,7 +31,7 @@ raw <- read.csv(paste0(importdir, "/0340_housing_data/IUSEHMSP_IUS30YMR_data.csv
 
 by_month <- raw %>%
               filter(date >= "2020-01-01",
-                     date < "2023-05-01") %>%
+                     date < "2024-04-01") %>%
               group_by(yr, mt) %>%
               summarise(median_price = max(median_price, na.rm = TRUE),
                         mortgage_rate = mean(mortgage_rate, na.rm = TRUE)/100) %>%
@@ -45,7 +45,7 @@ to_plot <- by_month %>%
                mortage_rate_monthly = mortgage_rate/12,
                monthly_payment = mortgage/((1 - (1 + mortage_rate_monthly)^(-360))/mortage_rate_monthly))
 
-file_path <- paste0(out_path, "/mortgage_payment_for_median_home_2023.jpeg")
+file_path <- paste0(out_path, "/mortgage_payment_for_median_home_2024_03.jpeg")
 source_string <- str_wrap(paste0("Source: YCharts (OfDollarsAndData.com)"),
                           width = 85)
 note_string <- str_wrap(paste0("Note: Assumes a 20% down payment and a 30-year fixed rate mortgage."),
@@ -53,7 +53,7 @@ note_string <- str_wrap(paste0("Note: Assumes a 20% down payment and a 30-year f
 
 plot <- ggplot(to_plot, aes(x=date, y=monthly_payment)) +
   geom_line() +
-  scale_y_continuous(label = dollar, breaks = seq(1000, 2000, 100)) +
+  scale_y_continuous(label = dollar, breaks = seq(1000, 2300, 100)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Monthly Mortgage Payment Required to\nPurchase the Median U.S. Home")) +
   labs(x = "Month" , y = "Mortgage Payment ($)",
