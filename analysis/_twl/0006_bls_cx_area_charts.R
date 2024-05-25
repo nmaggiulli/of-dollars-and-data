@@ -18,7 +18,7 @@ library(RColorBrewer)
 library(stringr)
 library(ggrepel)
 
-folder_name <- "_twl/0005_bls_cx_area_charts"
+folder_name <- "_twl/0006_bls_cx_area_charts"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 

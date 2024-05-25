@@ -18,7 +18,7 @@ library(mitools)
 library(Hmisc)
 library(tidyverse)
 
-folder_name <- "_twl/0001_asset_breakdown_by_networth_tier"
+folder_name <- "_twl/0007_income_education_percentiles"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -40,9 +40,13 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                 )) %>%
                 select(networth, income, wealth_level, edcl, agecl, wgt)
 
+scf_stack$wealth_level <- factor(scf_stack$wealth_level, levels = c("L1 (<$10k)", "L2 ($10k)",
+                                                                    "L3 ($100k)", "L4 ($1M)",
+                                                                    "L5 ($10M)", "L6 ($100M+)"))
+
 income_by_edcl <- scf_stack %>%
-                    group_by(wealth_level, edcl) %>%
-                    summarise(income = wtd.quantile(income, weights = wgt, probs = 0.5)) %>%
-                    ungroup() 
+  group_by(wealth_level, edcl) %>%
+  summarise(income = wtd.quantile(income, weights = wgt, probs = 0.5)) %>%
+  ungroup() 
 
 # ############################  End  ################################## #

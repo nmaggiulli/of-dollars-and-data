@@ -18,7 +18,7 @@ library(mitools)
 library(Hmisc)
 library(tidyverse)
 
-folder_name <- "_twl/0004_age_by_wealth_level"
+folder_name <- "_twl/xxxx_age_by_wealth_level"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -56,15 +56,9 @@ to_plot <- scf_stack %>%
 file_path <- paste0(out_path, "/age_breakdown_by_wealth_level.jpeg")
 source_string <- paste0("Source: Survey of Consumer Finances (2022)")
 
-text_labels <- to_plot %>%
-                  mutate(label = round(average_age, 0))
-
 # Create plot 
 plot <- ggplot(data = to_plot, aes(x = wealth_level, y=average_age)) +
   geom_bar(stat = "identity", position = "stack", fill = "black") +
-  geom_text(data = text_labels, aes(x = wealth_level, y=average_age, label = label),
-            vjust = 1.5,
-            color = "white") +
   scale_y_continuous(label = comma) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Average Age by Wealth Level")) +
