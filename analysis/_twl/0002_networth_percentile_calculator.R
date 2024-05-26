@@ -1,4 +1,4 @@
-cat("\014") # Clear your console
+`cat("\014") # Clear your console
 rm(list = ls()) #clear your environment
 
 ########################## Load in header file ######################## #
@@ -38,10 +38,10 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                   floor(log10(networth)) > 7 ~ "L6 ($100M+)", 
                   TRUE ~ "ERROR"
                 )) %>%
-                select(networth, age, wealth_level, wgt)
+                select(networth, age, income, wealth_level, wgt)
 
 # Calculate net worth percentiles
-find_percentile <- function(amount){
+find_percentile <- function(amount, var, varname){
   
   if(amount < 10^6){
     p_change <- 0.01
@@ -60,10 +60,11 @@ find_percentile <- function(amount){
   solved <- 0
   while(solved == 0){
     guess <- scf_stack %>%
-            summarise(nw_percentile = wtd.quantile(networth, weights = wgt, probs = p_guess)) %>%
+            rename(summary_col = !!sym(var)) %>%
+            summarise(nw_percentile = wtd.quantile(summary_col, weights = wgt, probs = p_guess)) %>%
             pull(nw_percentile)
   
-    diff_allowed <- 10^(floor(log10(amount)) - 1)
+    diff_allowed <- 10^(floor(log10(amount) - 1))
     
     if(guess - amount > diff_allowed){
       p_guess <- p_guess - p_change
@@ -74,13 +75,17 @@ find_percentile <- function(amount){
     }
   }
   
-  print(paste0("NW Percentile for ", format_as_dollar(amount), " = ", 100*p_guess, "%"))
+  print(paste0(varname, " Percentile for ", format_as_dollar(amount), " = ", 100*p_guess, "%"))
 }
 
-find_percentile(10000)
-find_percentile(10^5)
-find_percentile(10^6)
-find_percentile(10^7)
-find_percentile(10^8)
+find_percentile(10000, "networth", "Net Worth")
+find_percentile(10^5, "networth", "Net Worth")
+find_percentile(10^6, "networth", "Net Worth")
+find_percentile(10^7, "networth", "Net Worth")
+find_percentile(10^8, "networth", "Net Worth")
 
-# ############################  End  ################################## #
+find_percentile(35000, "income", "Income")
+find_percentile(70000, "income", "Income")
+find_percentile(140000, "income", "Income")
+
+# ############################  End  ################################## #`
