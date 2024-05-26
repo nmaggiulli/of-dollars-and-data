@@ -38,13 +38,8 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                   floor(log10(networth)) > 7 ~ "L6 ($100M+)", 
                   TRUE ~ "ERROR"
                 ),
-                income_group = case_when(
-                  income < 35000 ~ "0-25th Pct",
-                  income < 70000 ~ "25th-50th Pct", 
-                  income < 140000 ~ "50th-75th Pct", 
-                  TRUE ~ "75th-100 Pct"
-                ),) %>%
-                select(networth, income, wealth_level, income_group, edcl, agecl, wgt)
+               ) %>%
+                select(networth, income, wealth_level, edcl, agecl, wgt)
 
 scf_stack$wealth_level <- factor(scf_stack$wealth_level, levels = c("L1 (<$10k)", "L2 ($10k)",
                                                                     "L3 ($100k)", "L4 ($1M)",
@@ -96,23 +91,14 @@ plot <- ggplot(to_plot, aes(x=edcl, y=income)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-#Do distributions of income within each wealth level
-inc_dist_by_wealth_level <- scf_stack %>%
+#Do income by wealth level
+income_by_wealth_level <- scf_stack %>%
   group_by(wealth_level) %>%
   summarise(pct_10 = wtd.quantile(income, weights = wgt, probs = 0.1),
             pct_25 = wtd.quantile(income, weights = wgt, probs = 0.25),
             pct_50 = wtd.quantile(income, weights = wgt, probs = 0.5),
             pct_75 = wtd.quantile(income, weights = wgt, probs = 0.75),
             pct_90 = wtd.quantile(income, weights = wgt, probs = 0.9)) %>%
-  ungroup() 
-
-wealth_dist_by_income <- scf_stack %>%
-  group_by(income_group) %>%
-  summarise(pct_10 = wtd.quantile(networth, weights = wgt, probs = 0.1),
-            pct_25 = wtd.quantile(networth, weights = wgt, probs = 0.25),
-            pct_50 = wtd.quantile(networth, weights = wgt, probs = 0.5),
-            pct_75 = wtd.quantile(networth, weights = wgt, probs = 0.75),
-            pct_90 = wtd.quantile(networth, weights = wgt, probs = 0.9)) %>%
   ungroup() 
 
 # ############################  End  ################################## #

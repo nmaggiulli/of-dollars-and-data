@@ -37,8 +37,14 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                   floor(log10(networth)) == 7 ~ "L5 ($10M)",  
                   floor(log10(networth)) > 7 ~ "L6 ($100M+)", 
                   TRUE ~ "ERROR"
+                ),
+                income_group = case_when(
+                  income < 35000 ~ "(1) <$35k",
+                  income < 70000 ~ "(2) $35k-$70k", 
+                  income < 140000 ~ "(3) $70k-$140k", 
+                  TRUE ~ "(4) $140k+"
                 )) %>%
-                select(networth, income, wealth_level, edcl, agecl, wgt)
+                select(networth, income, income_group, wealth_level, edcl, agecl, wgt)
 
 scf_stack$wealth_level <- factor(scf_stack$wealth_level, levels = c("L1 (<$10k)", "L2 ($10k)",
                                                                     "L3 ($100k)", "L4 ($1M)",
@@ -73,5 +79,14 @@ plot <- ggplot(data = to_plot, aes(x = wealth_level, y=value, fill = key)) +
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Do some wealth dist stats by income group
+wealth_dist_by_income <- scf_stack %>%
+  group_by(income_group) %>%
+  summarise(
+            pct_25 = wtd.quantile(networth, weights = wgt, probs = 0.25),
+            pct_50 = wtd.quantile(networth, weights = wgt, probs = 0.5),
+            pct_75 = wtd.quantile(networth, weights = wgt, probs = 0.75)) %>%
+  ungroup() 
 
 # ############################  End  ################################## #
