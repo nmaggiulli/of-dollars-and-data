@@ -44,9 +44,50 @@ scf_stack$wealth_level <- factor(scf_stack$wealth_level, levels = c("L1 (<$10k)"
                                                                     "L3 ($100k)", "L4 ($1M)",
                                                                     "L5 ($10M)", "L6 ($100M+)"))
 
+#Plot income by education level
+to_plot <- scf_stack %>%
+  group_by(edcl) %>%
+  summarise(income = wtd.quantile(income, weights = wgt, probs = 0.5)) %>%
+  ungroup() 
+
+file_path <- paste0(out_path, "/income_by_edcl.jpeg")
+source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
+
+plot <- ggplot(to_plot, aes(x=edcl, y=income)) +
+  geom_bar(stat = "identity", position = "dodge", fill = chart_standard_color) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle(paste0("Median Income\nby Education Level")) +
+  labs(x="Education Level", y=paste0("Income"),
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Now plot by wealth level as well
 income_by_edcl <- scf_stack %>%
   group_by(wealth_level, edcl) %>%
   summarise(income = wtd.quantile(income, weights = wgt, probs = 0.5)) %>%
   ungroup() 
+
+to_plot <- income_by_edcl %>%
+            filter(!grepl("L5|L6", wealth_level))
+
+file_path <- paste0(out_path, "/edcl_income_by_wealth_level.jpeg")
+source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
+
+plot <- ggplot(to_plot, aes(x=edcl, y=income)) +
+  geom_bar(stat = "identity", position = "dodge", fill = chart_standard_color) +
+  facet_rep_wrap(wealth_level ~ ., scales = "free_y", repeat.tick.labels = c("left", "bottom")) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle(paste0("Median Income\nby Education & Wealth Level")) +
+  labs(x="Education Level", y=paste0("Income"),
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #
