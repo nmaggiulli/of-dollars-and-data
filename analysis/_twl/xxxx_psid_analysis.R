@@ -13,7 +13,7 @@ library(lubridate)
 library(stringr)
 library(psidR)
 library(data.table)
-library(utils)
+library(quantmod)
 library(tidyverse)
 
 folder_name <- "_twl/xxxx_psid_analysis"
@@ -91,12 +91,26 @@ for(s in supplemental_years){
     supp_stack <- supp_stack %>% bind_rows(tmp2)
   }
 }
+
+#Get CPI data for inflation adjustment
+getSymbols('CPIAUCNS',src='FRED')
+
+cpi_all_years <- data.frame(date=index(get("CPIAUCNS")), coredata(get("CPIAUCNS"))) %>%
+  rename(cpi = `CPIAUCNS`) %>%
+  mutate(year = year(date)) %>%
+  filter(month(date) == 1, year %in% wealth_years) %>%
+  select(year, cpi)
+
+cpi_deflator <- cpi_all_years %>%
+                  mutate(cpi_deflator = cpi/cpi_all_years[1, "cpi"]) %>%
+                  select(year, cpi_deflator)
                         
 full_psid_supp <- full_psid %>%
                     left_join(supp_stack) %>%
+                    left_join(cpi_deflator) %>%
                     mutate(networth = case_when(
-                      year < 2009 ~ supp_wealth,
-                      TRUE ~ wealth
+                      year < 2009 ~ supp_wealth/cpi_deflator,
+                      TRUE ~ wealth/cpi_deflator
                     ),
                     wealth_level = case_when(
                       networth < 10000 ~ "L1 (<$10k)",
@@ -107,14 +121,34 @@ full_psid_supp <- full_psid %>%
                       floor(log10(networth)) > 7 ~ "L6 ($100M+)", 
                       TRUE ~ "ERROR"
                     )) %>%
-                    filter(!is.na(networth)) %>%
                     select(year, interview, weight, networth, wealth_level, faminc, hvalue,
                            ID1968, age, educ)
 
-wealth_level_pct <- full_psid_supp %>%
-  group_by(year, wealth_level) %>%
+full_psid_supp$wealth_level <- factor(full_psid_supp$wealth_level, levels = c("L1 (<$10k)", "L2 ($10k)",
+                                                                    "L3 ($100k)", "L4 ($1M)",
+                                                                    "L5 ($10M)", "L6 ($100M+)"))
+
+missing_nw_id_to_remove <- full_psid_supp %>%
+                          filter(is.na(networth)) %>%
+                          pull(ID1968)
+
+full_data <- full_psid_supp %>%
+            filter(ID1968 != missing_nw_id_to_remove) 
+            
+test_1984_1994 <- full_data %>%
+  filter(year %in% c(1984, 1994), weight > 0) %>%
+  group_by(year, wealth_level, ID1968) %>%
   summarise(total_weight = sum(weight)) %>%
-  mutate(pct = total_weight / sum(total_weight) * 100)
+  ungroup() %>%
+  mutate(percentage = total_weight / sum(total_weight)) %>%
+  arrange(ID1968, year) %>%
+  mutate(level_change = case_when(
+    ID1968 != lead(ID1968) ~ "",
+    wealth_level == lead(wealth_level) ~ "0 (No Change)",
+    wealth_level < lead(wealth_level) ~ "1 (Up Level)",
+    TRUE ~ "-1 (Down Level)"
+  ))
+
 
 
 # ############################  End  ################################## #
