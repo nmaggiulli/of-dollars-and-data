@@ -24,12 +24,11 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 psid_path <- paste0(importdir, "_twl/0001_psid/")
-#build.psid(datadr = paste0(psid_path), small = FALSE)
 r <- system.file(package="psidR")
 cwf <- openxlsx::read.xlsx(file.path(r,"psid-lists","psid.xlsx"))
 
 wealth_years <- c(1984, 1989, 1994, 1999, 2001, 2003, 2005, 2007, 
-                  2009, 2011, 2013, 2015, 2017)
+                  2009, 2011, 2013, 2015, 2017, 2019, 2021)
 
 # Select vars we care about and the years we care about
 f <- fread(file.path(r,"psid-lists","famvars.txt")) %>%
@@ -44,12 +43,13 @@ i <- dcast(i[,list(year,name,variable)],year~name, value.var = "variable")
 f <- dcast(f[,list(year,name,variable)],year~name, value.var = "variable")
 
 # Build the full panel data (we will add 1984-2007 after)
-d <- build.panel(datadir=psid_path,
+full_psid <- build.panel(datadir=psid_path,
                 fam.vars=f,
                 ind.vars=i,
                 heads.only = TRUE,
                 sample = "SRC",
-                design="balanced")
+                design="balanced") %>%
+            rename()
 
 #Loop through years 1984-2007
 supplemental_years <- wealth_years[wealth_years < 2009]
@@ -82,7 +82,8 @@ for(s in supplemental_years){
                    col.names = colnames,
                   header = FALSE, 
                   skip = 0) %>%
-            select(family_id, wealth)
+            mutate(year = s) %>%
+            select(year, interview, supp_wealth)
   
   if(s == min(supplemental_years)){
     supp_stack <- tmp2
@@ -91,5 +92,29 @@ for(s in supplemental_years){
   }
 }
                         
+full_psid_supp <- full_psid %>%
+                    left_join(supp_stack) %>%
+                    mutate(networth = case_when(
+                      year < 2009 ~ supp_wealth,
+                      TRUE ~ wealth
+                    ),
+                    wealth_level = case_when(
+                      networth < 10000 ~ "L1 (<$10k)",
+                      floor(log10(networth)) == 4 ~ "L2 ($10k)",
+                      floor(log10(networth)) == 5 ~ "L3 ($100k)",
+                      floor(log10(networth)) == 6 ~ "L4 ($1M)",  
+                      floor(log10(networth)) == 7 ~ "L5 ($10M)",  
+                      floor(log10(networth)) > 7 ~ "L6 ($100M+)", 
+                      TRUE ~ "ERROR"
+                    )) %>%
+                    filter(!is.na(networth)) %>%
+                    select(year, interview, weight, networth, wealth_level, faminc, hvalue,
+                           ID1968, age, educ)
+
+wealth_level_pct <- full_psid_supp %>%
+  group_by(year, wealth_level) %>%
+  summarise(total_weight = sum(weight)) %>%
+  mutate(pct = total_weight / sum(total_weight) * 100)
+
 
 # ############################  End  ################################## #
