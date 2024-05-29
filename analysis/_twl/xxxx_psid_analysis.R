@@ -149,13 +149,14 @@ for(i in 1:nrow(years_df)){
   
   start_data <- full_data %>%
     filter(year == start_yr, weight > 0) %>%
-    select(year, weight, ID1968, wealth_level) %>%
+    select(year, weight, ID1968, wealth_level, age) %>%
     rename(start_level = wealth_level)
   
   end_data <- full_data %>%
     filter(year == end_yr, weight > 0) %>%
-    select(ID1968, wealth_level) %>%
-    rename(end_level = wealth_level)
+    select(ID1968, wealth_level, age) %>%
+    rename(end_level = wealth_level,
+           end_age = age)
   
   merged_level_comparison <- start_data %>%
                               left_join(end_data)
@@ -206,5 +207,59 @@ all_change_summary <- change_stack %>%
                         group_by(level_change) %>%
                         summarise(all_pct = mean(all_pct)) %>%
                         ungroup()
+
+#Ages over time
+for(w in wealth_years){
+  tmp_one_year <- full_data %>%
+    filter(year == w, weight > 0) %>%
+    select(year, weight, ID1968, wealth_level, age)
+  
+  if(w == min(wealth_years)){
+    merged_stack <- tmp_one_year
+  } else{
+    merged_stack <- merged_stack %>% bind_rows(tmp_one_year)
+  }
+}
+
+age_analysis <- merged_stack %>%
+                  mutate(
+                    l1_dummy = ifelse(wealth_level == 1, 1, 0),
+                    l2_dummy = ifelse(wealth_level == 2, 1, 0),
+                    l3_dummy = ifelse(wealth_level == 3, 1, 0),
+                    l4_dummy = ifelse(wealth_level == 4, 1, 0)) %>%
+                  group_by(year) %>%
+                  summarise(avg_age = wtd.mean(age, weights = weight),
+                            avg_wealth_level = wtd.mean(wealth_level, weight),
+                            `L1 (<$10k)` = wtd.mean(l1_dummy, weight),
+                            `L2 ($10k)` = wtd.mean(l2_dummy, weight),
+                            `L3 ($100k)` = wtd.mean(l3_dummy, weight),
+                            `L4 ($1M)` = wtd.mean(l4_dummy, weight)
+                            ) %>%
+                  ungroup()
+
+to_plot <- age_analysis %>%
+              select(-avg_age, -avg_wealth_level) %>%
+              gather(-year, key=key, value=value)
+
+file_path <- paste0(out_path, "/wealth_levels_over_time.jpeg")
+source_string <- paste0("Source: PSID, University of Michigan (1984-2017)")
+
+bw_colors <- c("#cccccc", "#969696", "#525252", "#252525")
+
+# Create plot 
+plot <- ggplot(data = to_plot, aes(x = year, y = value, fill = key)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = bw_colors) +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  scale_x_continuous(breaks = seq(1985, 2015, 5)) +
+  of_dollars_and_data_theme +
+  theme(legend.title = element_blank()) +
+  ggtitle(paste0("Wealth Level Breakdown by Year\n1984-2017")) +
+  labs(x = "Year" , y = "Percentage of All Households",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 
 # ############################  End  ################################## #

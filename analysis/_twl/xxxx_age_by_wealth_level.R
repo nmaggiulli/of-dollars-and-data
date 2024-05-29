@@ -85,4 +85,58 @@ median <- age_percentile_summary_by_level %>%
 pct_1 <- age_percentile_summary_by_level %>%
   filter(percentile == 1)
 
+# Now do all data years to get all wealth levels over time
+scf_stack_full <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
+  mutate(wealth_level = case_when(
+    networth < 10000 ~ 1,
+    floor(log10(networth)) == 4 ~ 2,
+    floor(log10(networth)) == 5 ~ 3,
+    floor(log10(networth)) == 6 ~ 4,  
+    floor(log10(networth)) == 7 ~ 5,  
+    floor(log10(networth)) > 7 ~ 6, 
+    TRUE ~ -999
+  )) %>%
+  select(year, wgt, age, wealth_level)
+
+wealth_lvls_over_time <- scf_stack_full %>%
+  mutate(
+    l1_dummy = ifelse(wealth_level == 1, 1, 0),
+    l2_dummy = ifelse(wealth_level == 2, 1, 0),
+    l3_dummy = ifelse(wealth_level == 3, 1, 0),
+    l4_dummy = ifelse(wealth_level == 4, 1, 0)) %>%
+  group_by(year) %>%
+  summarise(avg_age = wtd.mean(age, wgt),
+            avg_wealth_level = wtd.mean(wealth_level, wgt),
+            `L1 (<$10k)` = wtd.mean(l1_dummy, wgt),
+            `L2 ($10k)` = wtd.mean(l2_dummy, wgt),
+            `L3 ($100k)` = wtd.mean(l3_dummy, wgt),
+            `L4 ($1M)` = wtd.mean(l4_dummy, wgt)
+  ) %>%
+  ungroup()
+
+to_plot <- wealth_lvls_over_time %>%
+  select(-avg_age, -avg_wealth_level) %>%
+  mutate(year = as.Date(paste0(year, "-01-01"))) %>%
+  gather(-year, key=key, value=value)
+
+file_path <- paste0(out_path, "/wealth_levels_over_time.jpeg")
+source_string <- paste0("Source: Survey of Consumer Finances (1989-2022)")
+
+bw_colors <- c("#cccccc", "#969696", "#525252", "#252525")
+
+# Create plot 
+plot <- ggplot(data = to_plot, aes(x = year, y = value, fill = key)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = bw_colors) +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  scale_x_date() +
+  of_dollars_and_data_theme +
+  theme(legend.title = element_blank()) +
+  ggtitle(paste0("Wealth Level Breakdown by Year\n1989-2022")) +
+  labs(x = "Year" , y = "Percentage of All Households",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 # ############################  End  ################################## #
