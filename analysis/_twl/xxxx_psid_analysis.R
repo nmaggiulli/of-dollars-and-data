@@ -13,7 +13,9 @@ library(lubridate)
 library(stringr)
 library(psidR)
 library(data.table)
+library(devtools)
 library(quantmod)
+library(Hmisc)
 library(tidyverse)
 
 folder_name <- "_twl/xxxx_psid_analysis"
@@ -25,22 +27,31 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 psid_path <- paste0(importdir, "_twl/0001_psid/")
 r <- system.file(package="psidR")
-cwf <- openxlsx::read.xlsx(file.path(r,"psid-lists","psid.xlsx"))
+#install_github("floswald/psidR")
 
 wealth_years <- c(1984, 1989, 1994, 1999, 2001, 2003, 2005, 2007,
-                  2009, 2011, 2013, 2015, 2017)
+                  2009, 2011, 2013, 2015, 2017, 2019, 2021)
 
 # Select vars we care about and the years we care about
 f <- fread(file.path(r,"psid-lists","famvars.txt")) %>%
-        filter(name %in% c("faminc", "hvalue", "wealth"),
+        filter(name %in% c("wealth", "hvalue"),
                year %in% wealth_years)
+
 i <- fread(file.path(r,"psid-lists","indvars.txt")) %>%
-        filter(name != "empstat",
+        filter(name %in% c("age", "weight"),
                year %in% wealth_years)
 
 # Reformat the shape
 i <- dcast(i[,list(year,name,variable)],year~name, value.var = "variable")
 f <- dcast(f[,list(year,name,variable)],year~name, value.var = "variable")
+
+#Add 2019 and 2021 variables
+f <- f %>% bind_rows(data.frame(year = c(2019, 2021),
+                     wealth = c ("ER77511", "ER81838")))
+
+i <- i %>% bind_rows(data.frame(year = c(2019, 2021),
+                                age = c ("ER34704", "ER34904"),
+                                weight = c("ER34863", "ER35064")))
 
 # Build the full panel data (we will add 1984-2007 after)
 full_psid <- build.panel(datadir=psid_path,
@@ -122,12 +133,12 @@ full_psid_supp <- full_psid %>%
                       floor(log10(networth)) > 7 ~ 6, 
                       TRUE ~ NA
                     )) %>%
-                    select(year, interview, weight, pernum, networth, wealth_level, faminc, hvalue,
-                           ID1968, age, educ)
+                    select(year, interview, weight, pernum, networth, wealth_level,
+                           ID1968, age)
 
 missing_nw_id_to_remove <- full_psid_supp %>%
-                          filter(is.na(networth)) %>%
-                          pull(ID1968)
+  filter(is.na(networth)) %>%
+  pull(ID1968)
 
 # Now just keep one observation per HH
 full_data <- full_psid_supp %>%
@@ -139,8 +150,8 @@ full_data <- full_psid_supp %>%
 
 #Loop through start and end years
 years_df <- data.frame(
-   start_year = c(1984, 1989, 1994, 1999, 2001, 2003, 2005, 2007),
-   end_year = c(1994, 1999, 2003, 2009, 2011, 2013, 2015, 2017)
+   start_year = c(1984, 1989, 1994, 1999, 2001, 2003, 2005, 2007, 2009, 2011),
+   end_year = c(1994, 1999, 2003, 2009, 2011, 2013, 2015, 2017, 2019, 2021)
 )
 
 for(i in 1:nrow(years_df)){
@@ -251,10 +262,10 @@ plot <- ggplot(data = to_plot, aes(x = year, y = value, fill = key)) +
   geom_bar(stat = "identity", position = "stack") +
   scale_fill_manual(values = bw_colors) +
   scale_y_continuous(label = percent_format(accuracy = 1)) +
-  scale_x_continuous(breaks = seq(1985, 2015, 5)) +
+  scale_x_continuous(breaks = seq(1985, 2020, 5)) +
   of_dollars_and_data_theme +
   theme(legend.title = element_blank()) +
-  ggtitle(paste0("Wealth Level Breakdown by Year\n1984-2017")) +
+  ggtitle(paste0("Wealth Level Breakdown by Year\n", min(wealth_years), "-", max(wealth_years))) +
   labs(x = "Year" , y = "Percentage of All Households",
        caption = paste0(source_string))
 
