@@ -1,4 +1,4 @@
-`cat("\014") # Clear your console
+cat("\014") # Clear your console
 rm(list = ls()) #clear your environment
 
 ########################## Load in header file ######################## #
@@ -29,7 +29,7 @@ data_year <- 2022
 # Bring in assets and normalize percentages
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
               filter(year == data_year) %>%
-                mutate( wealth_level = case_when(
+                mutate(wealth_level = case_when(
                   networth < 10000 ~ "L1 (<$10k)",
                   floor(log10(networth)) == 4 ~ "L2 ($10k)",
                   floor(log10(networth)) == 5 ~ "L3 ($100k)",
@@ -44,17 +44,21 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
 find_percentile <- function(amount, var, varname){
   
   if(amount < 10^6){
-    p_change <- 0.01
+    p_change <- 0.001
     p_guess <- 0.5
+    log_reduce <- 1
   } else if(amount < 10^7){
-    p_change <- 0.001
-    p_guess <- 0.7
+    p_change <- 0.0001
+    p_guess <- 0.8
+    log_reduce <- 2
   } else if (amount < 10^8){
-    p_change <- 0.001
-    p_guess <- 0.95
+    p_change <- 0.0001
+    p_guess <- 0.97
+    log_reduce <- 2
   } else{
     p_change <- 0.0001
     p_guess <- 0.99
+    log_reduce <- 2
   }
   
   solved <- 0
@@ -64,7 +68,7 @@ find_percentile <- function(amount, var, varname){
             summarise(nw_percentile = wtd.quantile(summary_col, weights = wgt, probs = p_guess)) %>%
             pull(nw_percentile)
   
-    diff_allowed <- 10^(floor(log10(amount) - 1))
+    diff_allowed <- 10^(floor(log10(amount) - log_reduce))
     
     if(guess - amount > diff_allowed){
       p_guess <- p_guess - p_change
