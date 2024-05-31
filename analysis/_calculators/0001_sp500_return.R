@@ -23,7 +23,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 download_data <- 1
 today <- Sys.Date() 
 filter_date <- "1871-01-01"
-url <- "http://www.econ.yale.edu/~shiller/data/ie_data.xls"
+url <- "https://img1.wsimg.com/blobby/go/e5e77e0b-59d1-44d9-ab25-4763ac982e53/downloads/ie_data.xls?ver=1714742730434"
 dest_file <- paste0(importdir, "0009_sp500_returns_pe/ie_data.xls") 
 
 if(download_data == 1){
