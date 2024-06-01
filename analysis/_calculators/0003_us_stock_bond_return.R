@@ -175,7 +175,8 @@ to_calc <- sp500_ret_pe %>%
                 row_number() == 1 ~ real_bond_ret,
                 TRUE ~ real_bond_index/lag(real_bond_index, 1) - 1)
                 ) %>%
-              select(month, nom_sp500_ret, real_sp500_ret, nom_bond_ret, real_bond_ret, cpi)
+              select(month, nom_sp500_ret, real_sp500_ret, nom_bond_ret, real_bond_ret, cpi) %>%
+              drop_na()
 
 end_year <- year(max(to_calc$month))
 
