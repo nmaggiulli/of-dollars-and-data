@@ -48,25 +48,10 @@ scf_stack$wealth_level <- factor(scf_stack$wealth_level, levels = c("L1 (<$10k)"
                                                                     "L3 ($100k)", "L4 ($1M)",
                                                                     "L5 ($10M)", "L6 ($100M+)"))
 
-to_plot <- scf_stack %>%
+avg_age_by_wealth_lvl <- scf_stack %>%
               group_by(wealth_level) %>%
               summarise(average_age = wtd.mean(age, weights = wgt)) %>%
               ungroup()
-
-file_path <- paste0(out_path, "/age_breakdown_by_wealth_level.jpeg")
-source_string <- paste0("Source: Survey of Consumer Finances (2022)")
-
-# Create plot 
-plot <- ggplot(data = to_plot, aes(x = wealth_level, y=average_age)) +
-  geom_bar(stat = "identity", position = "stack", fill = "black") +
-  scale_y_continuous(label = comma) +
-  of_dollars_and_data_theme +
-  ggtitle(paste0("Average Age by Wealth Level")) +
-  labs(x = "Wealth Level (Net Worth Tier)" , y = "Average Age",
-       caption = paste0(source_string))
-
-# Save the plot
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 #Calculate the age distribution across each wealth level
 age_percentile_summary_by_level <- scf_stack %>%
@@ -79,8 +64,8 @@ age_percentile_summary_by_level <- scf_stack %>%
   ungroup() %>%
   mutate(percentile = rep(seq(1, 99), 6))
 
-median <- age_percentile_summary_by_level %>%
-            filter(percentile == 50)
+pct_10_25_50_age_by_wealth_level <- age_percentile_summary_by_level %>%
+            filter(percentile %in% c(10, 25, 50))
 
 pct_1 <- age_percentile_summary_by_level %>%
   filter(percentile == 1)
