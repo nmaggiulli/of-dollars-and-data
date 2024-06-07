@@ -150,11 +150,9 @@ full_data <- full_psid_supp %>%
 
 #Loop through start and end years
 years_df <- data.frame(
-   start_year = c(1984, 1989, 1994, 1999, 2001, 2003, 2005, 2007, 2009, 2011, 
-                  1984, 1989, 1994, 1999),
-   end_year = c(1994, 1999, 2003, 2009, 2011, 2013, 2015, 2017, 2019, 2021,
-                2003, 2009, 2013, 2019),
-   n_years = c(rep(10, 10), 20, 20, 20, 20)
+   start_year = c(1984, 1989, 1994, 1999, 2001, 2003, 2005, 2007, 2009, 2011),
+   end_year = c(1994, 1999, 2003, 2009, 2011, 2013, 2015, 2017, 2019, 2021),
+   n_years = c(rep(10, 10))
 )
 
 for(i in 1:nrow(years_df)){
@@ -199,8 +197,7 @@ for(i in 1:nrow(years_df)){
     summarise(n_hhs = n(),
               total_weight = sum(weight)) %>%
     ungroup() %>%
-    mutate(all_pct = total_weight / sum(total_weight),
-           start_year = start_yr,
+    mutate(start_year = start_yr,
            end_year = end_yr,
            n_years = n_years)
   
@@ -214,31 +211,36 @@ for(i in 1:nrow(years_df)){
 }
 
 #Summarize diffs
-all_levels_summary_10 <- levels_stack %>%
-                      filter(n_years == 10) %>%
+summarize_diffs <- function(years_n){
+  
+lv_tmp <- levels_stack %>%
+                  filter(n_years == years_n) %>%
+                  group_by(start_level) %>%
+                  summarise(level_weight = sum(total_weight)) %>%
+                  ungroup()
+
+all_lv_sum <- levels_stack %>%
+                      filter(n_years == years_n) %>%
                       group_by(start_level, end_level) %>%
-                      summarise(level_pct = mean(level_pct),
-                                all_pct = mean(all_pct)) %>%
-                      ungroup()
+                      summarise(total_weight = sum(total_weight)) %>%
+                      ungroup() %>%
+                      left_join(lv_tmp) %>%
+                      mutate(level_pct = total_weight / level_weight,
+                             all_pct = total_weight / sum(total_weight))
 
-all_change_summary_10 <- change_stack %>%
-                        filter(n_years == 10) %>%
+all_change_sum <- change_stack %>%
+                        filter(n_years == years_n) %>%
                         group_by(level_change) %>%
-                        summarise(all_pct = mean(all_pct)) %>%
-                        ungroup()
+                        summarise(total_weight = sum(total_weight)) %>%
+                        ungroup() %>%
+                        mutate(all_pct = total_weight/sum(change_stack$total_weight))
 
-all_levels_summary_20 <- levels_stack %>%
-                          filter(n_years == 20) %>%
-                          group_by(start_level, end_level) %>%
-                          summarise(level_pct = mean(level_pct),
-                                    all_pct = mean(all_pct)) %>%
-                          ungroup()
+assign(paste0("all_levels_summary_", years_n), all_lv_sum, envir = .GlobalEnv)
+assign(paste0("all_change_summary_", years_n), all_change_sum, envir = .GlobalEnv)
 
-all_change_summary_20 <- change_stack %>%
-                            filter(n_years == 20) %>%
-                            group_by(level_change) %>%
-                            summarise(all_pct = mean(all_pct)) %>%
-                            ungroup()
+}
+
+summarize_diffs(10)
 
 #Ages over time
 for(w in wealth_years){

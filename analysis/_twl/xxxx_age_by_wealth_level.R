@@ -41,8 +41,16 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                             floor(log10(networth)) == 7 ~ "L5 ($10M)",  
                             floor(log10(networth)) > 7 ~ "L6 ($100M+)", 
                             TRUE ~ "ERROR"
-                          )) %>%
-                select(wealth_level, age, wgt)
+                          ),
+                     new_agecl = case_when(
+                       age < 30 ~ "20s",
+                       age < 40 ~ "30s",
+                       age < 50 ~ "40s",
+                       age < 60 ~ "50s",
+                       age < 70 ~ "60s",
+                       TRUE ~ "70+"
+                     )) %>%
+                select(wealth_level, networth, age, new_agecl, wgt)
 
 scf_stack$wealth_level <- factor(scf_stack$wealth_level, levels = c("L1 (<$10k)", "L2 ($10k)",
                                                                     "L3 ($100k)", "L4 ($1M)",
@@ -123,5 +131,54 @@ plot <- ggplot(data = to_plot, aes(x = year, y = value, fill = key)) +
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Now calculate wealth by age level
+#Calculate the age distribution across each wealth level
+nw_summary_by_age <- scf_stack %>%
+  group_by(new_agecl) %>%
+  summarise(nw_10pct = wtd.quantile(networth, 
+                               weights = wgt, 
+                               probs = 0.1),
+            nw_20pct = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = 0.2),
+            nw_30pct = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = 0.3),
+            nw_40pct = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = 0.4),
+            nw_50pct = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = 0.5),
+            nw_60pct = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = 0.6),
+            nw_70pct = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = 0.7),
+            nw_80pct = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = 0.8),
+            nw_90pct = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = 0.9),
+            nw_95pct = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = 0.95),
+            nw_96pct = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = 0.96),
+            nw_97pct = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = 0.97),
+            nw_98pct = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = 0.98),
+            nw_99pct = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = 0.99),
+  ) %>%
+  ungroup() 
 
 # ############################  End  ################################## #
