@@ -22,9 +22,10 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 # Do all simulations using a 60/40 portfolio
 s_weight <- 0.6
+swr <- 0.04
 
 #Bring in raw data
-raw <- read.csv(paste0(importdir, "/_fl/0014_discretionary_sims/GrowthOfWealth_20230206173453.csv"),
+raw <- read.csv(paste0(importdir, "/0405_retire_inflation/GrowthOfWealth_20240614085022.csv"),
                 skip = 7, 
                 row.names = NULL,
                 col.names = c("date", "index_bond",	"index_sp500", "cpi"))  %>%
@@ -111,12 +112,14 @@ start_years <- c("1974-01-01",
                  "1954-01-01",
                  "1990-01-01")
 
+labels <- c("Early (1974)", "Middle (1964)", "Late (1954)", "Low (1990)")
+
 periods_to_run <- data.frame(
   start_year = start_years,
   n_years = rep(30, length(start_years)),
-  withdrawal_rate = rep(0.04, length(start_years)),
-  label = c("Early (1974)", "Middle (1964)", "Late (1954)", "Low (1990)")
-)
+  withdrawal_rate = rep(swr, length(start_years)),
+  label = labels
+  )
 
 for(i in 1:nrow(periods_to_run)){
   s <- periods_to_run[i, "start_year"]
@@ -150,7 +153,7 @@ to_plot <- summary %>%
 #Plot
 file_path <- paste0(out_path, "/retire_spending_by_inflation.jpeg")
 source_string <- paste0("Source:  Returns 2.0 (OfDollarsAndData.com)")
-note_string <-  str_wrap(paste0("Note: Assumes a 4% withdrawal rate to determine your initial spending level which is adjusted by inflation thereafter.")
+note_string <-  str_wrap(paste0("Note: Assumes a ", 100*swr, "% withdrawal rate to determine your initial spending level which is adjusted by inflation thereafter.")
                          , width = 85)
 
 plot <- ggplot(to_plot, aes(x=year, y=value, col = key)) +
@@ -170,24 +173,53 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 to_plot <- summary %>%
   select(year, label, avg_port) %>%
   rename(key = label,
-         value = avg_port)
+         value = avg_port) %>%
+  bind_rows(data.frame(
+    year = rep(0, length(start_years)),
+    key = labels,
+    value = rep(10^6, length(start_years))
+  )
+  )
 
 #Plot
-file_path <- paste0(out_path, "/retire_port_by_inflation.jpeg")
+file_path <- paste0(out_path, "/retire_port_by_inflation_swr_", 100*swr, ".jpeg")
 source_string <- paste0("Source:  Returns 2.0 (OfDollarsAndData.com)")
-note_string <-  str_wrap(paste0("Note: Assumes a 4% withdrawal rate to determine your initial spending level which is adjusted by inflation thereafter. ",
-                                "Assumes all money is invested in a 60/40 U.S. Stock/Bond portfolio, rebalanced annually.")
+note_string <-  str_wrap(paste0("Note: Assumes a ", 100*swr, "% withdrawal rate to determine your initial spending level which is adjusted by inflation thereafter. ",
+                                "Assumes all money is invested in a ", 100*s_weight,"/", 100*(1-s_weight), " U.S. Stock/Bond portfolio and is rebalanced annually.")
                          , width = 85)
 
 plot <- ggplot(to_plot, aes(x=year, y=value, col = key)) +
   geom_line() +
   scale_color_discrete() +
-  scale_y_continuous(label = dollar) +
+  scale_y_continuous(label = dollar, breaks = seq(10^6, 7*10^6, 10^6)) +
   of_dollars_and_data_theme +
   theme(legend.position = "right",
         legend.title = element_blank()) +
-  ggtitle(paste0("Retirement Portfolio Value\nby Inflation Regime")) +
+  ggtitle(paste0("Retirement Portfolio Value\nby Inflation Regime\n", 100*swr, "% Withdrawal Rate")) +
   labs(x="Year", y="Nominal Portfolio Value",
+       caption = paste0(source_string, "\n", note_string))
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+#Plot cpi
+cpi_annual <- raw %>%
+              select(date, change_in_cpi) %>%
+              drop_na()
+
+file_path <- paste0(out_path, "/annual_inflation_rate_through_april_2024.jpeg")
+source_string <- paste0("Source: Returns 2.0 (OfDollarsAndData.com)")
+note_string <-  str_wrap(paste0("Note: CPI data through April 2024.")
+                         , width = 85)
+
+plot <- ggplot(cpi_annual, aes(x=date, y=change_in_cpi)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_line(col = "black") +
+  scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(-0.1, 0.2, 0.05)) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "right",
+        legend.title = element_blank()) +
+  ggtitle(paste0("Annual Inflation Rate\n1927-2024")) +
+  labs(x="Year", y="Annual Inflation Rate",
        caption = paste0(source_string, "\n", note_string))
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
