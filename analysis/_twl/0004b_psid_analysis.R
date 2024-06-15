@@ -150,9 +150,11 @@ full_data <- full_psid_supp %>%
 
 #Loop through start and end years
 years_df <- data.frame(
-   start_year = c(1984, 1989, 1994, 1999, 2001, 2003, 2005, 2007, 2009, 2011),
-   end_year = c(1994, 1999, 2003, 2009, 2011, 2013, 2015, 2017, 2019, 2021),
-   n_years = c(rep(10, 10))
+   start_year = c(1984, 1989, 1994, 1999, 2001, 2003, 2005, 2007, 2009, 2011,
+                  1984, 1989, 1994, 1999, 2001),
+   end_year = c(1994, 1999, 2003, 2009, 2011, 2013, 2015, 2017, 2019, 2021,
+                2003, 2009, 2013, 2019, 2021),
+   n_years = c(rep(10, 10), rep(20, 5))
 )
 
 for(i in 1:nrow(years_df)){
@@ -228,12 +230,14 @@ all_lv_sum <- levels_stack %>%
                       mutate(level_pct = total_weight / level_weight,
                              all_pct = total_weight / sum(total_weight))
 
-all_change_sum <- change_stack %>%
-                        filter(n_years == years_n) %>%
+change_stack_n_years <- change_stack %>%
+                           filter(n_years == years_n)
+
+all_change_sum <- change_stack_n_years %>%
                         group_by(level_change) %>%
                         summarise(total_weight = sum(total_weight)) %>%
                         ungroup() %>%
-                        mutate(all_pct = total_weight/sum(change_stack$total_weight))
+                        mutate(all_pct = total_weight/sum(change_stack_n_years$total_weight))
 
 assign(paste0("all_levels_summary_", years_n), all_lv_sum, envir = .GlobalEnv)
 assign(paste0("all_change_summary_", years_n), all_change_sum, envir = .GlobalEnv)
@@ -241,6 +245,7 @@ assign(paste0("all_change_summary_", years_n), all_change_sum, envir = .GlobalEn
 }
 
 summarize_diffs(10)
+summarize_diffs(20)
 
 #Ages over time
 for(w in wealth_years){
