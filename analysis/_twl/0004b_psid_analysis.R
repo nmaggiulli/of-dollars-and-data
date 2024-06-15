@@ -18,7 +18,7 @@ library(quantmod)
 library(Hmisc)
 library(tidyverse)
 
-folder_name <- "_twl/xxxx_psid_analysis"
+folder_name <- "_twl/0004b_psid_analysis"
 
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
@@ -276,7 +276,7 @@ to_plot <- age_analysis %>%
               gather(-year, key=key, value=value)
 
 file_path <- paste0(out_path, "/wealth_levels_over_time.jpeg")
-source_string <- paste0("Source: PSID, University of Michigan (1984-2017)")
+source_string <- paste0("Source: PSID, University of Michigan (1984-2021)")
 
 bw_colors <- c("#cccccc", "#969696", "#525252", "#252525")
 
