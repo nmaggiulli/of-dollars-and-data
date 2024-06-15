@@ -164,17 +164,22 @@ for(i in 1:nrow(years_df)){
   
   start_data <- full_data %>%
     filter(year == start_yr, weight > 0) %>%
-    select(year, weight, ID1968, wealth_level, age) %>%
-    rename(start_level = wealth_level)
+    select(year, weight, ID1968, wealth_level, age, networth) %>%
+    rename(start_level = wealth_level,
+           start_nw = networth)
   
   end_data <- full_data %>%
     filter(year == end_yr, weight > 0) %>%
-    select(ID1968, wealth_level, age) %>%
+    select(ID1968, wealth_level, age, networth) %>%
     rename(end_level = wealth_level,
+           end_nw = networth,
            end_age = age)
   
   merged_level_comparison <- start_data %>%
-                              left_join(end_data)
+                              left_join(end_data) %>%
+                              mutate(nw_change = end_nw - start_nw,
+                                     level_change = end_level - start_level,
+                                     n_years = n_years)
   
   tmp_level_weight <- merged_level_comparison %>%
                       group_by(start_level) %>%
@@ -194,7 +199,6 @@ for(i in 1:nrow(years_df)){
                              n_years = n_years)
   
   tmp_change_summary <- merged_level_comparison %>%
-    mutate(level_change = end_level - start_level) %>%
     group_by(level_change) %>%
     summarise(n_hhs = n(),
               total_weight = sum(weight)) %>%
@@ -206,42 +210,50 @@ for(i in 1:nrow(years_df)){
   if(start_yr == min(years_df$start_year) & n_years == 10){
     levels_stack <- tmp_levels_summary
     change_stack <- tmp_change_summary
+    merged_level_stack <- merged_level_comparison
   } else{
     levels_stack <- levels_stack %>% bind_rows(tmp_levels_summary)
     change_stack <- change_stack %>% bind_rows(tmp_change_summary)
+    merged_level_stack <- merged_level_stack %>% bind_rows(merged_level_comparison)
   }
 }
 
 #Summarize diffs
 summarize_diffs <- function(years_n){
   
-lv_tmp <- levels_stack %>%
-                  filter(n_years == years_n) %>%
-                  group_by(start_level) %>%
-                  summarise(level_weight = sum(total_weight)) %>%
-                  ungroup()
-
-all_lv_sum <- levels_stack %>%
-                      filter(n_years == years_n) %>%
-                      group_by(start_level, end_level) %>%
-                      summarise(total_weight = sum(total_weight)) %>%
-                      ungroup() %>%
-                      left_join(lv_tmp) %>%
-                      mutate(level_pct = total_weight / level_weight,
-                             all_pct = total_weight / sum(total_weight))
-
-change_stack_n_years <- change_stack %>%
-                           filter(n_years == years_n)
-
-all_change_sum <- change_stack_n_years %>%
-                        group_by(level_change) %>%
+  lv_tmp <- levels_stack %>%
+                    filter(n_years == years_n) %>%
+                    group_by(start_level) %>%
+                    summarise(level_weight = sum(total_weight)) %>%
+                    ungroup()
+  
+  all_lv_sum <- levels_stack %>%
+                        filter(n_years == years_n) %>%
+                        group_by(start_level, end_level) %>%
                         summarise(total_weight = sum(total_weight)) %>%
                         ungroup() %>%
-                        mutate(all_pct = total_weight/sum(change_stack_n_years$total_weight))
-
-assign(paste0("all_levels_summary_", years_n), all_lv_sum, envir = .GlobalEnv)
-assign(paste0("all_change_summary_", years_n), all_change_sum, envir = .GlobalEnv)
-
+                        left_join(lv_tmp) %>%
+                        mutate(level_pct = total_weight / level_weight,
+                               all_pct = total_weight / sum(total_weight))
+  
+  change_stack_n_years <- change_stack %>%
+                             filter(n_years == years_n)
+  
+  all_change_sum <- change_stack_n_years %>%
+                          group_by(level_change) %>%
+                          summarise(total_weight = sum(total_weight)) %>%
+                          ungroup() %>%
+                          mutate(all_pct = total_weight/sum(change_stack_n_years$total_weight))
+  
+  nw_change_sum <- merged_level_stack %>%
+                      filter(n_years == years_n) %>%
+                      group_by(start_level, end_level) %>%
+                      summarise(nw_change = wtd.mean(nw_change, weights = weight)) %>%
+                      ungroup()
+  
+  assign(paste0("all_levels_summary_", years_n), all_lv_sum, envir = .GlobalEnv)
+  assign(paste0("all_change_summary_", years_n), all_change_sum, envir = .GlobalEnv)
+  assign(paste0("all_nw_change_summary_", years_n), nw_change_sum, envir = .GlobalEnv)
 }
 
 summarize_diffs(10)
