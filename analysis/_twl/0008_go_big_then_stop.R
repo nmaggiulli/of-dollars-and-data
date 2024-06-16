@@ -75,7 +75,7 @@ source_string <- "Source: Simulated data (OfDollarsAndData.com)"
 note_string <- str_wrap(paste0("Note: Assumes constant savings for ", n_years, " years and a ", 100*ret, "% annual rate of return."))
 
 plot <- ggplot(to_plot, aes(x= year, y=individual_pct)) +
-   geom_bar(stat = "identity", fill = chart_standard_color) +
+   geom_bar(stat = "identity", fill = "black") +
    scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 0.07, 0.01)) +
    of_dollars_and_data_theme +
    ggtitle(paste0("Percentage of Final Portfolio\nBy Year Saved")) +
