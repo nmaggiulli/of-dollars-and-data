@@ -112,17 +112,17 @@ cpi_all_years <- data.frame(date=index(get("CPIAUCNS")), coredata(get("CPIAUCNS"
   filter(month(date) == 1, year %in% wealth_years) %>%
   select(year, cpi)
 
-cpi_deflator <- cpi_all_years %>%
-                  mutate(cpi_deflator = cpi/cpi_all_years[1, "cpi"]) %>%
-                  select(year, cpi_deflator)
+cpi_inflator <- cpi_all_years %>%
+                  mutate(cpi_inflator = cpi_all_years[nrow(cpi_all_years), "cpi"]/cpi) %>%
+                  select(year, cpi_inflator)
                         
 # Join all data sources and deflate by CPI
 full_psid_supp <- full_psid %>%
                     left_join(supp_stack) %>%
-                    left_join(cpi_deflator) %>%
+                    left_join(cpi_inflator) %>%
                     mutate(networth = case_when(
-                      year < 2009 ~ supp_wealth/cpi_deflator,
-                      TRUE ~ wealth/cpi_deflator
+                      year < 2009 ~ supp_wealth*cpi_inflator,
+                      TRUE ~ wealth*cpi_inflator
                     ),
                     wealth_level = case_when(
                       networth < 10000 ~ 1,
@@ -284,7 +284,7 @@ age_analysis <- merged_stack %>%
                             `L1 (<$10k)` = wtd.mean(l1_dummy, weight),
                             `L2 ($10k)` = wtd.mean(l2_dummy, weight),
                             `L3 ($100k)` = wtd.mean(l3_dummy, weight),
-                            `L4 ($1M)` = wtd.mean(l4_dummy, weight)
+                            `L4 ($1M)` = wtd.mean(l4_dummy, weight),
                             ) %>%
                   ungroup()
 
