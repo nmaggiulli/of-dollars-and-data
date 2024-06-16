@@ -76,7 +76,7 @@ note_string <- str_wrap(paste0("Note: Assumes constant savings for ", n_years, "
 
 plot <- ggplot(to_plot, aes(x= year, y=individual_pct)) +
    geom_bar(stat = "identity", fill = chart_standard_color) +
-   scale_y_continuous(label = percent_format(accuracy = 1)) +
+   scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 0.07, 0.01)) +
    of_dollars_and_data_theme +
    ggtitle(paste0("Percentage of Final Portfolio\nBy Year Saved")) +
    labs(x="Year", y="Percentage of Final Portfolio",
@@ -93,10 +93,10 @@ point <- to_plot %>%
 
 plot <- ggplot(to_plot, aes(x= year, y=cumulative_pct)) +
    geom_line() +
-   geom_point(data=point, aes(x=year, y=cumulative_pct), col = "red") +
+   geom_vline(xintercept = 10, linetype = "dashed") +
    scale_y_continuous(label = percent_format(accuracy = 1)) +
    of_dollars_and_data_theme +
-   ggtitle(paste0("Over Half Your Final Portfolio is Built\nin the First Decade of Saving")) +
+   ggtitle(paste0("Over Half The Final Portfolio is Built\nin the First Decade of Saving")) +
    labs(x="Year", y="Cumulative Percentage of Final Portfolio",
         caption = paste0(source_string, "\n", note_string))
 
