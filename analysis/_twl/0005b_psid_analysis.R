@@ -34,7 +34,7 @@ wealth_years <- c(1984, 1989, 1994, 1999, 2001, 2003, 2005, 2007,
 
 # Select vars we care about and the years we care about
 f <- fread(file.path(r,"psid-lists","famvars.txt")) %>%
-        filter(name %in% c("wealth", "hvalue"),
+        filter(name %in% c("wealth", "hvalue", "faminc", "hours"),
                year %in% wealth_years)
 
 i <- fread(file.path(r,"psid-lists","indvars.txt")) %>%
@@ -45,9 +45,31 @@ i <- fread(file.path(r,"psid-lists","indvars.txt")) %>%
 i <- dcast(i[,list(year,name,variable)],year~name, value.var = "variable")
 f <- dcast(f[,list(year,name,variable)],year~name, value.var = "variable")
 
+#  Wealth =
+# ER81778/S103 Business asset +
+# ER81784/S105 Checking/MM +
+# ER81788 CD/Bonds +
+# ER81792/S109 Real Estate +
+# ER81798/S111 Stocks +
+# ER81800/S113 Vehicles +
+# ER81804/S115 Other + 
+# ER81808 Private annuity/IRA +
+# Home Equity +
+# DC Assets (pension value)
+# minus all debts
+
 #Add 2019 and 2021 variables
 f <- f %>% bind_rows(data.frame(year = c(2019, 2021),
-                     wealth = c ("ER77511", "ER81838")))
+                    faminc = c("ER77448", "ER81775"),
+                    hvalue = c("ER72031", "ER78032"),
+                    hours = c("ER77255", "ER81582"),
+                     wealth = c ("ER77511", "ER81838"))) %>%
+          left_join(data.frame(
+            year = wealth_years,
+            value_pension = c("V10498", NA, NA,"ER15181", "ER19349", "ER22744", "ER26725", 
+                              "ER37761", "ER43734", "ER49080", "ER54836", "ER61956", "ER68010", 
+                              "ER74036", "ER80159")
+          ))
 
 i <- i %>% bind_rows(data.frame(year = c(2019, 2021),
                                 age = c ("ER34704", "ER34904"),
@@ -60,7 +82,13 @@ full_psid <- build.panel(datadir=psid_path,
                 heads.only = TRUE,
                 sample = "SRC",
                 design="balanced") %>%
-            rename()
+            rename() %>%
+            mutate(value_pension = case_when(
+              value_pension > 10000000 ~ 0,
+              value_pension == 999998 ~ 0,
+              is.na(value_pension) ~ 0,
+              TRUE ~ value_pension
+            ))
 
 #Loop through years 1984-2007
 supplemental_years <- wealth_years[wealth_years < 2009]
@@ -121,19 +149,11 @@ full_psid_supp <- full_psid %>%
                     left_join(supp_stack) %>%
                     left_join(cpi_inflator) %>%
                     mutate(networth = case_when(
-                      year < 2009 ~ supp_wealth*cpi_inflator,
-                      TRUE ~ wealth*cpi_inflator
-                    ),
-                    wealth_level = case_when(
-                      networth < 10000 ~ 1,
-                      floor(log10(networth)) == 4 ~ 2,
-                      floor(log10(networth)) == 5 ~ 3,
-                      floor(log10(networth)) == 6 ~ 4,  
-                      floor(log10(networth)) == 7 ~ 5,  
-                      floor(log10(networth)) > 7 ~ 6, 
-                      TRUE ~ NA
+                      year < 2009 ~ (supp_wealth+value_pension)*cpi_inflator,
+                      TRUE ~ (wealth+value_pension)*cpi_inflator
                     )) %>%
-                    select(year, interview, weight, pernum, networth, wealth_level,
+                    select(year, interview, weight, pernum, networth,
+                           hvalue, faminc, hours, value_pension, cpi_inflator,
                            ID1968, age)
 
 missing_nw_id_to_remove <- full_psid_supp %>%
@@ -141,12 +161,35 @@ missing_nw_id_to_remove <- full_psid_supp %>%
   pull(ID1968)
 
 # Now just keep one observation per HH
-full_data <- full_psid_supp %>%
-            filter(ID1968 != missing_nw_id_to_remove) %>%
+full_pre_89_94 <- full_psid_supp %>%
+            filter(ID1968 != missing_nw_id_to_remove, 
+                   weight > 0) %>%
             arrange(ID1968, year, pernum) %>%
             group_by(year, ID1968) %>%
             slice(1) %>%
             ungroup()
+
+#Grab 1984 pension values for 89 and 94
+pension_1984 <- full_pre_89_94 %>%
+  filter(year == 1984) %>%
+  rename(pension_1984 = value_pension) %>%
+  select(ID1968, pension_1984)
+
+full_data <- full_pre_89_94 %>%
+                left_join(pension_1984) %>%
+                mutate(networth = case_when(
+                  year %in% c(1989, 1994) ~ networth + (cpi_inflator*pension_1984),
+                  TRUE ~ networth
+                ),
+                wealth_level = case_when(
+                  networth < 10000 ~ 1,
+                  floor(log10(networth)) == 4 ~ 2,
+                  floor(log10(networth)) == 5 ~ 3,
+                  floor(log10(networth)) == 6 ~ 4,  
+                  floor(log10(networth)) == 7 ~ 5,  
+                  floor(log10(networth)) > 7 ~ 6, 
+                  TRUE ~ NA
+                ))
 
 #Loop through start and end years
 years_df <- data.frame(
@@ -163,17 +206,26 @@ for(i in 1:nrow(years_df)){
   n_years <- years_df[i, "n_years"]
   
   start_data <- full_data %>%
-    filter(year == start_yr, weight > 0) %>%
-    select(year, weight, ID1968, wealth_level, age, networth) %>%
+    filter(year == start_yr) %>%
+    select(year, weight, ID1968, wealth_level, age, networth,
+           hvalue, faminc, hours) %>%
     rename(start_level = wealth_level,
-           start_nw = networth)
+           start_nw = networth,
+           start_age = age,
+           start_hvalue = hvalue,
+           start_faminc = faminc,
+           start_hours = hours)
   
   end_data <- full_data %>%
-    filter(year == end_yr, weight > 0) %>%
-    select(ID1968, wealth_level, age, networth) %>%
+    filter(year == end_yr) %>%
+    select(ID1968, wealth_level, age, networth, 
+           hvalue, faminc, hours) %>%
     rename(end_level = wealth_level,
            end_nw = networth,
-           end_age = age)
+           end_age = age,
+           end_hvalue = hvalue,
+           end_faminc = faminc,
+           end_hours = hours)
   
   merged_level_comparison <- start_data %>%
                               left_join(end_data) %>%
@@ -227,7 +279,7 @@ summarize_diffs <- function(years_n){
                     summarise(level_weight = sum(total_weight)) %>%
                     ungroup()
   
-  all_lv_sum <- levels_stack %>%
+  lv_sum <- levels_stack %>%
                         filter(n_years == years_n) %>%
                         group_by(start_level, end_level) %>%
                         summarise(total_weight = sum(total_weight)) %>%
@@ -251,9 +303,16 @@ summarize_diffs <- function(years_n){
                       summarise(nw_change = wtd.mean(nw_change, weights = weight)) %>%
                       ungroup()
   
-  assign(paste0("all_levels_summary_", years_n), all_lv_sum, envir = .GlobalEnv)
+  assign(paste0("levels_summary_", years_n), lv_sum, envir = .GlobalEnv)
   assign(paste0("all_change_summary_", years_n), all_change_sum, envir = .GlobalEnv)
   assign(paste0("all_nw_change_summary_", years_n), nw_change_sum, envir = .GlobalEnv)
+  
+  all_levels_summary <- lv_sum %>%
+                          filter(start_level != 6, end_level != 6) %>%
+                          select(start_level, end_level, level_pct) %>%
+                          spread(key=end_level, value = level_pct)
+  
+  assign(paste0("all_levels_summary_", years_n), all_levels_summary, envir = .GlobalEnv)
 }
 
 summarize_diffs(10)
@@ -311,6 +370,26 @@ plot <- ggplot(data = to_plot, aes(x = year, y = value, fill = key)) +
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+#Level comp summary
+l_set <- merged_level_stack %>%
+            filter(n_years == 20,
+                   year == 1984)
+
+l_summary <- l_set %>%
+                group_by(start_level, end_level) %>%
+                summarise(n_hh = n(),
+                          start_hvalue = wtd.quantile(start_hvalue, weights = weight, probs = 0.5),
+                          end_hvalue = wtd.quantile(end_hvalue, weights = weight, probs = 0.5),
+                          start_faminc = wtd.quantile(start_faminc, weights = weight, probs = 0.5),
+                          end_faminc = wtd.quantile(end_faminc, weights = weight, probs = 0.5),
+                          start_hours = wtd.quantile(start_hours, weights = weight, probs = 0.5),
+                          end_hours = wtd.quantile(end_hours, weights = weight, probs = 0.5),
+                          start_wealth = wtd.quantile(start_nw, weights = weight, probs = 0.5),
+                          end_wealth = wtd.quantile(end_nw, weights = weight, probs = 0.5),
+                          start_age = wtd.quantile(start_age, weights = weight, probs = 0.5),
+                          ) %>%
+                  ungroup()
 
 
 # ############################  End  ################################## #
