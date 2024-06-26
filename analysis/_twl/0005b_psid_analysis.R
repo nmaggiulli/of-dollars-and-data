@@ -68,7 +68,10 @@ f <- f %>% bind_rows(data.frame(year = c(2019, 2021),
             year = wealth_years,
             value_pension = c("V10498", NA, NA,"ER15181", "ER19349", "ER22744", "ER26725", 
                               "ER37761", "ER43734", "ER49080", "ER54836", "ER61956", "ER68010", 
-                              "ER74036", "ER80159")
+                              "ER74036", "ER80159"),
+            total_expenditure = c(NA, NA, NA, "ER16515D7", "ER20456D7", "ER24138D7", "ER28037E4", 
+                                  "ER41027E4", "ER46971E4", "ER52395E4", "ER58212E4", "ER65448B", "ER71527B", 
+                                  "ER77587", "ER81914")
           ))
 
 i <- i %>% bind_rows(data.frame(year = c(2019, 2021),
@@ -82,7 +85,6 @@ full_psid <- build.panel(datadir=psid_path,
                 heads.only = TRUE,
                 sample = "SRC",
                 design="balanced") %>%
-            rename() %>%
             mutate(value_pension = case_when(
               value_pension > 10000000 ~ 0,
               value_pension == 999998 ~ 0,
@@ -153,7 +155,7 @@ full_psid_supp <- full_psid %>%
                       TRUE ~ (wealth+value_pension)*cpi_inflator
                     )) %>%
                     select(year, interview, weight, pernum, networth,
-                           hvalue, faminc, hours, value_pension, cpi_inflator,
+                           hvalue, faminc, hours, value_pension, total_expenditure, cpi_inflator,
                            ID1968, age)
 
 missing_nw_id_to_remove <- full_psid_supp %>%
@@ -181,6 +183,7 @@ full_data <- full_pre_89_94 %>%
                   year %in% c(1989, 1994) ~ networth + (cpi_inflator*pension_1984),
                   TRUE ~ networth
                 ),
+                total_expenditure = total_expenditure*cpi_inflator,
                 wealth_level = case_when(
                   networth < 10000 ~ 1,
                   floor(log10(networth)) == 4 ~ 2,
@@ -208,24 +211,26 @@ for(i in 1:nrow(years_df)){
   start_data <- full_data %>%
     filter(year == start_yr) %>%
     select(year, weight, ID1968, wealth_level, age, networth,
-           hvalue, faminc, hours) %>%
+           hvalue, faminc, hours, total_expenditure) %>%
     rename(start_level = wealth_level,
            start_nw = networth,
            start_age = age,
            start_hvalue = hvalue,
            start_faminc = faminc,
-           start_hours = hours)
+           start_hours = hours,
+           start_expenditure = total_expenditure)
   
   end_data <- full_data %>%
     filter(year == end_yr) %>%
     select(ID1968, wealth_level, age, networth, 
-           hvalue, faminc, hours) %>%
+           hvalue, faminc, hours, total_expenditure) %>%
     rename(end_level = wealth_level,
            end_nw = networth,
            end_age = age,
            end_hvalue = hvalue,
            end_faminc = faminc,
-           end_hours = hours)
+           end_hours = hours,
+           end_expenditure = total_expenditure)
   
   merged_level_comparison <- start_data %>%
                               left_join(end_data) %>%
@@ -372,24 +377,57 @@ plot <- ggplot(data = to_plot, aes(x = year, y = value, fill = key)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 #Level comp summary
+s_year <- 1999
+n_yr <- 10
+
+e_year <- s_year + n_yr
+
 l_set <- merged_level_stack %>%
-            filter(n_years == 20,
-                   year == 1984)
+            filter(n_years == n_yr,
+                   year == s_year)
 
 l_summary <- l_set %>%
                 group_by(start_level, end_level) %>%
                 summarise(n_hh = n(),
-                          start_hvalue = wtd.quantile(start_hvalue, weights = weight, probs = 0.5),
-                          end_hvalue = wtd.quantile(end_hvalue, weights = weight, probs = 0.5),
+                          start_expenditure = wtd.quantile(start_expenditure, weights = weight, probs = 0.5),
+                          end_expenditure = wtd.quantile(end_expenditure, weights = weight, probs = 0.5),
                           start_faminc = wtd.quantile(start_faminc, weights = weight, probs = 0.5),
                           end_faminc = wtd.quantile(end_faminc, weights = weight, probs = 0.5),
                           start_hours = wtd.quantile(start_hours, weights = weight, probs = 0.5),
                           end_hours = wtd.quantile(end_hours, weights = weight, probs = 0.5),
+                          start_hvalue = wtd.quantile(start_hvalue, weights = weight, probs = 0.5),
+                          end_hvalue = wtd.quantile(end_hvalue, weights = weight, probs = 0.5),
                           start_wealth = wtd.quantile(start_nw, weights = weight, probs = 0.5),
                           end_wealth = wtd.quantile(end_nw, weights = weight, probs = 0.5),
                           start_age = wtd.quantile(start_age, weights = weight, probs = 0.5),
                           ) %>%
                   ungroup()
 
+wealth_level_start <- full_data %>%
+                        filter(year == s_year) %>%
+                        select(ID1968, wealth_level) %>%
+                        rename(start_level = wealth_level)
+
+wealth_level_end <- full_data %>%
+                        filter(year == e_year) %>%
+                        select(ID1968, wealth_level) %>%
+                        rename(end_level = wealth_level)
+
+cumulative_inc_spend <- full_data %>%
+                          filter(year >= s_year, year <= e_year) %>%
+                          group_by(ID1968) %>%
+                          summarise(total_inc = sum(faminc),
+                                    total_expenditure = sum(total_expenditure),
+                                    total_weight = sum(weight)) %>%
+                          ungroup() %>%
+                          mutate(total_savings = total_inc - total_expenditure) %>%
+                          left_join(wealth_level_start) %>%
+                          left_join(wealth_level_end)
+
+cumulative_summary <- cumulative_inc_spend %>%
+                        group_by(start_level, end_level) %>%
+                        summarise(n_hh = n(),
+                                  total_savings = wtd.quantile(total_savings, weights = total_weight, probs = 0.5)) %>%
+                        ungroup()
 
 # ############################  End  ################################## #
