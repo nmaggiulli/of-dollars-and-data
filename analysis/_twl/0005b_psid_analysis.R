@@ -380,8 +380,6 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 s_year <- 1999
 n_yr <- 10
 
-e_year <- s_year + n_yr
-
 l_set <- merged_level_stack %>%
             filter(n_years == n_yr,
                    year == s_year)
@@ -402,32 +400,5 @@ l_summary <- l_set %>%
                           start_age = wtd.quantile(start_age, weights = weight, probs = 0.5),
                           ) %>%
                   ungroup()
-
-wealth_level_start <- full_data %>%
-                        filter(year == s_year) %>%
-                        select(ID1968, wealth_level) %>%
-                        rename(start_level = wealth_level)
-
-wealth_level_end <- full_data %>%
-                        filter(year == e_year) %>%
-                        select(ID1968, wealth_level) %>%
-                        rename(end_level = wealth_level)
-
-cumulative_inc_spend <- full_data %>%
-                          filter(year >= s_year, year <= e_year) %>%
-                          group_by(ID1968) %>%
-                          summarise(total_inc = sum(faminc),
-                                    total_expenditure = sum(total_expenditure),
-                                    total_weight = sum(weight)) %>%
-                          ungroup() %>%
-                          mutate(total_savings = total_inc - total_expenditure) %>%
-                          left_join(wealth_level_start) %>%
-                          left_join(wealth_level_end)
-
-cumulative_summary <- cumulative_inc_spend %>%
-                        group_by(start_level, end_level) %>%
-                        summarise(n_hh = n(),
-                                  total_savings = wtd.quantile(total_savings, weights = total_weight, probs = 0.5)) %>%
-                        ungroup()
 
 # ############################  End  ################################## #
