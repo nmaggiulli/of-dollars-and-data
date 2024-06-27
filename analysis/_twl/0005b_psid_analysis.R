@@ -382,23 +382,24 @@ n_yr <- 10
 
 l_set <- merged_level_stack %>%
             filter(n_years == n_yr,
-                   year == s_year)
+                   year >= s_year)
 
-l_summary <- l_set %>%
-                group_by(start_level, end_level) %>%
-                summarise(n_hh = n(),
-                          start_expenditure = wtd.quantile(start_expenditure, weights = weight, probs = 0.5),
-                          end_expenditure = wtd.quantile(end_expenditure, weights = weight, probs = 0.5),
-                          start_faminc = wtd.quantile(start_faminc, weights = weight, probs = 0.5),
-                          end_faminc = wtd.quantile(end_faminc, weights = weight, probs = 0.5),
-                          start_hours = wtd.quantile(start_hours, weights = weight, probs = 0.5),
-                          end_hours = wtd.quantile(end_hours, weights = weight, probs = 0.5),
-                          start_hvalue = wtd.quantile(start_hvalue, weights = weight, probs = 0.5),
-                          end_hvalue = wtd.quantile(end_hvalue, weights = weight, probs = 0.5),
-                          start_wealth = wtd.quantile(start_nw, weights = weight, probs = 0.5),
-                          end_wealth = wtd.quantile(end_nw, weights = weight, probs = 0.5),
-                          start_age = wtd.quantile(start_age, weights = weight, probs = 0.5),
-                          ) %>%
-                  ungroup()
+l_summary_mean <- l_set %>%
+  group_by(start_level, end_level) %>%
+  summarise(n_hh = n(),
+            start_faminc = wtd.mean(start_faminc, weights = weight),
+            start_expenditure = wtd.mean(start_expenditure, weights = weight),
+            end_faminc = wtd.mean(end_faminc, weights = weight),
+            end_expenditure = wtd.mean(end_expenditure, weights = weight),
+            start_hours = wtd.mean(start_hours, weights = weight),
+            end_hours = wtd.mean(end_hours, weights = weight),
+            start_hvalue = wtd.mean(start_hvalue, weights = weight),
+            end_hvalue = wtd.mean(end_hvalue, weights = weight),
+            start_wealth = wtd.mean(start_nw, weights = weight),
+            end_wealth = wtd.mean(end_nw, weights = weight),
+            start_age = wtd.mean(start_age, weights = weight),
+  ) %>%
+  ungroup()
+
 
 # ############################  End  ################################## #
