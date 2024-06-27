@@ -380,11 +380,10 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 s_year <- 1999
 n_yr <- 10
 
-l_set <- merged_level_stack %>%
-            filter(n_years == n_yr,
-                   year >= s_year)
-
-l_summary_mean <- l_set %>%
+# Summary stats on all spending over 10 years
+l_summary_mean_99 <- merged_level_stack %>%
+  filter(n_years == n_yr,
+         year >= s_year) %>%
   group_by(start_level, end_level) %>%
   summarise(n_hh = n(),
             start_faminc = wtd.mean(start_faminc, weights = weight),
@@ -400,6 +399,23 @@ l_summary_mean <- l_set %>%
             start_age = wtd.mean(start_age, weights = weight),
   ) %>%
   ungroup()
+
+# Summary stats on all income over 10 years
+l_summary_mean_84 <- merged_level_stack %>%
+    filter(n_years == n_yr) %>%
+  group_by(start_level, end_level) %>%
+    summarise(n_hh = n(),
+              start_faminc = wtd.mean(start_faminc, weights = weight),
+              end_faminc = wtd.mean(end_faminc, weights = weight),
+              start_hours = wtd.mean(start_hours, weights = weight),
+              end_hours = wtd.mean(end_hours, weights = weight),
+              start_hvalue = wtd.mean(start_hvalue, weights = weight),
+              end_hvalue = wtd.mean(end_hvalue, weights = weight),
+              start_wealth = wtd.mean(start_nw, weights = weight),
+              end_wealth = wtd.mean(end_nw, weights = weight),
+              start_age = wtd.mean(start_age, weights = weight),
+    ) %>%
+    ungroup()
 
 
 # ############################  End  ################################## #
