@@ -74,7 +74,7 @@ export_to_excel <- function(df, outfile, sheetname, new_file, fancy_formatting){
       for (i in 1:ncol(df)){
         col_type <- sapply(df, class)[i]
         col_name <- colnames(df)[i]
-        if (grepl("pct_|_pct", col_name)){
+        if (grepl("pct_|_pct|Percentage|%", col_name)){
           s1 <- createStyle(numFmt = "PERCENTAGE", 
                             halign = "center", 
                             fgFill = highlight_fill, 
