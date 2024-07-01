@@ -20,9 +20,9 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-data_year <- 2022
+data_year <- 2024
 
-raw <- read.csv(paste0(importdir, "0198_all_weather_historical/PeriodicReturns_20200808115926.csv"),
+raw <- read.csv(paste0(importdir, "0198_all_weather_historical/PeriodicReturns_20240701175447.csv"),
                 skip = 6, col.names = c("date", "ret_bond_lt", "ret_bond_it", "ret_sp500", "ret_gld", "ret_cpi", "drop")) %>%
         select(-drop) %>%
         filter(date != "", ret_sp500 != "") %>%
@@ -135,8 +135,8 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 
 # Plot growth of $1
-file_path <- paste0(out_path, "/all_weather_rl_growth_of_dollar_", data_year, ".jpeg")
-source_string <- paste0("Source:  Returns 2.0, 1973-2022 (OfDollarsAndData.com)")
+file_path <- paste0(out_path, "/all_weather_rl_growth_of_dollar__", data_year, ".jpeg")
+source_string <- paste0("Source:  Returns 2.0, 1973-", data_year, " (OfDollarsAndData.com)")
 
 to_plot <- all_weather %>%
               bind_rows(port_6040) %>%
@@ -165,8 +165,8 @@ plot <- ggplot(to_plot, aes(x = date, y = value_port, col = name)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Plot DD
-file_path <- paste0(out_path, "/all_weather_rl_dd_", data_year, ".jpeg")
-source_string <- paste0("Source:  Returns 2.0, 1973-2022 (OfDollarsAndData.com)")
+file_path <- paste0(out_path, "/all_weather_rl_dd__", data_year, ".jpeg")
+source_string <- paste0("Source:  Returns 2.0, 1973-", data_year, " (OfDollarsAndData.com)")
 
 to_plot <- drawdown_path(select(all_weather, date, value_port))
 
