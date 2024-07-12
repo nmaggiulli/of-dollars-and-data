@@ -280,7 +280,7 @@ plot_inc_spend_change <- function(start_yr, end_yr){
           legend.title = element_blank()) +
     of_dollars_and_data_theme +
     ggtitle(paste0("Spending Change vs. Income Change\nU.S. Households\n", start_yr, "—", end_yr)) +
-    labs(x="Income Change", y="Spending Change",
+    labs(x="Income Change (over 10 Years)", y="Spending Change (over 10 Years)",
          caption = paste0(source_string, "\n", note_string))
   
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
