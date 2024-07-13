@@ -98,7 +98,7 @@ income_producing_summary$key <- factor(income_producing_summary$key, levels = c(
 assign("income_producing_summary", income_producing_summary, envir = .GlobalEnv)
 
 #Do income-producing summary
-my_grayscale <- c("#969696", "#525252")
+my_grayscale <- c("#969696", "black")
 
 file_path <- paste0(out_path, "/_income_producing_breakdown_by_wealth_level.jpeg")
 source_string <- paste0("Source: Survey of Consumer Finances (2022)")
