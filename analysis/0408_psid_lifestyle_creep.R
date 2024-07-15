@@ -16,6 +16,7 @@ library(data.table)
 library(devtools)
 library(quantmod)
 library(Hmisc)
+library(xtable)
 library(tidyverse)
 
 folder_name <- "0408_psid_lifestyle_creep"
@@ -308,16 +309,25 @@ summary_stats <- all_merged %>%
   )) %>%
   group_by(increase_bin) %>%
   summarise(
-    spend_change_25pct = quantile(spending_change, weight = weight, probs = 0.25),
-    spend_change_50pct = quantile(spending_change, weight = weight, probs = 0.5),
-    spend_change_75pct = quantile(spending_change, weight = weight, probs = 0.75)
+    spend_change_25pct = format_as_dollar(quantile(spending_change, weight = weight, probs = 0.25)),
+    spend_change_50pct = format_as_dollar(quantile(spending_change, weight = weight, probs = 0.5)),
+    spend_change_75pct = format_as_dollar(quantile(spending_change, weight = weight, probs = 0.75))
   ) %>%
   ungroup() 
 
 summary_stats$increase_bin <- factor(summary_stats$increase_bin, 
                                      levels = c("<$10k", "$10k-$25k", "$25k-$50k", "$50k-$100k", "$100k+"))
 
-summary_stats <- summary_stats %>%
-  arrange(increase_bin)
+summary_stats_html <- summary_stats %>%
+  arrange(increase_bin) %>%
+  rename(`Income Increase` = increase_bin,
+         `Spending Change (25th Pct.)` = spend_change_25pct,
+         `Spending Change (50th Pct.)` = spend_change_50pct,
+         `Spending Change (75th Pct.)` = spend_change_75pct)
+
+print(xtable(summary_stats_html), 
+      include.rownames=FALSE,
+      type="html", 
+      file=paste0(out_path, "/income_spend_change_psid_1999_2021.html"))
 
 # ############################  End  ################################## #

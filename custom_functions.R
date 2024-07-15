@@ -240,7 +240,11 @@ proper_case <- function(InputString){
 }
 
 format_as_dollar <- function(NumberInput, Digits=0){
-  return(paste0("$", formatC(NumberInput, digits = Digits, format = "f", big.mark = ",")))
+  if(NumberInput >= 0){
+    return(paste0("$", formatC(NumberInput, digits = Digits, format = "f", big.mark = ",")))
+  } else{
+    return(paste0("-$", formatC(-1*NumberInput, digits = Digits, format = "f", big.mark = ",")))
+  }
 }
 
 import_ycharts_timeseries <- function(path){
