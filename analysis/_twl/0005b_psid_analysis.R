@@ -146,7 +146,7 @@ cpi_inflator <- cpi_all_years %>%
                   mutate(cpi_inflator = cpi_all_years[nrow(cpi_all_years), "cpi"]/cpi) %>%
                   select(year, cpi_inflator)
                         
-# Join all data sources and deflate by CPI
+# Join all data sources and inflate by CPI
 full_psid_supp <- full_psid %>%
                     left_join(supp_stack) %>%
                     left_join(cpi_inflator) %>%
