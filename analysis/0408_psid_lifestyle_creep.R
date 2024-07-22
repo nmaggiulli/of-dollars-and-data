@@ -184,6 +184,7 @@ full_data <- full_pre_89_94 %>%
                   year %in% c(1989, 1994) ~ networth + (cpi_inflator*pension_1984),
                   TRUE ~ networth
                 ),
+                faminc = faminc*cpi_inflator,
                 total_expenditure = total_expenditure*cpi_inflator)
 
 plot_inc_spend_change <- function(start_yr, end_yr){
