@@ -266,7 +266,7 @@ plot_inc_spend_change <- function(start_yr, end_yr){
   
   max_change <- round_to_nearest(max(to_plot$income_change), "up", 100000)
   
-  file_path <- paste0(out_path, "/psid_income_change_vs_spending_change_", start_yr, "_", end_yr, ".jpeg")
+  file_path <- paste0(out_path, "/psid_real_inc_vs_spending_change_", start_yr, "_", end_yr, ".jpeg")
   source_string <- paste0("Source: PSID Data (OfDollarsAndData.com)")
   note_string <-  str_wrap(paste0("Note: All figures are adjusted for inflation in 2021 dollars. ",
                                   "Excludes households with income increases less than $1,000 and those 65 and older. ",
