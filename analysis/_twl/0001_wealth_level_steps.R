@@ -41,4 +41,28 @@ plot <- ggplot(data = to_plot, aes(x = level, y = nw)) +
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+# Now do log plot for happiness
+nw_levels_short <- seq(10^3, 10^5, 100)
+
+y <- log(nw_levels_short)
+
+to_plot <- data.frame(happiness = y, nw_level = nw_levels_short)
+
+file_path <- paste0(out_path, "/wealth_v_happiness.jpeg")
+
+plot <- ggplot(data = to_plot, aes(x = nw_level, y = happiness)) +
+  geom_line() +
+  scale_x_continuous(label = dollar_format()) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_blank()) +
+  ggtitle(paste0("Happiness Based on Wealth")) +
+  labs(x = paste0("Wealth"), y = paste0("Happiness"))
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 # ############################  End  ################################## #
