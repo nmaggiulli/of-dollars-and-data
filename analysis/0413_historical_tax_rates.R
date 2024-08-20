@@ -176,4 +176,24 @@ plot <- ggplot(to_plot, aes(x=year, y=effective_rate, col = income_label)) +
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+#Now do a subset plot
+to_plot2 <- to_plot %>%
+              filter(income < 1000000)
+
+file_path <- paste0(out_path, "/historical_effective_tax_rates_subset_", last_year, ".jpeg")
+source_string <- paste0("Source: Tax Foundation, Tax Policy Center (OfDollarsAndData.com)")
+note_string <-  str_wrap(paste0("Note: Assumes a single filer with the standard deduction (which started in 1944) and no other credits/exemptions. Incomes are adjusted for inflation.")
+                         , width = 80)
+
+plot <- ggplot(to_plot2, aes(x=year, y=effective_rate, col = income_label)) +
+  geom_line() +
+  scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 0.4, 0.1), limits = c(0, 0.4)) +
+  of_dollars_and_data_theme +
+  theme(legend.title = element_blank()) +
+  ggtitle(paste0("Effective U.S. Federal Tax Rate by Income\nAdjusted for Inflation\n", first_year, "-", last_year)) +
+  labs(x="Year", y="Effective Tax Rate",
+       caption = paste0(source_string, "\n", note_string))
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 # ############################  End  ################################## #

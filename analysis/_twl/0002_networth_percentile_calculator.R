@@ -37,8 +37,11 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                   floor(log10(networth)) == 7 ~ "L5 ($10M)",  
                   floor(log10(networth)) > 7 ~ "L6 ($100M+)", 
                   TRUE ~ "ERROR"
-                )) %>%
-                select(networth, age, income, wealth_level, wgt)
+                ),
+                liquid_assets = asset - reteq - nfin,
+                liquid_networth = liquid_assets - debt
+                ) %>%
+                select(networth, liquid_networth, age, income, wealth_level, wgt)
 
 # Calculate net worth percentiles
 find_percentile <- function(amount, var, varname){
@@ -91,5 +94,9 @@ find_percentile(10^8, "networth", "Net Worth")
 find_percentile(35000, "income", "Income")
 find_percentile(70000, "income", "Income")
 find_percentile(140000, "income", "Income")
+
+find_percentile(10000, "liquid_networth", "Liquid Net Worth")
+find_percentile(100000, "liquid_networth", "Liquid Net Worth")
+find_percentile(10^6, "liquid_networth", "Liquid Net Worth")
 
 # ############################  End  ################################## #`
