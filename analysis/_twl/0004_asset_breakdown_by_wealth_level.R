@@ -59,6 +59,21 @@ scf_stack$wealth_level <- factor(scf_stack$wealth_level, levels = c("L1 (<$10k)"
                                                                       "L3 ($100k)", "L4 ($1M)",
                                                                       "L5 ($10M)", "L6 ($100M+)"))
 
+all_levels_median <- scf_stack %>%
+  group_by(wealth_level) %>%
+  summarise(`Business Interests` = wtd.quantile(`Business Interests`, weights = wgt, probs = 0.5),
+            `Real Estate` =  wtd.quantile(`Real Estate`, weights = wgt, probs = 0.5),
+            `Primary Residence` =  wtd.quantile(`Primary Residence`, weights = wgt, probs = 0.5),
+            `Vehicles` =  wtd.quantile(`Vehicles`, weights = wgt, probs = 0.5),
+            `Retirement` =  wtd.quantile(`Retirement`, weights = wgt, probs = 0.5),
+            `Stocks & Mutual Funds` =  wtd.quantile(`Stocks & Mutual Funds`, weights = wgt, probs = 0.5),
+            `Cash` =  wtd.quantile(`Cash`, weights = wgt, probs = 0.5),
+            `Other` =  wtd.quantile(`Other`, weights = wgt, probs = 0.5)
+  ) %>%
+  ungroup() %>%
+  gather(-wealth_level, key=key, value=value) %>%
+  arrange(wealth_level, desc(value))
+
 to_plot <- scf_stack %>%
               group_by(wealth_level) %>%
               summarise(`Business Interests` = wtd.mean(`Business Interests`, weights = wgt),
