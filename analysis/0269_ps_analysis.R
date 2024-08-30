@@ -22,7 +22,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-ps <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_1-8-2022_ps.csv"),
+#Bring in 2022 data
+ps_2022 <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_1-8-2022_ps.csv"),
                    skip = 6) %>%
   select(-Metric, -Name) %>%
   rename(symbol = Symbol) %>%
@@ -34,7 +35,26 @@ ps <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_1-8-202
   select(date, symbol, ps) %>%
   drop_na()
 
-mcap <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_1-8-2022_mcap.csv"),
+#Bring in 2024 data
+ps_2024 <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_08-29-2024_ps.csv"),
+               skip = 6) %>%
+  select(-Metric, -Name) %>%
+  rename(symbol = Symbol) %>%
+  gather(-symbol, key=key, value=ps) %>%
+  mutate(year = gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\1", key, perl = TRUE),
+         month =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\2", key, perl = TRUE),
+         day =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\3", key, perl = TRUE),
+         date = as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d")) %>%
+  select(date, symbol, ps) %>%
+  drop_na() %>%
+  filter(date > as.Date("2022-01-31"))
+
+ps <- ps_2022 %>%
+        bind_rows(ps_2024) %>%
+        arrange(symbol, date)
+
+#Now do mcap
+mcap_2022 <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_1-8-2022_mcap.csv"),
                skip = 6) %>%
   select(-Metric, -Name) %>%
   rename(symbol = Symbol) %>%
@@ -47,6 +67,23 @@ mcap <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_1-8-2
   select(date, symbol, mcap) %>%
   drop_na()
 
+mcap_2024 <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_08-29-2024_mcap.csv"),
+                      skip = 6) %>%
+  select(-Metric, -Name) %>%
+  rename(symbol = Symbol) %>%
+  gather(-symbol, key=key, value=mcap) %>%
+  mutate(year = gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\1", key, perl = TRUE),
+         month =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\2", key, perl = TRUE),
+         day =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\3", key, perl = TRUE),
+         date = as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d"), 
+         mcap = mcap/1000) %>%
+  select(date, symbol, mcap) %>%
+  drop_na()
+
+mcap <- mcap_2022 %>%
+  bind_rows(mcap_2024) %>%
+  arrange(symbol, date)
+
 df <- ps %>%
         full_join(mcap) %>%
         drop_na() %>%
@@ -55,8 +92,8 @@ df <- ps %>%
 all_dates <- df %>%
               group_by(date) %>%
               summarise(n_symbols = n()) %>%
-              ungroup()
-              filter(n_symbols > 2500) %>%
+              ungroup() %>%
+              filter(n_symbols > 1800) %>%
               select(date)
               
 df <- df %>%
