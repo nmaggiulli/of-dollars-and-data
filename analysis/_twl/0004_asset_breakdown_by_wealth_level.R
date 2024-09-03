@@ -41,6 +41,7 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                      `Stocks & Mutual Funds` = (nmmf + stocks)/asset, 
                      `Cash` = liq/asset,
                      `Other` = (savbnd + othfin + othnfin + cashli + othma + bond + cds)/asset,
+                     owns_home = ifelse(houses > 0, 1, 0),
                      wealth_level = case_when(
                        networth < 10000 ~ "L1 (<$10k)",
                        floor(log10(networth)) == 4 ~ "L2 ($10k)",
@@ -53,6 +54,7 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                 select(wealth_level, networth, `Business Interests`, `Real Estate`,`Primary Residence`,
                        `Vehicles`, `Retirement`,
                        `Stocks & Mutual Funds`, `Cash`, `Other`,
+                       owns_home,
                        wgt)
 
 scf_stack$wealth_level <- factor(scf_stack$wealth_level, levels = c("L1 (<$10k)", "L2 ($10k)",
@@ -214,5 +216,41 @@ for(a in all_assets){
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
+
+# Do homeowner only analysis
+homeowner_only_avg <- scf_stack %>%
+  filter(owns_home == 1) %>%
+  group_by(wealth_level) %>%
+  summarise(
+            `Primary Residence` = wtd.mean(`Primary Residence`, weights = wgt),
+  ) %>%
+  ungroup() %>%
+  mutate(`All Other Assets` = 1 - `Primary Residence`) %>%
+  gather(-wealth_level, key=key, value=value)
+
+file_path <- paste0(out_path, "/homeowner_residence_by_wealth_level_grayscale.jpeg")
+
+# Create plot 
+plot <- ggplot(data = homeowner_only_avg, aes(x = wealth_level, y=value, fill = key)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 1, 0.1)) +
+  scale_fill_manual(values = my_grayscale) +
+  of_dollars_and_data_theme +
+  theme(legend.title = element_blank(),
+        axis.text.x = element_text(angle = 45, vjust = 0.5)) +
+  ggtitle(paste0("Primary Residence by Wealth Level\nAmong Homeowners")) +
+  labs(x = "Wealth Level (Net Worth Tier)" , y = "Percentage of Assets",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+# Calculate homeownership rate
+homeown_rate <- scf_stack %>%
+  group_by(wealth_level) %>%
+  summarise(
+    owns_home = wtd.mean(owns_home, weights = wgt),
+  ) %>%
+  ungroup()
 
 # ############################  End  ################################## #
