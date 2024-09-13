@@ -253,4 +253,13 @@ homeown_rate <- scf_stack %>%
   ) %>%
   ungroup()
 
+homeowner_overall <- scf_stack %>%
+  filter(owns_home == 1) %>%
+  summarise(
+    mean_primary = wtd.mean(`Primary Residence`, weights = wgt),
+    median_primary_residence = wtd.quantile(`Primary Residence`, weights = wgt, probs = 0.5),
+    pct75_primary_residence = wtd.quantile(`Primary Residence`, weights = wgt, probs = 0.75)
+  ) %>%
+  ungroup() 
+
 # ############################  End  ################################## #
