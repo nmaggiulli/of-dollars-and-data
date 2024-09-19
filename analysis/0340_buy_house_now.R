@@ -31,7 +31,7 @@ raw <- read.csv(paste0(importdir, "/0340_housing_data/IUSEHMSP_IUS30YMR_data.csv
 
 by_month <- raw %>%
               filter(date >= "2020-01-01",
-                     date < "2024-04-01") %>%
+                     date < "2024-09-01") %>%
               group_by(yr, mt) %>%
               summarise(median_price = max(median_price, na.rm = TRUE),
                         mortgage_rate = mean(mortgage_rate, na.rm = TRUE)/100) %>%
@@ -45,7 +45,7 @@ to_plot <- by_month %>%
                mortage_rate_monthly = mortgage_rate/12,
                monthly_payment = mortgage/((1 - (1 + mortage_rate_monthly)^(-360))/mortage_rate_monthly))
 
-file_path <- paste0(out_path, "/mortgage_payment_for_median_home_2024_03.jpeg")
+file_path <- paste0(out_path, "/mortgage_payment_for_median_home_2024_09.jpeg")
 source_string <- str_wrap(paste0("Source: YCharts (OfDollarsAndData.com)"),
                           width = 85)
 note_string <- str_wrap(paste0("Note: Assumes a 20% down payment and a 30-year fixed rate mortgage."),

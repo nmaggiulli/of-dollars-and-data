@@ -26,7 +26,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 date_string <- date_to_string(Sys.Date())
 
-shiller_housing <- read_excel(paste0(importdir, "0352_shiller_hpi_data/shiller_house_data_2023_06_05.xls"),
+shiller_housing <- read_excel(paste0(importdir, "0352_shiller_hpi_data/shiller_house_data_2024_09_19.xls"),
                               sheet = "Data",
                               skip = 6) %>%
                     select(1, 2) 
