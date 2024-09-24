@@ -23,7 +23,8 @@ anchor <- 0.9999999
 nw_levels <- c(10^3, 10^4, 10^5, 10^6, 10^7, 10^8, 10^9)
 w_levels <- c(anchor, seq(1, 6))
                 
-df <- data.frame(level = w_levels, nw = nw_levels)
+df <- data.frame(level = w_levels, nw = nw_levels) %>%
+          mutate(marginal_spend = lag(nw)/10000)
 
 to_plot <- df
 
@@ -38,6 +39,24 @@ plot <- ggplot(data = to_plot, aes(x = level, y = nw)) +
         legend.title = element_blank()) +
   ggtitle(paste0("Wealth Level Based on Net Worth")) +
   labs(x = paste0("Wealth Level"), y = paste0("Net Worth"))
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+#Now plot spending by wealth level
+file_path <- paste0(out_path, "/spending_wealth_steps_log_scale.jpeg")
+
+to_plot_spend <- to_plot %>%
+                  tail(nrow(to_plot)-1)
+
+plot <- ggplot(data = to_plot_spend, aes(x = level, y = marginal_spend)) +
+  geom_line() +
+  scale_x_continuous(label = comma, breaks = w_levels[2:length(w_levels)], limits = c(1, 6)) +
+  scale_y_continuous(label = dollar_format(accuracy = 1), breaks = to_plot$marginal_spend, trans = "log10") +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("Additional Spending Based on Wealth Level")) +
+  labs(x = paste0("Wealth Level"), y = paste0("Additional Spending"))
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
