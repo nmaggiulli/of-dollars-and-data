@@ -65,7 +65,7 @@ to_plot <- bind_rows(ret_1900, ret_2000)
 
 # Set the file_path for the next output
 file_path = paste0(out_path, "/returns_by_century.jpeg")
-source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)")
+source_string <- paste0("Source:  Shiller data (OfDollarsAndData.com)")
 note_string   <- paste0("Note:  Annualized real returns include reinvested dividends.") 
 
 plot <- ggplot(data = to_plot, aes(x = period, y = price, col = as.factor(start_date))) +
@@ -89,7 +89,7 @@ plot <- ggplot(data = to_plot, aes(x = period, y = price, col = as.factor(start_
                       label = "1900-1999",
                       family = "my_font")
   ) +
-  ggtitle(paste0("U.S. Stocks During the 20th and 21st Century")) +
+  ggtitle(paste0("U.S. Stock Performance\nDuring the 20th and 21st Century")) +
   of_dollars_and_data_theme +
   labs(x = "Month" , y = "Growth of $1",
        caption = paste0(source_string, "\n", note_string))
