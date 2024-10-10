@@ -101,6 +101,8 @@ nw_summary_by_age <- scf_stack %>%
          ))
 
 nw_level_summary <- nw_summary_by_age %>%
-                      filter(wealth_level != lag(wealth_level))
+                      filter(wealth_level != lag(wealth_level)) %>%
+                      arrange(new_agecl, wealth_level) %>%
+                      mutate(next_percentile = percentile - lag(percentile))
 
 # ############################  End  ################################## #
