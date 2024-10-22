@@ -32,7 +32,7 @@ data_year <- 2022
 
 # Bring in assets and normalize percentages
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
-              filter(year == data_year, networth > 1000) %>%
+              filter(year == data_year, networth >= 1000) %>%
               mutate(`Debt Over NW` = debt/networth,
                      wealth_level = case_when(
                        networth < 10000 ~ "L1 (<$10k)",
@@ -74,6 +74,7 @@ all_levels_avg <- to_plot %>%
 
 file_path <- paste0(out_path, "/avg_debt_over_nw_by_wealth_level.jpeg")
 source_string <- paste0("Source: Survey of Consumer Finances (2022)")
+note_string <- paste0("Note: Households with a net worth less than $1,000 have been excluded.")
 
 # Create plot 
 plot <- ggplot(data = to_plot, aes(x = wealth_level, y=value, fill = key)) +
@@ -85,7 +86,7 @@ plot <- ggplot(data = to_plot, aes(x = wealth_level, y=value, fill = key)) +
         axis.text.x = element_text(angle = 45, vjust = 0.5)) +
   ggtitle(paste0("Average Debt over Net Worth by Wealth Level")) +
   labs(x = "Wealth Level (Net Worth Tier)" , y = "Debt / Net Worth",
-       caption = paste0(source_string))
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -119,7 +120,7 @@ plot <- ggplot(data = to_plot, aes(x = wealth_level, y=value, fill = key)) +
         axis.text.x = element_text(angle = 45, vjust = 0.5)) +
   ggtitle(paste0("Median Debt over Net Worth by Wealth Level")) +
   labs(x = "Wealth Level (Net Worth Tier)" , y = "Debt / Net Worth",
-       caption = paste0(source_string))
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
