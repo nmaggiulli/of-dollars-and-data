@@ -403,7 +403,7 @@ l_summary_mean_99 <- merged_level_stack %>%
 
 # Summary stats on all income over 10 years
 l_summary_mean_84 <- merged_level_stack %>%
-    filter(n_years == n_yr) %>%
+    filter(year == 1984) %>%
   group_by(start_level, end_level) %>%
     summarise(n_hh = n(),
               start_faminc = wtd.mean(start_faminc, weights = weight),
