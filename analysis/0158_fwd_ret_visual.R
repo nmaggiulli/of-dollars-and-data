@@ -22,16 +22,12 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 animate <- 0
 
-raw <- read.csv(paste0(importdir, "0158_dfa_sp500/DFA_PeriodicReturns_20191223103141.csv"), skip = 7,
+raw <- read.csv(paste0(importdir, "0158_dfa_sp500/DFA_PeriodicReturns_20241107145701.csv"), skip = 7,
                 col.names = c("date", "ret_sp500", "blank_col")) %>%
   select(-blank_col) %>%
   filter(!is.na(ret_sp500)) %>%
   mutate(date = as.Date(date, format = "%m/%d/%Y")) %>%
   select(date, ret_sp500)
-
-# raw <- readRDS(paste0(localdir, "/0009_sp500_ret_pe.Rds")) %>%
-#           mutate(ret_sp500 = price_plus_div/lag(price_plus_div) - 1) %>%
-#           filter(date >= "1926-01-01")
 
 df <- raw
 
