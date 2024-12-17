@@ -12,6 +12,7 @@ library(readxl)
 library(lubridate)
 library(ggrepel)
 library(gganimate)
+library(broom)
 library(tidyverse)
 
 folder_name <- "0432_bullish_enough_future_returns"
@@ -22,81 +23,105 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 df <- readRDS(paste0(localdir, "/0009_sp500_ret_pe.Rds")) %>%
         rename(index = price_plus_div) %>%
+        filter(date >= as.Date("1926-01-01")) %>%
         select(date, index)
 
-lag_years <- c(25)
-future_years <- c(10)
+future_years <- 10
+prior_years <- 25
 
-for(l in lag_years){
-  lag_months <- l * 12
-  for(y in future_years){
-    fwd_months <- y * 12
-    
-  tmp <- df %>%
-    mutate(lag_ret = (index/lag(index, lag_months))^(1/l) - 1,
-           lead_ret = (lead(index, fwd_months)/index),
-           n_years_ret = y)
-  
-    if(y == min(future_years)){
-      final_results <- tmp
-    } else{
-      final_results <- bind_rows(final_results, tmp)
-    }
-  }
-  
-  upper_flag <- 0.0525
-  lower_flag <- 0.0475
+final_results <- df %>%
+  mutate(lag_ret_10 = (index/lag(index, 12*10))^(1/10) - 1,
+         lag_ret_15 = (index/lag(index, 12*15))^(1/15) - 1,
+         lag_ret_20 = (index/lag(index, 12*20))^(1/20) - 1,
+         lag_ret_25 = (index/lag(index, 12*25))^(1/25) - 1,
+         lag_ret_30 = (index/lag(index, 12*30))^(1/30) - 1,
+         lead_ret_10 = (lead(index, 12*future_years)/index))
 
-  to_plot <- final_results %>%
-              filter(!is.na(lag_ret), !is.na(lead_ret)) %>%
-              mutate(flagged = ifelse(lag_ret > lower_flag & lag_ret < upper_flag, 1, 0)) %>%
-              select(date, lag_ret, lead_ret, n_years_ret, flagged)
-  
-  print(paste0("N year lookback = ", l))
-  print(paste0("The correlation is: ", cor(to_plot$lag_ret, to_plot$lead_ret)))
-  
-  flagged_points <- to_plot %>%
-                      filter(flagged == 1) %>%
-                      arrange(date)
+# Subset data
+to_test <- final_results %>%
+  filter(!is.na(lag_ret_25), !is.na(lead_ret_10))
 
-  print(flagged_points)
-  
-  source_string <- str_wrap(paste0("Source: Returns 2.0 (OfDollarsAndData.com)"), 
-                            width = 80)
-  note_string <-  str_wrap(paste0("Note:  Performance shown includes dividends and is adjusted for inflation."), 
-                           width = 80)
-  
-  file_path <- paste0(out_path, "/_fit_10_fwd_growth_", l, "_prior_plot.jpeg")
-  
-  # Toggle the second 'black' value in the scale_color_manual() below to create annotated plots
-  plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret)) +
-    geom_point() +
-    geom_smooth(method = "lm", se = FALSE) + 
-    geom_hline(yintercept = 1, linetype = "dashed") +
-    scale_x_continuous(label = percent) +
-    scale_y_continuous(label = dollar, limits = c(0, 7), breaks = seq(0, 7, 1)) +
-    of_dollars_and_data_theme +
-    ggtitle(paste0("S&P 500\n", y, "-Year Future Growth\nBased on ", l, "-Year Prior Return")) +
-    labs(x= paste0(l, "-Year Annualized Prior Return"), y = "Growth of $1\nOver Next Decade",
-         caption = paste0(source_string, "\n", note_string))
-  
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-  
-  file_path <- paste0(out_path, "/_color_10_fwd_growth_", l, "_prior_plot.jpeg")
-  
-  # Toggle the second 'black' value in the scale_color_manual() below to create annotated plots
-  plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, color = as.factor(flagged))) +
-    geom_point() +
-    scale_color_manual(values = c("black", "red"), guide = FALSE) +
-    geom_hline(yintercept = 1, linetype = "dashed") +
-    scale_x_continuous(label = percent) +
-    scale_y_continuous(label = dollar, limits = c(0, 7), breaks = seq(0, 7, 1)) +
-    of_dollars_and_data_theme +
-    ggtitle(paste0("S&P 500\n", y, "-Year Future Growth\nBased on ", l, "-Year Prior Return")) +
-    labs(x= paste0(l, "-Year Annualized Prior Return"), y = "Growth of $1\nOver Next Decade",
-         caption = paste0(source_string, "\n", note_string))
-  
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+# Run regressions to test R^2
+calculate_r_squared_tidy <- function(data, future_col, lag_cols) {
+  map_df(lag_cols, function(lag_col) {
+    data %>%
+      select(all_of(c(future_col, lag_col))) %>%
+      drop_na() %>%
+      # Fit linear model
+      {lm(reformulate(lag_col, future_col), data = .)} %>%
+      # Extract R-squared
+      glance() %>%
+      select(r.squared) %>%
+      mutate(lag_period = lag_col)
+  })
 }
+
+# Define your column names
+future_col <- "lead_ret_10"
+lag_cols <- c("lag_ret_10", "lag_ret_15", "lag_ret_20", "lag_ret_25", "lag_ret_30")
+
+# Using tidyverse approach
+results_tidy <- calculate_r_squared_tidy(to_test, future_col, lag_cols)
+
+# Print results in a nice format
+print(results_tidy)
+
+# Lookup for flagging
+upper_flag <- 0.0525
+lower_flag <- 0.0475
+
+# Plot the results
+to_plot <- final_results %>%
+            rename(lag_ret = lag_ret_25,
+                   lead_ret = lead_ret_10) %>%
+            filter(!is.na(lag_ret), !is.na(lead_ret)) %>%
+            mutate(flagged = ifelse(lag_ret > lower_flag & lag_ret < upper_flag, 1, 0)) %>%
+            select(date, lag_ret, lead_ret, flagged)
+
+
+
+flagged_points <- to_plot %>%
+                    filter(flagged == 1) %>%
+                    arrange(date)
+  
+start_year <- min(year(final_results$date))
+end_year <- max(year(final_results$date))
+
+source_string <- str_wrap(paste0("Source: Shiller data, ", start_year, "-", end_year, " (OfDollarsAndData.com)"), 
+                          width = 80)
+note_string <-  str_wrap(paste0("Note:  Performance shown includes dividends and is adjusted for inflation."), 
+                         width = 80)
+
+file_path <- paste0(out_path, "/_fit_10_fwd_growth_", prior_years, "_prior_plot.jpeg")
+
+# Toggle the second 'black' value in the scale_color_manual() below to create annotated plots
+plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) + 
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  scale_x_continuous(label = percent) +
+  scale_y_continuous(label = dollar, limits = c(0, 7), breaks = seq(0, 7, 1)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("S&P 500\n", future_years, "-Year Future Growth\nBased on ", prior_years, "-Year Prior Return")) +
+  labs(x= paste0(prior_years, "-Year Annualized Prior Return"), y = "Growth of $1\nOver Next Decade",
+       caption = paste0(source_string, "\n", note_string))
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+file_path <- paste0(out_path, "/_color_10_fwd_growth_", prior_years, "_prior_plot.jpeg")
+
+# Toggle the second 'black' value in the scale_color_manual() below to create annotated plots
+plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, color = as.factor(flagged))) +
+  geom_point() +
+  scale_color_manual(values = c("black", "red"), guide = FALSE) +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  scale_x_continuous(label = percent) +
+  scale_y_continuous(label = dollar, limits = c(0, 7), breaks = seq(0, 7, 1)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("S&P 500\n", future_years, "-Year Future Growth\nBased on ", prior_years, "-Year Prior Return")) +
+  labs(x= paste0(prior_years, "-Year Annualized Prior Return"), y = "Growth of $1\nOver Next Decade",
+       caption = paste0(source_string, "\n", note_string))
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #
