@@ -101,13 +101,13 @@ plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret)) +
   scale_x_continuous(label = percent) +
   scale_y_continuous(label = dollar, limits = c(0, 7), breaks = seq(0, 7, 1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("S&P 500\n", future_years, "-Year Future Growth\nBased on ", prior_years, "-Year Prior Return")) +
-  labs(x= paste0(prior_years, "-Year Annualized Prior Return"), y = "Growth of $1\nOver Next Decade",
+  ggtitle(paste0("S&P 500\n", future_years, "-Year Future Real Growth\nBased on ", prior_years, "-Year Prior Return")) +
+  labs(x= paste0(prior_years, "-Year Annualized Prior Return"), y = "Real Growth of $1\nOver Next Decade",
        caption = paste0(source_string, "\n", note_string))
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-file_path <- paste0(out_path, "/flag_2024_10_fwd_growth_", prior_years, "_prior_plot.jpeg")
+file_path <- paste0(out_path, "/anno_2024_10_fwd_growth_", prior_years, "_prior_plot.jpeg")
 
 # Annotate
 text_labels <- data.frame()
@@ -115,7 +115,7 @@ text_labels <- data.frame()
 text_labels[1, "lag_ret"] <- 0.074
 text_labels[1, "lead_ret"] <- 5.5
 text_labels[1, "flag_2020"] <- 1
-text_labels[1, "label"] <- "2024"
+text_labels[1, "label"] <- "2004-2023"
 
 plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, color = as.factor(flag_2024))) +
   geom_point() +
@@ -127,13 +127,13 @@ plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, color = as.factor(flag_2024))
   scale_x_continuous(label = percent) +
   scale_y_continuous(label = dollar, limits = c(0, 7), breaks = seq(0, 7, 1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("S&P 500\n", future_years, "-Year Future Growth\nBased on ", prior_years, "-Year Prior Return")) +
-  labs(x= paste0(prior_years, "-Year Annualized Prior Return"), y = "Growth of $1\nOver Next Decade",
+  ggtitle(paste0("S&P 500\n", future_years, "-Year Future Real Growth\nBased on ", prior_years, "-Year Prior Return")) +
+  labs(x= paste0(prior_years, "-Year Annualized Prior Return"), y = "Real Growth of $1\nOver Next Decade",
        caption = paste0(source_string, "\n", note_string))
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-file_path <- paste0(out_path, "/flag_2020_10_fwd_growth_", prior_years, "_prior_plot.jpeg")
+file_path <- paste0(out_path, "/anno_2020_10_fwd_growth_", prior_years, "_prior_plot.jpeg")
 
 #annotate
 text_labels <- data.frame()
@@ -141,7 +141,7 @@ text_labels <- data.frame()
 text_labels[1, "lag_ret"] <- 0.038
 text_labels[1, "lead_ret"] <- 5.5
 text_labels[1, "flag_2020"] <- 1
-text_labels[1, "label"] <- "2020"
+text_labels[1, "label"] <- "2000-2019"
 
 plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, color = as.factor(flag_2020))) +
   geom_point() +
@@ -153,8 +153,8 @@ plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, color = as.factor(flag_2020))
   scale_x_continuous(label = percent) +
   scale_y_continuous(label = dollar, limits = c(0, 7), breaks = seq(0, 7, 1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("S&P 500\n", future_years, "-Year Future Growth\nBased on ", prior_years, "-Year Prior Return")) +
-  labs(x= paste0(prior_years, "-Year Annualized Prior Return"), y = "Growth of $1\nOver Next Decade",
+  ggtitle(paste0("S&P 500\n", future_years, "-Year Future Real Growth\nBased on ", prior_years, "-Year Prior Return")) +
+  labs(x= paste0(prior_years, "-Year Annualized Prior Return"), y = "Real Growth of $1\nOver Next Decade",
        caption = paste0(source_string, "\n", note_string))
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -203,7 +203,7 @@ plot <- ggplot(stack, aes(x=month, y=growth_of_dollar, color = as.factor(start_p
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 #Finally plot 1998-2000 data
-file_path <- paste0(out_path, "/flag_2000_10_fwd_growth_", prior_years, "_prior_plot.jpeg")
+file_path <- paste0(out_path, "/anno_2000_10_fwd_growth_", prior_years, "_prior_plot.jpeg")
 
 # Annotate
 text_labels <- data.frame()
@@ -211,7 +211,7 @@ text_labels <- data.frame()
 text_labels[1, "lag_ret"] <- 0.125
 text_labels[1, "lead_ret"] <- 2.75
 text_labels[1, "flag_2020"] <- 1
-text_labels[1, "label"] <- "2000"
+text_labels[1, "label"] <- "1980-1999"
 
 plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, color = as.factor(flag_1998_2000))) +
   geom_point() +
@@ -223,8 +223,8 @@ plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, color = as.factor(flag_1998_2
   scale_x_continuous(label = percent) +
   scale_y_continuous(label = dollar, limits = c(0, 7), breaks = seq(0, 7, 1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("S&P 500\n", future_years, "-Year Future Growth\nBased on ", prior_years, "-Year Prior Return")) +
-  labs(x= paste0(prior_years, "-Year Annualized Prior Return"), y = "Growth of $1\nOver Next Decade",
+  ggtitle(paste0("S&P 500\n", future_years, "-Year Future Real Growth\nBased on ", prior_years, "-Year Prior Return")) +
+  labs(x= paste0(prior_years, "-Year Annualized Prior Return"), y = "Real Growth of $1\nOver Next Decade",
        caption = paste0(source_string, "\n", note_string))
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
