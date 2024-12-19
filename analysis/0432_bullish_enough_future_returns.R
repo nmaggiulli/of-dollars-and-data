@@ -27,7 +27,7 @@ df <- readRDS(paste0(localdir, "/0009_sp500_ret_pe.Rds")) %>%
         select(date, index)
 
 future_years <- 10
-prior_years <- 25
+prior_years <- 20
 
 final_results <- df %>%
   mutate(lag_ret_10 = (index/lag(index, 12*10))^(1/10) - 1,
@@ -39,7 +39,7 @@ final_results <- df %>%
 
 # Subset data
 to_test <- final_results %>%
-  filter(!is.na(lag_ret_25), !is.na(lead_ret_10))
+  filter(!is.na(lag_ret_20), !is.na(lead_ret_10))
 
 # Run regressions to test R^2
 calculate_r_squared_tidy <- function(data, future_col, lag_cols) {
@@ -64,16 +64,23 @@ lag_cols <- c("lag_ret_10", "lag_ret_15", "lag_ret_20", "lag_ret_25", "lag_ret_3
 results_tidy <- calculate_r_squared_tidy(to_test, future_col, lag_cols)
 
 # Lookup for flagging
-upper_flag_24 <- 0.0525
-lower_flag_24 <- 0.0475
+lower_flag_24 <- 0.0675
+upper_flag_24 <- 0.0775
+
+lower_flag_20 <- 0.035
+upper_flag_20 <- 0.04
+
+lower_flag_00 <- 0.12
+upper_flag_00 <- 0.13
 
 # Plot the results
 to_plot <- final_results %>%
-            rename(lag_ret = lag_ret_25,
+            rename(lag_ret = lag_ret_20,
                    lead_ret = lead_ret_10) %>%
             filter(!is.na(lag_ret), !is.na(lead_ret)) %>%
             mutate(flag_2024 = ifelse(lag_ret > lower_flag_24 & lag_ret < upper_flag_24, 1, 0),
-                   flag_1998_2000 = ifelse(year(date) >= 1998 & year(date) <= 2000, 1, 0)) %>%
+                   flag_2020 = ifelse(lag_ret > lower_flag_20 & lag_ret < upper_flag_20, 1, 0),
+                   flag_1998_2000 = ifelse(lag_ret > lower_flag_00 & lag_ret < upper_flag_00, 1, 0)) %>%
             select(date, lag_ret, lead_ret, contains("flag_"))
   
 start_year <- min(year(final_results$date))
@@ -102,8 +109,45 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 file_path <- paste0(out_path, "/flag_2024_10_fwd_growth_", prior_years, "_prior_plot.jpeg")
 
+# Annotate
+text_labels <- data.frame()
+
+text_labels[1, "lag_ret"] <- 0.074
+text_labels[1, "lead_ret"] <- 5.5
+text_labels[1, "flag_2020"] <- 1
+text_labels[1, "label"] <- "2024"
+
 plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, color = as.factor(flag_2024))) +
   geom_point() +
+  geom_text(data=text_labels, aes(x=lag_ret, y=lead_ret, color = as.factor(flag_2020),
+                                  label = label),
+            family = my_font) +
+  scale_color_manual(values = c("black", "red"), guide = FALSE) +
+  geom_hline(yintercept = 1, linetype = "dashed") +
+  scale_x_continuous(label = percent) +
+  scale_y_continuous(label = dollar, limits = c(0, 7), breaks = seq(0, 7, 1)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("S&P 500\n", future_years, "-Year Future Growth\nBased on ", prior_years, "-Year Prior Return")) +
+  labs(x= paste0(prior_years, "-Year Annualized Prior Return"), y = "Growth of $1\nOver Next Decade",
+       caption = paste0(source_string, "\n", note_string))
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+file_path <- paste0(out_path, "/flag_2020_10_fwd_growth_", prior_years, "_prior_plot.jpeg")
+
+#annotate
+text_labels <- data.frame()
+
+text_labels[1, "lag_ret"] <- 0.038
+text_labels[1, "lead_ret"] <- 5.5
+text_labels[1, "flag_2020"] <- 1
+text_labels[1, "label"] <- "2020"
+
+plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, color = as.factor(flag_2020))) +
+  geom_point() +
+  geom_text(data=text_labels, aes(x=lag_ret, y=lead_ret, color = as.factor(flag_2020),
+                                  label = label),
+            family = my_font) +
   scale_color_manual(values = c("black", "red"), guide = FALSE) +
   geom_hline(yintercept = 1, linetype = "dashed") +
   scale_x_continuous(label = percent) +
@@ -152,7 +196,7 @@ plot <- ggplot(stack, aes(x=month, y=growth_of_dollar, color = as.factor(start_p
   scale_y_continuous(label = dollar) +
   scale_color_discrete(guide = "none") +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Growth of $1 for the S&P 500\nWhen Prior 25-Year Returns Were 4.75%-5.25%")) +
+  ggtitle(paste0("Growth of $1 for the S&P 500\nWhen Prior ", prior_years, "-Year Returns Were ", 100*lower_flag_24, "%-", 100*upper_flag_24, "%")) +
   labs(x= paste0("Month"), y = "Growth of $1",
        caption = paste0(source_string, "\n", note_string))
 
@@ -161,8 +205,19 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 #Finally plot 1998-2000 data
 file_path <- paste0(out_path, "/flag_2000_10_fwd_growth_", prior_years, "_prior_plot.jpeg")
 
+# Annotate
+text_labels <- data.frame()
+
+text_labels[1, "lag_ret"] <- 0.125
+text_labels[1, "lead_ret"] <- 2.75
+text_labels[1, "flag_2020"] <- 1
+text_labels[1, "label"] <- "2000"
+
 plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, color = as.factor(flag_1998_2000))) +
   geom_point() +
+  geom_text(data=text_labels, aes(x=lag_ret, y=lead_ret, color = as.factor(flag_2020),
+                                  label = label),
+            family = my_font) +
   scale_color_manual(values = c("black", "red"), guide = FALSE) +
   geom_hline(yintercept = 1, linetype = "dashed") +
   scale_x_continuous(label = percent) +
