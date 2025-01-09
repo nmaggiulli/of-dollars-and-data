@@ -107,7 +107,7 @@ plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret)) +
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-file_path <- paste0(out_path, "/anno_2024_10_fwd_growth_", prior_years, "_prior_plot.jpeg")
+file_path <- paste0(out_path, "/anno_05_2024_10_fwd_growth_", prior_years, "_prior_plot.jpeg")
 
 # Annotate
 text_labels <- data.frame()
@@ -115,7 +115,7 @@ text_labels <- data.frame()
 text_labels[1, "lag_ret"] <- 0.074
 text_labels[1, "lead_ret"] <- 5.5
 text_labels[1, "flag_2020"] <- 1
-text_labels[1, "label"] <- "2004-2023"
+text_labels[1, "label"] <- "2005-2024"
 
 plot <- ggplot(to_plot, aes(x=lag_ret, y=lead_ret, color = as.factor(flag_2024))) +
   geom_point() +
