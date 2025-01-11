@@ -22,7 +22,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-html_start <- '<!DOCTYPE html>
+html_start1 <- '<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -107,8 +107,9 @@ html_start <- '<!DOCTYPE html>
 
 </style>
   </head>
-  <body>
-  <div style="margin-top: -25vh; padding: 0; height: 0;">&nbsp;</div>
+  <body>'
+
+html_start2 <- '
 <div class="calculator">
     <div style="border: 4px solid #333; border-radius: 4px; padding: 25px 25px 15px 25px; margin-bottom: 0px; background-color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <div style="display: flex; gap: 20px;">
@@ -183,12 +184,10 @@ html_start <- '<!DOCTYPE html>
         </div>
     </div>
     <div class="chart-container" style="margin-top: 40px;">
-        <h3 style="margin-bottom: 20px;">Rent vs. Buy Over Time</h3>
+        <h3 style="margin-bottom: 20px;">Renting vs. Buying Over Time</h3>
         <canvas id="valueChart" style="width: 100%; height: 400px;"></canvas>
     </div>
 </div>'
-
-
 
 js_function_string <- '
 document.addEventListener("DOMContentLoaded", function() {
@@ -496,7 +495,8 @@ html_end <-
 '
 
 # Write the HTML string to a file
-writeLines(paste(html_start,
+writeLines(paste(html_start1,
+                 html_start2,
                  html_js_script,
                  js_function_string, 
                  html_end), 
@@ -506,8 +506,11 @@ writeLines(js_function_string,
            paste0(out_path, "/rent_vs_buy_calculator.js"))
 
 # Now write code for the HTML to work on Wordpress
-writeLines(paste(trimws(html_start)), 
-           paste0(out_path, "/rent_vs_buy_calculator.html"))
+html_start1_wp <- str_replace_all(html_start1, "</head>", "")
+html_start1_wp <- str_replace_all(html_start1_wp, "<body>", "")
 
+writeLines(paste(trimws(html_start1_wp),
+                        html_start2), 
+           paste0(out_path, "/rent_vs_buy_calculator.html"))
 
 # ############################  End  ################################## #
