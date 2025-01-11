@@ -22,11 +22,12 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-html <- '<!DOCTYPE html>
-  <html lang="en">
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+html_start <- '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
   
 .calculator {
@@ -68,7 +69,7 @@ html <- '<!DOCTYPE html>
     flex: 1;
 }
 
-/* Headers (Monthly Costs & 30-Year Projection) */
+/* Headers (Monthly Costs & Final Results) */
 .results h2 {
     font-size: 32px;
     margin-bottom: 25px;
@@ -90,18 +91,32 @@ html <- '<!DOCTYPE html>
     color: #2196F3;
 }
 
+  /* Add to existing styles */
+  .recharts-default-tooltip {
+      background-color: #fff !important;
+      border: 1px solid #ccc !important;
+      padding: 10px !important;
+  }
+  
+  .chart-container {
+      border: 1px solid #eee;
+      padding: 20px;
+      border-radius: 4px;
+      background-color: #fff;
+  }
+
 </style>
   </head>
   <body>
-  <div style="margin-top: -24vh; padding: 0; height: 0;">&nbsp;</div>
+  <div style="margin-top: -25vh; padding: 0; height: 0;">&nbsp;</div>
 <div class="calculator">
-    <div style="border: 4px solid #333; border-radius: 4px; padding: 25px 25px 15px 25px; margin-bottom: 30px; background-color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <div style="border: 4px solid #333; border-radius: 4px; padding: 25px 25px 15px 25px; margin-bottom: 0px; background-color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <div style="display: flex; gap: 20px;">
         <!-- Column 1 -->
         <div style="flex: 1;">
             <div class="input-group">
                 <label>Monthly Rent:</label>
-                <input type="text" id="monthlyRent" value="$3,000" oninput="handleInput(this)">
+                <input type="text" id="monthlyRent" value="$2,000" oninput="handleInput(this)">
             </div>
             <div class="input-group">
                 <label>Future Inflation:</label>
@@ -109,7 +124,7 @@ html <- '<!DOCTYPE html>
             </div>
             <div class="input-group">
                 <label>Portfolio Growth:</label>
-                <input type="text" id="portfolioGrowth" value="4%" oninput="handleInput(this)">
+                <input type="text" id="portfolioGrowth" value="4.00%" oninput="handleInput(this)">
             </div>
         </div>
 
@@ -117,7 +132,7 @@ html <- '<!DOCTYPE html>
         <div style="flex: 1;">
             <div class="input-group">
                 <label>Home Price:</label>
-                <input type="text" id="homePrice" value="$500,000" oninput="handleInput(this)">
+                <input type="text" id="homePrice" value="$420,000" oninput="handleInput(this)">
             </div>
             <div class="input-group">
                 <label>Downpayment:</label>
@@ -125,7 +140,7 @@ html <- '<!DOCTYPE html>
             </div>
             <div class="input-group">
                 <label>Interest Rate:</label>
-                <input type="text" id="interestRate" value="7.0%" oninput="handleInput(this)">
+                <input type="text" id="interestRate" value="7.00%" oninput="handleInput(this)">
             </div>
         </div>
 
@@ -133,11 +148,11 @@ html <- '<!DOCTYPE html>
         <div style="flex: 1;">
             <div class="input-group">
                 <label>Property Tax:</label>
-                <input type="text" id="propertyTax" value="1.0%" oninput="handleInput(this)">
+                <input type="text" id="propertyTax" value="1.00%" oninput="handleInput(this)">
             </div>
             <div class="input-group">
                 <label>HOA/Maintenance:</label>
-                <input type="text" id="maintenance" value="1.0%" oninput="handleInput(this)">
+                <input type="text" id="maintenance" value="1.00%" oninput="handleInput(this)">
             </div>
             <div class="input-group">
                 <label>Insurance:</label>
@@ -151,28 +166,34 @@ html <- '<!DOCTYPE html>
     <div class="results">
         <div style="display: flex; justify-content: space-between;">
             <div>
-                <h3>Monthly Costs:</h3>
+                <h3>Monthly Housing Cost</h3>
+                <p>Total: <span id="totalMonthlyCost">$0</span></p>
                 <p>Mortgage Payment: <span id="monthlyMortgage">$0</span></p>
                 <p>Property Tax: <span id="monthlyPropertyTax">$0</span></p>
                 <p>Maintenance/HOA: <span id="monthlyMaintenance">$0</span></p>
                 <p>Insurance: <span id="monthlyInsurance">$0</span></p>
-                <p>Total: <span id="totalMonthlyCost">$0</span></p>
             </div>
             
             <div>
-                <h3>30-Year Projection:</h3>
+                <h3>Final Decision</h3>
+                <div class="decision" id="finalDecision" style="text-align: left; margin: 30px 0; font-size: 32px; font-weight: bold; letter-spacing: 1px;">-</div>
                 <p>Final Portfolio Value: <span id="portfolioValue">$0</span></p>
                 <p>Final Home Value: <span id="finalHomeValue">$0</span></p>
-                <div class="decision" id="finalDecision" style="text-align: left;">-</div>
             </div>
         </div>
     </div>
-</div>
-  
-<script type="text/javascript">
-//<![CDATA[
+    <div class="chart-container" style="margin-top: 40px;">
+        <h3 style="margin-bottom: 20px;">Rent vs. Buy Over Time</h3>
+        <canvas id="valueChart" style="width: 100%; height: 400px;"></canvas>
+    </div>
+</div>'
+
+
+
+js_function_string <- '
 document.addEventListener("DOMContentLoaded", function() {
   let debounceTimer;
+  let valueChart = null;
 
 function handleInput(input) {
   clearTimeout(debounceTimer);
@@ -291,8 +312,13 @@ function calculateDecision() {
         (initialHomePrice * propertyTax) / 12 + 
         (initialHomePrice * maintenance) / 12 + 
         (initialHomePrice * insurance) / 12));
+        
+     let monthlyData = [];
+      let labels = [];
+      let portfolioValues = [];
+      let homeValues = [];
     
-    for (let i = 0; i < 360; i++) {
+    for (let i = 0; i <= 360; i++) {
         // Update home price and related costs with inflation
         currentHomePrice *= (1 + monthlyInflation);
         currentMonthlyRent *= (1 + monthlyInflation);
@@ -309,31 +335,143 @@ function calculateDecision() {
   // Calculate and apply monthly investment
   const monthlyInvestment = totalMonthlyHousingCost - currentMonthlyRent;
   portfolioValue = portfolioValue * (1 + monthlyReturn) + monthlyInvestment;
-  }
+  
+      if (i % 12 === 0) {
+          let year = Math.floor(i/12);
+          labels.push(year);
+          portfolioValues.push(Math.round(portfolioValue));
+          homeValues.push(Math.round(currentHomePrice));
+          console.log("Adding data for year:", year);  // Debug log
+      }
+    }
+    
+  console.log("Chart.js version:", Chart.version);  
+    
+  // Test formatting function
+    function formatYAxis(value) {
+        console.log("Formatting:", value);
+        try {
+            return "$" + value.toLocaleString();
+        } catch (e) {
+            console.error("Error formatting:", e);
+            return value;
+        }
+    }  
+  
+ // Update the chart
+        if (valueChart) {
+            valueChart.destroy();
+        }
+        
+        // Add this right before creating the chart to test
+        console.log("Test format: ", formatYAxis(1000000));
+        
+        const ctx = document.getElementById("valueChart").getContext("2d");
+        valueChart = new Chart(ctx, {
+            type: "line",
+                  data: {
+                    labels: Array.from({length: 31}, (_, i) => i),  // This will create labels 0-30
+                    datasets: [{
+                        label: "Portfolio Value",
+                        data: portfolioValues,
+                        borderColor: "#4CAF50",
+                        backgroundColor: "#4CAF50",
+                        fill: false,
+                        tension: 0.4,
+                        borderWidth: 2
+                    }, {
+                        label: "Home Value",
+                        data: homeValues,
+                        borderColor: "#2196F3",
+                        backgroundColor: "#2196F3",
+                        fill: false,
+                        tension: 0.4,
+                        borderWidth: 2
+                    }]
+                },
+            options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                   tooltips: {
+                        callbacks: {
+                            title: function(tooltipItems, data) {
+                                return "Year = " + tooltipItems[0].xLabel;
+                            },
+                            label: function(tooltipItem, data) {
+                                let value = tooltipItem.yLabel;
+                                return data.datasets[tooltipItem.datasetIndex].label + ": " + 
+                                    new Intl.NumberFormat("en-US", {
+                                        style: "currency",
+                                        currency: "USD",
+                                        minimumFractionDigits: 0,
+                                        maximumFractionDigits: 0
+                                    }).format(value);
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: "top",
+                            align: "center",
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 16,
+                                boxHeight: 16,
+                                padding: 20,
+                                color: "#000000",
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                callback: function(value) {
+                                    return new Intl.NumberFormat("en-US", {
+                                        style: "currency",
+                                        currency: "USD",
+                                        minimumFractionDigits: 0,
+                                        maximumFractionDigits: 0
+                                    }).format(value);
+                                },
+                                beginAtZero: true
+                            }
+                        }],
+                        xAxes: [{
+                            scaleLabel: {
+                                display: true,
+                                labelString: "Year"
+                            }
+                        }]
+                    }
+                }
+        });
   
   // Final home value is already calculated in currentHomePrice
   const homeValue = currentHomePrice;
   
   // Update results display
   document.getElementById("portfolioValue").textContent = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(Math.round(portfolioValue));
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+      }).format(Math.round(portfolioValue));
+      
+      document.getElementById("finalHomeValue").textContent = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+      }).format(Math.round(homeValue));
   
-  document.getElementById("finalHomeValue").textContent = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(Math.round(homeValue));
-  
-  document.getElementById("finalDecision").textContent = 
-    portfolioValue > homeValue ? "RENT" : "BUY";
-  document.getElementById("finalDecision").style.color = 
-    portfolioValue > homeValue ? "#4CAF50" : "#2196F3";
-}
+    document.getElementById("finalDecision").textContent = 
+      portfolioValue > homeValue ? "RENT" : "BUY";
+    document.getElementById("finalDecision").style.color = 
+      portfolioValue > homeValue ? "#4CAF50" : "#2196F3";
+  }
 
 // Calculate initial results when page loads
     calculateDecision();
@@ -342,15 +480,34 @@ function calculateDecision() {
     document.querySelectorAll("input").forEach(input => {
         input.addEventListener("input", () => handleInput(input));
     });
-});
-//]]>
+});'
+
+html_js_script <- '
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4"></script>
+<script>
+'
+
+html_end <-
+  '
 </script>
-  </body>
-  </html>'
+</body>
+</html>
+'
 
-writeLines(html, 
-           paste0(out_path, "/buy_vs_rent.html"))
+# Write the HTML string to a file
+writeLines(paste(html_start,
+                 html_js_script,
+                 js_function_string, 
+                 html_end), 
+           paste0(out_path, "/_test_rent_vs_buy_calc.html"))
 
+writeLines(js_function_string, 
+           paste0(out_path, "/rent_vs_buy_calculator.js"))
+
+# Now write code for the HTML to work on Wordpress
+writeLines(paste(trimws(html_start)), 
+           paste0(out_path, "/rent_vs_buy_calculator.html"))
 
 
 # ############################  End  ################################## #
