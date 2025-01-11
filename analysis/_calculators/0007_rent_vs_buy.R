@@ -28,166 +28,162 @@ html_start1 <- '<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-  
-.calculator {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0;
-    font-family: Arial, sans-serif;
-}
-
-.input-group {
-    margin-bottom: 15px;
-}
-
-.input-group label {
-    display: inline-block;
-    width: 180px;
-    margin-right: 10px;
-    color: #666;
-    font-size: 1.1em;
-}
-
-.input-group input {
-    width: 120px;
-    padding: 8px 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
-    background-color: #fff;
-}
-
-/* Results section styling */
-.results {
-    display: flex;
-    gap: 60px;
-    margin-top: 40px;
-}
-
-.results > div {
-    flex: 1;
-}
-
-/* Headers (Monthly Costs & Final Results) */
-.results h2 {
-    font-size: 32px;
-    margin-bottom: 25px;
-    color: #333;
-}
-
-/* Individual result lines */
-.results p {
-    margin: 15px 0;
-    font-size: 20px;
-    color: #555;
-}
-
-/* Decision styling */
-.decision {
-    margin-top: 20px;
-    font-size: 28px;
-    font-weight: bold;
-    color: #2196F3;
-}
-
-  /* Add to existing styles */
-  .recharts-default-tooltip {
-      background-color: #fff !important;
-      border: 1px solid #ccc !important;
-      padding: 10px !important;
-  }
-  
-  .chart-container {
-      border: 1px solid #eee;
-      padding: 20px;
-      border-radius: 4px;
-      background-color: #fff;
-  }
-
-</style>
-  </head>
-  <body>'
+'
 
 html_start2 <- '
-<div class="calculator">
-    <div style="border: 4px solid #333; border-radius: 4px; padding: 25px 25px 15px 25px; margin-bottom: 0px; background-color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div style="display: flex; gap: 20px;">
-        <!-- Column 1 -->
-        <div style="flex: 1;">
-            <div class="input-group">
-                <label>Monthly Rent:</label>
-                <input type="text" id="monthlyRent" value="$2,000" oninput="handleInput(this)">
-            </div>
-            <div class="input-group">
-                <label>Future Inflation:</label>
-                <input type="text" id="inflation" value="4.00%" oninput="handleInput(this)">
-            </div>
-            <div class="input-group">
-                <label>Portfolio Growth:</label>
-                <input type="text" id="portfolioGrowth" value="4.00%" oninput="handleInput(this)">
-            </div>
-        </div>
-
-        <!-- Column 2 -->
-        <div style="flex: 1;">
-            <div class="input-group">
-                <label>Home Price:</label>
-                <input type="text" id="homePrice" value="$420,000" oninput="handleInput(this)">
-            </div>
-            <div class="input-group">
-                <label>Downpayment:</label>
-                <input type="text" id="downpayment" value="20%" oninput="handleInput(this)">
-            </div>
-            <div class="input-group">
-                <label>Interest Rate:</label>
-                <input type="text" id="interestRate" value="7.00%" oninput="handleInput(this)">
-            </div>
-        </div>
-
-        <!-- Column 3 -->
-        <div style="flex: 1;">
-            <div class="input-group">
-                <label>Property Tax:</label>
-                <input type="text" id="propertyTax" value="1.00%" oninput="handleInput(this)">
-            </div>
-            <div class="input-group">
-                <label>HOA/Maintenance:</label>
-                <input type="text" id="maintenance" value="1.00%" oninput="handleInput(this)">
-            </div>
-            <div class="input-group">
-                <label>Insurance:</label>
-                <input type="text" id="insurance" value="0.50%" oninput="handleInput(this)">
-            </div>
-        </div>
-    </div>
-  </div>  
+  <!-- Your HTML content goes here -->
+    <style>
+    
+  .calculator {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0;
+      font-family: Arial, sans-serif;
+  }
   
- <!-- Results section (back to original simple layout) -->
-    <div class="results">
-        <div style="display: flex; justify-content: space-between;">
-            <div>
-                <h3>Monthly Housing Cost</h3>
-                <p>Total: <span id="totalMonthlyCost">$0</span></p>
-                <p>Mortgage Payment: <span id="monthlyMortgage">$0</span></p>
-                <p>Property Tax: <span id="monthlyPropertyTax">$0</span></p>
-                <p>Maintenance/HOA: <span id="monthlyMaintenance">$0</span></p>
-                <p>Insurance: <span id="monthlyInsurance">$0</span></p>
-            </div>
-            
-            <div>
-                <h3>Final Decision</h3>
-                <div class="decision" id="finalDecision" style="text-align: left; margin: 30px 0; font-size: 32px; font-weight: bold; letter-spacing: 1px;">-</div>
-                <p>Final Portfolio Value: <span id="portfolioValue">$0</span></p>
-                <p>Final Home Value: <span id="finalHomeValue">$0</span></p>
-            </div>
-        </div>
-    </div>
-    <div class="chart-container" style="margin-top: 40px;">
-        <h3 style="margin-bottom: 20px;">Renting vs. Buying Over Time</h3>
-        <canvas id="valueChart" style="width: 100%; height: 400px;"></canvas>
-    </div>
-</div>'
+  .input-group {
+      margin-bottom: 15px;
+  }
+  
+  .input-group label {
+      display: inline-block;
+      width: 180px;
+      margin-right: 10px;
+      color: #666;
+      font-size: 1.1em;
+  }
+  
+  .input-group input {
+      width: 120px;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+      background-color: #fff;
+  }
+  
+  /* Results section styling */
+  .results {
+      display: flex;
+      gap: 60px;
+      margin-top: 40px;
+  }
+  
+  .results > div {
+      flex: 1;
+  }
+  
+  /* Headers (Monthly Costs & Final Results) */
+  .results h2 {
+      font-size: 32px;
+      margin-bottom: 25px;
+      color: #333;
+  }
+  
+  /* Individual result lines */
+  .results p {
+      margin: 15px 0;
+      font-size: 20px;
+      color: #555;
+  }
+  
+  /* Decision styling */
+  .decision {
+      margin-top: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #2196F3;
+  }
+  
+    /* Add to existing styles */
+    .recharts-default-tooltip {
+        background-color: #fff !important;
+        border: 1px solid #ccc !important;
+        padding: 10px !important;
+    }
+  
+  </style>
+    </head>
+    <body>
+  
+  <div class="calculator">
+      <div style="border: 4px solid #333; border-radius: 4px; padding: 25px 25px 15px 25px; margin-bottom: 0px; background-color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="display: flex; gap: 20px;">
+          <!-- Column 1 -->
+          <div style="flex: 1;">
+              <div class="input-group">
+                  <label>Monthly Rent:</label>
+                  <input type="text" id="monthlyRent" value="$2,000" oninput="handleInput(this)">
+              </div>
+              <div class="input-group">
+                  <label>Future Inflation:</label>
+                  <input type="text" id="inflation" value="4.00%" oninput="handleInput(this)">
+              </div>
+              <div class="input-group">
+                  <label>Portfolio Growth:</label>
+                  <input type="text" id="portfolioGrowth" value="4.00%" oninput="handleInput(this)">
+              </div>
+          </div>
+  
+          <!-- Column 2 -->
+          <div style="flex: 1;">
+              <div class="input-group">
+                  <label>Home Price:</label>
+                  <input type="text" id="homePrice" value="$420,000" oninput="handleInput(this)">
+              </div>
+              <div class="input-group">
+                  <label>Downpayment:</label>
+                  <input type="text" id="downpayment" value="20%" oninput="handleInput(this)">
+              </div>
+              <div class="input-group">
+                  <label>Interest Rate:</label>
+                  <input type="text" id="interestRate" value="7.00%" oninput="handleInput(this)">
+              </div>
+          </div>
+  
+          <!-- Column 3 -->
+          <div style="flex: 1;">
+              <div class="input-group">
+                  <label>Property Tax:</label>
+                  <input type="text" id="propertyTax" value="1.00%" oninput="handleInput(this)">
+              </div>
+              <div class="input-group">
+                  <label>HOA/Maintenance:</label>
+                  <input type="text" id="maintenance" value="1.00%" oninput="handleInput(this)">
+              </div>
+              <div class="input-group">
+                  <label>Insurance:</label>
+                  <input type="text" id="insurance" value="0.50%" oninput="handleInput(this)">
+              </div>
+          </div>
+      </div>
+    </div>  
+    
+   <!-- Results section (back to original simple layout) -->
+      <div class="results">
+          <div style="display: flex; justify-content: space-between;">
+              <div>
+                  <h3>Monthly Housing Cost</h3>
+                  <p>Total: <span id="totalMonthlyCost">$0</span></p>
+                  <p>Mortgage Payment: <span id="monthlyMortgage">$0</span></p>
+                  <p>Property Tax: <span id="monthlyPropertyTax">$0</span></p>
+                  <p>Maintenance/HOA: <span id="monthlyMaintenance">$0</span></p>
+                  <p>Insurance: <span id="monthlyInsurance">$0</span></p>
+              </div>
+              
+              <div>
+                  <h3>Final Decision</h3>
+                  <div class="decision" id="finalDecision" style="text-align: left; margin: 30px 0; font-size: 32px; font-weight: bold; letter-spacing: 1px;">-</div>
+                  <p>Final Portfolio Value: <span id="portfolioValue">$0</span></p>
+                  <p>Final Home Value: <span id="finalHomeValue">$0</span></p>
+              </div>
+          </div>
+      </div>
+      <div class="chart-container" style="border: 1px solid #eee; padding: 20px; border-radius: 4px; background-color: #fff; margin-top: 20px; border-top: 4px solid #333;">
+          <h3 style="margin-bottom: 20px; margin-top: 10px;">Renting vs. Buying Over Time</h3>
+          <canvas id="valueChart" style="width: 100%; height: 400px;"></canvas>
+      </div>
+  </div>'
 
 js_function_string <- '
 document.addEventListener("DOMContentLoaded", function() {
@@ -506,11 +502,10 @@ writeLines(js_function_string,
            paste0(out_path, "/rent_vs_buy_calculator.js"))
 
 # Now write code for the HTML to work on Wordpress
-html_start1_wp <- str_replace_all(html_start1, "</head>", "")
-html_start1_wp <- str_replace_all(html_start1_wp, "<body>", "")
+html_start2_wp <- str_replace_all(html_start2, "</head>", "")
+html_start2_wp <- str_replace_all(html_start2_wp, "<body>", "")
 
-writeLines(paste(trimws(html_start1_wp),
-                        html_start2), 
+writeLines(paste(trimws(html_start2_wp)), 
            paste0(out_path, "/rent_vs_buy_calculator.html"))
 
 # ############################  End  ################################## #
