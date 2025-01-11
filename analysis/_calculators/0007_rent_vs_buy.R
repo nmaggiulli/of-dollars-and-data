@@ -36,16 +36,6 @@ html <- '<!DOCTYPE html>
     font-family: Arial, sans-serif;
 }
 
-/* Add this new class for the inputs container */
-.inputs-container {
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 25px;
-    margin-bottom: 30px;
-    background-color: #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
 .input-group {
     margin-bottom: 15px;
 }
@@ -67,12 +57,45 @@ html <- '<!DOCTYPE html>
     background-color: #fff;
 }
 
+/* Results section styling */
+.results {
+    display: flex;
+    gap: 60px;
+    margin-top: 40px;
+}
+
+.results > div {
+    flex: 1;
+}
+
+/* Headers (Monthly Costs & 30-Year Projection) */
+.results h2 {
+    font-size: 32px;
+    margin-bottom: 25px;
+    color: #333;
+}
+
+/* Individual result lines */
+.results p {
+    margin: 15px 0;
+    font-size: 20px;
+    color: #555;
+}
+
+/* Decision styling */
+.decision {
+    margin-top: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    color: #2196F3;
+}
+
 </style>
   </head>
   <body>
-  <div style="margin-top: -22vh; padding: 0; height: 0;">&nbsp;</div>
-  <div class="calculator">
-       <div class="inputs-container" style="border: 1px solid #ccc; border-radius: 4px; padding: 25px; margin-bottom: 30px; background-color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+  <div style="margin-top: -24vh; padding: 0; height: 0;">&nbsp;</div>
+<div class="calculator">
+    <div style="border: 4px solid #333; border-radius: 4px; padding: 25px 25px 15px 25px; margin-bottom: 30px; background-color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <div style="display: flex; gap: 20px;">
         <!-- Column 1 -->
         <div style="flex: 1;">
@@ -93,7 +116,7 @@ html <- '<!DOCTYPE html>
         <!-- Column 2 -->
         <div style="flex: 1;">
             <div class="input-group">
-                <label>Initial Home Price:</label>
+                <label>Home Price:</label>
                 <input type="text" id="homePrice" value="$500,000" oninput="handleInput(this)">
             </div>
             <div class="input-group">
@@ -122,26 +145,29 @@ html <- '<!DOCTYPE html>
             </div>
         </div>
     </div>
+  </div>  
   
-  <div class="results">
-      <div style="display: flex; justify-content: space-between; gap: 40px;">
-          <div style="flex: 1;">
-              <h3>Monthly Costs:</h3>
-              <p>Mortgage Payment: <span id="monthlyMortgage">$0</span></p>
-              <p>Property Tax: <span id="monthlyPropertyTax">$0</span></p>
-              <p>Maintenance/HOA: <span id="monthlyMaintenance">$0</span></p>
-              <p>Insurance: <span id="monthlyInsurance">$0</span></p>
-              <p style="font-weight: bold; margin-top: 15px;">Total: <span id="totalMonthlyCost">$0</span></p>
-          </div>
-          
-          <div style="flex: 1;">
-              <h3>30-Year Projection:</h3>
-              <p>Final Portfolio Value: <span id="portfolioValue">$0</span></p>
-              <p>Final Home Value: <span id="finalHomeValue">$0</span></p>
-              <div class="decision" id="finalDecision" style="text-align: left;">-</div>
-          </div>
-      </div>
-  </div>
+ <!-- Results section (back to original simple layout) -->
+    <div class="results">
+        <div style="display: flex; justify-content: space-between;">
+            <div>
+                <h3>Monthly Costs:</h3>
+                <p>Mortgage Payment: <span id="monthlyMortgage">$0</span></p>
+                <p>Property Tax: <span id="monthlyPropertyTax">$0</span></p>
+                <p>Maintenance/HOA: <span id="monthlyMaintenance">$0</span></p>
+                <p>Insurance: <span id="monthlyInsurance">$0</span></p>
+                <p>Total: <span id="totalMonthlyCost">$0</span></p>
+            </div>
+            
+            <div>
+                <h3>30-Year Projection:</h3>
+                <p>Final Portfolio Value: <span id="portfolioValue">$0</span></p>
+                <p>Final Home Value: <span id="finalHomeValue">$0</span></p>
+                <div class="decision" id="finalDecision" style="text-align: left;">-</div>
+            </div>
+        </div>
+    </div>
+</div>
   
 <script type="text/javascript">
 //<![CDATA[
