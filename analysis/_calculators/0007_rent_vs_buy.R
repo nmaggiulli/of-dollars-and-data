@@ -16,7 +16,7 @@ library(Hmisc)
 library(scales)
 library(tidyverse)
 
-folder_name <- "_calculators/0007_buy_vs_rent"
+folder_name <- "_calculators/0007_rent_vs_buy"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
