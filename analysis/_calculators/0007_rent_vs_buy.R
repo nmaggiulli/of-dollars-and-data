@@ -30,10 +30,7 @@ html_start1 <- '<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 '
 
-html_start2 <- '
-  <!-- Your HTML content goes here -->
-    <style>
-    
+html_css <- '<style>
   .calculator {
       max-width: 800px;
       margin: 0 auto;
@@ -102,34 +99,35 @@ html_start2 <- '
         padding: 10px !important;
     }
   
-  </style>
-    </head>
+  </style>'
+
+html_start2 <- '</head>
     <body>
-  
+    <!-- Your HTML content goes here -->
   <div class="calculator">
       <div style="border: 4px solid #333; border-radius: 4px; padding: 25px 25px 15px 25px; margin-bottom: 0px; background-color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-          <div style="display: flex; gap: 20px;">
+      <div class="calculator-grid-bvr" style="display: flex; flex-wrap: wrap; width: 100%;">
           <!-- Column 1 -->
-          <div style="flex: 1;">
+          <div style="flex: 1 1 auto; min-width: 200px; width: calc(33.333% - 14px);">
               <div class="input-group">
                   <label>Monthly Rent:</label>
-                  <input type="text" id="monthlyRent" value="$2,000" oninput="handleInput(this)">
+                  <input type="text" id="monthlyRent" value="$3,000" oninput="handleInput(this)">
               </div>
               <div class="input-group">
                   <label>Future Inflation:</label>
-                  <input type="text" id="inflation" value="4.00%" oninput="handleInput(this)">
+                  <input type="text" id="inflation" value="3.00%" oninput="handleInput(this)">
               </div>
               <div class="input-group">
                   <label>Portfolio Growth:</label>
                   <input type="text" id="portfolioGrowth" value="4.00%" oninput="handleInput(this)">
               </div>
           </div>
-  
+      
           <!-- Column 2 -->
-          <div style="flex: 1;">
+           <div style="flex: 1 1 auto; min-width: 200px; width: calc(33.333% - 14px);">
               <div class="input-group">
                   <label>Home Price:</label>
-                  <input type="text" id="homePrice" value="$420,000" oninput="handleInput(this)">
+                  <input type="text" id="homePrice" value="$500,000" oninput="handleInput(this)">
               </div>
               <div class="input-group">
                   <label>Downpayment:</label>
@@ -140,9 +138,9 @@ html_start2 <- '
                   <input type="text" id="interestRate" value="7.00%" oninput="handleInput(this)">
               </div>
           </div>
-  
+      
           <!-- Column 3 -->
-          <div style="flex: 1;">
+           <div style="flex: 1 1 auto; min-width: 200px; width: calc(33.333% - 14px);">
               <div class="input-group">
                   <label>Property Tax:</label>
                   <input type="text" id="propertyTax" value="1.00%" oninput="handleInput(this)">
@@ -241,6 +239,17 @@ function calculateMonthlyMortgage(principal, annualRate, years) {
   return principal * monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments) 
   / (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
 }
+
+function calculateRemainingMortgage(principal, annualRate, totalMonths, monthsPassed) {
+    const monthlyRate = annualRate / 12 / 100;
+    const monthlyPayment = calculateMonthlyMortgage(principal, annualRate, totalMonths/12);
+    
+    let remainingBalance = principal * Math.pow(1 + monthlyRate, monthsPassed) - 
+        monthlyPayment * ((Math.pow(1 + monthlyRate, monthsPassed) - 1) / monthlyRate);
+    
+    return Math.max(0, remainingBalance);
+}
+
 function calculateDecision() {
     // Get input values
     const inflation = parsePercent(document.getElementById("inflation").value) / 100;
@@ -311,12 +320,17 @@ function calculateDecision() {
      let monthlyData = [];
       let labels = [];
       let portfolioValues = [];
-      let homeValues = [];
+      let homeEquity = [];
     
     for (let i = 0; i <= 360; i++) {
         // Update home price and related costs with inflation
         currentHomePrice *= (1 + monthlyInflation);
         currentMonthlyRent *= (1 + monthlyInflation);
+        
+        // Calculate remaining mortgage and equity
+        const remainingMortgage = calculateRemainingMortgage(loanAmount, interestRate, 360, i);
+        const currentEquity = currentHomePrice - remainingMortgage;
+        
         let currentMonthlyPropertyTax = (currentHomePrice * propertyTax) / 12;
         let currentMonthlyMaintenance = (currentHomePrice * maintenance) / 12;
         let currentMonthlyInsurance = (currentHomePrice * insurance) / 12;
@@ -335,16 +349,12 @@ function calculateDecision() {
           let year = Math.floor(i/12);
           labels.push(year);
           portfolioValues.push(Math.round(portfolioValue));
-          homeValues.push(Math.round(currentHomePrice));
-          console.log("Adding data for year:", year);  // Debug log
+          homeEquity.push(Math.round(currentEquity));
       }
     }
     
-  console.log("Chart.js version:", Chart.version);  
-    
   // Test formatting function
     function formatYAxis(value) {
-        console.log("Formatting:", value);
         try {
             return "$" + value.toLocaleString();
         } catch (e) {
@@ -357,9 +367,6 @@ function calculateDecision() {
         if (valueChart) {
             valueChart.destroy();
         }
-        
-        // Add this right before creating the chart to test
-        console.log("Test format: ", formatYAxis(1000000));
         
         const ctx = document.getElementById("valueChart").getContext("2d");
         valueChart = new Chart(ctx, {
@@ -375,8 +382,8 @@ function calculateDecision() {
                         tension: 0.4,
                         borderWidth: 2
                     }, {
-                        label: "Home Value",
-                        data: homeValues,
+                        label: "Home Equity",
+                        data: homeEquity,
                         borderColor: "#2196F3",
                         backgroundColor: "#2196F3",
                         fill: false,
@@ -492,6 +499,7 @@ html_end <-
 
 # Write the HTML string to a file
 writeLines(paste(html_start1,
+                 html_css,
                  html_start2,
                  html_js_script,
                  js_function_string, 
