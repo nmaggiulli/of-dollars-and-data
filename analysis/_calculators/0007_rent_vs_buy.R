@@ -111,7 +111,7 @@ html_start2 <- '</head>
           <div style="flex: 1 1 auto; min-width: 200px; width: calc(33.333% - 14px);">
               <div class="input-group">
                   <label>Monthly Rent:</label>
-                  <input type="text" id="monthlyRent" value="$3,000" oninput="handleInput(this)">
+                  <input type="text" id="monthlyRent" value="$2,500" oninput="handleInput(this)">
               </div>
               <div class="input-group">
                   <label>Future Inflation:</label>
@@ -119,7 +119,7 @@ html_start2 <- '</head>
               </div>
               <div class="input-group">
                   <label>Portfolio Growth:</label>
-                  <input type="text" id="portfolioGrowth" value="4.00%" oninput="handleInput(this)">
+                  <input type="text" id="portfolioGrowth" value="6.00%" oninput="handleInput(this)">
               </div>
           </div>
       
@@ -270,7 +270,7 @@ function calculateDecision() {
     // Initialize starting values
     let portfolioValue = downpaymentAmount + closingCosts;
     const portfolioGrowthRate = parsePercent(document.getElementById("portfolioGrowth").value) / 100;
-    const totalAnnualReturn = (1 + inflation) * (1 + portfolioGrowthRate) - 1;
+    const totalAnnualReturn = (1 + portfolioGrowthRate) - 1;
     const monthlyReturn = Math.pow(1 + totalAnnualReturn, 1/12) - 1;
     const monthlyInflation = Math.pow(1 + inflation, 1/12) - 1;
 
