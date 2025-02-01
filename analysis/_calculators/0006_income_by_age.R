@@ -27,14 +27,27 @@ calculate_data <- 0
 
 if(calculate_data == 1){
   scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
-                  filter(year == data_year,
-                         age >= 23,
-                         age <= 80)
+    filter(year == data_year,
+           age >= 20,
+           age <= 79) %>%
+    mutate(agecl = case_when(
+      age >= 20 & age <= 24 ~ "20-24",
+      age >= 25 & age <= 29 ~ "25-29",
+      age >= 30 & age <= 34 ~ "30-34",
+      age >= 35 & age <= 39 ~ "35-39",
+      age >= 40 & age <= 44 ~ "40-44",
+      age >= 45 & age <= 49 ~ "45-49",
+      age >= 50 & age <= 54 ~ "50-54",
+      age >= 55 & age <= 59 ~ "55-59",
+      age >= 60 & age <= 64 ~ "60-64",
+      age >= 65 & age <= 69 ~ "65-69",
+      age >= 70 & age <= 74 ~ "70-74",
+      TRUE ~ "75-79"))
         
   df <- scf_stack %>%
           select(hh_id, imp_id, 
                  income, wgt, 
-                 age) %>%
+                 agecl) %>%
           arrange(hh_id, imp_id)
   
   pcts <- seq(0.01, 0.99, 0.01)
@@ -43,12 +56,12 @@ if(calculate_data == 1){
   
   for(p in pcts){
     tmp <- df %>%
-    group_by(age) %>%
+    group_by(agecl) %>%
       summarise(
         pct = wtd.quantile(income, weights = wgt, probs=p)
       ) %>%
       ungroup() %>%
-      gather(-age, key=key, value=value) %>%
+      gather(-agecl, key=key, value=value) %>%
       mutate(pct = p) %>%
       select(-key)
     
@@ -119,14 +132,14 @@ function calculateIncomePercentile() {
     
     document.getElementById("chart-container").appendChild(newCanvas);
 
-    const currentAge = parseInt(document.getElementById("age").value);
+    const ageGroup = document.getElementById("age").value;
     const income = parseInt(document.getElementById("income").value);
     let userPercentileIndex = -1;
     let percentile = "Not Found";
     
-    // Check if age input is empty or invalid
-    if (isNaN(currentAge)) {
-        alert("Please enter a valid age.");
+    // Check if age group is selected
+    if (!ageGroup) {
+        alert("Please select an age group.");
         return;
     }
 
@@ -136,13 +149,8 @@ function calculateIncomePercentile() {
         return;
     }
     
-    if (currentAge < 23 || currentAge > 80) {
-      alert("Age must be between 23 and 80.");
-      return; // Exit the function early
-    }
-    
     // Find the closest net worth value for the given age
-    const ageData = income_data.filter(item => parseInt(item.age) === currentAge);
+    const ageData = income_data.filter(item => item.agecl === ageGroup);
     const eligiblePercentiles = ageData.filter(item => item.value <= income);
 
     if (eligiblePercentiles.length > 0) {
@@ -246,12 +254,10 @@ function calculateIncomePercentile() {
       }
   });
   
-  var ageFormatted = formatNumberNoDecimals(document.getElementById("age").value);
-  
   myChart.options.title = {
     display: true,
     text: [`U.S. Household Income by Percentile`, 
-    `Age: ${ageFormatted}`],
+    `Age Group: ${ageGroup}`],
     fontSize: 16
   };
 
@@ -305,8 +311,22 @@ html_start2 <- '
   <!-- Your HTML content goes here -->
   <div class="calculator">
         <div class="inputs">
-            <label for="age">Your Age:</label>
-            <input type="number" id="age" name="age" placeholder="Enter your age">
+            <label for="age">Your Age Group:</label>
+              <select id="age" name="age">
+                  <option value="">Select age group</option>
+                  <option value="20-24">20-24</option>
+                  <option value="25-29">25-29</option>
+                  <option value="30-34">30-34</option>
+                  <option value="35-39">35-39</option>
+                  <option value="40-44">40-44</option>
+                  <option value="45-49">45-49</option>
+                  <option value="50-54">50-54</option>
+                  <option value="55-59">55-59</option>
+                  <option value="60-64">60-64</option>
+                  <option value="65-69">65-69</option>
+                  <option value="70-74">70-74</option>
+                  <option value="75-79">75-79</option>
+              </select>
             <label for="income">Household Income:</label>
             <input type="number" id="income" name="income" placeholder="Enter your household income">
         </div>
