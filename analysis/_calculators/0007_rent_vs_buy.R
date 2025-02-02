@@ -185,6 +185,15 @@ html_start2 <- '</head>
 
 js_function_string <- '
 document.addEventListener("DOMContentLoaded", function() {
+
+// Check if calculator elements exist before initializing
+const calculatorElement = document.querySelector(".calculator-grid-bvr");
+
+if (!calculatorElement) {
+    // Exit if calculator elements are not present on this page
+    return;
+}
+    
   let debounceTimer;
   let valueChart = null;
 
