@@ -26,11 +26,12 @@ gm_auth_configure(path = client_path)
 gm_auth(email = "nick@ofdollarsanddata.com")
 
 ms <- gm_messages(
-  search = 'subject:"💰💻" exact',  # Using exact match
+  search = 'in:inbox',  # or whatever folder you want to search
   include_spam_trash = FALSE, 
   num_results = 10000
 )
 
+# Then run your loop but add a filter for the emojis
 for (i in 1:length(ms)){
   n_messages <- length(ms[[i]][[1]]) 
   print(paste0("In loop ", i, " of ", length(ms)))
@@ -39,65 +40,79 @@ for (i in 1:length(ms)){
       id <- ms[[i]][[1]][[j]]$id
       email <- gm_message(id, user_id = "me", format = c("full"))
       
+      # Check subject first - with error handling
+      headers <- email$payload$headers
+      subject_idx <- which(sapply(headers, function(x) x$name == "Subject"))
+      from_idx <- which(sapply(headers, function(x) x$name == "From"))
+      
+      # Skip if we can't find required headers
+      if(length(subject_idx) == 0 || length(from_idx) == 0) {
+        print(paste("Skipping message", i, j, "- missing required headers"))
+        next
+      }
+      
+      subject_line <- headers[[subject_idx]]$value
+      from_header <- headers[[from_idx]]$value
+      
+      # Skip if subject doesn't contain the emojis
+      if(!grepl("💰💻", subject_line)) {
+        next
+      }
+      
       # Extract timestamp
       epoch <- as.numeric(email$internalDate)
       dt <- as.Date(as.POSIXct(epoch/1000, origin="1970-01-01"))
       
-      # Extract sender email
-      headers <- email$payload$headers
-      from_header <- headers[[which(sapply(headers, function(x) x$name == "From"))]]
-      sender_email <- gsub(".*<(.+)>.*", "\\1", from_header$value)
+      # Extract sender email with safer regex
+      sender_email <- if(grepl("<.*>", from_header)) {
+        gsub(".*<(.+)>.*", "\\1", from_header)
+      } else {
+        from_header  # If no angle brackets, use the whole string
+      }
       
-      # Extract message content with better error handling
+      # Message content extraction remains the same
       message_content <- tryCatch({
-        if (!is.null(email$payload$parts)) {
-          # Try to find text/plain part
-          text_parts <- which(sapply(email$payload$parts, function(x) x$mimeType == "text/plain"))
-          if (length(text_parts) > 0) {
-            part_data <- email$payload$parts[[text_parts[1]]]$body$data
-            if (!is.null(part_data)) {
-              rawToChar(base64decode(gsub("-", "+", gsub("_", "/", part_data))))
-            } else {
-              "No readable content"
-            }
-          } else {
-            # If no text/plain, try html part
-            html_parts <- which(sapply(email$payload$parts, function(x) x$mimeType == "text/html"))
-            if (length(html_parts) > 0) {
-              part_data <- email$payload$parts[[html_parts[1]]]$body$data
-              if (!is.null(part_data)) {
-                rawToChar(base64decode(gsub("-", "+", gsub("_", "/", part_data))))
-              } else {
-                "No readable content"
-              }
-            } else {
-              "No readable content"
-            }
-          }
-        } else if (!is.null(email$payload$body$data)) {
-          # Simple email with just body
-          rawToChar(base64decode(gsub("-", "+", gsub("_", "/", email$payload$body$data))))
-        } else {
-          "No readable content"
-        }
+        # ... your existing message content code ...
       }, error = function(e) {
-        paste("Error extracting content:", e$message)
+        "Error extracting content"
       })
       
-      temp <- data.frame(
-        id = id, 
-        date = dt, 
-        sender = sender_email,
-        content = message_content,
-        snippet = email$snippet,
-        stringsAsFactors = FALSE
+      # Create temp dataframe with explicit checking
+      temp_list <- list(
+        id = as.character(id),
+        date = as.Date(dt),
+        subject = as.character(subject_line),
+        sender = as.character(sender_email),
+        content = as.character(message_content),
+        snippet = as.character(email$snippet)
       )
       
-      if (i == 1 & j == 1){
+      # Print debug info
+      print(paste("Creating temp df for message", i, j))
+      print(str(temp_list))
+      
+      temp <- as.data.frame(temp_list, stringsAsFactors = FALSE)
+      
+      # Initialize or append to df with explicit error checking
+      if (!exists("df")) {
+        print("Creating initial df")
         df <- temp
-      } else{
-        df <- bind_rows(df, temp)
-      } 
+      } else {
+        print("Attempting to bind rows")
+        print(paste("temp columns:", paste(names(temp), collapse = ", ")))
+        print(paste("df columns:", paste(names(df), collapse = ", ")))
+        
+        tryCatch({
+          df <- bind_rows(df, temp)
+        }, error = function(e) {
+          print(paste("Error binding rows for message", i, j))
+          print("temp structure:")
+          print(str(temp))
+          print("df structure:")
+          print(str(df))
+          stop(e)
+        })
+      }
       
     }, error = function(e) {
       print(paste("Error processing message", i, j, ":", e$message))
