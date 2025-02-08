@@ -17,7 +17,7 @@ library(Hmisc)
 library(lemon)
 library(tidyverse)
 
-folder_name <- "0439_1m_purchasing_power"
+folder_name <- "0437_1m_purchasing_power"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
