@@ -36,8 +36,10 @@ cpi_latest <- cpi %>%
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
   filter(year >= 1998) %>%
   left_join(cpi_latest) %>%
-  mutate(networth_nominal = networth * cpi_latest) %>%
-  select(year, wgt, networth_nominal)
+  mutate(networth_nominal = networth * cpi_latest,
+         liquid_assets = asset - reteq - nfin,
+         liquid_networth_nominal = (liquid_assets - debt)*cpi_latest) %>%
+  select(year, wgt, networth_nominal, liquid_networth_nominal)
 
 # Calculate net worth percentiles
 find_percentile <- function(yr, amount, var, varname){
@@ -85,6 +87,9 @@ find_percentile <- function(yr, amount, var, varname){
 find_percentile(1998, 10^6, "networth_nominal", "Net Worth")
 find_percentile(2022, 10^6, "networth_nominal", "Net Worth")
 
+find_percentile(1998, 4*10^5, "liquid_networth_nominal", "LNW")
+find_percentile(2022,  4*10^5, "liquid_networth_nominal", "LNW")
+
 # Now find the 1998 percentile in 2022
 to_plot <- scf_stack %>%
                     group_by(year) %>%
@@ -111,6 +116,31 @@ plot <- ggplot(to_plot, aes(x= year, y = value, col = key)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+#LIQUID net worth
+# Now find the 1998 percentile in 2022
+to_plot <- scf_stack %>%
+  group_by(year) %>%
+  summarise(pct_95 = wtd.quantile(liquid_networth_nominal, weights = wgt, probs = 0.95)) %>%
+  ungroup() %>%
+  gather(-year, key=key, value=value)
 
+start_year <- min(scf_stack$year)
+end_year <- max(scf_stack$year)
+
+file_path <- paste0(out_path, "/lnw_95_over_time.jpeg")
+source_string <- paste0("Source: Survey of Consumer Finances (", start_year, "-", end_year, ")")
+
+plot <- ggplot(to_plot, aes(x= year, y = value, col = key)) +
+  geom_line() +
+  scale_color_manual(values = c("black"), guide = "none") +
+  scale_y_continuous(label = dollar, breaks = seq(0, 4*10^6, 2*10^5)) +
+  scale_x_continuous(breaks = seq(start_year, end_year, 3)) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("95th Percentile of Liquid Net Worth over Time")) +
+  labs(x="Year", y="Liquid Net Worth (Nominal Dollars)",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #
