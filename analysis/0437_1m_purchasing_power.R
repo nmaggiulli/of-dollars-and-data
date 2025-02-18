@@ -90,6 +90,8 @@ find_percentile(2022, 10^6, "networth_nominal", "Net Worth")
 find_percentile(1998, 4*10^5, "liquid_networth_nominal", "LNW")
 find_percentile(2022,  4*10^5, "liquid_networth_nominal", "LNW")
 
+find_percentile(2022,  10^6, "liquid_networth_nominal", "LNW")
+
 # Now find the 1998 percentile in 2022
 to_plot <- scf_stack %>%
                     group_by(year) %>%
