@@ -41,14 +41,14 @@ to_plot <- pre_plot %>%
             filter(income_group == "All Incomes")
 
 ## Add plot ##
-file_path <- paste0(out_path, "/avg_inheritance_by_age.jpeg")
+file_path <- paste0(out_path, "/average_inheritance_by_age.jpeg")
 source_string <- paste0("Source: Survey of Consumer Finances, University of Pennsylvania")
 note_string <- strwrap(paste0("Note: Figures include only individuals who received an inheritance."),
                        width = 80)
 
 plot <- ggplot(to_plot, aes(x= as.factor(key), y = value)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
-  scale_y_continuous(label = dollar) +
+  scale_y_continuous(label = dollar, limits = c(0, 200000)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Average Inheritance by Age Group")) +
   labs(x="Age Group", y="Total Inheritance",
@@ -62,7 +62,7 @@ to_plot <- pre_plot %>%
   filter(key == "all_ages")
 
 ## Add plot ##
-file_path <- paste0(out_path, "/avg_inheritance_by_inc_percentile.jpeg")
+file_path <- paste0(out_path, "/average_inheritance_by_inc_percentile.jpeg")
 
 plot <- ggplot(to_plot, aes(x= as.factor(income_group), y = value)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
