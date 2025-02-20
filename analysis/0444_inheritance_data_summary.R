@@ -41,11 +41,38 @@ to_plot <- pre_plot %>%
             filter(income_group == "All Incomes")
 
 ## Add plot ##
+file_path <- paste0(out_path, "/avg_inheritance_by_age.jpeg")
+source_string <- paste0("Source: Survey of Consumer Finances, University of Pennsylvania")
+
+plot <- ggplot(to_plot, aes(x= as.factor(key), y = value)) +
+  geom_bar(stat = "identity", fill = chart_standard_color) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Average Inheritance by Age Group")) +
+  labs(x="Age Group", y="Total Inheritance",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 
 to_plot <- pre_plot %>%
-  filter( key == "all_ages")
+  filter(key == "all_ages")
 
 ## Add plot ##
+file_path <- paste0(out_path, "/avg_inheritance_by_inc_percentile.jpeg")
+source_string <- paste0("Source: Survey of Consumer Finances, University of Pennsylvania")
+
+plot <- ggplot(to_plot, aes(x= as.factor(income_group), y = value)) +
+  geom_bar(stat = "identity", fill = chart_standard_color) +
+  scale_y_continuous(label = dollar) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Average Inheritance by Income Percentile")) +
+  labs(x="Income Percentile", y="Total Inheritance",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 ## Export heatmap data
 for_heatmap <- raw %>%
