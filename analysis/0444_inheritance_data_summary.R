@@ -43,6 +43,8 @@ to_plot <- pre_plot %>%
 ## Add plot ##
 file_path <- paste0(out_path, "/avg_inheritance_by_age.jpeg")
 source_string <- paste0("Source: Survey of Consumer Finances, University of Pennsylvania")
+note_string <- strwrap(paste0("Note: Figures include only individuals who received an inheritance."),
+                       width = 80)
 
 plot <- ggplot(to_plot, aes(x= as.factor(key), y = value)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
@@ -50,7 +52,7 @@ plot <- ggplot(to_plot, aes(x= as.factor(key), y = value)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Average Inheritance by Age Group")) +
   labs(x="Age Group", y="Total Inheritance",
-       caption = paste0(source_string))
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -61,7 +63,6 @@ to_plot <- pre_plot %>%
 
 ## Add plot ##
 file_path <- paste0(out_path, "/avg_inheritance_by_inc_percentile.jpeg")
-source_string <- paste0("Source: Survey of Consumer Finances, University of Pennsylvania")
 
 plot <- ggplot(to_plot, aes(x= as.factor(income_group), y = value)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
@@ -69,7 +70,7 @@ plot <- ggplot(to_plot, aes(x= as.factor(income_group), y = value)) +
   of_dollars_and_data_theme +
   ggtitle(paste0("Average Inheritance by Income Percentile")) +
   labs(x="Income Percentile", y="Total Inheritance",
-       caption = paste0(source_string))
+       caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
