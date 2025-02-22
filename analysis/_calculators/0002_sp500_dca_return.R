@@ -150,6 +150,21 @@ json_data <- toJSON(to_calc, dataframe = "rows", pretty = TRUE)
 
 #Create function string
 js_function_string <- '
+function formatInputNumber(input) {
+    // Remove existing commas and non-numeric characters
+    let value = input.value.replace(/[^0-9.]/g, "");
+    
+    // Format with commas
+    if (value) {
+        input.value = new Intl.NumberFormat("en-US").format(value);
+    }
+}
+
+function getNumericValue(formattedValue) {
+    // Remove commas and convert to number
+    return parseFloat(formattedValue.replace(/,/g, "")) || 0;
+}
+
 function formatNumber(num) {
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -225,8 +240,8 @@ function calculateDCAReturns() {
     const endMonth = document.getElementById("end-month").value;
     const endYear = document.getElementById("end-year").value;
     
-    const initialInvestment = parseFloat(document.getElementById("initial-investment").value);
-    const monthlyInvestment = parseFloat(document.getElementById("monthly-investment").value);
+    const initialInvestment = getNumericValue(document.getElementById("initial-investment").value);
+    const monthlyInvestment = getNumericValue(document.getElementById("monthly-investment").value);
     const adjustForInflation = document.getElementById("adjust-for-inflation").checked;
 
     if (initialInvestment < 0 || monthlyInvestment < 0) {
@@ -517,9 +532,18 @@ html_mid4 <- '</select>
         <hr>
     <div class="investment-amounts">
       <label for="initialInvestment">Initial Investment:</label>
-      <input type="number" id="initial-investment" name="initialInvestment" value="1">
+      <input type="text" 
+             id="initial-investment" 
+             name="initialInvestment" 
+             value="10,000" 
+             oninput="formatInputNumber(this)" 
+             onblur="if(this.value === \'\') this.value = \'0\'">
       <label for="monthly-investment">Monthly Investment:</label>
-      <input type="number" id="monthly-investment" value="0">
+      <input type="text" 
+             id="monthly-investment" 
+             value="1,000" 
+             oninput="formatInputNumber(this)" 
+             onblur="if(this.value === \'\') this.value = \'0\'">
     </div>
       <div class="inflation-checkbox">
       <label for="adjust-for-inflation">Adjust Monthly Investments for Inflation?</label>

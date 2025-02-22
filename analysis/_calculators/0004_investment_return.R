@@ -21,6 +21,21 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 #Create function string
 js_function_string <- "
+function formatInputNumber(input) {
+    // Remove existing commas and non-numeric characters
+    let value = input.value.replace(/[^0-9.]/g, '');
+    
+    // Format with commas
+    if (value) {
+        input.value = new Intl.NumberFormat('en-US').format(value);
+    }
+}
+
+function getNumericValue(formattedValue) {
+    // Remove commas and convert to number
+    return parseFloat(formattedValue.replace(/,/g, '')) || 0;
+}
+
 function dynamicCeil(number) {
   if (number === 0) return 0;
   
@@ -38,8 +53,8 @@ function calculate() {
 
   const currentAge = parseInt(document.getElementById('current-age').value);
   const retirementAge = parseInt(document.getElementById('retirement-age').value);
-  const currentAmount = parseFloat(document.getElementById('current-amount').value);
-  const monthlyContributions = parseFloat(document.getElementById('monthly-contributions').value);
+  const currentAmount = getNumericValue(document.getElementById('current-amount').value);
+  const monthlyContributions = getNumericValue(document.getElementById('monthly-contributions').value);
   const expectedReturn = parseFloat(document.getElementById('expected-return').value) / 100;
 
   if (currentAge < 18 || currentAge > 80) {
@@ -176,7 +191,7 @@ function calculate() {
 
   var currentAmountFormatted = formatNumber(currentAmount);
   var monthlyContributionsFormatted = formatNumber(monthlyContributions);
-  var expectedReturnFormatted = expectedReturn*100;
+  var expectedReturnFormatted = (expectedReturn*100).toFixed(2);
 
   myChart.options.title = {
       display: true,
@@ -225,9 +240,19 @@ html_start2 <- '
   </div>
   <div class ="amounts">
     <label for="current-amount">Current Amount Invested:</label>
-    <input type="number" id="current-amount" name="current-amount" value="1">
+    <input type="text" 
+             id="current-amount" 
+             name="current-amount" 
+             value="10,000" 
+             oninput="formatInputNumber(this)" 
+             onblur="if(this.value === \'\') this.value = \'0\'">
     <label for="monthly-contributions">Monthly Contributions:</label>
-    <input type="number" id="monthly-contributions" name="monthly-contribution" value="0">
+        <input type="text" 
+             id="monthly-contributions" 
+             name="monthly-contribution" 
+             value="1,000" 
+             oninput="formatInputNumber(this)" 
+             onblur="if(this.value === \'\') this.value = \'0\'">
   </div>
   </div>
 
