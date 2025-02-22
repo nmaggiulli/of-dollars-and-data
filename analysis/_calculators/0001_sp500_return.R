@@ -144,6 +144,21 @@ json_data <- toJSON(to_calc, dataframe = "rows", pretty = TRUE)
 
 #Create function string
 js_function_string <- '
+function formatInputNumber(input) {
+    // Remove existing commas and non-numeric characters
+    let value = input.value.replace(/[^0-9.]/g, "");
+    
+    // Format with commas
+    if (value) {
+        input.value = new Intl.NumberFormat("en-US").format(value);
+    }
+}
+
+function getNumericValue(formattedValue) {
+    // Remove commas and convert to number
+    return parseFloat(formattedValue.replace(/,/g, "")) || 0;
+}
+
 function formatNumber(num) {
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
@@ -161,7 +176,7 @@ function calculateReturns() {
     const startYear = document.getElementById("start-year").value;
     const endMonth = document.getElementById("end-month").value;
     const endYear = document.getElementById("end-year").value;
-    const initialInvestment = document.getElementById("initialInvestment").value;
+    const initialInvestment = getNumericValue(document.getElementById("initialInvestment").value);
     
     const startMonthInt = parseInt(document.getElementById("start-month").value, 10);
     const startYearInt = parseInt(document.getElementById("start-year").value, 10);
@@ -275,7 +290,12 @@ html_mid4 <- '</select>
         <hr>
       <div class="initial-investment">
     <label for="initialInvestment">Initial Investment:</label>
-    <input type="number" id="initialInvestment" name="initialInvestment" value="1">
+           <input type="text" 
+               id="initialInvestment" 
+               name="initialInvestment" 
+               value="10,000" 
+               oninput="formatInputNumber(this)" 
+               onblur="if(this.value === \'\') this.value = \'0\'">
     </div>
       <button onclick="calculateReturns()">Calculate</button>
       </div>
