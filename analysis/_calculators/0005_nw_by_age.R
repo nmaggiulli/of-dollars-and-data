@@ -82,6 +82,21 @@ json_data <- toJSON(to_calc, dataframe = "rows", pretty = TRUE)
 
 #Create function string
 js_function_string <- '
+function formatInputNumber(input) {
+    // Remove existing commas and non-numeric characters
+    let value = input.value.replace(/[^0-9.]/g, "");
+    
+    // Format with commas
+    if (value) {
+        input.value = new Intl.NumberFormat("en-US").format(value);
+    }
+}
+
+function getNumericValue(formattedValue) {
+    // Remove commas and convert to number
+    return parseFloat(formattedValue.replace(/,/g, "")) || 0;
+}
+
 function formatNumberNoDecimals(number) {
     return number.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0});
 }
@@ -133,7 +148,7 @@ function calculatePercentile() {
     document.getElementById("chart-container").appendChild(newCanvas);
 
     const ageGroup = document.getElementById("age").value;
-    const netWorth = parseInt(document.getElementById("net-worth").value);
+    const netWorth = getNumericValue(document.getElementById("net-worth").value);
     let userPercentileIndex = -1;
     let percentile = "Not Found";
     
@@ -151,7 +166,7 @@ function calculatePercentile() {
     
     // Find the closest net worth value for the given age
     const ageData = nw_data.filter(item => item.agecl === ageGroup);
-    const eligiblePercentiles = ageData.filter(item => item.value <= netWorth);
+    const eligiblePercentiles = ageData.filter(item => Number(item.value) <= Number(netWorth));
 
     if (eligiblePercentiles.length > 0) {
         // Find the closest net worth value for the given net worth
@@ -328,7 +343,12 @@ html_start2 <- '
                   <option value="75-79">75-79</option>
               </select>
             <label for="net-worth">Household Net Worth:</label>
-            <input type="number" id="net-worth" name="net-worth" placeholder="Enter your household net worth">
+            <input type="text" 
+             id="net-worth" 
+             name="net-worth" 
+             placeholder="Enter your household net worth"
+             oninput="formatInputNumber(this)" 
+             onblur="if(this.value === \'\') this.value = \'0\'">
         </div>
         <button onclick="calculatePercentile()">Calculate Percentile</button>
   </div>
