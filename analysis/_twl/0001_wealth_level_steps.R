@@ -60,9 +60,8 @@ plot <- ggplot(data = to_plot_spend, aes(x = level, y = marginal_spend)) +
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
-
 #Now plot spending by wealth level
-file_path <- paste0(out_path, "/spending_wealth_steps.jpeg")
+file_path <- paste0(out_path, "/spending_wealth_steps_w_text.jpeg")
 
 to_plot_spend <- to_plot %>%
   tail(nrow(to_plot)-1)
@@ -79,13 +78,33 @@ text_labels <- data.frame(nw = nw_levels[3: length(nw_levels) - 1],
 plot <- ggplot(data = to_plot, aes(x = level, y = nw)) +
   geom_step() +
   geom_point(data=text_labels, aes(x=level, y = nw), col = "black") +
-  geom_text(data=text_labels, aes(x=level, y = nw, label = text), col = "black", size = 3) +
+  geom_text(data=text_labels, aes(x=level, y = nw, label = text), col = "black", size = 3,
+            vjust = -0.75, hjust = 1.1,
+            family = my_font) +
   scale_x_continuous(label = comma, breaks = w_levels[2:length(w_levels)], limits = c(anchor, 6)) +
   scale_y_continuous(label = dollar_format(), limits= c(10^3, 10^9 *1.1), breaks = c(nw_levels[2:(length(nw_levels) - 1)]), trans = "log10") +
   of_dollars_and_data_theme +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
-  ggtitle(paste0("Additional Spending by Wealth Level")) +
+  ggtitle(paste0("Spending by Wealth Level")) +
+  labs(x = paste0("Wealth Level"), y = paste0("Liquid Net Worth"))
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+file_path <- paste0(out_path, "/spending_wealth_steps_no_text.jpeg")
+
+to_plot_spend <- to_plot %>%
+  tail(nrow(to_plot)-1)
+
+plot <- ggplot(data = to_plot, aes(x = level, y = nw)) +
+  geom_step() +
+  geom_point(data=text_labels, aes(x=level, y = nw), col = "black") +
+  scale_x_continuous(label = comma, breaks = w_levels[2:length(w_levels)], limits = c(anchor, 6)) +
+  scale_y_continuous(label = dollar_format(), limits= c(10^3, 10^9 *1.1), breaks = c(nw_levels[2:(length(nw_levels) - 1)]), trans = "log10") +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("Spending by Wealth Level")) +
   labs(x = paste0("Wealth Level"), y = paste0("Liquid Net Worth"))
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
