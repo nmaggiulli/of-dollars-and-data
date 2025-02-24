@@ -28,7 +28,7 @@ df <- data.frame(level = w_levels, nw = nw_levels) %>%
 
 to_plot <- df
 
-file_path <- paste0(out_path, "/wealth_steps_log_scale.jpeg")
+file_path <- paste0(out_path, "/wealth_steps.jpeg")
 
 plot <- ggplot(data = to_plot, aes(x = level, y = nw)) +
   geom_step() +
@@ -43,7 +43,7 @@ plot <- ggplot(data = to_plot, aes(x = level, y = nw)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 #Now plot spending by wealth level
-file_path <- paste0(out_path, "/spending_wealth_steps_log_scale.jpeg")
+file_path <- paste0(out_path, "/additional_spending_log_scale.jpeg")
 
 to_plot_spend <- to_plot %>%
                   tail(nrow(to_plot)-1)
@@ -57,6 +57,36 @@ plot <- ggplot(data = to_plot_spend, aes(x = level, y = marginal_spend)) +
         legend.title = element_blank()) +
   ggtitle(paste0("Additional Spending Based on Wealth Level")) +
   labs(x = paste0("Wealth Level"), y = paste0("Additional Spending"))
+
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+
+#Now plot spending by wealth level
+file_path <- paste0(out_path, "/spending_wealth_steps.jpeg")
+
+to_plot_spend <- to_plot %>%
+  tail(nrow(to_plot)-1)
+
+text_labels <- data.frame(nw = nw_levels[3: length(nw_levels) - 1],
+                          level = seq(2, length(w_levels) - 1),
+                          text = c(
+                            "Grocery prices\nmatter less",
+                            "Restaurant prices\nmatter less",
+                            "Vacation prices\n  matter less",
+                            "Home prices\nmatter less",
+                            "What are\nprices?"))
+
+plot <- ggplot(data = to_plot, aes(x = level, y = nw)) +
+  geom_step() +
+  geom_point(data=text_labels, aes(x=level, y = nw), col = "black") +
+  geom_text(data=text_labels, aes(x=level, y = nw, label = text), col = "black", size = 3) +
+  scale_x_continuous(label = comma, breaks = w_levels[2:length(w_levels)], limits = c(anchor, 6)) +
+  scale_y_continuous(label = dollar_format(), limits= c(10^3, 10^9 *1.1), breaks = c(nw_levels[2:(length(nw_levels) - 1)]), trans = "log10") +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle(paste0("Additional Spending by Wealth Level")) +
+  labs(x = paste0("Wealth Level"), y = paste0("Liquid Net Worth"))
 
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
