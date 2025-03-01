@@ -397,9 +397,10 @@ run_sim <- function(portfolio_size, monthly_investment){
       by = "date"
     )
   
-  to_export <- select(date, `Never Rebalance`, `Accumulation Rebalance`)
+  to_export <- results %>%
+                select(date, `Never Rebalance`, `Accumulation Rebalance`)
   
-  export_to_excel(df = results,
+  export_to_excel(df = to_export,
                   outfile = paste0(out_path, "/results_", portfolio_size, "_", monthly_investment, ".xlsx"),
                   sheetname = "equity_weights",
                   new_file = 1,
