@@ -8,6 +8,7 @@ source(file.path(paste0(getwd(),"/header.R")))
 ########################## Load in Libraries ########################## #
 
 library(tidyverse)
+library(scales)
 library(lubridate)
 
 folder_name <- "_fl/0017_accumulation_rebal"
@@ -388,7 +389,7 @@ run_sim <- function(portfolio_size, monthly_investment){
   
   results <- prorata_portfolio %>%
     select(date, prorata_value = total_value,
-           `Prorata` = equity_weight) %>%
+           `Never Rebalance` = equity_weight) %>%
     left_join(
       strategic_portfolio %>%
         select(date, strategic_value = total_value,
@@ -397,7 +398,7 @@ run_sim <- function(portfolio_size, monthly_investment){
     )
   
   to_plot <- results %>%
-                select(date, `Prorata`, `Accumulation Rebal`) %>%
+                select(date, `Never Rebalance`, `Accumulation Rebal`) %>%
                 gather(-date, key=key, value=value)
   
   file_path <- paste0(out_path, "/equity_pct_", portfolio_size, "_", monthly_investment, ".jpeg")
