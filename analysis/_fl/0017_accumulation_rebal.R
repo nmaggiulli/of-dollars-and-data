@@ -393,12 +393,12 @@ run_sim <- function(portfolio_size, monthly_investment){
     left_join(
       strategic_portfolio %>%
         select(date, strategic_value = total_value,
-               `Accumulation Rebal` = equity_weight),
+               `Accumulation Rebalance` = equity_weight),
       by = "date"
     )
   
   to_plot <- results %>%
-                select(date, `Never Rebalance`, `Accumulation Rebal`) %>%
+                select(date, `Never Rebalance`, `Accumulation Rebalance`) %>%
                 gather(-date, key=key, value=value)
   
   file_path <- paste0(out_path, "/equity_pct_", portfolio_size, "_", monthly_investment, ".jpeg")
