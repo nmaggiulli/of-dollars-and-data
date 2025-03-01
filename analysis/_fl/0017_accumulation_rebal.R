@@ -401,6 +401,12 @@ run_sim <- function(portfolio_size, monthly_investment){
                 select(date, `Never Rebalance`, `Accumulation Rebalance`) %>%
                 gather(-date, key=key, value=value)
   
+  export_to_excel(df = to_plot,
+                  outfile = paste0(out_path, "/results_", portfolio_size, "_", monthly_investment, ".xlsx"),
+                  sheetname = "data",
+                  new_file = 1,
+                  fancy_formatting = 0)
+  
   file_path <- paste0(out_path, "/equity_pct_", portfolio_size, "_", monthly_investment, ".jpeg")
   source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note: The Accumulation Rebalance Strategy assumes a starting portfolio value of ", format_as_dollar(portfolio_size), 
