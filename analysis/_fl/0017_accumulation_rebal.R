@@ -397,15 +397,17 @@ run_sim <- function(portfolio_size, monthly_investment){
       by = "date"
     )
   
-  to_plot <- results %>%
-                select(date, `Never Rebalance`, `Accumulation Rebalance`) %>%
-                gather(-date, key=key, value=value)
-  
-  export_to_excel(df = to_plot,
+  export_to_excel(df = results,
                   outfile = paste0(out_path, "/results_", portfolio_size, "_", monthly_investment, ".xlsx"),
                   sheetname = "data",
                   new_file = 1,
                   fancy_formatting = 0)
+  
+  to_plot <- results %>%
+                select(date, `Never Rebalance`, `Accumulation Rebalance`) %>%
+                gather(-date, key=key, value=value)
+  
+
   
   file_path <- paste0(out_path, "/equity_pct_", portfolio_size, "_", monthly_investment, ".jpeg")
   source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
