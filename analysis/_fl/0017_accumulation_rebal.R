@@ -384,7 +384,7 @@ print("data prepared")
 # Run simulations
 run_sim <- function(portfolio_size, monthly_investment){
   
-  prorata_portfolio <- simulate_prorata_portfolio(prepared_data$returns, prepared_data$prices, portfolio_size, monthly_investment)
+  prorata_portfolio <- simulate_prorata_portfolio(prepared_data$returns, prepared_data$prices, portfolio_size, 0)
   strategic_portfolio <- simulate_strategic_portfolio(prepared_data$returns, prepared_data$prices, portfolio_size, monthly_investment)
   
   results <- prorata_portfolio %>%
@@ -403,6 +403,9 @@ run_sim <- function(portfolio_size, monthly_investment){
   
   file_path <- paste0(out_path, "/equity_pct_", portfolio_size, "_", monthly_investment, ".jpeg")
   source_string <- paste0("Source:  YCharts (OfDollarsAndData.com)")
+  note_string <- str_wrap(paste0("Note: The Accumulation Rebalance Strategy assumes a starting portfolio value of ", format_as_dollar(portfolio_size), 
+                                 " and a monthly investment of ", format_as_dollar(monthly_investment), "."),
+                          width = 85)
   
   plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
     geom_line() +
@@ -413,7 +416,7 @@ run_sim <- function(portfolio_size, monthly_investment){
           legend.title = element_blank()) +
     ggtitle(paste0("Equity Allocations Over Time")) +
     labs(x = "Date", y = "Equity Allocation",
-         caption = paste0(source_string))
+         caption = paste0(source_string, "\n", note_string))
   
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")  
 }
