@@ -412,7 +412,7 @@ run_sim <- function(portfolio_size, monthly_investment){
     geom_hline(yintercept = 0.6, linetype = "dashed") +
     of_dollars_and_data_theme +
     scale_y_continuous(label = percent) +
-    scale_color_manual(values = c("green", "black")) +
+    scale_color_manual(values = c(chart_standard_color, "black")) +
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
     ggtitle(paste0("Equity Allocations Over Time")) +
