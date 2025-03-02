@@ -433,7 +433,6 @@ run_sim <- function(portfolio_size, monthly_investment){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")  
 }
 
-run_sim(100000, 1000)
 run_sim(10000, 1000)
 
 
