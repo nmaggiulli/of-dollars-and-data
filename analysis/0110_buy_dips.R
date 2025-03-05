@@ -393,6 +393,25 @@ plot_dca_v_cash <- function(lag_length, start_date, end_date, text_date){
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  
+  # Do a separate one without the dips
+  file_path <- paste0(out_path, "/", start_date_string, "/dca_final_growth_", lag_length, "_", start_date_string, ".jpeg")
+  
+  note_string <- str_wrap(paste0("Note: Real return includes reinvested dividends.  ",  
+                                 "Assumes a monthly payment of $", formatC(monthly_buy, digits=0, big.mark = ",", format = "f"),"."), 
+                          width = 80)
+  
+  plot <- ggplot(to_plot, aes(x=date, y=value)) +
+    geom_bar(stat="identity", position="dodge", col = "black") +
+    scale_y_continuous(label = dollar) +
+    scale_color_manual(values = c("#3182bd", "black"), guide = FALSE) +
+    of_dollars_and_data_theme +
+    ggtitle(paste0("Final Growth of Each DCA Payment")) +
+    labs(x = "Date", y = "Amount",
+         caption = paste0(source_string, "\n", note_string))
+  
+  # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
 ###### End function definition ############
