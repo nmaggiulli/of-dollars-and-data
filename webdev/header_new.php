@@ -25,6 +25,39 @@
 				font-display: swap !important;
 			}
 		</style>
+		
+		<!-- ADDITION: Header banner styles moved to head -->
+		<?php if(get_field('header_image', 'option')) : 
+		    $header = get_field('header_image', 'option');
+		    $mobile_header = 'https://ofdollarsanddata.com/wp-content/uploads/2025/03/odad_header_mobile.webp';
+		    
+		    // Specify dimensions for better CLS
+		    $desktop_width = 1200; // Set your actual width
+		    $desktop_height = 133; // Your actual height
+		    $mobile_width = 600;  // Your mobile width
+		    $mobile_height = 133; // Your mobile height
+		    
+		    echo '<style>
+		        .header-banner {
+		            background-image: url('. $mobile_header .');
+		            background-repeat: no-repeat;
+		            background-size: contain;
+		            background-position: center;
+		            width: 100%;
+		            height: '. $mobile_height .'px;
+		            max-width: 100%;
+		            will-change: transform; /* Hint for browser optimization */
+		        }
+		        @media (min-width: 769px) {
+		            .header-banner {
+		                background-image: url('. $header .');
+		                height: '. $desktop_height .'px;
+		            }
+		        }
+		    </style>';
+		endif; ?>
+		<!-- END ADDITION -->
+		
 		<!-- icons & favicons -->
 		<?php
 		$fav_png = get_field('favicons', 'option')[0]['favicon_png'];
@@ -50,41 +83,20 @@
 		<div id="container">
 			<header class="header" role="banner">
 				<div id="inner-header" class="inner-header clearfix">
-				<?php // Theme Header
-if(get_field('header_image', 'option')) {
-    $header = get_field('header_image', 'option');
-    $mobile_header = 'https://ofdollarsanddata.com/wp-content/uploads/2025/03/odad_header_mobile.webp'; // Use WebP
-    
-    // Specify dimensions for better CLS
-    $desktop_width = 1200; // Set your actual width
-    $desktop_height = 133; // Your actual height
-    $mobile_width = 600;  // Your mobile width
-    $mobile_height = 133; // Your mobile height
-    
-    echo '<a href="'. get_bloginfo("url") .'">';
-    echo '<div class="header-banner" role="img" aria-label="Site Header"></div>';
-    echo '</a>';
-    
-    // Add inline critical CSS for the header
-    echo '<style>
-        .header-banner {
-            background-image: url('. $mobile_header .');
-            background-repeat: no-repeat;
-            background-size: contain;
-            background-position: center;
-            width: 100%;
-            height: '. $mobile_height .'px;
-            max-width: 100%;
-        }
-        @media (min-width: 769px) {
-            .header-banner {
-                background-image: url('. $header .');
-                height: '. $desktop_height .'px;
-            }
-        }
-    </style>';
-}
-?>
+				<?php if(get_field('header_image', 'option')) : 
+				    $header = get_field('header_image', 'option');
+				    $mobile_header = 'https://ofdollarsanddata.com/wp-content/uploads/2025/03/odad_header_mobile.webp';
+				    
+				    // Specify dimensions for better CLS
+				    $desktop_width = 1200; // Set your actual width
+				    $desktop_height = 133; // Your actual height
+				    $mobile_width = 600;  // Your mobile width
+				    $mobile_height = 133; // Your mobile height
+				    
+				    echo '<a href="'. get_bloginfo("url") .'">';
+				    echo '<div class="header-banner" role="img" aria-label="Site Header" style="width:100%;height:'.$mobile_height.'px;"></div>';
+				    echo '</a>';
+				endif; ?>
 					<div id="sticker" class="nav-wrap">
 						<p class="mobile-title"><a href="<?php bloginfo('url'); ?>"><?php bloginfo('name'); ?></a></p>
 						<i class="fa fa-bars nav-toggle"></i>
