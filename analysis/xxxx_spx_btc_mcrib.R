@@ -19,7 +19,7 @@ library(lubridate)
 library(readxl)
 library(tidyverse)
 
-folder_name <- "0445_spx_btc_mcrib"
+folder_name <- "xxxx_spx_btc_mcrib"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
