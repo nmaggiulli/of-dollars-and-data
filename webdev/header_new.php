@@ -2,14 +2,16 @@
 <html <?php language_attributes(); ?> class="no-js">
 	<head>
 		<meta charset="utf-8">
-		<!-- Preload header image -->
-		<?php if(get_field('header_image', 'option')) : 
-			$header = get_field('header_image', 'option');
-			// Check if WebP version exists (you'll need to create this)
-			$header_webp = str_replace(array('.jpg', '.jpeg', '.png'), '.webp', $header);
-		?>
-			<link rel="preload" href="<?php echo $header_webp; ?>" as="image">
-		<?php endif; ?>
+<!-- Preload header images -->
+<?php if(get_field('header_image', 'option')) : 
+    $header = get_field('header_image', 'option');
+    $mobile_header = 'https://ofdollarsanddata.com/wp-content/uploads/2025/03/odad_header_mobile.webp';
+?>
+    <!-- Preload mobile header for mobile users -->
+    <link rel="preload" href="<?php echo $mobile_header; ?>" as="image" media="(max-width: 768px)">
+    <!-- Preload desktop header for desktop users -->
+    <link rel="preload" href="<?php echo $header; ?>" as="image" media="(min-width: 769px)">
+<?php endif; ?>
 		<!-- Google Chrome Frame for IE -->
 		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 		<title><?php wp_title(''); ?></title>
@@ -49,36 +51,40 @@
 			<header class="header" role="banner">
 				<div id="inner-header" class="inner-header clearfix">
 				<?php // Theme Header
-				if(get_field('header_image', 'option')) {
-					$header = get_field('header_image', 'option');
-					$mobile_header = 'https://ofdollarsanddata.com/wp-content/uploads/2025/03/odad_header_mobile.jpg';
-
-					echo '<a href="'. get_bloginfo("url") .'">';
-					echo '<div class="header-banner"></div>';
-					echo '</a>';
-
-					// Add inline CSS for responsive header images
-					echo '<style>
-						.header-banner {
-							background-image: url('. $header .');
-							background-repeat: no-repeat;
-							background-size: contain;
-							background-position: center;
-							width: 100%;
-							height: 133px;
-						}
-						@media (max-width: 768px) {
-							.header-banner {
-								background-image: url('. $mobile_header .');
-							}
-						}
-					</style>';
-				} else {
-					echo '<div class="wrap">';
-					echo '<h1 class="site-title"><a href="'. get_bloginfo("url") .'">'. get_bloginfo("name") .'</a></h1>';
-					echo '</div>';
-				}
-				?>
+if(get_field('header_image', 'option')) {
+    $header = get_field('header_image', 'option');
+    $mobile_header = 'https://ofdollarsanddata.com/wp-content/uploads/2025/03/odad_header_mobile.webp'; // Use WebP
+    
+    // Specify dimensions for better CLS
+    $desktop_width = 1200; // Set your actual width
+    $desktop_height = 133; // Your actual height
+    $mobile_width = 600;  // Your mobile width
+    $mobile_height = 133; // Your mobile height
+    
+    echo '<a href="'. get_bloginfo("url") .'">';
+    echo '<div class="header-banner" role="img" aria-label="Site Header"></div>';
+    echo '</a>';
+    
+    // Add inline critical CSS for the header
+    echo '<style>
+        .header-banner {
+            background-image: url('. $mobile_header .');
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
+            width: 100%;
+            height: '. $mobile_height .'px;
+            max-width: 100%;
+        }
+        @media (min-width: 769px) {
+            .header-banner {
+                background-image: url('. $header .');
+                height: '. $desktop_height .'px;
+            }
+        }
+    </style>';
+}
+?>
 					<div id="sticker" class="nav-wrap">
 						<p class="mobile-title"><a href="<?php bloginfo('url'); ?>"><?php bloginfo('name'); ?></a></p>
 						<i class="fa fa-bars nav-toggle"></i>
