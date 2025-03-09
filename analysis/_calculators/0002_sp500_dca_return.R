@@ -20,15 +20,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-download_file <- 0
 today <- Sys.Date() 
 filter_date <- "1871-01-01"
-url <- "https://img1.wsimg.com/blobby/go/e5e77e0b-59d1-44d9-ab25-4763ac982e53/downloads/ie_data.xls?ver=1714742730434"
-dest_file <- paste0(importdir, "0009_sp500_returns_pe/ie_data.xls") 
-
-if(download_file == 1){
-  download.file(url, dest_file, mode = "wb")
-}
 
 sp500_raw <- read_excel(paste0(importdir, "0009_sp500_returns_pe/ie_data.xls"),
                            sheet = "Data") 
