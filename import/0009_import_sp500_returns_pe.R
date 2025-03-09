@@ -13,7 +13,7 @@ library(tidyverse)
 
 ########################## Start Program Here ######################### #
 
-url <- "https://img1.wsimg.com/blobby/go/e5e77e0b-59d1-44d9-ab25-4763ac982e53/downloads/ie_data.xls?ver=1714742730434"
+url <- "https://img1.wsimg.com/blobby/go/e5e77e0b-59d1-44d9-ab25-4763ac982e53/downloads/34a1781b-f073-448f-b9f9-6230becb2e49/ie_data.xls?ver=1741185530815"
 dest_file <- paste0(importdir, "0009_sp500_returns_pe/ie_data.xls") 
 
 download.file(url, dest_file, mode = "wb")
