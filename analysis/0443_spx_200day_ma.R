@@ -48,7 +48,7 @@ run_ma_analysis <- function(start_date, end_date, log_scale){
                  in_out_status = case_when(
                    in_out == 1 & lag(in_out, 1) == 1 ~ "Stay Invested",
                    in_out == 0 & lag(in_out, 1) == 0 ~ "Stay Out",
-                   in_out == 1 & lag(in_out, 1) == 0 ~ "Enter",
+                   in_out == 1 & lag(in_out, 1) == 0 ~ "Re-entry",
                    in_out == 0 & lag(in_out, 1) == 1 ~ "Exit",
                    TRUE ~ NA
                  ),
@@ -59,7 +59,7 @@ run_ma_analysis <- function(start_date, end_date, log_scale){
                  ),
                  ret_ma = case_when(
                    row_number() == 1 ~ 1,
-                   in_out_status %in% c("Stay Out", "Enter") ~ 1,
+                   in_out_status %in% c("Stay Out", "Re-entry") ~ 1,
                    TRUE ~ index_spx/lag(index_spx, 1)
                  ),
                  port_bh = cumprod(ret_bh),
@@ -85,22 +85,24 @@ run_ma_analysis <- function(start_date, end_date, log_scale){
                   new_file = 1,
                   fancy_formatting = 0)
   
-  export_to_excel(df = df,
-                  outfile = paste0(out_path, "/spx_200day_ma_summary_", start_year, "_", end_year, ".xlsx"),
-                  sheetname = "all_data",
-                  new_file = 0,
-                  fancy_formatting = 0)
+  if(log_scale == 0){
+    export_to_excel(df = df,
+                    outfile = paste0(out_path, "/spx_200day_ma_summary_", start_year, "_", end_year, ".xlsx"),
+                    sheetname = "all_data",
+                    new_file = 0,
+                    fancy_formatting = 0)
+  }
 
   to_plot <- df %>%
               select(date, port_bh, port_ma) %>%
               rename(`Buy & Hold` = port_bh,
-                     `200-Day MA` = port_ma) %>%
+                     `200-Day Moving Average` = port_ma) %>%
               gather(-date, key=key, value=value)
   
-  file_path <- paste0(out_path, "/spx_200day_ma_growth_of_dollar_", start_year, "_", end_year, ".jpeg")
+  file_path <- paste0(out_path, "/spx_200day_moving_avg_growth_of_dollar_", start_year, "_", end_year, ".jpeg")
   source_string <- paste0("Source: YCharts (OfDollarsAndData.com)")
-  note_string <- str_wrap(paste0("Note: The 200-Day Moving Average strategy fully invested in U.S. stocks anytime the S&P 500 index is above its 200-day moving average and ",
-                                 "moves to 100% cash anytime its below its 200-day moving average."),
+  note_string <- str_wrap(paste0("Note: The 200-Day Moving Average strategy is fully invested in U.S. stocks anytime the S&P 500 index is above its 200-day moving average and ",
+                                 "is 100% cash otherwise."),
                                 width = 85)
   
   if(log_scale == 1){
@@ -122,7 +124,7 @@ run_ma_analysis <- function(start_date, end_date, log_scale){
       of_dollars_and_data_theme +
       theme(legend.position = "bottom",
             legend.title = element_blank()) +
-      ggtitle(paste0("Growth of $1\nBuy & Hold vs. 200-Day MA\n", start_year, " - ", end_year)) +
+      ggtitle(paste0("Growth of $1\nBuy & Hold vs. 200-Day Moving Average\n", start_year, " - ", end_year)) +
       labs(x="Year", y="Portfolio Value",
            caption = paste0(source_string, "\n", note_string))
   }
@@ -136,7 +138,7 @@ run_ma_analysis <- function(start_date, end_date, log_scale){
                 select(date, in_out_status, port_ma)
     
     points <- to_plot %>%
-                filter(in_out_status %in% c("Enter", "Exit"))
+                filter(in_out_status %in% c("Exit", "Re-entry"))
     
     file_path <- paste0(out_path, "/spx_200day_ma_entry_exit_", start_year, "_", end_year, ".jpeg")
     
@@ -144,12 +146,12 @@ run_ma_analysis <- function(start_date, end_date, log_scale){
       geom_line(col = "black") +
       geom_point(data = points, aes(x = date, y = port_ma, col = in_out_status),
                  alpha = 0.5) +
-      scale_color_manual(values = c("green", "red")) +
+      scale_color_manual(values = c("red", "green")) +
       scale_y_continuous(label = dollar) +
       of_dollars_and_data_theme +
       theme(legend.position = "bottom",
             legend.title = element_blank()) +
-      ggtitle(paste0("200-Day Moving Average Strategy\nEntry and Exit Points\n", start_year, " - ", end_year)) +
+      ggtitle(paste0("200-Day Moving Average Strategy\nExit and Re-entry Points\n", start_year, " - ", end_year)) +
       labs(x="Year", y="Portfolio Value",
            caption = paste0(source_string, "\n", note_string))
   
@@ -159,8 +161,8 @@ run_ma_analysis <- function(start_date, end_date, log_scale){
 }
 
 run_ma_analysis("1950-01-01", "2024-12-31", 1)
-run_ma_analysis("1995-01-01", "2003-12-31", 0)
-run_ma_analysis("2000-01-01", "2010-12-31", 0)
+run_ma_analysis("1999-01-01", "2010-12-31", 0)
+run_ma_analysis("1999-01-01", "2024-12-31", 0)
 run_ma_analysis("2019-01-01", "2024-12-31", 0)
 
 # ############################  End  ################################## #
