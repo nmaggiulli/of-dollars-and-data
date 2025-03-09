@@ -163,6 +163,6 @@ run_ma_analysis <- function(start_date, end_date, log_scale){
 run_ma_analysis("1950-01-01", "2024-12-31", 1)
 run_ma_analysis("1999-01-01", "2010-12-31", 0)
 run_ma_analysis("1999-01-01", "2024-12-31", 0)
-run_ma_analysis("2019-01-01", "2024-12-31", 0)
+run_ma_analysis("2019-01-01", "2020-12-31", 0)
 
 # ############################  End  ################################## #
