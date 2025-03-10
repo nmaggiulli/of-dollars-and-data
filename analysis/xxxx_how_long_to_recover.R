@@ -27,7 +27,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 # Read in data for individual stocks and sp500 Shiller data
 sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
-                    filter(date >= "1920-01-01")
+                    filter(date >= "1920-01-01",
+                           date <= "2024-12-31")
   
 # Create function to calculate the drawdowns over time
 drawdown_path <- function(vp){
@@ -52,7 +53,7 @@ dd        <- drawdown_path(sp500_ret_pe)
 
 # Create vector of drawdown percentages to loop over
 
-drops <- c(-0.05, -0.1, -0.2, -0.3, -0.4, -0.5)
+drops <- c(-0.1, -0.2, -0.3, -0.4, -0.5)
 
 results_df <- data.frame(matrix(NA, nrow=length(drops), ncol=0))
 
@@ -75,7 +76,7 @@ bottom_to_peak <- function(drop, j, name){
   
   n_months_recovery_ex_0 <- n_months_recovery[!n_months_recovery %in% c(0)]
   results_df[j, "name"]    <- name
-  results_df[j, "b_p_med"] <- median(n_months_recovery_ex_0)/12
+  results_df[j, "median_bottom_to_peak"] <- median(n_months_recovery_ex_0)/12
   print(paste0("The average number of months from a ", drop, " drawdown to a peak is: ", mean(n_months_recovery_ex_0)))
   assign("results_df", results_df, envir = .GlobalEnv)
 }
@@ -99,7 +100,7 @@ peak_to_bottom <- function(drop, j, name){
   
   n_months_to_drop_ex_0 <- n_months_to_drop[!n_months_to_drop %in% c(0)]
   results_df[j, "name"]    <- name
-  results_df[j, "p_b_med"] <- median(n_months_to_drop_ex_0)/12
+  results_df[j, "median_peak_to_bottom"] <- median(n_months_to_drop_ex_0)/12
   print(paste0("The average number of months from a peak to a ", drop, " drawdown is: ", mean(n_months_to_drop_ex_0)))
   assign("results_df", results_df, envir = .GlobalEnv)
 }
@@ -123,7 +124,7 @@ peak_to_known_bottom <- function(drop, j, name){
   
   n_months_to_drop_ex_0 <- n_months_to_drop[!n_months_to_drop %in% c(0)]
   results_df[j, "name"]    <- name
-  results_df[j, "p_kb_med"] <- median(n_months_to_drop_ex_0)/12
+  results_df[j, "median_peak_to_known_bottom"] <- median(n_months_to_drop_ex_0)/12
   print(paste0("The average number of months from a peak to a known ", drop, " drawdown is: ", mean(n_months_to_drop_ex_0)))
   assign("results_df", results_df, envir = .GlobalEnv)
 }
@@ -135,16 +136,14 @@ for (j in 1:length(drops)){
     left_join(dd)
   
   if (j == 1){
-    name <- "5 Percent"
-  } else if (j == 2){
     name <- "10 Percent"
-  } else if (j == 3){
+  } else if (j == 2){
     name <- "20 Percent"
-  } else if (j == 4){
+  } else if (j == 3){
     name <- "30 Percent"
-  } else if (j == 5){
+  } else if (j == 4){
     name <- "40 Percent"
-  } else if (j == 6){
+  } else if (j == 5){
     name <- "50 Percent"
   }
   
@@ -220,13 +219,12 @@ for (j in 1:length(drops)){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm") 
 }
 
-# Export a CSV of the peak to bottom and bottom to peak results
-write.csv(results_df, 
-          paste0(out_path, "/result_df.csv"),
-          row.names = FALSE)
-
-
-
+# Export the peak to bottom and bottom to peak results
+export_to_excel(df = results_df,
+                outfile = paste0(out_path, "/peak_to_bottom_results_df.xlsx"),
+                sheetname = "results",
+                new_file = 1,
+                fancy_formatting = 0)
 
 # ############################  End  ################################## #
 
