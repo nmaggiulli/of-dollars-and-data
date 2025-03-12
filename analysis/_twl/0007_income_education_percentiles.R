@@ -52,7 +52,7 @@ to_plot <- scf_stack %>%
   ungroup() 
 
 file_path <- paste0(out_path, "/income_by_edcl.jpeg")
-source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
+source_string <- paste0("Source:  Survey of Consumer Finances (", data_year, ")")
 
 plot <- ggplot(to_plot, aes(x=edcl, y=income)) +
   geom_bar(stat = "identity", position = "dodge", fill = "black") +
@@ -76,7 +76,6 @@ to_plot <- income_by_edcl %>%
             filter(!grepl("L5|L6", wealth_level))
 
 file_path <- paste0(out_path, "/edcl_income_by_wealth_level.jpeg")
-source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year, " (OfDollarsAndData.com)")
 
 plot <- ggplot(to_plot, aes(x=edcl, y=income)) +
   geom_bar(stat = "identity", position = "dodge", fill = "black") +
