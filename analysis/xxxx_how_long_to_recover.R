@@ -188,15 +188,22 @@ for (j in 1:length(drops)){
     }
   }
   
-  to_plot <- arrange(sp500_ret_pe_dd, date)
+  first_value <- sp500_ret_pe_dd %>%
+                  filter(date == min(sp500_ret_pe_dd$date)) %>%
+                  pull(price_plus_div)
+  
+  to_plot <- sp500_ret_pe_dd %>%
+                arrange(date) %>%
+                mutate(price_plus_div = price_plus_div/first_value)
   
   drops_df      <- filter(to_plot, drop == 1, drop_date != date, lag(peak) == 1)
   recoveries_df <- filter(to_plot, recovery == 1, recovery_date != date, lead(peak) == 1)
   
   # Set the file_path based on the function input 
-  file_path <- paste0(out_path, "/sp500_bottom_peaks_", name, ".jpeg")
-  source_string <- paste0("Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)")
-  note_string <- str_wrap(paste0("Note:  Red bars correspond to drawdowns and green bars correspond to the subsequent recoveries."),
+  file_path <- paste0(out_path, "/sp500_bottoms_and_peaks_", name, ".jpeg")
+  source_string <- paste0("Source:  Shiller data (OfDollarsAndData.com)")
+  note_string <- str_wrap(paste0("Note:  Blue bars correspond to drawdowns and green bars correspond to the subsequent recoveries. ",
+                                 "Performance includes dividends and is adjusted for inflation."),
                           width = 85)
   
   
@@ -204,15 +211,16 @@ for (j in 1:length(drops)){
   plot <- ggplot(to_plot, aes(x = date, y = price_plus_div)) +
     geom_rect(data=drops_df, aes(xmin = date, ymin = 0, 
                   xmax = as.Date(drop_date), ymax = price_plus_div),
-              fill = "red") +
+              fill = "#1f78b4") +
     geom_rect(data=recoveries_df, aes(xmin = date, ymin = 0, 
                               xmax = as.Date(recovery_date), ymax = price_plus_div),
               fill = "green") +
     geom_line() +
     ggtitle(paste0("The S&P 500 Drops Fast and Recovers Slow\n", name, " Drawdowns")) +
-    scale_y_continuous(label = dollar, trans = log_trans(), breaks = c(0, 1, 10, 100, 1000, 10000, 100000, 1000000)) +
+    scale_y_continuous(label = function(x) scales::dollar(x, accuracy = 1),
+                       trans = log_trans(), breaks = c(0, 1, 10, 100, 1000, 10000, 100000, 1000000)) +
     of_dollars_and_data_theme +
-    labs(x = "Year", y = "Real Price + Dividends (Log Scale)",
+    labs(x = "Year", y = "Growth of $1 (Log Scale)",
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot  
