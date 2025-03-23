@@ -17,7 +17,7 @@ library(Hmisc)
 library(lemon)
 library(tidyverse)
 
-folder_name <- "0444_inheritance_data_summary"
+folder_name <- "xxxx_inheritance_data_summary"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
