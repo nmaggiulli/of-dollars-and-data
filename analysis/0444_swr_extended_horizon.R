@@ -14,13 +14,13 @@ library(stringr)
 library(ggrepel)
 library(tidyverse)
 
-folder_name <- "xxxx_swr_extended_horizon"
+folder_name <- "0444_swr_extended_horizon"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-n_years <- 40
+n_years <- 55
 min_swr <- 0.04
 max_swr <- 0.1
 
