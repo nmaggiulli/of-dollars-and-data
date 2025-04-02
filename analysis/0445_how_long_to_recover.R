@@ -19,7 +19,7 @@ library(lubridate)
 library(magrittr)
 library(dplyr)
 
-folder_name <- "xxxx_how_long_to_recover"
+folder_name <- "0445_how_long_to_recover"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
