@@ -20,11 +20,11 @@ highlight_standard_color <- "#D6E6F1"
 chart_standard_color     <- "#003C68" 
 
 # Set my font for MAC (just download and install OTF fonts then use quartzFonts)
-# quartzFonts(my_font = quartzFont(c("Libre Baskerville", 
-#                                  "Libre Baskerville Bold", 
+# quartzFonts(my_font = quartzFont(c("Libre Baskerville",
+#                                  "Libre Baskerville Bold",
 #                                  "Libre Baskerville Italic",
 #                                  "Libre Baskerville Bold")))
-#all_fonts <- data.frame(systemfonts::system_fonts())
+# all_fonts <- data.frame(systemfonts::system_fonts())
 require(ggplot2)
 
 my_font <- "Libre Baskerville"

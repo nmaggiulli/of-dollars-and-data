@@ -11,11 +11,9 @@ library(readr)
 
 ########################## Start Program Here ######################### #
 
-# Returns are taken from this locaton by BuillionVault
-# http://banners.bullionvault.com/en/us-annual-asset-performance-comparison-1976-2015.pdf
-#
+# Returns are taken from BuillionVault through 2023 and Damodaran and elsewhere after
 
-bv_returns <- read_csv(paste0(importdir, "0006_bullion_vault_asset_returns/asset-returns-bullion-vault-1976.csv"))
+bv_returns <- read_csv(paste0(importdir, "0006_bullion_vault_asset_returns/asset-returns-bullion-vault.csv"))
 
 # Make all of the returns into real returns
 # Create a function
