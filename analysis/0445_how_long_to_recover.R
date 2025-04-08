@@ -185,7 +185,7 @@ for (j in 1:length(drops)){
   recoveries_df <- filter(to_plot, recovery == 1, recovery_date != date, lead(peak) == 1)
   
   # Set the file_path based on the function input 
-  file_path <- paste0(out_path, "/sp500_bottoms_and_peaks_", name, ".jpeg")
+  file_path <- paste0(out_path, "/sp500_div_bottoms_and_peaks_", name, ".jpeg")
   source_string <- paste0("Source:  Shiller data (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note:  Blue bars correspond to drawdowns and green bars correspond to the subsequent recoveries. ",
                                  "Performance includes dividends and is adjusted for inflation."),
