@@ -29,27 +29,12 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 sp500_ret_pe    <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
                     filter(date >= "1920-01-01",
                            date <= "2024-12-31")
-  
-# Create function to calculate the drawdowns over time
-drawdown_path <- function(vp){
-  dd      <- data.frame(date = as.Date(1:nrow(vp), origin=Sys.Date()), drawdown = numeric(nrow(vp)))
-  loc_max <- 0
-  for (i in 1:(nrow(vp))){
-    if (vp[i, 2] < loc_max & i != 1){
-      dd[i, 1] <- vp[i, 1]
-      dd[i, 2] <- vp[i, 2]/loc_max - 1
-    } else{
-      dd[i, 1] <- vp[i, 1]
-      dd[i, 2] <- 0
-      loc_max  <- vp[i, 2]
-    }
-  }
-  return(dd)
-}
 
 # Find the drawdowns for investigative purposes
 # Use this list to find the most recent peak from each bottom in the data
-dd        <- drawdown_path(sp500_ret_pe)
+dd        <- drawdown_path(sp500_ret_pe %>%
+                             select(date, price_plus_div)) %>%
+                            rename(drawdown = pct)
 
 # Create vector of drawdown percentages to loop over
 
