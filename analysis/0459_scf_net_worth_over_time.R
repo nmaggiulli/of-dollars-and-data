@@ -19,7 +19,7 @@ library(Hmisc)
 library(xtable)
 library(tidyverse)
 
-folder_name <- "0369_scf_trends_over_time"
+folder_name <- "0459_scf_net_worth_over_time"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -184,129 +184,115 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
   }
 }
 
-# create_time_series_chart("networth", "25th Percentile Real Net Worth", 0.25)
-# create_time_series_chart("networth", "Real Median Net Worth", 0.5)
-# create_time_series_chart("homeeq", "Real Median Home Equity", 0.5)
-# create_time_series_chart("homeeq", "Real 75th Percentile Home Equity", 0.75)
-# create_time_series_chart("networth", "75th Percentile Real Net Worth", 0.75)
-create_time_series_chart("networth", "82nd Percentile Real Net Worth", 0.82)
+create_time_series_chart("networth", "Real Median Net Worth", 0.5)
 create_time_series_chart("networth", "90th Percentile Real Net Worth", 0.9)
-# create_time_series_chart("networth", "Real Average Net Worth", 0)
-# create_time_series_chart("income", "Real Median Income", 0.5)
-# create_time_series_chart("debt", "Real Median Debt", 0.5)
-# create_time_series_chart("fin", "Real Median Financial Assets", 0.5)
-# create_time_series_chart("nfin", "Real Median Non-Financial Assets", 0.5)
-# create_time_series_chart("vehic", "Real Median Vehicle Value", 0.5)
-# create_time_series_chart("asset", "Real Median Assets", 0.5)
-# create_time_series_chart("networth", "99th Percentile Real Net Worth", 0.99)
 
-#Plot all percentiles by age for given year
-data_year <- 2022
+# Now do Wealth Level breakdown over time
+# First, calculate net worth percentiles
+find_percentile <- function(yr, amount, var, varname){
+  
+  if(amount < 10^6){
+    p_change <- 0.001
+    p_guess <- 0.5
+    log_reduce <- 1
+  } else if(amount < 10^7){
+    p_change <- 0.001
+    p_guess <- 0.8
+    log_reduce <- 2
+  } else if (amount < 10^8){
+    p_change <- 0.001
+    p_guess <- 0.97
+    log_reduce <- 2
+  } else{
+    p_change <- 0.001
+    p_guess <- 0.99
+    log_reduce <- 2
+  }
+  
+  solved <- 0
+  p_guess_prior <- 0
+  p_guess2_prior <- 1
+  while(solved == 0){
+    guess <- scf_stack %>%
+      filter(year == yr) %>%
+      rename(summary_col = !!sym(var)) %>%
+      summarise(nw_percentile = wtd.quantile(summary_col, weights = wgt, probs = p_guess)) %>%
+      pull(nw_percentile)
+    
+    diff_allowed <- 10^(floor(log10(amount) - log_reduce))
+    
+    if(p_guess2_prior == p_guess){
+      solved <- 1
+    }else if(guess - amount > diff_allowed){
+      p_guess2_prior <- p_guess_prior
+      p_guess_prior <- p_guess
+      p_guess <- p_guess - p_change
+    } else if (amount - guess > diff_allowed){
+      p_guess2_prior <- p_guess_prior
+      p_guess_prior <- p_guess
+      p_guess <- p_guess + p_change
+    } else{
+      solved <- 1
+    }
+  }
+  return(p_guess)
+}
 
-df_year <- scf_stack %>%
-  filter(year == data_year) %>%
-  select(year, hh_id, imp_id, agecl, wgt, age,
-         networth, homeeq) %>%
-  arrange(year, hh_id, imp_id)
+all_years <- unique(scf_stack$year)
+all_wealth_levels <- c(10000, 10^5, 10^6, 10^7)
 
-to_plot <- df_year %>%
-  group_by(agecl) %>%
-  summarise(
-    value = wtd.quantile(networth, weights = wgt, probs=c(0.25, 0.5, 0.75, 0.9))
-  ) %>%
-  ungroup() %>%
-  mutate(key = case_when(
-    row_number() %% 4 == 0 ~ "90th Percentile",
-    row_number() %% 4 == 3 ~ "75th Percentile",
-    row_number() %% 4 == 2  ~ "50th Percentile",
-    row_number() %% 4 == 1 ~ "25th Percentile",
-    TRUE ~ "Error"
-  ))
+final_results <- data.frame()
+counter <- 1
+for(y in all_years){
+  print(y)
+  for(a in all_wealth_levels){
+    print(a)
+    tmp <- find_percentile(y, a, "networth", "Net Worth")
+    
+    final_results[counter, "year"] <- y
+    final_results[counter, "wealth_level"] <- log10(a)-3
+    final_results[counter, "pct"] <- tmp
+    counter <- counter + 1
+  }
+}
 
-file_path <- paste0(out_path, "/2022_all_networth_percentiles_by_agecl.jpeg")
+to_plot <- final_results %>%
+              mutate(wealth_level = case_when(
+                wealth_level == 1 ~ "L1 (<$10k)",
+                wealth_level == 2 ~ "L2 ($10k-$100k)",
+                wealth_level == 3 ~ "L3 ($100k-$1M)",
+                TRUE ~ "L4 ($1M-$10M)"
+              ),
+              pct = case_when(
+                wealth_level == "L1 (<$10k)" ~ pct,
+                TRUE ~ pct - lag(pct)
+              ))
+
+# Set the file_path based on the function input 
+file_path <- paste0(out_path, "/scf_wealth_percentiles_by_year.jpeg")
 source_string <- paste0("Source:  Survey of Consumer Finances (OfDollarsAndData.com)")
-note_string <- paste0("Note: All figures are in 2022 dollars.")
+note_string <- str_wrap(paste0("Note: All figures are adjusted for inflation to 2022 dollars."),
+                        width = 85)
 
-text_labels <- to_plot %>%
-  mutate(label = case_when(
-    value > 10^6 ~ paste0("$", formatC(round(value/1000000, 3), big.mark=",", format="f", digits=2), "M"),
-    value > 0 ~ paste0("$", formatC(round(value/1000, 0), big.mark=",", format="f", digits=0), "k"),
-    TRUE ~ paste0("$0"))
-    )
-
-max_y <- max(to_plot$value)
-
-plot <- ggplot(to_plot, aes(x=agecl, y=value)) +
-  geom_bar(stat = "identity", fill = chart_standard_color) +
-  geom_text(data=text_labels, aes(x=agecl, y=value, label = label),
-            col = chart_standard_color,
-            vjust = ifelse(text_labels$value >0, 0, 1),
-            size = 1.8) +
-  facet_rep_wrap(key ~ ., repeat.tick.labels = c("left", "bottom")) +
-  scale_y_continuous(label = dollar) +
+# Create the plot object
+plot <- ggplot(to_plot, aes(x = year, y = pct, fill = as.factor(wealth_level))) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("#bdd7e7", "#6baed6", "#3182bd", "#08519c")) +
+  scale_y_continuous(label = percent) +
+  scale_x_continuous(breaks = seq(1992, 2022, 6)) +
   of_dollars_and_data_theme +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle(paste0("Net Worth Percentiles by Age\n", data_year)) +
-  labs(x="Age", y=paste0("Net Worth"),
+  theme(legend.title = element_blank()) +
+  ggtitle(paste0("U.S. Wealth Levels Over Time")) +
+  labs(x = "Year", y = "Percentage of Households",
        caption = paste0(source_string, "\n", note_string))
 
-# Save the plot
-ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+# Save the plot  
+ggsave(file_path, plot, width = 15, height = 12, units = "cm") 
 
-# Now do average and median for table
-wealth_table_by_age_html <- df_year %>%
-  filter(age >= 20, age<=80) %>%
-  mutate(agecl_new = case_when(age < 25 ~ "20-24",
-                               age < 30 ~ "25-29",
-                               age < 35 ~ "30-34",
-                               age < 40 ~ "35-39",
-                               age < 45 ~ "40-44",
-                               age < 50 ~ "45-49",
-                               age < 55 ~ "50-54",
-                               age < 60 ~ "55-59",
-                               age < 65 ~ "60-64",
-                               age < 70 ~ "65-69",
-                               age < 75 ~ "70-74",
-                               TRUE ~ "75-80")) %>%
-  group_by(agecl_new) %>%
-  summarise(
-    pct_50 = format_as_dollar(wtd.quantile(networth, weights = wgt, probs=c(0.5))),
-    avg = format_as_dollar(wtd.mean(networth, weights = wgt))
-  ) %>%
-  ungroup() %>%
-  select(agecl_new, avg, pct_50)
-
-print(xtable(wealth_table_by_age_html), 
-      include.rownames=FALSE,
-      type="html", 
-      file=paste0(out_path, "/", data_year, "_wealth_by_agecl_table.html"))
-
-#Now do home equity
-homeeq_table_by_age_html <- df_year %>%
-  filter(age >= 20, age<=80) %>%
-  mutate(agecl_new = case_when(age < 25 ~ "20-24",
-                               age < 30 ~ "25-29",
-                               age < 35 ~ "30-34",
-                               age < 40 ~ "35-39",
-                               age < 45 ~ "40-44",
-                               age < 50 ~ "45-49",
-                               age < 55 ~ "50-54",
-                               age < 60 ~ "55-59",
-                               age < 65 ~ "60-64",
-                               age < 70 ~ "65-69",
-                               age < 75 ~ "70-74",
-                               TRUE ~ "75-80")) %>%
-  group_by(agecl_new) %>%
-  summarise(
-    pct_50 = format_as_dollar(wtd.quantile(homeeq, weights = wgt, probs=c(0.5))),
-    avg = format_as_dollar(wtd.mean(homeeq, weights = wgt))
-  ) %>%
-  ungroup() %>%
-  select(agecl_new, avg, pct_50)
-
-print(xtable(homeeq_table_by_age_html), 
-      include.rownames=FALSE,
-      type="html", 
-      file=paste0(out_path, "/", data_year, "_homeeq_by_agecl_table.html"))
+export_to_excel(df = to_plot,
+                outfile = paste0(out_path, "/scf_wealth_levels_by_year.xlsx"),
+                sheetname = "scf",
+                new_file = 1,
+                fancy_formatting = 0)
 
 # ############################  End  ################################## #
