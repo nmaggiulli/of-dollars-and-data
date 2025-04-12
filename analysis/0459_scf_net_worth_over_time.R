@@ -82,6 +82,12 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
   
+  export_to_excel(df = to_plot,
+                  outfile = paste0(out_path, "/networth_plot_data_", 100*quantile_prob,"_pct.xlsx"),
+                  sheetname = "data",
+                  new_file = 1,
+                  fancy_formatting = 0)
+  
   #Now do by Age class
   # Now do age only and then education only
   for(i in 1:2){
@@ -184,8 +190,8 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
   }
 }
 
-create_time_series_chart("networth", "Real Median Net Worth", 0.5)
-create_time_series_chart("networth", "90th Percentile Real Net Worth", 0.9)
+create_time_series_chart("networth", "Median Inflation-Adjusted Net Worth", 0.5)
+create_time_series_chart("networth", "90th Percentile Inflation-Adjusted Net Worth", 0.9)
 
 # Now do Wealth Level breakdown over time
 # First, calculate net worth percentiles
