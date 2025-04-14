@@ -17,7 +17,7 @@ library(Hmisc)
 library(lemon)
 library(tidyverse)
 
-folder_name <- "xxxx_inheritance_data_summary"
+folder_name <- "0447_inheritance_data_summary"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -26,7 +26,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 #Import UPenn data
 # https://budgetmodel.wharton.upenn.edu/issues/2021/7/16/inheritances-by-age-and-income-group
 
-raw <- read_excel(paste0(importdir, "/0444_inheritance_data/upenn_inheritance_data_scf.xlsx")) %>%
+raw <- read_excel(paste0(importdir, "/0447_inheritance_data/upenn_inheritance_data_scf.xlsx")) %>%
           clean_cols() %>%
           rename(`<26` = under_26) 
 

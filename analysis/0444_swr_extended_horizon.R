@@ -83,7 +83,7 @@ run_retirement_sim <- function(n_years, withdrawal_rate){
 run_full_sim <- function(n_yrs, s_weight){
 
   # Do some data analysis to establish a long-term growth rate
-  raw <- read.csv(paste0(importdir, "/xxxx_swr_extended/GrowthOfWealth_20250320195235.csv"),
+  raw <- read.csv(paste0(importdir, "/0444_swr_extended/GrowthOfWealth_20250320195235.csv"),
                        skip = 7, 
                        row.names = NULL,
                        col.names = c("date", "index_bond",	"index_sp500", "cpi"))  %>%
