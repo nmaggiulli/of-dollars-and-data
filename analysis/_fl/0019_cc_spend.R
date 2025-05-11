@@ -76,61 +76,40 @@ for(i in 1:nrow(apple_01_list)){
   counter <- counter + 1
 }
 
-#Do Amazon
-amazon_01_list <- data.frame(file_name = list.files(path = paste0(local, "/amazon_01/"), recursive = TRUE)) %>%
-  filter(grepl(".pdf", file_name))
-
-amazon_01_data <- data.frame()
-counter <- 1
-
-for(i in 1:nrow(amazon_01_list)){
-  fname <- amazon_01_list[i, "file_name"]
-  print(fname)
-  pdf_in <- paste0(local, "/amazon_01/", fname)
+import_chase <- function(folder_name, source, purchaser){
+  tmp_01_list <- data.frame(file_name = list.files(path = paste0(local, "/amazon_01/"), recursive = TRUE)) %>%
+    filter(grepl(".pdf", file_name))
   
-  text <- data.frame(line = pdf_text(pdf_in))
+  chase_01_data <- data.frame()
+  counter <- 1
   
-  chase_balance_regex <- ".*?New Balance\\s+(\\$\\d+,?\\.\\d+).*"
-  chase_date_regex <- ".*?New Balance\\\n\\s+(\\w+\\s\\d{4}).*"
+  for(i in 1:nrow(tmp_01_list)){
+    fname <- tmp_01_list[i, "file_name"]
+    print(fname)
+    pdf_in <- paste0(local, "/amazon_01/", fname)
+    
+    text <- data.frame(line = pdf_text(pdf_in))
+    
+    chase_balance_regex <- ".*?New Balance\\s+(\\$\\d+,?\\.\\d+).*"
+    chase_date_regex <- ".*?New Balance\\\n\\s+(\\w+\\s\\d{4}).*"
+    
+    total_balance <- gsub(chase_balance_regex, "\\1", text[1, "line"])
+    month_year_str <- gsub(chase_date_regex, "\\1", text[1, "line"])
+    
+    chase_01_data[counter, "month_date"] <- as.Date(paste0("01 ", month_year_str), format = "%d %B %Y")
+    chase_01_data[counter, "total_balance"] <- dollar_to_numeric(total_balance)
+    chase_01_data[counter, "source"] <- source
+    chase_01_data[counter, "purchaser"] <- purchaser
+    
+    counter <- counter + 1
+  }
   
-  total_balance <- gsub(chase_balance_regex, "\\1", text[1, "line"])
-  month_year_str <- gsub(chase_date_regex, "\\1", text[1, "line"])
-  
-  amazon_01_data[counter, "month_date"] <- as.Date(paste0("01 ", month_year_str), format = "%d %B %Y")
-  amazon_01_data[counter, "total_balance"] <- dollar_to_numeric(total_balance)
-  amazon_01_data[counter, "source"] <- "amazon"
-  amazon_01_data[counter, "purchaser"] <- "01"
-  
-  counter <- counter + 1
+  return(chase_01_data)
 }
 
-#Do other chase
-chase_01_list <- data.frame(file_name = list.files(path = paste0(local, "/chase_01/"), recursive = TRUE)) %>%
-  filter(grepl(".pdf", file_name))
-
-chase_01_data <- data.frame()
-counter <- 1
-
-for(i in 1:nrow(chase_01_list)){
-  fname <- chase_01_list[i, "file_name"]
-  print(fname)
-  pdf_in <- paste0(local, "/chase_01/", fname)
-  
-  text <- data.frame(line = pdf_text(pdf_in))
-  
-  chase_balance_regex <- ".*?New Balance\\s+(\\$\\d+,?\\.\\d+).*"
-  chase_date_regex <- ".*?New Balance\\\n\\s+(\\w+\\s\\d{4}).*"
-  
-  total_balance <- gsub(chase_balance_regex, "\\1", text[1, "line"])
-  month_year_str <- gsub(chase_date_regex, "\\1", text[1, "line"])
-  
-  chase_01_data[counter, "month_date"] <- as.Date(paste0("01 ", month_year_str), format = "%d %B %Y")
-  chase_01_data[counter, "total_balance"] <- dollar_to_numeric(total_balance)
-  chase_01_data[counter, "source"] <- "chase"
-  chase_01_data[counter, "purchaser"] <- "01"
-  
-  counter <- counter + 1
-}
+# Import chase statements
+amazon_01_data <- import_chase("amazon_01", "amazon", "01")
+chase_01_data <- import_chase("chase_01", "chase", "01")
 
 # Final bind row
 final <- amex_autopays %>%
