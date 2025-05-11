@@ -261,3 +261,14 @@ import_ycharts_timeseries <- function(path){
   
   return(tmp)
 }
+
+date_to_month <- function(date){
+  month_dt <- as.Date(paste0(year(date), "-", month(date), "-01"))
+  
+  return(month_dt)
+}
+
+dollar_to_numeric <- function(dollar_str) {
+  # Remove $ and , then convert to numeric
+  as.numeric(gsub("[$,]", "", dollar_str))
+}
