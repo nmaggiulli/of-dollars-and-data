@@ -165,88 +165,96 @@ for (i in 1:nrow(sp500_ret_pe)){
 }
 
 # Now run DCA data
-filter_date <- "1919-12-01"
-n_years <- 10
-w_stock <- 0.8
+plot_dca <-function(nyrs, wstock){
+  
+  filter_date <- "1919-12-01"
+  n_years <- nyrs
+  w_stock <- wstock
 
-# Final df
-df <- sp500_ret_pe %>%
-  filter(month >= filter_date) %>%
-  mutate(real_bond_ret = case_when(
-    row_number() == 1 ~ real_bond_ret,
-    TRUE ~ real_bond_index/lag(real_bond_index, 1) - 1)
-  ) %>%
-  select(month, real_sp500_ret, real_bond_ret) %>%
-  drop_na()
-
-for (i in 1:nrow(df)){
-  mt <- month(pull(df[i, "month"]))
-  if(i == 1){
-    df[i, "value_sp500"] <- w_stock
-    df[i, "value_bond"] <- 1 - w_stock
-  } else{
-    ret_stock <- df[i, "real_sp500_ret"]
-    #Rebalance
-    if(mt == 1){
-      df[i, "value_sp500"] <- (df[(i-1), "value_port"] * w_stock) * (1 + df[i, "real_sp500_ret"])
-      df[i, "value_bond"] <- (df[(i-1), "value_port"] * (1 - w_stock)) * (1 + df[i, "real_bond_ret"])
+  # Final df
+  df <- sp500_ret_pe %>%
+    filter(month >= filter_date) %>%
+    mutate(real_bond_ret = case_when(
+      row_number() == 1 ~ real_bond_ret,
+      TRUE ~ real_bond_index/lag(real_bond_index, 1) - 1)
+    ) %>%
+    select(month, real_sp500_ret, real_bond_ret) %>%
+    drop_na()
+  
+  for (i in 1:nrow(df)){
+    mt <- month(pull(df[i, "month"]))
+    if(i == 1){
+      df[i, "value_sp500"] <- w_stock
+      df[i, "value_bond"] <- 1 - w_stock
     } else{
-      df[i, "value_sp500"] <- df[(i-1), "value_sp500"] * (1 + df[i, "real_sp500_ret"])
-      df[i, "value_bond"] <- df[(i-1), "value_bond"] * (1 + df[i, "real_bond_ret"])
+      ret_stock <- df[i, "real_sp500_ret"]
+      #Rebalance
+      if(mt == 1){
+        df[i, "value_sp500"] <- (df[(i-1), "value_port"] * w_stock) * (1 + df[i, "real_sp500_ret"])
+        df[i, "value_bond"] <- (df[(i-1), "value_port"] * (1 - w_stock)) * (1 + df[i, "real_bond_ret"])
+      } else{
+        df[i, "value_sp500"] <- df[(i-1), "value_sp500"] * (1 + df[i, "real_sp500_ret"])
+        df[i, "value_bond"] <- df[(i-1), "value_bond"] * (1 + df[i, "real_bond_ret"])
+      }
     }
+    df[i, "value_port"] <- df[i, "value_sp500"] + df[i, "value_bond"]
   }
-  df[i, "value_port"] <- df[i, "value_sp500"] + df[i, "value_bond"]
+  
+  end_months <- df %>%
+                  filter(month >= as.Date(filter_date) + years(n_years) + months(1)) %>%
+                  pull(month)
+  
+  final <- data.frame()
+  counter <- 1
+  
+  for(i in 1:length(end_months)){
+    end_mt <- end_months[i]
+    start_mt <- end_mt - years(n_years) + months(1)
+    end_value <- df %>%
+                    filter(month == end_mt) %>%
+                    pull(value_port)
+    
+    tr <- df %>%
+          filter(month < end_mt, month >= start_mt) %>%
+          mutate(total_return = end_value/value_port) %>%
+          pull(total_return)
+    
+    final[counter, "start_month"] <- start_mt
+    final[counter, "end_month"] <- end_mt
+    final[counter, "dca_return"] <- mean(tr)
+    
+    counter <- counter + 1
+  }
+  
+  to_plot <- final %>%
+              mutate(lost_money = case_when(
+                dca_return < 1 ~ 1,
+                TRUE ~ 0
+              ))
+  
+  # Set the file_path based on the function input 
+  file_path <- paste0(out_path, "/dca_", n_years, "_", 100*w_stock, "_", (100*(1-w_stock)), "_port.jpeg")
+  source_string <- paste0("Source:  Shiller data, FRED (OfDollarsAndData.com)")
+  note_string <- str_wrap(paste0("Note: Assumes an equal monthly contribution, reinvested dividends, and all returns are adjusted for inflation. The portfolio is rebalanced annually each January."),
+                          width = 85)
+  
+  # Create the plot object
+  plot <- ggplot(to_plot, aes(x = end_month, y = dca_return)) +
+    geom_line() +
+    geom_hline(yintercept = 1, linetype = "dashed") +
+    scale_y_continuous(label = dollar) +
+    ggtitle(paste0("Average Real Dollar Growth for\n", n_years, "-Year DCA\n",  100*w_stock, "/", (100*(1-w_stock)), " Portfolio")) +
+    of_dollars_and_data_theme +
+    labs(x = "Ending Period", y = "Average Real Growth",
+         caption = paste0(source_string, "\n", note_string))
+  
+  # Save the plot  
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm") 
+  
+  assign("to_plot", to_plot, envir = .GlobalEnv)
 }
 
-end_months <- df %>%
-                filter(month >= as.Date(filter_date) + years(n_years) + months(1)) %>%
-                pull(month)
-
-final <- data.frame()
-counter <- 1
-
-for(i in 1:length(end_months)){
-  end_mt <- end_months[i]
-  start_mt <- end_mt - years(n_years) + months(1)
-  end_value <- df %>%
-                  filter(month == end_mt) %>%
-                  pull(value_port)
-  
-  tr <- df %>%
-        filter(month < end_mt, month >= start_mt) %>%
-        mutate(total_return = end_value/value_port) %>%
-        pull(total_return)
-  
-  final[counter, "start_month"] <- start_mt
-  final[counter, "end_month"] <- end_mt
-  final[counter, "dca_return"] <- mean(tr)
-  
-  counter <- counter + 1
-}
-
-to_plot <- final %>%
-            mutate(lost_money = case_when(
-              dca_return < 1 ~ 1,
-              TRUE ~ 0
-            ))
-
-# Set the file_path based on the function input 
-file_path <- paste0(out_path, "/dca_", n_years, "_", 100*w_stock, "_", (100*(1-w_stock)), "_port.jpeg")
-source_string <- paste0("Source:  Shiller data, FRED (OfDollarsAndData.com)")
-note_string <- str_wrap(paste0("Note: Assumes an equal monthly contribution, reinvested dividends, and all returns are adjusted for inflation. The portfolio is rebalanced annually each January."),
-                        width = 85)
-
-# Create the plot object
-plot <- ggplot(to_plot, aes(x = end_month, y = dca_return)) +
-  geom_line() +
-  geom_hline(yintercept = 1, linetype = "dashed") +
-  scale_y_continuous(label = dollar) +
-  ggtitle(paste0("Rolling Average Real Dollar Growth\n", n_years, "-Year DCA\n",  100*w_stock, "/", (100*(1-w_stock)), " Portfolio")) +
-  of_dollars_and_data_theme +
-  labs(x = "Ending Year", y = "Average Real Growth",
-       caption = paste0(source_string, "\n", note_string))
-
-# Save the plot  
-ggsave(file_path, plot, width = 15, height = 12, units = "cm") 
+plot_dca(10, 0.8)
+plot_dca(20, 0.8)
 
 # ############################  End  ################################## #
