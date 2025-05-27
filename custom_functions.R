@@ -229,9 +229,15 @@ round_to_nearest <- function(num, round_direction, unit){
   return(final)
 } 
 
-# Capitalize first letter of a word (even if it's part of a hyphenated name)
+roman_numerals <- c("I", "II", "III", "IV", "V")
+
+# Capitalize first letter of a word unless it's a Roman numeral
 sent_case <- function(word) {
-  paste0(toupper(substring(word, 1, 1)), tolower(substring(word, 2)))
+  if (toupper(word) %in% roman_numerals) {
+    return(toupper(word))
+  } else {
+    return(paste0(toupper(substring(word, 1, 1)), tolower(substring(word, 2))))
+  }
 }
 
 # Apply sent_case to each part of a hyphenated word
