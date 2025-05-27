@@ -229,14 +229,23 @@ round_to_nearest <- function(num, round_direction, unit){
   return(final)
 } 
 
-sent_case <- function(InputString){
-  InputString <-
-    paste(toupper(substring(InputString,1,1)),tolower(substring(InputString,2)),
-          sep="")
+# Capitalize first letter of a word (even if it's part of a hyphenated name)
+sent_case <- function(word) {
+  paste0(toupper(substring(word, 1, 1)), tolower(substring(word, 2)))
 }
 
-proper_case <- function(InputString){
-  sapply(lapply(strsplit(InputString," "), sent_case), paste, collapse=" ")
+# Apply sent_case to each part of a hyphenated word
+properize_word <- function(word) {
+  parts <- strsplit(word, "-", fixed = TRUE)[[1]]
+  parts_proper <- sapply(parts, sent_case)
+  paste(parts_proper, collapse = "-")
+}
+
+# Apply properize_word to each space-separated word
+proper_case <- function(input_string) {
+  words <- strsplit(input_string, " ", fixed = TRUE)[[1]]
+  words_proper <- sapply(words, properize_word)
+  paste(words_proper, collapse = " ")
 }
 
 format_as_dollar <- function(NumberInput, Digits=0){
