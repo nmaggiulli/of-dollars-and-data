@@ -116,8 +116,11 @@ for (j in 1:nrow(to_plot)){
 start_date <- min(to_plot$date)
 end_date   <- max(to_plot$date)
 
+start_yr <- year(start_date)
+end_yr <- year(end_date)
+
 # File path to save
-file_path <- paste0(exportdir, "0038_gold_returns/gold-drawdowns.jpeg")
+file_path <- paste0(exportdir, "0038_gold_returns/gold_drawdowns_", start_yr, "_", end_yr, ".jpeg")
 
 # Create the plot object
 plot <- ggplot(to_plot, aes(x = date, y = pct)) +
@@ -130,8 +133,8 @@ plot <- ggplot(to_plot, aes(x = date, y = pct)) +
   labs(x = "Year", y = "Percentage of Value Lost")
 
   # Add a source and note string for the plots
-  source_string <- paste0("Source:  BullionVault U.S. Asset Class Performance Data, ", min_year, "-", max_year," (OfDollarsAndData.com)")
-  note_string   <- paste0("Note:  Returns are adjusted using the U.S. Consumer Price Index.") 
+  source_string <- paste0("Source: BullionVault U.S. Asset Class Performance Data, ", min_year, "-", max_year," (OfDollarsAndData.com)")
+  note_string   <- paste0("Note: Returns are adjusted using the U.S. Consumer Price Index.") 
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
