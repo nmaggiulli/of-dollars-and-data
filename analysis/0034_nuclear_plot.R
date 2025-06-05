@@ -21,16 +21,16 @@ library(magrittr)
 
 ########################## Start Program Here ######################### #
 
-years    <- seq(1945, 2016, 1)
+years    <- seq(1945, 2025, 1)
 n_events <- c(2, rep(0, length(years)-1))
 
 to_plot <- data.frame(year = years, value = n_events)
 
 # Set the file_path based on the function input 
-file_path = paste0(exportdir, "0034_cooperation/nuclear-events.jpeg")
+file_path = paste0(exportdir, "0034_cooperation/nuclear_events_2025.jpeg")
 
 # Create title with ticker in subtitle
-top_title <- paste0("Number of Nuclear Bombs Dropped\non Civilian Locations\n1945 - 2016")
+top_title <- paste0("Number of Nuclear Bombs Dropped\non Civilian Locations\n1945 - 2025")
 
 # Create the plot object
 plot <- ggplot(to_plot, aes(x = year, y = value)) +
@@ -39,7 +39,7 @@ plot <- ggplot(to_plot, aes(x = year, y = value)) +
   guides(fill = FALSE) +
   of_dollars_and_data_theme +
   scale_y_continuous(limits = c(0, 2), breaks = seq(0, 2, 1)) +
-  scale_x_continuous(limits = c(1945, 2017), breaks = seq(1945, 2015, 10)) +
+  scale_x_continuous(limits = c(1945, 2025), breaks = seq(1945, 2025, 10)) +
   labs(x = "Year", y = "Number of Events")
 
 # Turn plot into a gtable for adding text grobs
