@@ -19,7 +19,7 @@ library(Hmisc)
 library(lemon)
 library(tidyverse)
 
-folder_name <- "xxxx_10yr_dca_summary"
+folder_name <- "0454_10yr_dca_summary"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -256,5 +256,7 @@ plot_dca <-function(nyrs, wstock){
 
 plot_dca(10, 0.8)
 plot_dca(20, 0.8)
+plot_dca(10, 0.6)
+plot_dca(20, 0.6)
 
 # ############################  End  ################################## #
