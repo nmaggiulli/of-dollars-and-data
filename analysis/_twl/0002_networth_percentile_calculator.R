@@ -98,5 +98,6 @@ find_percentile(140000, "income", "Income")
 find_percentile(10000, "liquid_networth", "Liquid Net Worth")
 find_percentile(100000, "liquid_networth", "Liquid Net Worth")
 find_percentile(10^6, "liquid_networth", "Liquid Net Worth")
+find_percentile(10^7, "liquid_networth", "Liquid Net Worth")
 
 # ############################  End  ################################## #`
