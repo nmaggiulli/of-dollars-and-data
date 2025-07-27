@@ -26,9 +26,9 @@ pct_for_html <- function(x){
   return(t)
 }
 
-countries <- c("US", "Canada", "UK", 
-              "India", "Singapore", "Germany", 
-              "Australia", "Italy", "Poland", "CPI", "rfr")
+countries <- c("Japan", "US", "Canada", "UK", 
+              "India", "Germany", 
+              "Australia", "Italy", "CPI", "rfr")
 
 exclude <- c("CPI", "rfr")
 
@@ -42,14 +42,14 @@ my_colors <- c("black",
                 "#ff7f00",
                 "#cab2d6")
 
-raw <- read.csv(paste0(importdir, "/0342_global_stock_performance/GrowthOfWealth_20230305183049.csv"),
+raw <- read.csv(paste0(importdir, "/0342_global_stock_performance/GrowthOfWealth_20250727131334.csv"),
                 skip = 7,
                 col.names = c("date", countries)) %>%
         filter(!is.na(US)) %>%
         mutate(date = as.Date(date, "%m/%d/%Y"),
                yr = year(date),
                mt = month(date)) %>%
-        filter(date <= "2022-12-31") %>%
+        filter(date <= "2024-12-31") %>%
         arrange(date)
 
 long <- raw %>%
@@ -123,7 +123,7 @@ to_plot <- long %>%
 
 to_plot$key <- factor(to_plot$key, levels = last_value$key)
 
-file_path <- paste0(out_path, "/global_stock_growth_of_dollar_1993_2022.jpeg")
+file_path <- paste0(out_path, "/global_stock_growth_of_dollar_1993_2024.jpeg")
 source_string <- str_wrap(paste0("Source: Returns 2.0 (OfDollarsAndData.com)"),
                           width = 85)
 note_string <- str_wrap(paste0("Note: The U.S. is represented by the S&P 500. ",
@@ -137,7 +137,7 @@ plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   of_dollars_and_data_theme +
   theme(legend.position = "right",
         legend.title = element_blank()) +
-  ggtitle(paste0("Growth of $1\n1993-2022")) +
+  ggtitle(paste0("Growth of $1\n1993-2024")) +
   labs(x = "Date" , y = "Growth of $1",
        caption = paste0(source_string, "\n", note_string))
 
@@ -164,7 +164,7 @@ last_value <- to_plot %>%
 
 to_plot$key <- factor(to_plot$key, levels = last_value$key)
 
-file_path <- paste0(out_path, "/global_stock_growth_of_dollar_2009_2022.jpeg")
+file_path <- paste0(out_path, "/global_stock_growth_of_dollar_2009_2024.jpeg")
 
 plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   geom_line() +
@@ -173,7 +173,7 @@ plot <- ggplot(to_plot, aes(x=date, y=value, col = key)) +
   of_dollars_and_data_theme +
   theme(legend.position = "right",
         legend.title = element_blank()) +
-  ggtitle(paste0("Growth of $1\n2009-2022")) +
+  ggtitle(paste0("Growth of $1\n2009-2024")) +
   labs(x = "Date" , y = "Growth of $1",
        caption = paste0(source_string, "\n", note_string))
 
@@ -236,7 +236,7 @@ for(c in countries){
 to_plot <- dd_stack %>%
               filter(!(key %in% exclude))
 
-file_path <- paste0(out_path, "/global_stock_dd_facet_1993_2022.jpeg")
+file_path <- paste0(out_path, "/global_stock_dd_facet_1993_2024.jpeg")
 
 plot <- ggplot(to_plot, aes(x=date, y=pct, col = key)) +
   geom_line() +
@@ -244,7 +244,7 @@ plot <- ggplot(to_plot, aes(x=date, y=pct, col = key)) +
   scale_y_continuous(label = percent_format(accuracy = 1)) +
   scale_color_manual(values = my_colors, guide = "none") +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Declines from All Time Highs\n1993-2022")) +
+  ggtitle(paste0("Declines from All Time Highs\n1993-2024")) +
   labs(x = "Date" , y = "Percentage of Value Lost",
        caption = paste0(source_string, "\n", note_string))
 
@@ -252,7 +252,7 @@ plot <- ggplot(to_plot, aes(x=date, y=pct, col = key)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Overlay
-file_path <- paste0(out_path, "/global_stock_dd_overlay_1993_2022.jpeg")
+file_path <- paste0(out_path, "/global_stock_dd_overlay_1993_2024.jpeg")
 
 plot <- ggplot(to_plot, aes(x=date, y=pct, col = key)) +
   geom_line() +
@@ -261,7 +261,7 @@ plot <- ggplot(to_plot, aes(x=date, y=pct, col = key)) +
   of_dollars_and_data_theme +
   theme(legend.title = element_blank(),
         legend.position = "right") +
-  ggtitle(paste0("Declines from All Time Highs\n1993-2022")) +
+  ggtitle(paste0("Declines from All Time Highs\n1993-2024")) +
   labs(x = "Date" , y = "Percentage of Value Lost",
        caption = paste0(source_string, "\n", note_string))
 
@@ -312,7 +312,7 @@ last_dca_values <- to_plot %>%
                       filter(date == max(to_plot$date),
                              type == "port")
   
-file_path <- paste0(out_path, "/global_stock_dca_1993_2022.jpeg")
+file_path <- paste0(out_path, "/global_stock_dca_1993_2024.jpeg")
 
 plot <- ggplot(to_plot, aes(x=date, y=value, col = type)) +
   geom_line() +
@@ -320,7 +320,7 @@ plot <- ggplot(to_plot, aes(x=date, y=value, col = type)) +
   scale_color_manual(values = c("black", "green"), guide = "none") +
   scale_y_continuous(label = dollar) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("$300,000 DCA Investment by Country\n1993-2022")) +
+  ggtitle(paste0("$300,000 DCA Investment by Country\n1993-2024")) +
   labs(x = "Date" , y = "Value",
        caption = paste0(source_string, "\n", note_string))
 
