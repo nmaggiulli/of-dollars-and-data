@@ -423,7 +423,7 @@ function calculatePortReturns() {
   // Calculate the bond percentage
   var bondPercent = 100 - stockPercent;
   
-  var initialI = parseFloat(document.getElementById("initial-investment").value);
+  var initialI = getNumericValue(document.getElementById("initial-investment").value);
   var initialIFormatted = formatNumberNoDecimals(initialI);
   
   // Convert month numbers to full month names
