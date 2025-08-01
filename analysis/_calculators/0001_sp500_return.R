@@ -86,11 +86,11 @@ yahoo_monthly <- yahoo_daily %>%
                     ungroup()
 
 # Get CPI
-getSymbols('CPIAUCNS',src='FRED')
-
-cpi_monthly <- data.frame(date=index(get("CPIAUCNS")), coredata(get("CPIAUCNS"))) %>%
-                  rename(cpi_fred = `CPIAUCNS`,
-                         month = date)
+#https://fred.stlouisfed.org/series/CPIAUCNS
+cpi_monthly <- read.csv(paste0(importdir, "/0009_sp500_returns_pe/CPIAUCNS.csv")) %>%
+              rename(cpi_fred = `CPIAUCNS`) %>%
+              mutate(month = as.Date(observation_date)) %>%
+              select(month, cpi_fred)
 
 # Join Shiller, Yahoo, and FRED
 sp500_ret_pe <- sp500_subset %>%
