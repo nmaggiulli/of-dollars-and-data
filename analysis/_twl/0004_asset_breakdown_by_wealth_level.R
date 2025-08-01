@@ -155,6 +155,34 @@ plot <- ggplot(data = to_plot, aes(x = wealth_level, y=value, fill = key)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+# Do one off based on Wealth Level Breakdown
+to_plot_nm <- to_plot %>%
+                bind_rows(data.frame(wealth_level = rep("Nick Maggiulli", 8),
+                                     key = c("Business Interests", "Real Estate",  "Primary Residence", "Vehicles",             
+                                             "Retirement", "Stocks & Mutual Funds", "Cash", "Other"),
+                                     value = c(0.17, 0, 0, 0, 
+                                               0.25, 0.52, 0.01, 0.05)))
+
+file_path <- paste0(out_path, "/_asset_breakdown_by_wealth_level_nm.jpeg")
+
+my_colors <- c("#1f78b4", "#a6cee3", "#33a02c", "#FFDB58", "#e31a1c", "#fb9a99",
+               "purple", "#ff7f00")
+
+# Create plot 
+plot <- ggplot(data = to_plot_nm, aes(x = wealth_level, y=value, fill = key)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_y_continuous(label = percent_format(accuracy = 1), breaks = seq(0, 1, 0.1)) +
+  scale_fill_manual(values = my_colors) +
+  of_dollars_and_data_theme +
+  theme(legend.title = element_blank(),
+        axis.text.x = element_text(angle = 45, vjust = 0.5)) +
+  ggtitle(paste0("Asset Breakdown by Wealth Level")) +
+  labs(x = "Wealth Level (Net Worth Tier)" , y = "Percentage of Assets",
+       caption = paste0(source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 # Now do grayscale
 file_path <- paste0(out_path, "/_asset_breakdown_by_wealth_level_grayscale.jpeg")
 
