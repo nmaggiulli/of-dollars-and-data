@@ -433,8 +433,8 @@ function calculateDCAReturns() {
       }
   });
   
-  var initialI = parseFloat(document.getElementById("initial-investment").value);
-  var monthlyI = parseFloat(document.getElementById("monthly-investment").value);
+  var initialI = getNumericValue(document.getElementById("initial-investment").value);
+  var monthlyI = getNumericValue(document.getElementById("monthly-investment").value);
   
   var initialIFormatted = formatNumberNoDecimals(initialI);
   var monthlyIFormatted = formatNumberNoDecimals(monthlyI);
