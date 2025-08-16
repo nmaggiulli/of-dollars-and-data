@@ -55,6 +55,15 @@ if(calculate_data == 1){
   final_pct_stack <- data.frame()
   
   for(p in pcts){
+    all_tmp <- df %>%
+      summarise(
+        pct = wtd.quantile(networth, weights = wgt, probs=p)
+      ) %>%
+      mutate(agecl = "All Ages") %>%
+      gather(-agecl, key=key, value=value) %>%
+      mutate(pct = p) %>%
+      select(-key)
+    
     tmp <- df %>%
     group_by(agecl) %>%
       summarise(
@@ -66,9 +75,9 @@ if(calculate_data == 1){
       select(-key)
     
     if(p == min(pcts)){
-      final_pct_stack <- tmp
+      final_pct_stack <- all_tmp %>% bind_rows(tmp)
     } else{
-      final_pct_stack <- final_pct_stack %>% bind_rows(tmp)
+      final_pct_stack <- final_pct_stack %>% bind_rows(all_tmp, tmp)
     }
   }
   
@@ -329,6 +338,7 @@ html_start2 <- '
                <label for="age">Your Age Group:</label>
               <select id="age" name="age">
                   <option value="">Select age group</option>
+                  <option value="All Ages">All Ages</option>
                   <option value="20-24">20-24</option>
                   <option value="25-29">25-29</option>
                   <option value="30-34">30-34</option>
