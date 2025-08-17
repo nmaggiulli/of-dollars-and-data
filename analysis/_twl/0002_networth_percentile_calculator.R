@@ -39,7 +39,7 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                   TRUE ~ "ERROR"
                 ),
                 liquid_assets = asset - reteq - nfin,
-                liquid_networth = liquid_assets - debt
+                liquid_networth = networth - reteq - nfin,
                 ) %>%
                 select(networth, liquid_networth, age, income, wealth_level, wgt)
 

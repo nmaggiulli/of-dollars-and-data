@@ -41,6 +41,8 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                      `Stocks & Mutual Funds` = (nmmf + stocks)/asset, 
                      `Cash` = liq/asset,
                      `Other` = (savbnd + othfin + othnfin + cashli + othma + bond + cds)/asset,
+                     liquid_assets = asset - reteq - nfin,
+                     liquid_networth = networth - reteq - nfin,
                      owns_home = ifelse(houses > 0, 1, 0),
                      wealth_level = case_when(
                        networth < 10000 ~ "L1 (<$10k)",
@@ -51,7 +53,7 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                        floor(log10(networth)) > 7 ~ "L6 ($100M+)", 
                              TRUE ~ "ERROR"
                      )) %>%
-                select(wealth_level, networth, `Business Interests`, `Real Estate`,`Primary Residence`,
+                select(wealth_level, networth, liquid_networth, liquid_assets, income, `Business Interests`, `Real Estate`,`Primary Residence`,
                        `Vehicles`, `Retirement`,
                        `Stocks & Mutual Funds`, `Cash`, `Other`,
                        owns_home,
@@ -289,5 +291,12 @@ homeowner_overall <- scf_stack %>%
     pct75_primary_residence = wtd.quantile(`Primary Residence`, weights = wgt, probs = 0.75)
   ) %>%
   ungroup() 
+
+median_nw_by_level <- scf_stack %>%
+  group_by(wealth_level) %>%
+  summarise(median_nw = wtd.quantile(networth, weights = wgt, probs = 0.5),
+            median_lnw = wtd.quantile(liquid_networth, weights = wgt, probs = 0.5),
+            median_l_assets = wtd.quantile(liquid_assets, weights = wgt, probs = 0.5)) %>%
+  ungroup()
 
 # ############################  End  ################################## #
