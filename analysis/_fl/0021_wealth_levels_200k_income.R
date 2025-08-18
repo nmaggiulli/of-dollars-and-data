@@ -56,45 +56,33 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                 select(wealth_level, networth, liquid_networth, liquid_assets, income, `Business Interests`, `Real Estate`,`Primary Residence`,
                        `Vehicles`, `Retirement`,
                        `Stocks & Mutual Funds`, `Cash`, `Other`,
-                       owns_home,
+                       owns_home, age,
                        wgt)
 
 scf_stack$wealth_level <- factor(scf_stack$wealth_level, levels = c("L1 (<$10k)", "L2 ($10k)",
                                                                       "L3 ($100k)", "L4 ($1M)",
                                                                       "L5 ($10M)", "L6 ($100M+)"))
 
+run_wealth_dist <- function(lower_inc, higher_inc, name){
+  tmp_inc <- scf_stack %>%
+    filter(income > lower_inc, income < higher_inc)
+  
+  tmp_wealth <- tmp_inc %>%
+    summarise(pct01_nw = wtd.quantile(networth, weights = wgt, probs = 0.01),
+              pct05_nw = wtd.quantile(networth, weights = wgt, probs = 0.05),
+              pct10_nw = wtd.quantile(networth, weights = wgt, probs = 0.1),
+              pct25_nw = wtd.quantile(networth, weights = wgt, probs = 0.25),
+              median_nw = wtd.quantile(networth, weights = wgt, probs = 0.5),
+              pct75_nw = wtd.quantile(networth, weights = wgt, probs = 0.75),
+              pct90_nw = wtd.quantile(networth, weights = wgt, probs = 0.9))
+  
+  assign(name, tmp_wealth, envir = .GlobalEnv)
+}
 
-income_200k_plus <- scf_stack %>%
-              filter(income > 200000)
+run_wealth_dist(200000, 9999999999, "wealth_dist_200k_plus")
+run_wealth_dist(200000, 250000, "wealth_dist_200k_250k")
+run_wealth_dist(500000, 750000, "wealth_dist_500k_750k")
 
-wealth_dist_200k_plus <- income_200k_plus %>%
-                      summarise(pct05_nw = wtd.quantile(networth, weights = wgt, probs = 0.05),
-                        pct10_nw = wtd.quantile(networth, weights = wgt, probs = 0.1),
-                        pct25_nw = wtd.quantile(networth, weights = wgt, probs = 0.25),
-                        median_nw = wtd.quantile(networth, weights = wgt, probs = 0.5),
-                        pct75_nw = wtd.quantile(networth, weights = wgt, probs = 0.75))
-
-income_200k_250k <- scf_stack %>%
-  filter(income > 200000, income < 250000)
-
-
-wealth_dist_200k_250k <- income_200k_250k %>%
-  summarise(pct05_nw = wtd.quantile(networth, weights = wgt, probs = 0.05),
-            pct10_nw = wtd.quantile(networth, weights = wgt, probs = 0.1),
-            pct25_nw = wtd.quantile(networth, weights = wgt, probs = 0.25),
-            median_nw = wtd.quantile(networth, weights = wgt, probs = 0.5),
-            pct75_nw = wtd.quantile(networth, weights = wgt, probs = 0.75))
-
-income_500k_750k <- scf_stack %>%
-  filter(income > 500000, income < 750000)
-
-wealth_dist_500k_750k <- income_500k_750k %>%
-  summarise(pct01_nw = wtd.quantile(networth, weights = wgt, probs = 0.01),
-            pct05_nw = wtd.quantile(networth, weights = wgt, probs = 0.05),
-            pct10_nw = wtd.quantile(networth, weights = wgt, probs = 0.1),
-            pct25_nw = wtd.quantile(networth, weights = wgt, probs = 0.25),
-            median_nw = wtd.quantile(networth, weights = wgt, probs = 0.5),
-            pct75_nw = wtd.quantile(networth, weights = wgt, probs = 0.75))
 
 
 # ############################  End  ################################## #
