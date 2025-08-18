@@ -85,5 +85,16 @@ wealth_dist_200k_250k <- income_200k_250k %>%
             median_nw = wtd.quantile(networth, weights = wgt, probs = 0.5),
             pct75_nw = wtd.quantile(networth, weights = wgt, probs = 0.75))
 
+income_500k_750k <- scf_stack %>%
+  filter(income > 500000, income < 750000)
+
+wealth_dist_500k_750k <- income_500k_750k %>%
+  summarise(pct01_nw = wtd.quantile(networth, weights = wgt, probs = 0.01),
+            pct05_nw = wtd.quantile(networth, weights = wgt, probs = 0.05),
+            pct10_nw = wtd.quantile(networth, weights = wgt, probs = 0.1),
+            pct25_nw = wtd.quantile(networth, weights = wgt, probs = 0.25),
+            median_nw = wtd.quantile(networth, weights = wgt, probs = 0.5),
+            pct75_nw = wtd.quantile(networth, weights = wgt, probs = 0.75))
+
 
 # ############################  End  ################################## #
