@@ -49,8 +49,22 @@ ps_2024 <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_08
   drop_na() %>%
   filter(date > as.Date("2022-01-31"))
 
+ps_2025 <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_8-20-2025_ps.csv"),
+                    skip = 6) %>%
+  select(-Metric, -Name) %>%
+  rename(symbol = Symbol) %>%
+  gather(-symbol, key=key, value=ps) %>%
+  mutate(year = gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\1", key, perl = TRUE),
+         month =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\2", key, perl = TRUE),
+         day =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\3", key, perl = TRUE),
+         date = as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d")) %>%
+  select(date, symbol, ps) %>%
+  drop_na() %>%
+  filter(date > as.Date("2024-08-31"))
+
 ps <- ps_2022 %>%
         bind_rows(ps_2024) %>%
+        bind_rows(ps_2025) %>%
         arrange(symbol, date)
 
 #Now do mcap
@@ -80,8 +94,24 @@ mcap_2024 <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_
   select(date, symbol, mcap) %>%
   drop_na()
 
+
+
+mcap_2025 <- read.csv(paste0(importdir, "/0269_ycharts_market_cap_ps/timeseries_8-20-2025_mcap.csv"),
+                      skip = 6) %>%
+  select(-Metric, -Name) %>%
+  rename(symbol = Symbol) %>%
+  gather(-symbol, key=key, value=mcap) %>%
+  mutate(year = gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\1", key, perl = TRUE),
+         month =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\2", key, perl = TRUE),
+         day =  gsub("X(\\d+)\\.(\\d+)\\.(\\d+)", "\\3", key, perl = TRUE),
+         date = as.Date(paste0(year, "-", month, "-", day), format = "%Y-%m-%d"), 
+         mcap = mcap/1000) %>%
+  select(date, symbol, mcap) %>%
+  drop_na()
+
 mcap <- mcap_2022 %>%
   bind_rows(mcap_2024) %>%
+  bind_rows(mcap_2025) %>%
   arrange(symbol, date)
 
 df <- ps %>%
