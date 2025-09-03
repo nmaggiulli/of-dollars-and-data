@@ -13,7 +13,6 @@ library(lubridate)
 library(ggrepel)
 library(tidylog)
 library(zoo)
-library(ggjoy)
 library(tidyverse)
 
 folder_name <- "0269_ps_analysis"
@@ -193,7 +192,7 @@ plot <- ggplot(data = to_plot, aes(x = date, y = total_mcap)) +
   scale_x_date(date_labels = "%m/%y") +
   ggtitle(paste0("Total Market Capitalization of U.S. Stocks\nwith P/S Ratio > 20")) +
   of_dollars_and_data_theme +
-  labs(x = "Date" , y = "Market Capitalization (in millions)",
+  labs(x = "Date" , y = "Market Capitalization (in billions)",
        caption = paste0(source_string, "\n", note_string))
 
 # Save the plot
