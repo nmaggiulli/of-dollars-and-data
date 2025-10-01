@@ -55,6 +55,7 @@ for (x in year_list){
   # debt = value of all debt // DEBT=MRTHEL+RESDBT+OTHLOC+CCBAL+INSTALL+ODEBT
   # mrthel = mortgage debt
   # resdbt = other residential debt
+  # rent = Monthly rent spending: all housing types (including mobile homes);
   # ccbal = credit card balance
   # install = installment loan
   # odebt = Other debt
@@ -81,7 +82,7 @@ for (x in year_list){
   vars_to_keep <- c('y1', 'yy1', 'networth', 'asset',
                     'fin' , 'liq', 'cds', 'nmmf', 'stocks', 'bond', 'retqliq', 'savbnd', 'cashli', 'othma', 'othfin', 'reteq',
                     'nfin', 'vehic', 'houses', 'oresre', 'nnresre', 'bus', 'othnfin', 'homeeq',
-                    'debt', 'mrthel','resdbt','ccbal', 'install', 'odebt', 'hdebt',
+                    'debt', 'mrthel','resdbt', 'rent','ccbal', 'install', 'odebt', 'hdebt',
                     'payedu1', 'payedu2', 'payedu3', 'payedu4', 'payedu5', 'payedu6', 'payedu7',
                     'income', 'wageinc', 'intdivinc', 'bussefarminc',  'kginc', 'ssretinc',
                     'agecl', 'age', 'hhsex', 'race', 'racecl4', 'edcl', 'married', 'kids', 
