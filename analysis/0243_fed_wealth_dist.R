@@ -29,6 +29,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 # Born in 1965-1980 (1972 on average)
 # Millennials born in 1981-1996 (1989 on average)
 
+dollar_year <- 2025
+
 my_colors <- c("#d7191c", "#fdae61", "#2c7bb6", "#abd9e9")
 
 cpi <- readRDS(paste0(localdir, "0021_FRED_cpi.Rds")) %>%
@@ -109,7 +111,7 @@ for(i in 1:nrow(vars_to_plot)){
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
     ggtitle(paste0("Inflation-Adjusted ", proper_name, "\nBy Age and Generation")) +
-    labs(x="Average Age", y="Value in Trillions (2020 Dollars)",
+    labs(x="Average Age", y=paste0("Value Per Capita (", dollar_year," Dollars)"),
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
@@ -132,7 +134,7 @@ for(i in 1:nrow(vars_to_plot)){
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
     ggtitle(paste0("Inflation-Adjusted ", proper_name, " Per Capita\nBy Age and Generation")) +
-    labs(x="Average Age", y="Value Per Capita (2020 Dollars)",
+    labs(x="Average Age", y=paste0("Value Per Capita (", dollar_year," Dollars)"),
          caption = paste0(source_string, "\n", note_string))
   
   # Save the plot
