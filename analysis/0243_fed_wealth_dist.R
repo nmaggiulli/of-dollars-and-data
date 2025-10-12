@@ -92,32 +92,12 @@ for(i in 1:nrow(vars_to_plot)){
   full_var <- paste0("real_", vars_to_plot[i, "var"])
   proper_name <- paste0(vars_to_plot[i, "proper_name"])
   
+  # Do per capita plot
   to_plot <- df %>%
     rename_(.dots = setNames(full_var, "var_to_plot")) %>%
     mutate(var_to_plot = var_to_plot/(10^6)) %>%
     select(age, category, var_to_plot, household_count)
-    
-  file_path <- paste0(out_path, "/age_", full_var, ".jpeg")
-  source_string <- "Source:  FRED, FED Distributional Accounts (OfDollarsAndData.com)"
-  note_string <- str_wrap(paste0("Note: Assumes that, on average, the Silent Generation was born in 1938, BabyBoomers were born in 1955, 
-                                 GenX was born in 1972, and Millennials were born in 1989."),
-                          width = 75)
   
-  plot <- ggplot(to_plot, aes(x=age, y = var_to_plot, col = category)) +
-    geom_line() +
-    scale_y_continuous(label = dollar) +
-    scale_color_manual(values = my_colors) +
-    of_dollars_and_data_theme +
-    theme(legend.position = "bottom",
-          legend.title = element_blank()) +
-    ggtitle(paste0("Inflation-Adjusted ", proper_name, "\nBy Age and Generation")) +
-    labs(x="Average Age", y=paste0("Value Per Capita (", dollar_year," Dollars)"),
-         caption = paste0(source_string, "\n", note_string))
-  
-  # Save the plot
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
-  
-  # Do per capita plot
   to_plot <- to_plot %>%
             mutate(var_to_plot = var_to_plot/household_count*(10^6)*(10^6))
   
@@ -125,6 +105,9 @@ for(i in 1:nrow(vars_to_plot)){
   
   file_path <- paste0(out_path, "/per_capita_age_", full_var, ".jpeg")
   source_string <- "Source:  FRED, FED Distributional Accounts (OfDollarsAndData.com)"
+  note_string <- str_wrap(paste0("Note: Assumes that, on average, the Silent Generation was born in 1938, BabyBoomers were born in 1955, 
+                                 GenX was born in 1972, and Millennials were born in 1989."),
+                          width = 75)
   
   plot <- ggplot(to_plot, aes(x=age, y = var_to_plot, col = category)) +
     geom_line() +
