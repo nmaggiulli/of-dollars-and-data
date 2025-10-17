@@ -50,7 +50,7 @@ nw_stats <- cohort_26_41 %>%
             ungroup() %>%
             gather(-year, key=key, value=value)
 
-plot_percentiles <- function(grepl_string, pct_file_string){
+plot_percentiles <- function(grepl_string, pct_file_string, percentile_text){
   
   if(grepl_string == "50th|75th|90th"){
     tmp_colors <- rev(my_colors[1:3])
@@ -71,7 +71,7 @@ plot_percentiles <- function(grepl_string, pct_file_string){
     of_dollars_and_data_theme +
     theme(legend.position = "bottom",
           legend.title = element_blank()) +
-    ggtitle(paste0("Inflation-Adjusted Net Worth By Year\nHouseholds Age 26-41")) +
+    ggtitle(paste0("Inflation-Adjusted Net Worth By Year\nHouseholds Age 26-41\n", percentile_text)) +
     labs(x="Year", y="Inflation-Adjusted Net Worth",
          caption = paste0(source_string))
   
@@ -79,7 +79,7 @@ plot_percentiles <- function(grepl_string, pct_file_string){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-plot_percentiles("50th|75th|90th", "50_90")
-plot_percentiles("15th|25th|50th", "15_50")
+plot_percentiles("50th|75th|90th", "50_90", "50th-90th Percentile")
+plot_percentiles("15th|25th|50th", "15_50", "15th-50th Percentile")
 
 # ############################  End  ################################## #
