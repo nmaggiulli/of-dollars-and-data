@@ -66,7 +66,7 @@ df <- monthly_spxtr %>%
         select(-index_gld_monthly) %>%
         arrange(date)
 
-plot_by_date <- function(start_date){
+plot_by_date <- function(start_date, x_nudge1, y_nudge1, x_nudge2, y_nudge2){
   tmp <- df %>%
               filter(date >= start_date)
   
@@ -86,22 +86,20 @@ plot_by_date <- function(start_date){
   
   file_path <- paste0(out_path, "/spxtr_v_gld_", start_year, "_", end_year, ".jpeg")
   source_string <- "Source:  YCharts, YahooFinance (OfDollarsAndData.com)"
-  note_string <- str_wrap(paste0("Note: Uses average monthly prices. S&P 500 return includes dividends but is not adjusted for inflation."),
+  note_string <- str_wrap(paste0("Note: Uses average monthly prices. Performance includes dividends (for the S&P 500) but is not adjusted for inflation."),
                           width = 85)
   
   text_labels <- data.frame()
-  x_nudge <- 24
-  y_nudge <- 0.9
   
-  text_labels[1, "date"] <- tmp_long[nrow(tmp_long) - x_nudge, "date"]
-  text_labels[1, "value"] <- tmp_long[nrow(tmp_long), "Gold"]*y_nudge
+  text_labels[1, "date"] <- tmp_long[nrow(tmp_long) - x_nudge1, "date"]
+  text_labels[1, "value"] <- tmp_long[nrow(tmp_long), "Gold"]*y_nudge1
   text_labels[1, "key"] <- "Gold"
-  text_labels[1, "label"] <- paste0("Gold\n", format_as_dollar(text_labels[1, "value"], 2))
+  text_labels[1, "label"] <- paste0("Gold\n", format_as_dollar(pull(tmp_long[nrow(tmp_long), "Gold"]), 2))
   
-  text_labels[2, "date"] <- tmp_long[nrow(tmp_long) - x_nudge, "date"]
-  text_labels[2, "value"] <- tmp_long[nrow(tmp_long), "S&P 500"]*y_nudge
+  text_labels[2, "date"] <- tmp_long[nrow(tmp_long) - x_nudge2, "date"]
+  text_labels[2, "value"] <- tmp_long[nrow(tmp_long), "S&P 500"]*y_nudge2
   text_labels[2, "key"] <- "S&P 500"
-  text_labels[2, "label"] <- paste0("S&P 500\n", format_as_dollar(text_labels[2, "value"], 2))
+  text_labels[2, "label"] <- paste0("S&P 500\n", format_as_dollar(pull(tmp_long[nrow(tmp_long), "S&P 500"]), 2))
   
   plot <- ggplot(to_plot, aes(x=date, y = value, col = key)) +
     geom_line() +
@@ -118,8 +116,8 @@ plot_by_date <- function(start_date){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-plot_by_date("1990-01-01")
-plot_by_date("2000-01-01")
-plot_by_date("2012-01-01")
+plot_by_date("1990-01-01", 24, 1.3, 36, 0.95)
+plot_by_date("2000-01-01", 18, 0.98, 12, 0.4)
+plot_by_date("2012-01-01", 6, 1.25, 6, 0.7)
 
 # ############################  End  ################################## #
