@@ -34,7 +34,7 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                 age >= 26 & age <= 41 ~ 1,
                 TRUE ~ 0
               ),
-              rent_over_income = case_when(
+              rent_to_income = case_when(
                 rent > 0 & (rent*12 > income) ~ 1,
                 rent > 0 ~ (rent*12)/income,
                 TRUE ~ NaN),
@@ -67,8 +67,8 @@ plot_percentiles <- function(grepl_string, pct_file_string, percentile_text, var
   
   if(var_slug== "nw"){
     title <- "Net Worth"
-  } else if (var_slug == "roi"){
-    title <- "Rent Over Income"
+  } else if (var_slug == "rti"){
+    title <- "Rent-To-Income"
   } else if (var_slug == "nhd"){
     title <- "Non-Home Debt"
   }
@@ -103,7 +103,7 @@ plot_percentiles <- function(grepl_string, pct_file_string, percentile_text, var
 
 plot_percentiles("50th|75th|90th", "50_90", "50th-90th Percentile", "networth", "nw")
 plot_percentiles("15th|25th|50th", "15_50", "15th-50th Percentile", "networth", "nw")
-plot_percentiles("50th|75th|90th", "50_90", "50th-90th Percentile", "rent_over_income", "roi")
+plot_percentiles("50th|75th|90th", "50_90", "50th-90th Percentile", "rent_to_income", "rti")
 plot_percentiles("50th|75th|90th", "50_90", "50th-90th Percentile", "nhd", "nhd")
 
 # ############################  End  ################################## #
