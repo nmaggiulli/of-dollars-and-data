@@ -25,7 +25,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-yesterday <- Sys.Date() - 1 
+last_yahoo_date <- Sys.Date() 
 
 raw_spxtr <- read.csv(paste0(importdir, "/", folder_name, "/SPXTR_data_2025_10_18.csv")) %>%
               mutate(day = as.Date(Period),
@@ -38,7 +38,7 @@ raw_gld <- read.csv(paste0(importdir, "/", folder_name, "/IGPUSPPC8_data_2025_10
          index_gld = `Gold.Price.in.US.Dollars..I.GPUSPPC8.`) %>%
   select(date, index_gld)
 
-getSymbols("GC%3DF", from = as.Date("2025-08-31"), to = yesterday, 
+getSymbols("GC%3DF", from = as.Date("2025-08-31"), to = last_yahoo_date, 
            src="yahoo", periodicity = "daily") 
 
 gld_latest <- data.frame(day=index(get("GC%3DF")), coredata(get("GC%3DF"))) %>%
