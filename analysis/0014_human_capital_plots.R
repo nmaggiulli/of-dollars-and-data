@@ -17,13 +17,17 @@ library(gtable)
 library(ggrepel)
 library(stringr)
 
+folder_name <- "0014_human_capital_plots"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+
 ########################## Start Program Here ######################### #
 
 n_years_working           <- 40
 starting_income           <- 50000
 discount_rate             <- 0.03
 savings_rate              <- 0.15
-annual_return             <- 0.05
+annual_return             <- 0.06
 growth_rate               <- 0.0
 starting_financial_assets <- 0
 
@@ -89,21 +93,20 @@ plot <- ggplot(data = assets_long, aes(x = year, y = value, fill = asset_type, a
                 family = "my_font"),
             nudge_x = 12) +
           geom_text_repel(data = filter(assets_long, 
-                                year == (n_years_working-4), 
+                                year == (n_years_working-7), 
                                 asset_type == "financial_assets"),
                   aes(x = year, 
-                      y= value,
+                      y = value,
                       col = asset_type,
                       label = "Financial Assets",
                       family = "my_font"),
                   nudge_y = y_max/3) +
           scale_alpha_continuous(guide = FALSE) +
-          geom_hline(data = assets_long, yintercept = fin_max, col = "red") +
           scale_fill_brewer(palette = "Set1", guide = FALSE) +
           scale_colour_brewer(palette = "Set1", guide = FALSE) +
           scale_y_continuous(label = dollar, breaks = seq(0, y_max, 200000), limits = c(0, y_max)) +
           of_dollars_and_data_theme +
-          labs(x = "Years" , y = "Value (in real $)") +
+          labs(x = "Years" , y = "Value") +
           ggtitle(paste0("As You Age, Your Financial Assets\nShould Replace Your Human Capital"))
 
   # Add a source and note string for the plots
@@ -122,14 +125,14 @@ plot <- ggplot(data = assets_long, aes(x = year, y = value, fill = asset_type, a
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
   # Make the source and note text grobs
-  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
+  # source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
+  #                         gp =gpar(fontfamily = "my_font", fontsize = 8))
+  # note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+  #                         gp =gpar(fontfamily = "my_font", fontsize = 8))
   
   # Add the text grobs to the bototm of the gtable
-  my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
-  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
+  # my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
+  # my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
   
   # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
