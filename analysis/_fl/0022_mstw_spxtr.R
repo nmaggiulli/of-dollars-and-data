@@ -84,7 +84,7 @@ plot_year <- function(start_year, tw_date, spx_date){
     geom_line() +
     geom_text(data = text_labels, aes(x=date, y=growth_of_dollar, label = label, col = key),
               family = "my_font") +
-    scale_color_manual(guide = "none", values = c("black", "blue")) +
+    scale_color_manual(guide = "none", values = c("blue", "black")) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
     ggtitle(paste0("Growth of NT$1\nMSCI Taiwan vs. S&P 500\n", start_year, "-2025")) +
@@ -130,7 +130,7 @@ plot_year <- function(start_year, tw_date, spx_date){
     geom_line() +
     geom_text(data = text_labels, aes(x=date, y=dca, label = label, col = key),
               family = "my_font") +
-    scale_color_manual(guide = "none", values = c("black", "blue")) +
+    scale_color_manual(guide = "none", values = c("blue", "black")) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
     ggtitle(paste0("Growth of NT$100 Per Day\nMSCI Taiwan vs. S&P 500\n", start_year, "-2025")) +
