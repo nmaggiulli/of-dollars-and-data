@@ -25,17 +25,19 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+raw <- read.csv(paste0(importdir, "/", folder_name, "/MSTW_SPXTR_data_2000_2025_09_30.csv"),
+                col.names = c("date", "index_msci_taiwan", "index_spx")) %>%
+  mutate(date = as.Date(date, "%m/%d/%y")) %>%
+  arrange(date) %>%
+  rename(`MSCI Taiwan` = index_msci_taiwan,
+         `S&P 500` = index_spx)
+
+raw$`MSCI Taiwan` <- na.locf(raw$`MSCI Taiwan`)
+raw$`S&P 500` <- na.locf(raw$`S&P 500`)
+
+max_date <- max(raw$date)
+
 plot_year <- function(start_year, tw_date, spx_date){
-  
-  raw <- read.csv(paste0(importdir, "/", folder_name, "/MSTW_SPXTR_data_2000_2025_10_13.csv"),
-                  col.names = c("date", "index_msci_taiwan", "index_spx")) %>%
-          mutate(date = as.Date(date, "%m/%d/%y")) %>%
-          arrange(date) %>%
-          rename(`MSCI Taiwan` = index_msci_taiwan,
-                 `S&P 500` = index_spx)
-  
-  raw$`MSCI Taiwan` <- na.locf(raw$`MSCI Taiwan`)
-  raw$`S&P 500` <- na.locf(raw$`S&P 500`)
   
   filtered <- raw %>%
           filter(year(date) >= start_year)
@@ -50,8 +52,7 @@ plot_year <- function(start_year, tw_date, spx_date){
                 TRUE ~ value/first_spx
               )) %>%
             select(-value)
-  
-  max_date <- max(to_plot$date)
+
   to_plot$growth_of_dollar <- na.locf(to_plot$growth_of_dollar)
   
   file_path <- paste0(out_path, "/growth_of_dollar_msci_taiwan_vs_sp500_", start_year, ".jpeg")
@@ -144,5 +145,56 @@ plot_year(2000, as.Date("2024-01-01"), as.Date("2022-01-01"))
 plot_year(2005, as.Date("2023-01-01"), as.Date("2023-01-01"))
 plot_year(2010, as.Date("2024-01-01"), as.Date("2022-01-01"))
 plot_year(2015, as.Date("2023-01-01"), as.Date("2023-01-01"))
+
+run_dca_compare <- function(start_date){
+  filtered <- raw %>%
+    filter(date >= start_date)
+  
+  first_mstw <- filtered[1, "MSCI Taiwan"]
+  first_spx <- filtered[1, "S&P 500"]
+  
+  tmp_df <- filtered %>%
+    gather(-date, key=key, value=value) %>%
+    mutate(growth_of_dollar =  case_when(
+      key == "MSCI Taiwan" ~ value/first_mstw,
+      TRUE ~ value/first_spx
+    )) %>%
+    group_by(key) %>%
+    mutate(ret = (growth_of_dollar / lag(growth_of_dollar)) - 1,
+           ret = coalesce(ret, 0)) %>%
+    mutate(
+      dca = {
+        out <- accumulate(ret, ~ (.x * (1 + .y)) + 100, .init = 0) |> tail(-1)
+        out[1] <- 100
+        out
+      }
+    ) %>%
+    ungroup()
+  
+  return(tmp_df)
+}
+
+all_dates <- unique(raw$date)
+final_results <- data.frame()
+counter <- 1
+
+for(i in 1:length(all_dates)){
+  print(i)
+  start_dt <- all_dates[i]
+  
+  tmp_df <- run_dca_compare(start_dt)
+  
+  final_results[counter, "start_date"] <- start_dt
+  final_results[counter, "final_dca_tw"] <- tmp_df %>% filter(date == max_date, key == "MSCI Taiwan") %>% pull(dca)
+  final_results[counter, "final_dca_spx"] <- tmp_df %>% filter(date == max_date, key == "S&P 500") %>% pull(dca)
+  counter <- counter + 1
+}
+
+final_results <- final_results %>%
+                  mutate(tw_win = ifelse(final_dca_tw>final_dca_spx, 1, 0),
+                         tw_win_pct = final_dca_tw/final_dca_spx - 1)
+
+print(mean(final_results$tw_win))
+print(mean(final_results$tw_win_pct))
 
 # ############################  End  ################################## #
