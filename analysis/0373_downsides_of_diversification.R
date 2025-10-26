@@ -45,6 +45,8 @@ sorted_keys <- last_date %>% arrange(desc(value)) %>% pull(key)
 
 standard_size <- 0.4
 
+end_month <- format.Date(max(to_plot$date), format = "%b %Y")
+
 plot <- ggplot(data = to_plot, aes(x = date, y = value, col = key, size = key)) +
   geom_line() +
   scale_y_continuous(label = percent_format(accuracy = 1)) +
@@ -56,9 +58,8 @@ plot <- ggplot(data = to_plot, aes(x = date, y = value, col = key, size = key)) 
   of_dollars_and_data_theme +
   theme(legend.title = element_blank(),
         legend.position = "right") +
-  ggtitle("Nick Maggiulli Portfolio vs\nUnderlying Holdings\nAug 2012 - Oct 2023") +
-  labs(x = "Date" , y = "Total Return (%)",
-       caption = paste0(source_string, "\n", note_string))
+  ggtitle(paste0("Nick Maggiulli Portfolio vs\nUnderlying Holdings\nAug 2012 - ", end_month)) +
+  labs(x = "Date" , y = "Total Return (%)")
 
 # Save the gtable
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
