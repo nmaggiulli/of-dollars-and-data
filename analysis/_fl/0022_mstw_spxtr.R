@@ -25,6 +25,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
+run_dca_loop <- 0
+
 raw <- read.csv(paste0(importdir, "/", folder_name, "/MSTW_SPXTR_data_2000_2025_09_30.csv"),
                 col.names = c("date", "index_msci_taiwan", "index_spx")) %>%
   mutate(date = as.Date(date, "%m/%d/%y")) %>%
@@ -178,23 +180,26 @@ all_dates <- unique(raw$date)
 final_results <- data.frame()
 counter <- 1
 
-for(i in 1:length(all_dates)){
-  print(i)
-  start_dt <- all_dates[i]
+if(run_dca_loop == 1){
   
-  tmp_df <- run_dca_compare(start_dt)
+  for(i in 1:length(all_dates)){
+    print(i)
+    start_dt <- all_dates[i]
+    
+    tmp_df <- run_dca_compare(start_dt)
+    
+    final_results[counter, "start_date"] <- start_dt
+    final_results[counter, "final_dca_tw"] <- tmp_df %>% filter(date == max_date, key == "MSCI Taiwan") %>% pull(dca)
+    final_results[counter, "final_dca_spx"] <- tmp_df %>% filter(date == max_date, key == "S&P 500") %>% pull(dca)
+    counter <- counter + 1
+  }
   
-  final_results[counter, "start_date"] <- start_dt
-  final_results[counter, "final_dca_tw"] <- tmp_df %>% filter(date == max_date, key == "MSCI Taiwan") %>% pull(dca)
-  final_results[counter, "final_dca_spx"] <- tmp_df %>% filter(date == max_date, key == "S&P 500") %>% pull(dca)
-  counter <- counter + 1
+  final_results <- final_results %>%
+                    mutate(tw_win = ifelse(final_dca_tw>final_dca_spx, 1, 0),
+                           tw_win_pct = final_dca_tw/final_dca_spx - 1)
+  
+  print(mean(final_results$tw_win))
+  print(mean(final_results$tw_win_pct))
 }
-
-final_results <- final_results %>%
-                  mutate(tw_win = ifelse(final_dca_tw>final_dca_spx, 1, 0),
-                         tw_win_pct = final_dca_tw/final_dca_spx - 1)
-
-print(mean(final_results$tw_win))
-print(mean(final_results$tw_win_pct))
 
 # ############################  End  ################################## #
