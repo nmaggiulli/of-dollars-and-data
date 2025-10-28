@@ -93,7 +93,7 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
 
 ## Create 1st plot
   # Set the file path
-  file_path = paste0(exportdir, "0016_investing_vs_saving/saving-vs-investing.jpeg")
+  file_path = paste0(exportdir, "0016_investing_vs_saving/saving_vs_investing.jpeg")
   
   # Create plot 
   plot <- ggplot(data = to_plot, aes(x = year, fill = type, weight = value)) +
@@ -121,8 +121,8 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
                                   family = "my_font"),
                               nudge_y = 130000,
                               nudge_x = -2) +
-              scale_color_manual(values = my_palette, guide = FALSE) +
-              scale_fill_manual(values = my_palette, guide = FALSE) +
+              scale_color_brewer(palette = "Set1", guide = FALSE) +
+              scale_fill_brewer(palette = "Set1", guide = FALSE) +
               scale_y_continuous(labels = dollar, limits = c(y_min, y_max), breaks = seq(y_min, y_max, y_unit)) +
               scale_x_continuous(breaks = seq(0, n_years_working, 5)) +
               of_dollars_and_data_theme +
@@ -141,15 +141,15 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
   # Make the source and note text grobs
-  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  
-  # Add the text grobs to the bototm of the gtable
-  my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
-  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
-  
+  # source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
+  #                         gp =gpar(fontfamily = "my_font", fontsize = 8))
+  # note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
+  #                         gp =gpar(fontfamily = "my_font", fontsize = 8))
+  # 
+  # # Add the text grobs to the bototm of the gtable
+  # my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
+  # my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
+  # 
   # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
  
@@ -165,7 +165,7 @@ assets_df$type  <- "investment_pct"
   ymax <- max(assets_df$pct)
   
   # Set the file path
-  file_path = paste0(exportdir, "0016_investing_vs_saving/pct-of-total-assets.jpeg")
+  file_path = paste0(exportdir, "0016_investing_vs_saving/pct_of_total_assets.jpeg")
   
   # Create plot 
   plot <- ggplot(data = assets_df, aes(x = year, y = pct, fill = type)) +
