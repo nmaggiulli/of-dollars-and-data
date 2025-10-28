@@ -18,17 +18,21 @@ library(gtable)
 library(ggrepel)
 library(stringr)
 
+folder_name <- "_fl/0023_investing_vs_saving_plots"
+out_path <- paste0(exportdir, folder_name)
+dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+
 ########################## Start Program Here ######################### #
 
 # Set program paramaters
-n_years_working     <- 40
+n_years_working     <- 30
 income              <- 50000
 savings_rate        <- 0.15
 sample_mean         <- 0.05
 sample_sd           <- 0.09
 n_simulations       <- 1
 
-# Create a custom palette with black using COlorBrewer
+# Create a custom palette with black using ColorBrewer
 # From here:  http://colorbrewer2.org/#type=qualitative&scheme=Set1&n=7
 my_palette <- c("#E41A1C", "#4DAF4A", "#000000", "#377EB8", "#984EA3", "#FF7F00", "#A65628")
 
@@ -93,7 +97,7 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
 
 ## Create 1st plot
   # Set the file path
-  file_path = paste0(exportdir, "0016_investing_vs_saving/saving_vs_investing.jpeg")
+  file_path = paste0(out_path, "/saving_vs_investing.jpeg")
   
   # Create plot 
   plot <- ggplot(data = to_plot, aes(x = year, fill = type, weight = value)) +
@@ -108,19 +112,17 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
                                   col = type,
                                   label = str_wrap("Savings Matter Early in Life", width = 10),
                                   family = "my_font"),
-                              nudge_y = 120000,
+                              nudge_y = 20000,
                               nudge_x = 2) +
               geom_text_repel(data = 
                                 filter(to_plot, 
-                                       year == 29, 
+                                       year == 18, 
                                        type == "returns"),
                               aes(x = year, 
                                   y = value,
                                   col = type,
                                   label = str_wrap("Investments Dominate Later in Life", width = 10),
-                                  family = "my_font"),
-                              nudge_y = 130000,
-                              nudge_x = -2) +
+                                  family = "my_font")) +
               scale_color_brewer(palette = "Set1", guide = FALSE) +
               scale_fill_brewer(palette = "Set1", guide = FALSE) +
               scale_y_continuous(labels = dollar, limits = c(y_min, y_max), breaks = seq(y_min, y_max, y_unit)) +
@@ -140,16 +142,6 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
   
-  # Make the source and note text grobs
-  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-
-  # Add the text grobs to the bototm of the gtable
-  my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
-  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
-
   # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
  
@@ -165,7 +157,7 @@ assets_df$type  <- "investment_pct"
   ymax <- max(assets_df$pct)
   
   # Set the file path
-  file_path = paste0(exportdir, "0016_investing_vs_saving/pct_of_total_assets.jpeg")
+  file_path = paste0(out_path, "/pct_of_total_assets.jpeg")
   
   # Create plot 
   plot <- ggplot(data = assets_df, aes(x = year, y = pct, fill = type)) +
@@ -189,16 +181,6 @@ assets_df$type  <- "investment_pct"
   
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
-  
-  # Make the source and note text grobs
-  source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
-                          gp =gpar(fontfamily = "my_font", fontsize = 8))
-  
-  # Add the text grobs to the bototm of the gtable
-  my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
-  my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
 
   # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
