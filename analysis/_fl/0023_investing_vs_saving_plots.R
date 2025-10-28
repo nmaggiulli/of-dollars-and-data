@@ -110,19 +110,22 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
                               aes(x = year, 
                                   y = value,
                                   col = type,
+                                  segment.colour = "transparent",
                                   label = str_wrap("Savings Matter Early in Life", width = 10),
                                   family = "my_font"),
                               nudge_y = 20000,
-                              nudge_x = 2) +
+                              nudge_x = 1) +
               geom_text_repel(data = 
                                 filter(to_plot, 
-                                       year == 18, 
+                                       year == 19, 
                                        type == "returns"),
                               aes(x = year, 
                                   y = value,
                                   col = type,
+                                  segment.colour = "transparent",
                                   label = str_wrap("Investments Dominate Later in Life", width = 10),
-                                  family = "my_font")) +
+                                  family = "my_font"),
+                              nudge_y = 40000,) +
               scale_color_brewer(palette = "Set1", guide = FALSE) +
               scale_fill_brewer(palette = "Set1", guide = FALSE) +
               scale_y_continuous(labels = dollar, limits = c(y_min, y_max), breaks = seq(y_min, y_max, y_unit)) +
