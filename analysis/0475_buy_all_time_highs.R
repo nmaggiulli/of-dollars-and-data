@@ -12,6 +12,8 @@ library(readxl)
 library(lubridate)
 library(zoo)
 library(ggrepel)
+library(quantmod)
+library(FinCal)
 library(tidyverse)
 
 folder_name <- "0475_buy_all_time_highs"
@@ -23,11 +25,25 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ## Set DD ATH limit
 limit_1 <- -0.05
 
+getSymbols("GC%3DF", from = as.Date("2025-03-14"), to = Sys.Date()-1,
+           src="yahoo", periodicity = "daily")
+
+gld_latest <- data.frame(date=index(get("GC%3DF")), coredata(get("GC%3DF"))) %>%
+  rename(index = `GC.3DF.Adjusted`) %>%
+  select(date, index)
+
 read_ycharts <- function(symbol){
   raw <- read.csv(paste0(importdir, "/", folder_name, "/", symbol, "_data.csv"),
                   skip = 1, col.names = c("date", "index")) %>%
           mutate(date = as.Date(date)) %>%
           arrange(date) 
+  
+  if(symbol == "GOLD"){
+    raw <- raw %>%
+            bind_rows(gld_latest)
+    
+    raw$index <- na.locf(raw$index)
+  }
   
   dd <- drawdown_path(raw) %>%
     mutate(dd_group = case_when(
@@ -94,6 +110,8 @@ plot_symbol_ret <- function(sym, name, num){
               filter(symbol == sym) %>%
               rename_(.dots = setNames(paste0(ret_col), "fwd_ret"))
   
+  end_year <- year(max(stack$date))
+  
   avg_near <- to_plot %>%
                 filter(dd_group == "Near ATH") %>%
                 summarise(ret = mean(fwd_ret, na.rm = TRUE)) %>%
@@ -104,7 +122,7 @@ plot_symbol_ret <- function(sym, name, num){
                 summarise(ret = mean(fwd_ret, na.rm = TRUE)) %>%
                 pull(ret)
   
-  file_path <- paste0(out_path, "/fwd_ret_", sym, "_", num, "yr_.jpeg")
+  file_path <- paste0(out_path, "/fwd_ret_", sym, "_", num, "yr_", end_year, ".jpeg")
   source_string <- paste0("Source: YCharts (OfDollarsAndData.com)")
   note_string <- str_wrap(paste0("Note: 'Near ATH' is anytime the index is less than ", 
                                  -100*limit_1,
@@ -142,7 +160,7 @@ plot_symbol_ret <- function(sym, name, num){
   
   # Do ATH plot
   if(num == 1){
-    file_path <- paste0(out_path, "/days_btwn_ath_", sym, ".jpeg")
+    file_path <- paste0(out_path, "/days_btwn_ath_", sym, "_", end_year, ".jpeg")
     source_string <- paste0("Source: YCharts (OfDollarsAndData.com)")
     
     plot <- ggplot(to_plot, aes(x = date, y = days_between_ath)) +
@@ -157,7 +175,7 @@ plot_symbol_ret <- function(sym, name, num){
     ggsave(file_path, plot, width = 15, height = 12, units = "cm")
     
     # Plot price with ATH
-    file_path <- paste0(out_path, "/price_ath_", sym, ".jpeg")
+    file_path <- paste0(out_path, "/price_ath_", sym, "_", end_year, ".jpeg")
     source_string <- paste0("Source: YCharts (OfDollarsAndData.com)")
     
     if(sym == "BTC" | sym == "GOLD"){
