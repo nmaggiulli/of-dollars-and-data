@@ -35,8 +35,7 @@ plot <- ggplot(data = to_plot, aes(x=year, y=nw_change)) +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
   ggtitle(paste0("Net Worth Percentage Change by Year")) +
-  labs(x = "Year", y = "Percentage Change from Prior Year",
-       caption = paste0(source_string))
+  labs(x = "Year", y = "Percentage Change from Prior Year")
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -65,8 +64,7 @@ plot <- ggplot(data = to_plot, aes(x=year, y=value, fill = key)) +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
   ggtitle(paste0("Net Worth Percentage Change by Year\nWith Attribution")) +
-  labs(x = "Year", y = "Percentage Change from Prior Year",
-       caption = paste0(source_string, "\n", note_string))
+  labs(x = "Year", y = "Percentage Change from Prior Year")
 
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
