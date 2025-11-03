@@ -18,7 +18,7 @@ library(gtable)
 library(ggrepel)
 library(stringr)
 
-folder_name <- "_fl/0023_investing_vs_saving_plots"
+folder_name <- "_mttw/0002_investing_vs_saving_plots"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -111,10 +111,10 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
                                   y = value,
                                   col = type,
                                   segment.colour = "transparent",
-                                  label = str_wrap("Savings Matter Early in Life", width = 10),
+                                  label = str_wrap("年輕時期:\n儲蓄更重要", width = 10),
                                   family = "my_font"),
                               nudge_y = 20000,
-                              nudge_x = 1) +
+                              nudge_x = 2) +
               geom_text_repel(data = 
                                 filter(to_plot, 
                                        year == 19, 
@@ -123,7 +123,7 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
                                   y = value,
                                   col = type,
                                   segment.colour = "transparent",
-                                  label = str_wrap("Investments Dominate Later in Life", width = 10),
+                                  label = str_wrap("晚年時期:\n投資報酬主導成長e", width = 10),
                                   family = "my_font"),
                               nudge_y = 40000,) +
               scale_color_brewer(palette = "Set1", guide = FALSE) +
@@ -131,8 +131,8 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
               scale_y_continuous(labels = dollar, limits = c(y_min, y_max), breaks = seq(y_min, y_max, y_unit)) +
               scale_x_continuous(breaks = seq(0, n_years_working, 5)) +
               of_dollars_and_data_theme +
-              labs(x = "Years" , y = "Change in Value") +
-              ggtitle(paste0("Savings and Investment Returns Have\nVarying Impact Over Time"))
+              labs(x = "年份" , y = "價值變化") +
+              ggtitle(paste0("「儲蓄」與「投資報酬」在不同人生階段的差異"))
   
   # Add a source and note string for the plots
   source_string <- "Source:  Simulated data (OfDollarsAndData.com)"

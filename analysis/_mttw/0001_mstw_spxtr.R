@@ -19,7 +19,7 @@ library(zoo)
 library(purrr)
 library(ggrepel)
 
-folder_name <- "_fl/0022_mstw_spxtr"
+folder_name <- "_mttw/0001_mstw_spxtr"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -75,7 +75,7 @@ plot_year <- function(start_year, tw_date, spx_date){
   text_labels[1, "date"] <- tw_date
   text_labels[1, "growth_of_dollar"] <- msci_taiwan_multiplier*max_msci_taiwan
   text_labels[1, "key"] <- "MSCI Taiwan"
-  text_labels[1, "label"] <- paste0("MSCI Taiwan\nNT", format_as_dollar(max_msci_taiwan, 2))
+  text_labels[1, "label"] <- paste0("MSCI 台灣\nNT", format_as_dollar(max_msci_taiwan, 2))
   
   text_labels[2, "date"] <- spx_date
   text_labels[2, "growth_of_dollar"] <- spx_multiplier*max_spx
@@ -90,8 +90,8 @@ plot_year <- function(start_year, tw_date, spx_date){
     scale_color_manual(guide = "none", values = c("blue", "black")) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Growth of NT$1\nMSCI Taiwan vs. S&P 500\n", start_year, "-2025")) +
-    labs(x = "Year" , y = "Growth of NT$1")
+    ggtitle(paste0("新台幣 1 元的報酬成長\nMSCI 台灣 vs. S&P 500\n(", start_year, "-2025)")) +
+    labs(x = "年份" , y = "1 元成長值")
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -120,7 +120,7 @@ plot_year <- function(start_year, tw_date, spx_date){
   text_labels[1, "date"] <- as.Date("2022-01-01")
   text_labels[1, "dca"] <- 0.9*max_msci_taiwan
   text_labels[1, "key"] <- "MSCI Taiwan"
-  text_labels[1, "label"] <- paste0("MSCI Taiwan\nNT", format_as_dollar(max_msci_taiwan, 0))
+  text_labels[1, "label"] <- paste0("MSCI 台灣 \nNT", format_as_dollar(max_msci_taiwan, 0))
   
   max_spx <- to_plot %>% filter(date == max_date, key == "S&P 500") %>% pull(dca)
   text_labels[2, "date"] <- as.Date("2023-01-01")
@@ -136,8 +136,8 @@ plot_year <- function(start_year, tw_date, spx_date){
     scale_color_manual(guide = "none", values = c("blue", "black")) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Growth of NT$100 Per Day\nMSCI Taiwan vs. S&P 500\n", start_year, "-2025")) +
-    labs(x = "Year" , y = "Value")
+    ggtitle(paste0("每日投資新台幣 100 元的報酬成長\nMSCI 台灣 vs. S&P 500\n(", start_year, "-2025)")) +
+    labs(x = "年份" , y = "價值")
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
