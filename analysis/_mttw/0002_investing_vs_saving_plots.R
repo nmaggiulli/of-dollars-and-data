@@ -26,8 +26,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 # Set program paramaters
 n_years_working     <- 30
-income              <- 50000
-savings_rate        <- 0.15
+income              <- 1000000
+savings_rate        <- 0.20
 sample_mean         <- 0.05
 sample_sd           <- 0.09
 n_simulations       <- 1
@@ -47,14 +47,14 @@ savings_matrix <- matrix(NA, nrow = n_simulations, ncol = n_years_working+1)
 
 # Create a for loop for each year you work
 for (i in 1:(n_years_working + 1)){
-  returns <- rnorm(n_simulations, sample_mean, sample_sd)
+  return <- rnorm(n_simulations, sample_mean, sample_sd)
   if (i == 1){
     savings_matrix[, i]  <- income * savings_rate
     asset_matrix[, i]    <- savings_matrix[, i]
     returns_matrix[, i]  <- rep(0, n_simulations)
   } else {
     savings_matrix[, i]  <- income * savings_rate
-    returns_matrix[, i]  <- returns * asset_matrix[, (i-1)]
+    returns_matrix[, i]  <- return * asset_matrix[, (i-1)]
     asset_matrix[, i]    <- savings_matrix[, i] + returns_matrix[, i] + asset_matrix[, (i-1)]
   }
 }
@@ -113,7 +113,7 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
                                   segment.colour = "transparent",
                                   label = str_wrap("年輕時期:\n儲蓄更重要", width = 10),
                                   family = "my_font"),
-                              nudge_y = 20000,
+                              nudge_y = 350000,
                               nudge_x = 2) +
               geom_text_repel(data = 
                                 filter(to_plot, 
@@ -123,12 +123,12 @@ y_max <- create_max_min(y_max, y_unit, ceiling)
                                   y = value,
                                   col = type,
                                   segment.colour = "transparent",
-                                  label = str_wrap("晚年時期:\n投資報酬主導成長e", width = 10),
+                                  label = str_wrap("晚年時期:\n投資報酬主導成長", width = 10),
                                   family = "my_font"),
-                              nudge_y = 40000,) +
+                              nudge_y = 1100000,) +
               scale_color_brewer(palette = "Set1", guide = FALSE) +
               scale_fill_brewer(palette = "Set1", guide = FALSE) +
-              scale_y_continuous(labels = dollar, limits = c(y_min, y_max), breaks = seq(y_min, y_max, y_unit)) +
+              scale_y_continuous(labels = dollar, limits = c(-1000000, 2000000), breaks = seq(-1000000, 2000000, 200000)) +
               scale_x_continuous(breaks = seq(0, n_years_working, 5)) +
               of_dollars_and_data_theme +
               labs(x = "年份" , y = "價值變化") +
@@ -154,38 +154,5 @@ assets_df  <- convert_to_df(asset_matrix, "total_assets")
 assets_df$pct   <-  1 - ((seq(1, n_years_working + 1) * (income * savings_rate)) / assets_df$value)
 assets_df$type  <- "investment_pct"
 
-## Create 2nd plot
-  
-  # Get the maximum percentage for the data frame
-  ymax <- max(assets_df$pct)
-  
-  # Set the file path
-  file_path = paste0(out_path, "/pct_of_total_assets.jpeg")
-  
-  # Create plot 
-  plot <- ggplot(data = assets_df, aes(x = year, y = pct, fill = type)) +
-    geom_area() +
-    geom_hline(yintercept = ymax, col = my_palette[1], linetype = 2) +
-    scale_color_manual(values = my_palette, guide = FALSE) +
-    scale_fill_manual(values = my_palette, guide = FALSE) +
-    scale_y_continuous(labels = percent, limits = c(0, 1), breaks = seq(0, 1, 0.1)) +
-    scale_x_continuous(breaks = seq(0, n_years_working, 5)) +
-    of_dollars_and_data_theme +
-    labs(x = "Years" , y = "Percentage of Total Assets") +
-    ggtitle(paste0("Percentage of Total Assets That\nCome From Investment Gains"))
-  
-  # Add a source and note string for the plots
-  source_string <- "Source:  Simulated data (OfDollarsAndData.com)"
-  note_string   <- paste0("Note:  Assumes an annual mean return of ", 
-                          sample_mean*100,
-                          "% with a ",
-                          sample_sd*100,
-                          "% standard deviation.") 
-  
-  # Turn plot into a gtable for adding text grobs
-  my_gtable   <- ggplot_gtable(ggplot_build(plot))
-
-  # Save the gtable
-  ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #
