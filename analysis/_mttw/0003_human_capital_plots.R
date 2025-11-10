@@ -24,7 +24,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 n_years_working           <- 40
-starting_income           <- 50000
+starting_income           <- 1000000
 discount_rate             <- 0.03
 savings_rate              <- 0.15
 annual_return             <- 0.06
@@ -71,9 +71,6 @@ create_max_min <- function(x, unit, ceilfloor) {
   ceilfloor(x/unit)*unit
 }
 
-# Set the y_max dynamically
-y_max <- create_max_min(max(assets_long$value), 100000, ceiling)
-
 # Find the maximum financial asset value
 fin_max <- max(filter(assets_long, asset_type == "financial_assets")$value)
 
@@ -100,39 +97,17 @@ plot <- ggplot(data = assets_long, aes(x = year, y = value, fill = asset_type, a
                       col = asset_type,
                       label = "金融資產",
                       family = "my_font"),
-                  nudge_y = y_max/3) +
+                  nudge_y = 5000000) +
           scale_alpha_continuous(guide = FALSE) +
           scale_fill_brewer(palette = "Set1", guide = FALSE) +
           scale_colour_brewer(palette = "Set1", guide = FALSE) +
-          scale_y_continuous(label = dollar, breaks = seq(0, y_max, 200000), limits = c(0, y_max)) +
+          scale_y_continuous(label = dollar, breaks = seq(0, 24000000, 2000000), limits = c(0, 24000000)) +
           of_dollars_and_data_theme +
           labs(x = "年份" , y = "價值") +
           ggtitle(paste0("隨著年齡增長，你的金融資產應逐漸取代人力資本"))
 
-  # Add a source and note string for the plots
-  source_string <- "Source:  Simulated data (OfDollarsAndData.com)"
-  note_string   <- paste0("Note:  Assumes a ", 
-                          savings_rate*100,
-                          "% savings rate, ",  
-                          discount_rate*100,
-                          "% discount rate, ",
-                          annual_return*100,
-                          "% real return, and $",
-                          formatC(as.numeric(starting_income), format="f", digits=0, big.mark=","),
-                          " in annual income.") 
-  
   # Turn plot into a gtable for adding text grobs
   my_gtable   <- ggplot_gtable(ggplot_build(plot))
-  
-  # Make the source and note text grobs
-  # source_grob <- textGrob(source_string, x = (unit(0.5, "strwidth", source_string) + unit(0.2, "inches")), y = unit(0.1, "inches"),
-  #                         gp =gpar(fontfamily = "my_font", fontsize = 8))
-  # note_grob   <- textGrob(note_string, x = (unit(0.5, "strwidth", note_string) + unit(0.2, "inches")), y = unit(0.15, "inches"),
-  #                         gp =gpar(fontfamily = "my_font", fontsize = 8))
-  
-  # Add the text grobs to the bototm of the gtable
-  # my_gtable   <- arrangeGrob(my_gtable, bottom = source_grob)
-  # my_gtable   <- arrangeGrob(my_gtable, bottom = note_grob)
   
   # Save the gtable
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
