@@ -50,8 +50,8 @@ plot_year <- function(start_year, tw_date, spx_date){
   to_plot <- filtered %>%
               gather(-date, key=key, value=value) %>%
               mutate(growth_of_dollar =  case_when(
-                key == "MSCI Taiwan" ~ value/first_mstw,
-                TRUE ~ value/first_spx
+                key == "MSCI Taiwan" ~ 100*value/first_mstw,
+                TRUE ~ 100*value/first_spx
               )) %>%
             select(-value)
 
@@ -75,12 +75,12 @@ plot_year <- function(start_year, tw_date, spx_date){
   text_labels[1, "date"] <- tw_date
   text_labels[1, "growth_of_dollar"] <- msci_taiwan_multiplier*max_msci_taiwan
   text_labels[1, "key"] <- "MSCI Taiwan"
-  text_labels[1, "label"] <- paste0("MSCI 台灣\nNT", format_as_dollar(max_msci_taiwan, 2))
+  text_labels[1, "label"] <- paste0("MSCI 台灣\nNT", format_as_dollar(max_msci_taiwan, 0))
   
   text_labels[2, "date"] <- spx_date
   text_labels[2, "growth_of_dollar"] <- spx_multiplier*max_spx
   text_labels[2, "key"] <- "S&P 500"
-  text_labels[2, "label"] <- paste0("S&P 500\nNT", format_as_dollar(max_spx, 2))
+  text_labels[2, "label"] <- paste0("S&P 500\nNT", format_as_dollar(max_spx, 0))
   
   # Plot the results
   plot <- ggplot(to_plot, aes(x = date, y = growth_of_dollar, col = key)) +
@@ -90,8 +90,8 @@ plot_year <- function(start_year, tw_date, spx_date){
     scale_color_manual(guide = "none", values = c("blue", "black")) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("新台幣 1 元的報酬成長\nMSCI 台灣 vs. S&P 500\n(", start_year, "-2025)")) +
-    labs(x = "年份" , y = "1 元成長值")
+    ggtitle(paste0("新台幣100元的成長\nMSCI 台灣 vs. S&P 500\n(", start_year, "-2025)")) +
+    labs(x = "年份" , y = "新台幣100元的成長")
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
@@ -144,9 +144,6 @@ plot_year <- function(start_year, tw_date, spx_date){
 }
 
 plot_year(2000, as.Date("2024-01-01"), as.Date("2022-01-01"))
-plot_year(2005, as.Date("2023-01-01"), as.Date("2023-01-01"))
-plot_year(2010, as.Date("2024-01-01"), as.Date("2022-01-01"))
-plot_year(2015, as.Date("2023-01-01"), as.Date("2023-01-01"))
 
 run_dca_compare <- function(start_date){
   filtered <- raw %>%

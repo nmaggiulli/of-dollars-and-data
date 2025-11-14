@@ -509,7 +509,7 @@ if (run_all_years == 1){
                  )) +
     of_dollars_and_data_theme +
     ggtitle(paste0("逢低買進 vs. 持續買進 (延遲兩個月)\n所有", n_years, "年期間")) +
-    labs(x = "日期", y = "逢低買進超額報酬率（%）")
+    labs(x = "開始日期", y = "逢低買進超額報酬率（%）")
   
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")

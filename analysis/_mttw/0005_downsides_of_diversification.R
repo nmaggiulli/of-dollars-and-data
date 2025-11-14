@@ -47,7 +47,7 @@ end_month <- format.Date(max(to_plot$date), format = "%b %Y")
 plot <- ggplot(data = to_plot, aes(x = date, y = value, col = key, size = key)) +
   geom_line() +
   scale_y_continuous(label = percent_format(accuracy = 1)) +
-  scale_x_date(date_labels = "%m/%y") +
+  scale_x_date(date_labels = "%Y") +
   scale_colour_manual(values = c("#e41a1c", "#377eb8", "black", "#4daf4a", "#984ea3", "#ff7f00", "brown"), 
                       limits = sorted_keys) +
   scale_size_manual(values = c(rep(standard_size, 3), standard_size*2, rep(standard_size, 3)),
