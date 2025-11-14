@@ -25,10 +25,12 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-raw_msci <- read.csv(paste0(importdir, "/", folder_name, "/MSTW_data.csv"),
-                     col.names = c("date", "index_tw")) %>%
-            mutate(date = as.Date(date)) %>%
-            arrange(date)
+raw_msci <- read.csv(paste0(importdir, "/", folder_name, "/GrowthOfWealth_20251113221715_tw.csv"),
+                     col.names = c("date", "index_tw"), skip = 6) %>%
+  filter(!(date == ""), !(index_tw == "")) %>%
+  mutate(date = as.Date(date, format = "%m/%d/%Y"),
+         index_tw = as.numeric(index_tw)) %>%
+  arrange(date)
 
 raw_cpi <- read.csv(paste0(importdir, "/", folder_name, "/tw_cpi.csv"), col.names = c("date", "rate_cpi")) %>%
             mutate(date = as.Date(date, format = "%m/%d/%y"),
@@ -36,10 +38,9 @@ raw_cpi <- read.csv(paste0(importdir, "/", folder_name, "/tw_cpi.csv"), col.name
             select(year, rate_cpi)
 
 msci_monthly <- raw_msci %>%
-                  mutate(month = as.Date(paste0(year(date), "-", month(date), "-01"))) %>%
-                  group_by(month) %>%
-                  summarize(index_tw = mean(index_tw)) %>%
-                  ungroup()
+                  mutate(month = date + days(1) - months(1)) %>%
+                  select(month, index_tw) %>%
+                  filter(month >= "1990-01-01")
 
 start_month <- min(msci_monthly$month)
 end_month <- max(msci_monthly$month)
@@ -58,7 +59,7 @@ for(i in 2:nrow(tw_cpi)) {
   tw_cpi$index_cpi[i] <- tw_cpi$index_cpi[i-1] * tw_cpi$monthly_cpi[i]
 }
 
-first_tw <- pull(msci_monthly[1, "index_tw"])
+first_tw <- msci_monthly[1, "index_tw"]
 
 to_plot <- msci_monthly %>%
               left_join(tw_cpi %>% select(-year, -monthly_cpi, -rate_cpi)) %>%
@@ -74,13 +75,13 @@ file_path <- paste0(out_path, "/nominal_vs_real_taiwan_msci_", start_year, "_", 
 
 text_labels <- data.frame()
 
-text_labels[1, "month"] <- as.Date("2022-01-01")
-text_labels[1, "value"] <- 3.5
+text_labels[1, "month"] <- as.Date("2021-01-01")
+text_labels[1, "value"] <- 3.75
 text_labels[1, "key"] <- "index_tw"
 text_labels[1, "label"] <- paste0("名目價值")
 
 text_labels[2, "month"] <- as.Date("2022-01-01")
-text_labels[2, "value"] <- 0.75
+text_labels[2, "value"] <- 0.60
 text_labels[2, "key"] <- "index_tw_real"
 text_labels[2, "label"] <- paste0("通膨調整後價值")
 
