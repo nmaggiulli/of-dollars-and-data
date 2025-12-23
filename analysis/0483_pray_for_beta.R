@@ -108,7 +108,8 @@ plot_years(20, as.Date("1960-01-01"), as.Date("2000-01-01"), "From 1960-1980, Be
 
 all_20yr_returns <- sp500_ret_pe %>%
                       mutate(ret_20yr = (lead(price_plus_div, 240)/price_plus_div)^(1/20) - 1) %>%
-                      select(date, ret_20yr)
+                      select(date, ret_20yr) %>%
+                      drop_na()
 
 #Plot rolling 20-year annualized returns
 # Set the file_path based on the function input 
@@ -123,7 +124,7 @@ note_string <- str_wrap(paste0("Note:  Adjusted for dividends and inflation."),
 # Plot the returns to show how much they change over time
 plot <- ggplot(data = all_20yr_returns, aes(x = date, y = ret_20yr)) +
   geom_line() +
-  ggtitle("Rolling 20-Year Annualized Real Return\nS&P 500") +
+  ggtitle("Rolling 20-Year Annualized Real Returns\nS&P 500") +
   scale_y_continuous(labels = percent) +
   of_dollars_and_data_theme +
   labs(x = "Date" , y = paste0("Annualized Real Return (%)\nFor 20 Years"),
