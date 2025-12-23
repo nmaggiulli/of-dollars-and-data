@@ -20,10 +20,11 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 # Read in data for individual stocks and sp500 Shiller data
 sp500_ret_pe <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
-plot_years <- function(n_years, start_date, title_string){
+plot_years <- function(n_years, start_date, end_date, title_string, note_extra){
   # Subset based on start date
   df <- sp500_ret_pe %>%
-          filter(date >= start_date)
+          filter(date >= start_date,
+                 date < end_date)
   
   # Find number of months available
   n_months_avail <- nrow(df)
@@ -76,7 +77,7 @@ plot_years <- function(n_years, start_date, title_string){
   # Strings for source and note
   source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"
   
-  note_string <- str_wrap(paste0("Note:  Adjusted for dividends and inflation."),
+  note_string <- str_wrap(paste0("Note:  Adjusted for dividends and inflation. ", note_extra),
                           width = 85)
   
   # Plot the returns to show how much they change over time
@@ -102,8 +103,8 @@ plot_years <- function(n_years, start_date, title_string){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-plot_years(10, as.Date("1900-01-01"), "Lucky and Unlucky Decades for the S&P 500")
-#plot_years(20, as.Date("1960-01-01"), "From 1960-1980, Beating the Market by 5%\nWould Have Made You LESS Money Than\nUnderperforming By 5% From 1980-2000")
+plot_years(10, as.Date("1900-01-01"), as.Date("2026-01-01"), "Lucky and Unlucky Decades for the S&P 500", "Where complete decade data is not available, partial data is shown.")
+plot_years(20, as.Date("1960-01-01"), as.Date("2000-01-01"), "From 1960-1980, Beating the Market by 5%\nWould Have Made You LESS Money Than\nUnderperforming By 5% From 1980-2000", "")
 
 
 # ############################  End  ################################## #
