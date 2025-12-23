@@ -11,7 +11,7 @@ library(lubridate)
 library(scales)
 library(tidyverse)
 
-folder_name <- "00483_pray_for_beta"
+folder_name <- "0483_pray_for_beta"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -28,26 +28,45 @@ plot_years <- function(n_years, start_date, title_string){
   # Find number of months available
   n_months_avail <- nrow(df)
   
-  # Find the number of groups we can calculate
+  # 1. Find the number of FULL groups
   n_groups_to_calc <- floor(n_months_avail/(n_years*12))
   n_months_to_calc <- n_years*12
   
-  df <- df[(1:(n_months_to_calc*n_groups_to_calc)), ]
+  # Initialize the return column
+  df$ret <- NA
   
+  # Calculate full 10-year periods
   counter <- 1
   for (i in 1:n_groups_to_calc){
     final <- df[(counter + n_months_to_calc - 1), "price_plus_div"]
     initial <- df[counter, "price_plus_div"]
     
     df[counter, "ret"] <- (final/initial)^(1/n_years) - 1
-    
     counter <- counter + n_months_to_calc
   }
   
+  # 2. ADD LOGIC FOR THE PARTIAL DECADE (2020s so far)
+  # Check if there is data left after the last full decade
+  if (n_months_avail > (n_groups_to_calc * n_months_to_calc)) {
+    last_start_index <- (n_groups_to_calc * n_months_to_calc) + 1
+    
+    # Calculate how many years have actually passed in this partial period
+    # This ensures the "Annualized" math is correct
+    actual_months <- n_months_avail - last_start_index + 1
+    actual_years_passed <- actual_months / 12
+    
+    final_val <- df[n_months_avail, "price_plus_div"]
+    initial_val <- df[last_start_index, "price_plus_div"]
+    
+    # Annualize based on the actual time elapsed so far
+    df[last_start_index, "ret"] <- (final_val/initial_val)^(1/actual_years_passed) - 1
+  }
+  
+  # Prepare plotting data
   to_plot <- df %>%
-              filter(!is.na(ret)) %>%
-              mutate(year = year(date)) %>%
-              select(year, ret)
+    filter(!is.na(ret)) %>%
+    mutate(year = year(date)) %>%
+    select(year, ret)
   
   start_date_string <- as.character(start_date)
   
@@ -83,8 +102,8 @@ plot_years <- function(n_years, start_date, title_string){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-plot_years(20, as.Date("1960-01-01"), "From 1960-1980, Beating the Market by 5%\nWould Have Made You LESS Money Than\nUnderperforming By 5% From 1980-2000")
 plot_years(10, as.Date("1900-01-01"), "Lucky and Unlucky Decades for the S&P 500")
+#plot_years(20, as.Date("1960-01-01"), "From 1960-1980, Beating the Market by 5%\nWould Have Made You LESS Money Than\nUnderperforming By 5% From 1980-2000")
 
 
 # ############################  End  ################################## #
