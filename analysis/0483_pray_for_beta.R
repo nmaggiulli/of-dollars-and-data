@@ -175,7 +175,7 @@ note_string <- str_wrap(paste0("Note: Assumes a 20-year return period and consis
 # Plot the returns to show how much they change over time
 plot <- ggplot(data = to_plot, aes(x = alpha, y = win_rate)) +
   geom_bar(stat = "identity", fill = "blue") +
-  ggtitle("How Often Alpha Loses to Beta by Alpha Size\nU.S. Stocks") +
+  ggtitle("How Often Alpha Loses to Indexing by Alpha Size\nU.S. Stocks") +
   scale_fill_discrete(guide = FALSE) +
   scale_y_continuous(labels = percent) +
   scale_x_continuous(labels = percent_format(accuracy = 1), breaks = seq(0, 0.1, 0.01)) +
