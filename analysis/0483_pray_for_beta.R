@@ -103,7 +103,7 @@ plot_years <- function(n_years, start_date, end_date, title_string, note_extra){
   ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 }
 
-plot_years(10, as.Date("1900-01-01"), as.Date("2026-01-01"), "Lucky and Unlucky Decades for the S&P 500", "Where complete decade data is not available, partial data is shown.")
+plot_years(10, as.Date("1900-01-01"), as.Date("2026-01-01"), "Lucky and Unlucky Decades for U.S. Stocks", "Where complete decade data is not available, partial data is shown.")
 plot_years(20, as.Date("1960-01-01"), as.Date("2000-01-01"), "From 1960-1980, Beating the Market by 5%\nWould Have Made You LESS Money Than\nUnderperforming By 5% From 1980-2000", "")
 
 all_20yr_returns <- sp500_ret_pe %>%
@@ -124,7 +124,7 @@ note_string <- str_wrap(paste0("Note:  Adjusted for dividends and inflation."),
 # Plot the returns to show how much they change over time
 plot <- ggplot(data = all_20yr_returns, aes(x = date, y = ret_20yr)) +
   geom_line() +
-  ggtitle("Rolling 20-Year Annualized Real Returns\nS&P 500") +
+  ggtitle("Rolling 20-Year Annualized Real Returns\nU.S. Stocks") +
   scale_y_continuous(labels = percent) +
   of_dollars_and_data_theme +
   labs(x = "Date" , y = paste0("Annualized Real Return (%)\nFor 20 Years"),
@@ -135,5 +135,55 @@ my_gtable   <- ggplot_gtable(ggplot_build(plot))
 
 # Save the plot  
 ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
+
+# Now run the alpha analysis
+calendar_years_only <- all_20yr_returns %>%
+  filter(month(date) == 1) 
+
+alphas <- seq(0, 0.1, 0.01)
+
+final_results <- data.frame()
+counter <- 1
+
+for(alpha in alphas){
+   cal_with_alpha_beta <- calendar_years_only %>%
+    mutate(plus_alpha = ret_20yr + alpha,
+           beta = ret_20yr)
+  
+  full_merge <- cal_with_alpha_beta %>%
+    inner_join(cal_with_alpha_beta, join_by(date < date), suffix = c("_start", "_end"))
+  
+  plus_underperform_minus <- full_merge %>%
+    filter(plus_alpha_start < beta_end)
+  
+  final_results[counter, "alpha"] <- alpha
+  final_results[counter, "win_rate"] <- nrow(plus_underperform_minus)/nrow(full_merge)
+  
+  counter <- counter + 1
+}
+
+to_plot <- final_results
+
+file_path = paste0(out_path, "/alpha_lose_rate.jpeg")
+
+# Strings for source and note
+source_string <- "Source: http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"
+
+note_string <- str_wrap(paste0("Note: Assumes a 20-year return period and consistent alpha each year."),
+                        width = 85)
+
+# Plot the returns to show how much they change over time
+plot <- ggplot(data = to_plot, aes(x = alpha, y = win_rate)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  ggtitle("How Often Alpha Loses to Beta by Alpha Size\nU.S. Stocks") +
+  scale_fill_discrete(guide = FALSE) +
+  scale_y_continuous(labels = percent) +
+  scale_x_continuous(labels = percent_format(accuracy = 1), breaks = seq(0, 0.1, 0.01)) +
+  of_dollars_and_data_theme +
+  labs(x = "Annualized Alpha" , y = paste0("Lose Rate"),
+       caption = paste0("\n", source_string, "\n", note_string))
+
+# Save the plot  
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #
