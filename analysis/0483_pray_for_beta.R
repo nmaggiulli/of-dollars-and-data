@@ -75,7 +75,7 @@ plot_years <- function(n_years, start_date, end_date, title_string, note_extra){
   file_path = paste0(out_path, "/period_returns_", n_years, "yr_", start_date_string, ".jpeg")
   
   # Strings for source and note
-  source_string <- "Source:  http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"
+  source_string <- "Source: http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"
   
   note_string <- str_wrap(paste0("Note:  Adjusted for dividends and inflation. ", note_extra),
                           width = 85)
@@ -106,5 +106,33 @@ plot_years <- function(n_years, start_date, end_date, title_string, note_extra){
 plot_years(10, as.Date("1900-01-01"), as.Date("2026-01-01"), "Lucky and Unlucky Decades for the S&P 500", "Where complete decade data is not available, partial data is shown.")
 plot_years(20, as.Date("1960-01-01"), as.Date("2000-01-01"), "From 1960-1980, Beating the Market by 5%\nWould Have Made You LESS Money Than\nUnderperforming By 5% From 1980-2000", "")
 
+all_20yr_returns <- sp500_ret_pe %>%
+                      mutate(ret_20yr = (lead(price_plus_div, 240)/price_plus_div)^(1/20) - 1) %>%
+                      select(date, ret_20yr)
+
+#Plot rolling 20-year annualized returns
+# Set the file_path based on the function input 
+file_path = paste0(out_path, "/rolling_20yr_annualized_returns.jpeg")
+
+# Strings for source and note
+source_string <- "Source: http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"
+
+note_string <- str_wrap(paste0("Note:  Adjusted for dividends and inflation."),
+                        width = 85)
+
+# Plot the returns to show how much they change over time
+plot <- ggplot(data = all_20yr_returns, aes(x = date, y = ret_20yr)) +
+  geom_line() +
+  ggtitle("Rolling 20-Year Annualized Real Return\nS&P 500") +
+  scale_y_continuous(labels = percent) +
+  of_dollars_and_data_theme +
+  labs(x = "Date" , y = paste0("Annualized Real Return (%)\nFor 20 Years"),
+       caption = paste0("\n", source_string, "\n", note_string))
+
+# Turn plot into a gtable for adding text grobs
+my_gtable   <- ggplot_gtable(ggplot_build(plot))
+
+# Save the plot  
+ggsave(file_path, my_gtable, width = 15, height = 12, units = "cm")
 
 # ############################  End  ################################## #
