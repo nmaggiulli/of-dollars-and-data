@@ -144,7 +144,7 @@ function calculateStepSize(maxValue) {
     return stepSize;
 }
 
-function calculatePercentile() {
+function calculateNWPercentile() {
     //Remove old chart
     document.getElementById("myChart").remove();
     
@@ -156,7 +156,7 @@ function calculatePercentile() {
     
     document.getElementById("chart-container").appendChild(newCanvas);
 
-    const ageGroup = document.getElementById("age").value;
+    const ageGroup = document.getElementById("nw-age").value;
     const netWorth = getNumericValue(document.getElementById("net-worth").value);
     let userPercentileIndex = -1;
     let percentile = "Not Found";
@@ -335,8 +335,8 @@ html_start2 <- '
   <!-- Your HTML content goes here -->
   <div class="calculator">
         <div class="inputs">
-               <label for="age">Your Age Group:</label>
-              <select id="age" name="age">
+               <label for="nw-age">Your Age Group:</label>
+              <select id="nw-age" name="nw-age">
                   <option value="">Select age group</option>
                   <option value="All Ages">All Ages</option>
                   <option value="20-24">20-24</option>
@@ -360,7 +360,7 @@ html_start2 <- '
              oninput="formatInputNumber(this)" 
              onblur="if(this.value === \'\') this.value = \'0\'">
         </div>
-        <button onclick="calculatePercentile()">Calculate Percentile</button>
+        <button onclick="calculateNWPercentile()">Calculate Percentile</button>
   </div>
 
   <div class="results">
@@ -389,7 +389,7 @@ html_end <-
   
 # Write the HTML string to a file
 writeLines(paste(trimws(html_start1), trimws(html_start2), 
-                 html_js_script, 
+                 html_js_script,
                  " const nw_data = ", json_data, ";", 
                  js_function_string, html_end), 
            paste0(out_path, "/_test_nw_by_age_calc.html"))
