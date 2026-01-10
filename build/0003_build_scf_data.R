@@ -86,6 +86,7 @@ for (x in year_list){
                     'payedu1', 'payedu2', 'payedu3', 'payedu4', 'payedu5', 'payedu6', 'payedu7',
                     'income', 'wageinc', 'intdivinc', 'bussefarminc',  'kginc', 'ssretinc',
                     'agecl', 'age', 'hhsex', 'race', 'racecl4', 'edcl', 'married', 'kids', 
+                    'x5801', # <--- Added this variable (Inheritance)
                     'wgt')
   
   # Write a function to subset our data
@@ -134,6 +135,7 @@ scf_stack_final <- mutate(scf_stack, married = married %% 2,
                                       edcl == 4 ~ "College Degree",
                                       TRUE ~ "99"),
                     birthyear = year - age,
+                    inheritance = ifelse(x5801 == 1, 1, 0),
                      payedu = payedu1 + payedu2 + payedu3 + payedu4 + payedu5 + payedu6 + payedu7) %>%
               select(-payedu1, -payedu2, -payedu3, -payedu4, -payedu5, -payedu6, -payedu7)
 
