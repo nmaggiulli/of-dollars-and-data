@@ -1,5 +1,11 @@
-# Set dataroot location
-dataroot <- "/Users/nmaggiulli/Google Drive/My Drive/of_dollars_and_data/"
+# Set dataroot location dynamically
+os <- Sys.info()["sysname"]
+
+if (os == "Darwin") {  # macOS
+  dataroot <- "~/Google Drive/My Drive/of_dollars_and_data/"
+} else if (os == "Windows") {
+  dataroot <- "G:/My Drive/of_dollars_and_data/"
+}
 
 # Set dataset libraries
 localdir <- paste0(dataroot, "datasets/")

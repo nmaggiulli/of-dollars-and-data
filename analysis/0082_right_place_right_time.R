@@ -11,7 +11,7 @@ library(lubridate)
 library(scales)
 library(tidyverse)
 
-folder_name <- "0082_pray_for_beta"
+folder_name <- "0082_right_place_right_time"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
