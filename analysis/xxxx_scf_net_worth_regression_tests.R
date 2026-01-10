@@ -19,7 +19,7 @@ library(Hmisc)
 library(xtable)
 library(tidyverse)
 
-folder_name <- "0489_scf_net_worth_regressions"
+folder_name <- "xxxx_scf_net_worth_regression_tests"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
