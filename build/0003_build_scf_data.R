@@ -78,6 +78,8 @@ for (x in year_list){
   #   3 = some college, 4 = college degree
   # married = marital status, 1 = married/living with partner, 2 = neither married nor living with partner
   # kids = number of kids
+  # x5801 = Inheritance (1 = yes, 5 = no)
+  # x3915 = stock options (actual value)
   
   vars_to_keep <- c('y1', 'yy1', 'networth', 'asset',
                     'fin' , 'liq', 'cds', 'nmmf', 'stocks', 'bond', 'retqliq', 'savbnd', 'cashli', 'othma', 'othfin', 'reteq',
@@ -86,7 +88,7 @@ for (x in year_list){
                     'payedu1', 'payedu2', 'payedu3', 'payedu4', 'payedu5', 'payedu6', 'payedu7',
                     'income', 'wageinc', 'intdivinc', 'bussefarminc',  'kginc', 'ssretinc',
                     'agecl', 'age', 'hhsex', 'race', 'racecl4', 'edcl', 'married', 'kids', 
-                    'x5801', # <--- Added this variable (Inheritance)
+                    'x5801', 'x3915',
                     'wgt')
   
   # Write a function to subset our data
@@ -136,8 +138,9 @@ scf_stack_final <- mutate(scf_stack, married = married %% 2,
                                       TRUE ~ "99"),
                     birthyear = year - age,
                     inheritance = ifelse(x5801 == 1, 1, 0),
+                    stock_options = x3915,
                      payedu = payedu1 + payedu2 + payedu3 + payedu4 + payedu5 + payedu6 + payedu7) %>%
-              select(-payedu1, -payedu2, -payedu3, -payedu4, -payedu5, -payedu6, -payedu7)
+              select(-payedu1, -payedu2, -payedu3, -payedu4, -payedu5, -payedu6, -payedu7, -x3915, -x5801)
 
 # Make edcl into a factor
 scf_stack_final$edcl <- factor(scf_stack_final$edcl,levels = c("No High School", 
