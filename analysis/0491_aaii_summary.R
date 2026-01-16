@@ -20,7 +20,7 @@ library(xtable)
 library(gt)
 library(tidyverse)
 
-folder_name <- "0489_scf_net_worth_regressions"
+folder_name <- "0491_aaii_summary"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
@@ -38,11 +38,61 @@ aaii <- aaii_raw[3:(length(all_dates)+2), 2:6]
 colnames(aaii) <- c("stock_funds", "stocks", "bond_funds", "bonds", "cash")  
 
 aaii <- aaii %>%
-  mutate(date = as.POSIXct(all_dates),
+  mutate(date = as.POSIXct(all_dates) + days(1) - months(1),
          stock_allocation = as.numeric(stocks) + as.numeric(stock_funds),
          bond_allocation = as.numeric(bonds) + as.numeric(bond_funds),
          cash_allocation = as.numeric(cash)) %>%
   select(date, stock_allocation, bond_allocation, cash_allocation)
+
+sp500 <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
+          select(date, price_plus_div)
+
+df <- aaii %>%
+        left_join(sp500) %>%
+        mutate(fwd_ret_10 = (lead(price_plus_div, 120)/price_plus_div)^(1/10) - 1)
+
+to_plot <- df %>%
+              select(date, stock_allocation, fwd_ret_10) %>%
+              drop_na() %>%
+              mutate(flag = case_when(
+                year(date) == 2015 ~ 1,
+                TRUE ~ 0
+              ))
+
+# Set the file_path based on the function input 
+file_path <- paste0(out_path, "/aaii_allocation_vs_sp500_rets_2025_12_31.jpeg")
+source_string <- "Source: Shiller data, AAII (OfDollarsAndData.com)"
+note_string <- str_wrap(paste0("Note: S&P 500 returns include dividends and are adjusted for inflation."),
+                        width = 85)
+
+plot <- ggplot(to_plot, aes(x = stock_allocation, y = fwd_ret_10)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  scale_y_continuous(label = percent) +
+  scale_x_continuous(label = percent) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Higher Investor Allocation to Equities\nCorresponds to Lower Future Returns")) +
+  labs(x = "Average Investor Allocation to Equities" , y = "Future 10-Year Returns (Annualized)",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
+#Now highlight 2025
+file_path <- paste0(out_path, "/aaii_allocation_vs_sp500_rets_2025_12_31_highlighted.jpeg")
+
+plot <- ggplot(to_plot, aes(x = stock_allocation, y = fwd_ret_10, col = as.factor(flag))) +
+  geom_point() +
+  scale_color_manual(values = c("black", "red"), guide = "none") +
+  scale_y_continuous(label = percent) +
+  scale_x_continuous(label = percent) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Stock Allocation vs. Future 10-Year Return\n2015 Highlighted")) +
+  labs(x = "Average Investor Allocation to Equities" , y = "Future 10-Year Returns (Annualized)",
+       caption = paste0(source_string, "\n", note_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 
 # ############################  End  ################################## #
