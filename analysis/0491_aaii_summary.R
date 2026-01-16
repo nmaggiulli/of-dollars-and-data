@@ -94,5 +94,22 @@ plot <- ggplot(to_plot, aes(x = stock_allocation, y = fwd_ret_10, col = as.facto
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+file_path <- paste0(out_path, "/equity_allocation_over_time_1987_2025.jpeg")
+source_string <- str_wrap("Source: AAII, 1987-2025",
+                          width = 85)
+
+# Plot the allocation vs the average
+plot <- ggplot(aaii, aes(x = date, y = stock_allocation)) +
+  geom_line() +
+  geom_hline(yintercept = 0.62, col = "gray") +
+  scale_y_continuous(label = percent) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Investor Allocation to Equities Over Time")) +
+  labs(x = "Date" , y = "Average Investor Allocation to Equities",
+       caption = paste0("\n", source_string))
+
+# Save the plot
+ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+
 
 # ############################  End  ################################## #
