@@ -20,13 +20,13 @@ library(xtable)
 library(gt)
 library(tidyverse)
 
-folder_name <- "0491_aaii_summary"
+folder_name <- "0499_aaii_summary"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-aaii_raw <- read_excel(paste0(importdir, "0491_aaii_data/aaii.xls"))
+aaii_raw <- read_excel(paste0(importdir, "0499_aaii_data/aaii.xls"))
 
 # Create a date list to use for subsetting
 end_month <- floor_date(Sys.Date(), "month")
