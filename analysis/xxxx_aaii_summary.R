@@ -20,7 +20,7 @@ library(xtable)
 library(gt)
 library(tidyverse)
 
-folder_name <- "0499_aaii_summary"
+folder_name <- "xxxx_aaii_summary"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
