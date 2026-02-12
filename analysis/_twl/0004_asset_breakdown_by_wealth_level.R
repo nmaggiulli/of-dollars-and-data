@@ -163,7 +163,7 @@ to_plot_nm <- to_plot %>%
                                      key = c("Business Interests", "Real Estate",  "Primary Residence", "Vehicles",             
                                              "Retirement", "Stocks & Mutual Funds", "Cash", "Other"),
                                      value = c(0.23, 0, 0, 0, 
-                                               0.23, 0.48, 0.20, 0.05)))
+                                               0.23, 0.29, 0.20, 0.05)))
 
 file_path <- paste0(out_path, "/_asset_breakdown_by_wealth_level_nm.jpeg")
 
