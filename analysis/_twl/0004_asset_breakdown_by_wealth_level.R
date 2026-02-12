@@ -162,8 +162,8 @@ to_plot_nm <- to_plot %>%
                 bind_rows(data.frame(wealth_level = rep("Nick Maggiulli", 8),
                                      key = c("Business Interests", "Real Estate",  "Primary Residence", "Vehicles",             
                                              "Retirement", "Stocks & Mutual Funds", "Cash", "Other"),
-                                     value = c(0.17, 0, 0, 0, 
-                                               0.25, 0.52, 0.01, 0.05)))
+                                     value = c(0.23, 0, 0, 0, 
+                                               0.23, 0.48, 0.20, 0.05)))
 
 file_path <- paste0(out_path, "/_asset_breakdown_by_wealth_level_nm.jpeg")
 
