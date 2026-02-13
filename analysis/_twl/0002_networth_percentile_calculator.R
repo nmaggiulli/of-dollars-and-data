@@ -86,20 +86,20 @@ find_percentile <- function(amount, var, varname){
   print(paste0(varname, " Percentile for ", format_as_dollar(amount), " = ", 100*p_guess, "%"))
 }
 
-find_percentile(10000, "networth", "Net Worth")
-find_percentile(10^5, "networth", "Net Worth")
+# find_percentile(10000, "networth", "Net Worth")
+# find_percentile(10^5, "networth", "Net Worth")
 find_percentile(10^6, "networth", "Net Worth")
-find_percentile(10^7, "networth", "Net Worth")
-find_percentile(10^8, "networth", "Net Worth")
-
-find_percentile(35000, "income", "Income")
-find_percentile(70000, "income", "Income")
-find_percentile(140000, "income", "Income")
-
-find_percentile(100000, "liquid_networth", "Liquid Net Worth")
+# find_percentile(10^7, "networth", "Net Worth")
+# find_percentile(10^8, "networth", "Net Worth")
+# 
+# find_percentile(35000, "income", "Income")
+# find_percentile(70000, "income", "Income")
+# find_percentile(140000, "income", "Income")
+# 
+# find_percentile(100000, "liquid_networth", "Liquid Net Worth")
 find_percentile(10^6, "liquid_networth", "Liquid Net Worth")
-
-find_percentile(100000, "networth_ex_homeeq", "NW Minus Home Equity")
+# 
+# find_percentile(100000, "networth_ex_homeeq", "NW Minus Home Equity")
 find_percentile(10^6, "networth_ex_homeeq", "NW Minus Home Equity")
 
 # ############################  End  ################################## #`
