@@ -70,25 +70,25 @@ all_returns <- map2(periods, period_labels, function(p, lab) {
 
 create_buckets <- function(returns_vec, n_months) {
   if (n_months < 12) {
-    # Total return buckets for short periods
-    breaks <- c(-Inf, -0.20, -0.10, -0.05, -0.02, 0, 0.02, 0.05, 0.10, 0.20, Inf)
-    labels <- c("< -20%", "-20% to -10%", "-10% to -5%", "-5% to -2%", "-2% to 0%",
-                "0% to 2%", "2% to 5%", "5% to 10%", "10% to 20%", "> 20%")
+    # Even 5% bins for monthly/quarterly total returns
+    breaks <- c(-Inf, -0.15, -0.10, -0.05, 0, 0.05, 0.10, 0.15, Inf)
+    labels <- c("< -15%", "-15% to -10%", "-10% to -5%", "-5% to 0%",
+                "0% to 5%", "5% to 10%", "10% to 15%", "> 15%")
   } else if (n_months == 12) {
-    # 1-year buckets (wider spread)
-    breaks <- c(-Inf, -0.30, -0.20, -0.10, -0.05, 0, 0.05, 0.10, 0.20, 0.30, Inf)
-    labels <- c("< -30%", "-30% to -20%", "-20% to -10%", "-10% to -5%", "-5% to 0%",
-                "0% to 5%", "5% to 10%", "10% to 20%", "20% to 30%", "> 30%")
+    # Even 10% bins for 1-year returns
+    breaks <- c(-Inf, -0.30, -0.20, -0.10, 0, 0.10, 0.20, 0.30, Inf)
+    labels <- c("< -30%", "-30% to -20%", "-20% to -10%", "-10% to 0%",
+                "0% to 10%", "10% to 20%", "20% to 30%", "> 30%")
   } else if (n_months <= 120) {
-    # 5-10 year annualized
-    breaks <- c(-Inf, -0.05, -0.02, 0, 0.02, 0.04, 0.06, 0.08, 0.10, 0.12, Inf)
-    labels <- c("< -5%", "-5% to -2%", "-2% to 0%", "0% to 2%", "2% to 4%",
+    # Even 2% bins for 5-10 year annualized
+    breaks <- c(-Inf, -0.04, -0.02, 0, 0.02, 0.04, 0.06, 0.08, 0.10, 0.12, Inf)
+    labels <- c("< -4%", "-4% to -2%", "-2% to 0%", "0% to 2%", "2% to 4%",
                 "4% to 6%", "6% to 8%", "8% to 10%", "10% to 12%", "> 12%")
   } else {
-    # 20-30 year annualized (very tight range)
-    breaks <- c(-Inf, 0, 0.02, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10, Inf)
-    labels <- c("< 0%", "0% to 2%", "2% to 4%", "4% to 5%", "5% to 6%",
-                "6% to 7%", "7% to 8%", "8% to 9%", "9% to 10%", "> 10%")
+    # Even 2% bins for 20-30 year annualized
+    breaks <- c(-Inf, 0, 0.02, 0.04, 0.06, 0.08, 0.10, 0.12, Inf)
+    labels <- c("< 0%", "0% to 2%", "2% to 4%", "4% to 6%",
+                "6% to 8%", "8% to 10%", "10% to 12%", "> 12%")
   }
   
   cut(returns_vec, breaks = breaks, labels = labels, right = TRUE)
@@ -200,6 +200,64 @@ for (lab in period_labels) {
   
   expected_ret <- sum(period_results$contribution) * 100
   cat(sprintf("\n  Expected Return: %.2f%%\n\n", expected_ret))
+}
+
+all_periods <- unique(results$period)
+
+bucket_labels <- list(
+  "1 Month" = c("< -15%", "-15% to -10%", "-10% to -5%", "-5% to 0%",
+                "0% to 5%", "5% to 10%", "10% to 15%", "> 15%"),
+  "3 Months" = c("< -15%", "-15% to -10%", "-10% to -5%", "-5% to 0%",
+                 "0% to 5%", "5% to 10%", "10% to 15%", "> 15%"),
+  "1 Year" = c("< -30%", "-30% to -20%", "-20% to -10%", "-10% to 0%",
+               "0% to 10%", "10% to 20%", "20% to 30%", "> 30%"),
+  "5 Years" = c("< -4%", "-4% to -2%", "-2% to 0%", "0% to 2%", "2% to 4%",
+                "4% to 6%", "6% to 8%", "8% to 10%", "10% to 12%", "> 12%"),
+  "10 Years" = c("< -4%", "-4% to -2%", "-2% to 0%", "0% to 2%", "2% to 4%",
+                 "4% to 6%", "6% to 8%", "8% to 10%", "10% to 12%", "> 12%"),
+  "20 Years" = c("< 0%", "0% to 2%", "2% to 4%", "4% to 6%",
+                 "6% to 8%", "8% to 10%", "10% to 12%", "> 12%"),
+  "30 Years" = c("< 0%", "0% to 2%", "2% to 4%", "4% to 6%",
+                 "6% to 8%", "8% to 10%", "10% to 12%", "> 12%")
+)
+
+for(p in all_periods){
+  
+  period_results <- all_returns %>%
+    filter(period == p)
+  
+  if(grepl("Month", p)){
+    x_lab <- "Total Real Return"
+    annualized_string <- ""
+    exp_ret<- mean(period_results$total_return)
+  } else{
+    x_lab <- "Total Real Return (Annualized)"
+    annualized_string <- " (annualized)"
+    exp_ret<- mean(period_results$annualized_return)
+  }
+  
+  to_plot <- results %>%
+              filter(period == p) %>%
+              mutate(return_range = factor(return_range, levels = bucket_labels[[p]]))
+  
+  file_path <- paste0(out_path, "/us_stock_", p, "_return_distribution.jpeg")
+  source_string <- paste0("Source: Shiller data, 1926-2025 (OfDollarsAndData.com)")
+  note_string   <- str_wrap(paste0("Note: Performance includes reinvested dividends and is adjusted for inflation. The expected total real return over ", p, " is ", round(100*exp_ret, 2), "%", annualized_string, "."),
+                            width = 85)
+  
+  plot <- ggplot(to_plot, aes(x = return_range, y = probability)) +
+    geom_bar(stat = "identity", fill = chart_standard_color) +
+    scale_y_continuous(label = percent_format(accuracy = 1)) +
+    geom_text(aes(label = percent(probability, accuracy = 1)),
+              vjust = -0.5, color = chart_standard_color, size = 3) +
+    of_dollars_and_data_theme +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    ggtitle(paste0("U.S. Stock Market Return Distribution\n", p)) +
+    labs(x = x_lab, y = "Probability",
+         caption = paste0(source_string, "\n", note_string))
+  
+  # Save the plot
+  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
 # ############################  End  ################################## #
