@@ -39,7 +39,8 @@ sp500_ret_pe   <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds"))
 
 df <- sp500_ret_pe %>%
           filter(date >= "1926-01-01", date<= "2025-12-31") %>%
-          select(date, price_plus_div)
+          select(date, price_plus_div) %>%
+          arrange(date)
 
 # Define holding periods in months
 periods <- c(1, 3, 12, 60, 120, 240, 360)
@@ -230,17 +231,19 @@ for(p in all_periods){
     x_lab <- "Total Real Return"
     annualized_string <- ""
     exp_ret<- mean(period_results$total_return)
+    label_accuracy <- 0.1
   } else{
     x_lab <- "Total Real Return (Annualized)"
     annualized_string <- " (annualized)"
     exp_ret<- mean(period_results$annualized_return)
+    label_accuracy <- 1
   }
   
   to_plot <- results %>%
               filter(period == p) %>%
               mutate(return_range = factor(return_range, levels = bucket_labels[[p]]))
   
-  file_path <- paste0(out_path, "/us_stock_", p, "_return_distribution.jpeg")
+  file_path <- paste0(out_path, "/us_stock_", p, "_return_dist_1926_2025.jpeg")
   source_string <- paste0("Source: Shiller data, 1926-2025 (OfDollarsAndData.com)")
   note_string   <- str_wrap(paste0("Note: Performance includes reinvested dividends and is adjusted for inflation. The expected total real return over ", p, " is ", round(100*exp_ret, 2), "%", annualized_string, "."),
                             width = 85)
@@ -248,7 +251,7 @@ for(p in all_periods){
   plot <- ggplot(to_plot, aes(x = return_range, y = probability)) +
     geom_bar(stat = "identity", fill = chart_standard_color) +
     scale_y_continuous(label = percent_format(accuracy = 1)) +
-    geom_text(aes(label = percent(probability, accuracy = 1)),
+    geom_text(aes(label = percent(probability, accuracy = label_accuracy)),
               vjust = -0.5, color = chart_standard_color, size = 3) +
     of_dollars_and_data_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -259,5 +262,156 @@ for(p in all_periods){
   # Save the plot
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
+
+# ============================================================
+# Worst Entry Points Analysis
+# ============================================================
+
+worst_starts <- c("1929-09-01", "1973-01-01", "2000-03-01", "2007-10-01")
+worst_labels <- c("September 1929", "January 1973", "March 2000", "October 2007")
+
+# For each worst entry point, track growth of $1 over time
+worst_results <- map2_dfr(worst_starts, worst_labels, function(start, lab) {
+  
+  start_date <- as.Date(start)
+  
+  subset <- df %>%
+    filter(date >= start_date) %>%
+    mutate(
+      months_elapsed = as.numeric(difftime(date, start_date, units = "days")) / 30.44,
+      years_elapsed = months_elapsed / 12,
+      growth = price_plus_div / first(price_plus_div)
+    ) %>%
+    mutate(entry_point = lab)
+  
+  return(subset)
+})
+
+worst_results$entry_point <- factor(worst_results$entry_point, levels = worst_labels)
+
+# --- Chart 1: Growth of $1 for each entry point (first 20 years) ---
+plot_data <- worst_results %>%
+  filter(years_elapsed <= 20)
+
+plot_growth <- ggplot(plot_data, aes(x = years_elapsed, y = growth, color = entry_point)) +
+  geom_line(linewidth = 0.8) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "grey50") +
+  scale_y_continuous(label = dollar_format()) +
+  scale_color_manual(values = c("September 1929" = "#1a252f",
+                                "January 1973" = "#4292c6",
+                                "March 2000" = "#e08b36",
+                                "October 2007" = "#c94040")) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle("Growth of $1 Invested at the Worst Times\nU.S. Stocks, Real Total Return") +
+  labs(x = "Years After Investment",
+       y = "Growth of $1 (Real)",
+       caption = paste0("Source: Shiller data, 1926-2025 (OfDollarsAndData.com)\n",
+                        str_wrap("Note: Performance includes reinvested dividends and is adjusted for inflation.", width = 85)))
+
+ggsave(paste0(out_path, "/worst_entry_points_growth_20yr_line.jpeg"), plot_growth,
+       width = 15, height = 12, units = "cm")
+
+# --- Chart 2: Annualized returns at key milestones for each entry point ---
+milestones <- c(1, 5, 10, 20)
+
+milestone_returns <- map2_dfr(worst_starts, worst_labels, function(start, lab) {
+  
+  start_date <- as.Date(start)
+  start_price <- df %>% filter(date == start_date) %>% pull(price_plus_div)
+  
+  map_dfr(milestones, function(yrs) {
+    
+    end_date <- start_date %m+% months(yrs * 12)
+    
+    end_row <- df %>%
+      filter(date >= end_date) %>%
+      slice(1)
+    
+    if (nrow(end_row) == 0) return(NULL)
+    
+    end_price <- end_row$price_plus_div
+    total_return <- end_price / start_price - 1
+    ann_return <- (end_price / start_price)^(1 / yrs) - 1
+    
+    tibble(
+      entry_point = lab,
+      horizon = paste0(yrs, " Year", ifelse(yrs > 1, "s", "")),
+      horizon_years = yrs,
+      total_return = total_return,
+      annualized_return = ann_return
+    )
+  })
+})
+
+milestone_returns$horizon <- factor(milestone_returns$horizon,
+                                    levels = c("1 Year", "5 Years", "10 Years", "20 Years"))
+milestone_returns$entry_point <- factor(milestone_returns$entry_point, levels = worst_labels)
+
+# Grouped bar chart
+plot_milestones <- ggplot(milestone_returns,
+                          aes(x = horizon, y = annualized_return, fill = entry_point)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7) +
+  geom_text(aes(label = sprintf("%.1f%%", annualized_return * 100),
+                y = annualized_return + ifelse(annualized_return >= 0, 0.005, -0.005)),
+            position = position_dodge(width = 0.8),
+            vjust = ifelse(milestone_returns$annualized_return >= 0, -0.3, 1.3),
+            size = 2.2, color = "black"") +
+  geom_hline(yintercept = 0, color = "black", linewidth = 0.3) +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  scale_fill_manual(values = c("September 1929" = "#1a252f",
+                                "January 1973" = "#4292c6",
+                                "March 2000" = "#e08b36",
+                                "October 2007" = "#c94040")) +
+  of_dollars_and_data_theme +
+  theme(legend.position = "bottom",
+        legend.title = element_blank()) +
+  ggtitle("Annualized Real Returns After Investing\nat the Worst Possible Times") +
+  labs(x = "Holding Period",
+       y = "Annualized Real Return",
+       caption = paste0("Source: Shiller data, 1926-2025 (OfDollarsAndData.com)\n",
+                        str_wrap("Note: Performance includes reinvested dividends and is adjusted for inflation.", width = 85)))
+
+ggsave(paste0(out_path, "/worst_entry_points_milestones.jpeg"), plot_milestones,
+       width = 15, height = 12, units = "cm")
+
+# --- Print summary table ---
+cat(strrep("=", 70), "\n")
+cat("WORST ENTRY POINTS: ANNUALIZED REAL RETURNS\n")
+cat(strrep("=", 70), "\n\n")
+
+milestone_returns %>%
+  mutate(annualized_return = sprintf("%.2f%%", annualized_return * 100)) %>%
+  pivot_wider(names_from = horizon, values_from = annualized_return) %>%
+  select(-horizon_years, -total_return) %>%
+  print()
+
+# --- Time to recovery for each entry point ---
+recovery <- map2_dfr(worst_starts, worst_labels, function(start, lab) {
+  
+  start_date <- as.Date(start)
+  start_price <- df %>% filter(date == start_date) %>% pull(price_plus_div)
+  
+  recovery_row <- df %>%
+    filter(date > start_date, price_plus_div >= start_price) %>%
+    slice(1)
+  
+  if (nrow(recovery_row) == 0) {
+    recovery_months <- NA
+  } else {
+    recovery_months <- interval(start_date, recovery_row$date) %/% months(1)
+  }
+  
+  tibble(
+    entry_point = lab,
+    recovery_months = recovery_months,
+    recovery_years = round(recovery_months / 12, 1)
+  )
+})
+
+cat("\nTIME TO RECOVERY (Real Total Return)\n")
+cat(strrep("-", 70), "\n")
+print(recovery)
 
 # ############################  End  ################################## #
