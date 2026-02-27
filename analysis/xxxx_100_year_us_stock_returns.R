@@ -357,7 +357,7 @@ plot_milestones <- ggplot(milestone_returns,
                 y = annualized_return + ifelse(annualized_return >= 0, 0.005, -0.005)),
             position = position_dodge(width = 0.8),
             vjust = ifelse(milestone_returns$annualized_return >= 0, -0.3, 1.3),
-            size = 2.2, color = "black"") +
+            size = 2.2, color = "black") +
   geom_hline(yintercept = 0, color = "black", linewidth = 0.3) +
   scale_y_continuous(label = percent_format(accuracy = 1)) +
   scale_fill_manual(values = c("September 1929" = "#1a252f",
