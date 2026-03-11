@@ -72,7 +72,7 @@ plot_years <- function(n_years, start_date, end_date, title_string, note_extra){
   start_date_string <- as.character(start_date)
   
   # Set the file_path based on the function input 
-  file_path = paste0(out_path, "/period_returns_", n_years, "yr_", start_date_string, ".jpeg")
+  file_path = paste0(out_path, "/period_returns_", n_years, "yr_", start_date_string, "_updated.jpeg")
   
   # Strings for source and note
   source_string <- "Source: http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"
@@ -113,7 +113,7 @@ all_20yr_returns <- sp500_ret_pe %>%
 
 #Plot rolling 20-year annualized returns
 # Set the file_path based on the function input 
-file_path = paste0(out_path, "/rolling_20yr_annualized_returns.jpeg")
+file_path = paste0(out_path, "/rolling_20yr_annualized_returns_updated.jpeg")
 
 # Strings for source and note
 source_string <- "Source: http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"
@@ -164,7 +164,7 @@ for(alpha in alphas){
 
 to_plot <- final_results
 
-file_path = paste0(out_path, "/alpha_lose_rate.jpeg")
+file_path = paste0(out_path, "/alpha_lose_rate_updated.jpeg")
 
 # Strings for source and note
 source_string <- "Source: http://www.econ.yale.edu/~shiller/data.htm (OfDollarsAndData.com)"
