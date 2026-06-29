@@ -28,7 +28,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 # ------------------------------- EDIT ME -----------------------------
 principal_today <- 5e6                       # $ amount, in TODAY's money
-start_date      <- as_date("1980-01-01")     # how far back to go
+start_date      <- as_date("1987-01-01")     # how far back to go
+start_year      <- year(start_date)
 cpi_path        <- paste0(importdir, "/", folder_name, "/CPIAUCNS.xlsx")         
 tbill_path      <- paste0(importdir, "/", folder_name, "/DGS1.xlsx")
 # ---------------------------------------------------------------------
@@ -88,10 +89,6 @@ result <- merged |>
     #     that period's dollars (e.g. ~$1.16M in early 1980). This is the
     #     "real value of $5M" column you asked for.
     
-    # --- income, viewed two ways ---
-    income_real_dollars = principal_period_dollars * y_nom
-    #   ^ actual nominal interest $ you'd have collected that year, in today's $
-    
   ) |>
   filter(date >= start_date) |>
   transmute(
@@ -101,13 +98,14 @@ result <- merged |>
     real_yield_pct                = real_yield * 100,     # real 1-yr yield, %
     principal_today_dollars,                              # constant $5M (today's $)
     principal_period_dollars,                             # "real value of $5M" at each date
-    income_real_dollars,
   )
+
+first_value <- pull(result[1, "principal_period_dollars"])
 
 to_plot <- result
 
 # Set the file_path based on the function input 
-file_path <- paste0(out_path, "/tbill_1yr_rate.jpeg")
+file_path <- paste0(out_path, "/tbill_1yr_rate_", start_year, ".jpeg")
 source_string <- "Source: FRED (OfDollarsAndData.com)"
 
 plot <- ggplot(to_plot, aes(x = date, y = yield_1yr_pct/100)) +
@@ -122,7 +120,7 @@ plot <- ggplot(to_plot, aes(x = date, y = yield_1yr_pct/100)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Set the file_path based on the function input 
-file_path <- paste0(out_path, "/value_5m_real.jpeg")
+file_path <- paste0(out_path, "/value_5m_real_", start_year, ".jpeg")
 source_string <- "Source: FRED (OfDollarsAndData.com)"
 
 plot <- ggplot(to_plot, aes(x = date, y = principal_period_dollars)) +
@@ -136,16 +134,21 @@ plot <- ggplot(to_plot, aes(x = date, y = principal_period_dollars)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+to_plot2 <- to_plot %>%
+              mutate(nominal_income = first_value*yield_1yr_pct/100,
+                real_income = nominal_income*(principal_today_dollars/principal_period_dollars)) %>%
+              filter(month(date) == 1)
+
 # Set the file_path based on the function input 
-file_path <- paste0(out_path, "/tbill_5m_income_real.jpeg")
+file_path <- paste0(out_path, "/tbill_real_income_2026_", start_year, ".jpeg")
 source_string <- "Source: FRED (OfDollarsAndData.com)"
 
-plot <- ggplot(to_plot, aes(x = date, y = income_real_dollars)) +
+plot <- ggplot(to_plot2, aes(x = date, y = real_income)) +
   geom_line() +
   scale_y_continuous(label = dollar) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("Inflation-Adjusted Income of $5M in\n1-Year U.S. Treasury Bills")) +
-  labs(x = "Year" , y = "Annual Pre-Tax Income",
+  ggtitle(paste0("Inflation-Adjusted Income of $1.66M in\n1-Year U.S. Treasury Bills")) +
+  labs(x = "Year" , y = "Real Income\n(2026 Dollars)",
        caption = paste0(source_string))
 
 # Save the plot
