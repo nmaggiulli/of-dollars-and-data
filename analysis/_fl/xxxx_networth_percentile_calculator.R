@@ -24,13 +24,13 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-min_age <- 32
-max_age <- 35
+min_age <- 20
+max_age <- 25
 
 # Bring in assets and normalize percentages
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
-              filter(age >= 32,
-                     age<= 35) %>%
+              filter(age >= min_age,
+                     age<= max_age) %>%
                 mutate(wealth_level = case_when(
                   networth < 10000 ~ "L1 (<$10k)",
                   floor(log10(networth)) == 4 ~ "L2 ($10k)",
@@ -63,7 +63,7 @@ nw_pctiles <- scf_stack %>%
 
 to_plot <- nw_pctiles
 
-file_path <- paste0(out_path, "/networth_pcts_over_time.jpeg")
+file_path <- paste0(out_path, "/networth_pcts_over_time_", min_age, "_", max_age, ".jpeg")
 source_string <- paste0("Source:  Survey of Consumer Finances (OfDollarsAndData.com)")
 note_string <- str_wrap(paste0("Note: All figures are in 2022 inflation-adjusted dollars."),
                         width = 85)
@@ -75,7 +75,7 @@ plot <- ggplot(to_plot, aes(x=year, y=  networth, fill = as.factor(pct_label))) 
   scale_x_continuous(breaks = seq(min_year, max_year, 3)) +
   theme(legend.position = "bottom",
         legend.title = element_blank()) +
-  ggtitle(paste0("Inflation-Adjusted Net Worth Percentiles\n", min_age, "-", max_age, " Year-Old Households\n", min_year, "-", max_year)) +
+  ggtitle(paste0("Inflation-Adjusted Net Worth Percentiles\n", min_age, "-", max_age, " Year-Old Households")) +
   labs(x = "Year", y = "Net Worth",
        caption = paste0(source_string, "\n", note_string))
 
