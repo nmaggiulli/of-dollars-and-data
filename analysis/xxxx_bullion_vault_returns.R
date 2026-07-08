@@ -176,8 +176,9 @@ ealred <- "#7D110C"; ealdark <- "#423C30"
 
 all_stock        <- find_ret_sd_sharpe(replace(zero_w, "S&P 500", 1))
 all_gold         <- find_ret_sd_sharpe(replace(zero_w, "Gold", 1))
-all_home        <- find_ret_sd_sharpe(replace(zero_w, "U.S. Home Price", 1))
+all_home         <- find_ret_sd_sharpe(replace(zero_w, "U.S. Home Price", 1))
 stock_bond_50_50 <- find_ret_sd_sharpe(replace(zero_w, c("S&P 500","Treasury 10yr"), c(0.5,0.5)))
+pp               <- find_ret_sd_sharpe(replace(zero_w, c("S&P 500","Treasury 10yr", "Gold", "Tbill 3m"), c(0.25,0.25, 0.25, 0.25)))
 equal_weighted   <- find_ret_sd_sharpe(setNames(rep(1/n_assets, n_assets), colnames(returns)))
 
 frontier_plot <- ggplot(eff, aes(x = sd, y = exp_return)) +
@@ -198,7 +199,11 @@ frontier_plot <- ggplot(eff, aes(x = sd, y = exp_return)) +
   geom_point(data = all_gold, aes(x = sd, y = exp_return), color = "#FFD700", size = 2) +
   geom_text_repel(data = all_gold, label = "Gold Only", family = "my_font", size = 3,
                   nudge_x = -0.015, max.iter = 5000) +
-  
+
+  # Permanent portfolio
+  geom_point(data = pp, aes(x = sd, y = exp_return), color = "brown", size = 2) +
+  geom_text_repel(data = pp, label = "Permanent Portfolio", family = "my_font", size = 3, max.iter = 5000) +
+    
   # All U.S. Home
   geom_point(data = all_home, aes(x = sd, y = exp_return), color = "cyan", size = 2) +
   geom_text_repel(data = all_home, label = "U.S. Home Only", family = "my_font", size = 3, max.iter = 5000) +
@@ -217,6 +222,46 @@ frontier_plot <- ggplot(eff, aes(x = sd, y = exp_return)) +
   scale_y_continuous(label = percent)
 
 ggsave(paste0(out_path, "/efficient-frontier-", min_year, "-", max_year, ".jpeg"), frontier_plot, width = 15, height = 12, units = "cm")
+
+# Redo with just Permanent Portfolio
+frontier_plot2 <- ggplot(eff, aes(x = sd, y = exp_return)) +
+  geom_point(alpha = .15, color = ealdark) +
+  
+  # Optimal portfolio
+  geom_point(data = optimal, aes(x = sd, y = exp_return), color = ealred, size = 5) +
+  geom_text_repel(data = optimal, label = "Optimal Portfolio", family = "my_font", size = 3.5,
+                  segment.color = "transparent", 
+                  nudge_x = -0.02, nudge_y = 0.009, max.iter = 5000) +
+  # All S&P 500
+  geom_point(data = all_stock, aes(x = sd, y = exp_return), color = "green", size = 2) +
+  geom_text_repel(data = all_stock, label = "S&P 500 Only", family = "my_font", size = 3,
+                  segment.color = "transparent", 
+                  nudge_y = -0.004, max.iter = 5000) +
+
+  # All Gold
+  geom_point(data = all_gold, aes(x = sd, y = exp_return), color = "#FFD700", size = 2) +
+  geom_text_repel(data = all_gold, label = "Gold Only", family = "my_font", size = 3,
+                  nudge_x = -0.015, max.iter = 5000) +
+  
+  # Permanent portfolio
+  geom_point(data = pp, aes(x = sd, y = exp_return), color = "red", size = 2) +
+  geom_text_repel(data = pp, label = "Permanent Portfolio", family = "my_font", size = 3, nudge_y = -0.005, nudge_x = 0.01, 
+                  segment.color = "transparent", max.iter = 5000) +
+  
+  # All U.S. Home
+  geom_point(data = all_home, aes(x = sd, y = exp_return), color = "cyan", size = 2) +
+  geom_text_repel(data = all_home, label = "U.S. Home Only", family = "my_font", size = 3, max.iter = 5000) +
+  
+  ggtitle("Efficient Frontier and Optimal Portfolio\n") +
+  labs(x = "Risk (standard deviation of portfolio variance)", y = "Real Return",
+       caption = paste0("Source: BullionVault, ", min_year, "-", max_year, " (OfDollarsAndData.com)\n",
+                        "Note: Assumes no asset can be >", max_alloc * 100, "% of the portfolio and shorting is not allowed.")) +
+  of_dollars_and_data_theme +
+  scale_x_continuous(label = percent) +
+  scale_y_continuous(label = percent)
+
+ggsave(paste0(out_path, "/efficient-frontier-permanent-", min_year, "-", max_year, ".jpeg"), frontier_plot2, width = 15, height = 12, units = "cm")
+
 
 # ------------------------------------------------------------------
 # 6. HOW OFTEN DOES THE OPTIMAL PORTFOLIO LOSE MONEY?
