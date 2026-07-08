@@ -317,3 +317,79 @@ sp500_path <- cumprod(1 + returns$`S&P 500`) * 10000
 mdd <- function(path) min(path / cummax(path) - 1)
 cat(sprintf("\nMax drawdown, Optimal Portfolio: %.1f%%\n", mdd(port_path)*100))
 cat(sprintf("Max drawdown, S&P 500 Only:      %.1f%%\n", mdd(sp500_path)*100))
+
+# Calculate the highest return asset in each year (summarize after)
+real_returns_w_top <- real_returns %>%
+  rowwise() %>%
+  mutate(highest_ret_asset = names(real_returns)[-1][which.max(c_across(all_of(asset_cols)))]) %>%
+  ungroup()
+
+# Sanity check: tally of how often each asset was the year's top performer
+real_returns_w_top %>%
+  count(highest_ret_asset, sort = TRUE)
+
+# Now do bottom assets by year
+real_returns_w_bottom <- real_returns %>%
+  rowwise() %>%
+  mutate(lowest_ret_asset = names(real_returns)[-1][which.min(c_across(all_of(asset_cols)))]) %>%
+  ungroup()
+
+# Sanity check: tally of how often each asset was the year's worst performer
+real_returns_w_bottom %>%
+  count(lowest_ret_asset, sort = TRUE)
+
+# Now do growth of $1
+growth_of_1 <- real_returns %>%
+  summarise(across(all_of(asset_cols), ~ prod(1 + .x))) %>%
+  pivot_longer(everything(), names_to = "asset", values_to = "growth_of_1") %>%
+  arrange(desc(growth_of_1))
+
+print(growth_of_1)
+
+# ------------------------------------------------------------------
+# HIGH VS. LOW INFLATION REGIME: AVERAGE & MEDIAN REAL RETURNS BY ASSET
+# ------------------------------------------------------------------
+level_cpi <- 0.04
+real_returns_w_regime <- real_returns %>%
+  mutate(cpi = raw$CPI,
+         inflation_regime = if_else(cpi > level_cpi, "High Inflation", "Low Inflation"))
+
+regime_summary_avg <- real_returns_w_regime %>%
+  group_by(inflation_regime) %>%
+  summarise(across(all_of(asset_cols), mean), .groups = "drop") %>%
+  pivot_longer(-inflation_regime, names_to = "asset", values_to = "avg_real_return") %>%
+  pivot_wider(names_from = inflation_regime, values_from = avg_real_return) %>%
+  mutate(diff_high_minus_low = `High Inflation` - `Low Inflation`) %>%
+  arrange(desc(diff_high_minus_low))
+
+regime_summary_median <- real_returns_w_regime %>%
+  group_by(inflation_regime) %>%
+  summarise(across(all_of(asset_cols), median), .groups = "drop") %>%
+  pivot_longer(-inflation_regime, names_to = "asset", values_to = "median_real_return") %>%
+  pivot_wider(names_from = inflation_regime, values_from = median_real_return) %>%
+  mutate(diff_high_minus_low = `High Inflation` - `Low Inflation`) %>%
+  arrange(desc(diff_high_minus_low))
+
+cat("=== AVERAGE REAL RETURN BY REGIME ===\n")
+print(regime_summary_avg %>% mutate(across(where(is.numeric), ~round(.x, 3))))
+
+cat("\n=== MEDIAN REAL RETURN BY REGIME ===\n")
+print(regime_summary_median %>% mutate(across(where(is.numeric), ~round(.x, 3))))
+
+cat(sprintf("\nLevel CPI (inflation split point): %.1f%%\n", level_cpi * 100))
+cat(sprintf("Years classified as High Inflation: %d\n", sum(real_returns_w_regime$inflation_regime == "High Inflation")))
+cat(sprintf("Years classified as Low Inflation:  %d\n", sum(real_returns_w_regime$inflation_regime == "Low Inflation")))
+
+# Gold specifically
+gold_high_avg <- regime_summary_avg %>% filter(asset == "Gold") %>% pull(`High Inflation`)
+gold_low_avg  <- regime_summary_avg %>% filter(asset == "Gold") %>% pull(`Low Inflation`)
+gold_high_med <- regime_summary_median %>% filter(asset == "Gold") %>% pull(`High Inflation`)
+gold_low_med  <- regime_summary_median %>% filter(asset == "Gold") %>% pull(`Low Inflation`)
+
+cat(sprintf("\nGold's AVG real return, High Inflation years: %.1f%%\n", gold_high_avg * 100))
+cat(sprintf("Gold's AVG real return, Low Inflation years:  %.1f%%\n", gold_low_avg * 100))
+cat(sprintf("Gold's avg return is %.1fx higher in high-inflation years\n", gold_high_avg / gold_low_avg))
+
+cat(sprintf("\nGold's MEDIAN real return, High Inflation years: %.1f%%\n", gold_high_med * 100))
+cat(sprintf("Gold's MEDIAN real return, Low Inflation years:  %.1f%%\n", gold_low_med * 100))
+cat(sprintf("Gold's median return is %.1fx higher in high-inflation years\n", gold_high_med / gold_low_med))

@@ -13,7 +13,6 @@ library(lubridate)
 library(ggrepel)
 library(tidylog)
 library(zoo)
-library(ggjoy)
 library(tidyverse)
 
 folder_name <- "0268_invest_during_inflation"
@@ -22,8 +21,12 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-bv_returns <- read_csv(paste0(importdir, "0006_bullion_vault_asset_returns/asset-returns-bullion-vault-1976.csv")) %>%
+start_year <- 1976
+end_year <- 2019
+
+bv_returns <- read_csv(paste0(importdir, "0006_bullion_vault_asset_returns/asset-returns-bullion-vault.csv")) %>%
                 mutate(year = as.Date(year, format = "%m/%d/%y")) %>%
+                filter(year(year) >= start_year, year(year)<= end_year) %>%
                 gather(-year, key=key, value=value)
 
 min_year <- min(bv_returns$year)
@@ -116,12 +119,14 @@ table2 <- all_data %>%
           filter(cpi > 0.04) %>%
           group_by(key) %>%
             summarise(n_obs = n(),
-              value_real_high_cpi = quantile(value_real, probs = 0.5)) %>%
+              median_real_high_cpi = quantile(value_real, probs = 0.5),
+              avg_real_high_cpi = mean(value_real)) %>%
             ungroup() %>%
-            arrange(desc(value_real_high_cpi)) %>%
+            arrange(desc(median_real_high_cpi)) %>%
             select(-n_obs) %>%
             rename(`Asset Class` = key,
-                   `Real Return` = value_real_high_cpi)
+                   `Median Real Return` = median_real_high_cpi,
+                   `Avg Real Return` = avg_real_high_cpi,)
 
 export_to_excel(df = table2,
                 outfile = paste0(out_path, "/asset_class_real_returns_bv.xlsx"),
