@@ -40,6 +40,7 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                      `Retirement` =  retqliq/asset,
                      `Stocks & Mutual Funds` = (nmmf + stocks)/asset, 
                      `Cash` = liq/asset,
+                     `Home Equity` = homeeq/networth,
                      `Other` = (savbnd + othfin + othnfin + cashli + othma + bond + cds)/asset,
                      liquid_assets = asset - reteq - nfin,
                      liquid_networth = networth - reteq - nfin,
@@ -54,7 +55,7 @@ scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds")) %>%
                              TRUE ~ "ERROR"
                      )) %>%
                 select(wealth_level, networth, liquid_networth, liquid_assets, income, `Business Interests`, `Real Estate`,`Primary Residence`,
-                       `Vehicles`, `Retirement`,
+                       `Vehicles`, `Retirement`, `Home Equity`,
                        `Stocks & Mutual Funds`, `Cash`, `Other`,
                        owns_home,
                        wgt)
@@ -288,7 +289,9 @@ homeowner_overall <- scf_stack %>%
   summarise(
     mean_primary = wtd.mean(`Primary Residence`, weights = wgt),
     median_primary_residence = wtd.quantile(`Primary Residence`, weights = wgt, probs = 0.5),
-    pct75_primary_residence = wtd.quantile(`Primary Residence`, weights = wgt, probs = 0.75)
+    pct75_primary_residence = wtd.quantile(`Primary Residence`, weights = wgt, probs = 0.75),
+    mean_homeeq = wtd.mean(`Home Equity`, weights = wgt),
+    median_homeeq = wtd.quantile(`Home Equity`, weights = wgt, probs = 0.5),
   ) %>%
   ungroup() 
 
