@@ -50,4 +50,42 @@ plot <- ggplot(to_plot, aes(x = date, y = pct_change_real)) +
 # Save the plot
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
+# Side analysis on longest negative holding period
+all_spx <- readRDS(paste0(localdir, "0009_sp500_ret_pe.Rds")) %>%
+            select(date, price_plus_div)
+
+df <- all_spx %>% arrange(date)
+
+n      <- nrow(df)
+prices <- df$price_plus_div
+dates  <- df$date
+
+# 1. Identify "record high" points (running max) — these are the only
+#    candidates for the earliest s where price[s] >= price[t]
+running_max <- cummax(prices)
+is_record   <- prices == running_max          # TRUE at each new all-time high
+record_idx  <- which(is_record)
+record_val  <- prices[record_idx]
+
+# 2. For each t, find the earliest record point whose value >= price[t]
+#    (record_val is strictly increasing, so findInterval works as a binary search)
+earliest_s <- record_idx[findInterval(prices - 1e-9, record_val) + 1]
+# findInterval gives the count of records <= price[t]; +1 gives the first record >= price[t]
+
+# 3. Compute the gap (in months) for every t, and find the max
+gap <- seq_len(n) - earliest_s
+best_t <- which.max(gap)
+best_s <- earliest_s[best_t]
+
+result <- data.frame(
+  start_date   = dates[best_s],
+  start_price  = prices[best_s],
+  end_date     = dates[best_t],
+  end_price    = prices[best_t],
+  months       = gap[best_t],
+  years        = round(gap[best_t] / 12, 1)
+)
+
+result
+
 # ############################  End  ################################## #
