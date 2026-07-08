@@ -82,7 +82,7 @@ returns_plot <- ggplot(data = melted_returns, aes(x = year, y = value, col = ass
        caption = paste0("Source: BullionVault, ", min_year, "-", max_year, " (OfDollarsAndData.com)\n",
                         "Note: Returns are adjusted using the U.S. Consumer Price Index."))
 
-ggsave(paste0(out_path, "/bv-asset-returns", min_year, "-", max_year, ".jpeg"), returns_plot, width = 15, height = 12, units = "cm")
+ggsave(paste0(out_path, "/bv-asset-returns-", min_year, "-", max_year, ".jpeg"), returns_plot, width = 15, height = 12, units = "cm")
 
 # ------------------------------------------------------------------
 # 3. EFFICIENT FRONTIER (long-only, fully invested)
@@ -176,6 +176,7 @@ ealred <- "#7D110C"; ealdark <- "#423C30"
 
 all_stock        <- find_ret_sd_sharpe(replace(zero_w, "S&P 500", 1))
 all_gold         <- find_ret_sd_sharpe(replace(zero_w, "Gold", 1))
+all_home        <- find_ret_sd_sharpe(replace(zero_w, "U.S. Home Price", 1))
 stock_bond_50_50 <- find_ret_sd_sharpe(replace(zero_w, c("S&P 500","Treasury 10yr"), c(0.5,0.5)))
 equal_weighted   <- find_ret_sd_sharpe(setNames(rep(1/n_assets, n_assets), colnames(returns)))
 
@@ -192,15 +193,21 @@ frontier_plot <- ggplot(eff, aes(x = sd, y = exp_return)) +
   # 50-50 Stock/Bond
   geom_point(data = stock_bond_50_50, aes(x = sd, y = exp_return), color = "blue", size = 2) +
   geom_text_repel(data = stock_bond_50_50, label = "50-50 Stock/Bond", family = "my_font", size = 3,
-                  nudge_x = 0.03, max.iter = 5000) +
+                  max.iter = 5000) +
   # All Gold
   geom_point(data = all_gold, aes(x = sd, y = exp_return), color = "#FFD700", size = 2) +
   geom_text_repel(data = all_gold, label = "Gold Only", family = "my_font", size = 3,
                   nudge_x = -0.015, max.iter = 5000) +
+  
+  # All U.S. Home
+  geom_point(data = all_home, aes(x = sd, y = exp_return), color = "cyan", size = 2) +
+  geom_text_repel(data = all_home, label = "U.S. Home Only", family = "my_font", size = 3, max.iter = 5000) +
+  
   # Equal Weighted
   geom_point(data = equal_weighted, aes(x = sd, y = exp_return), color = "purple", size = 2) +
   geom_text_repel(data = equal_weighted, label = "Equal Weighted", family = "my_font", size = 3,
                   nudge_y = -0.004, nudge_x = 0.002, max.iter = 5000) +
+  
   ggtitle("Efficient Frontier and Optimal Portfolio\n") +
   labs(x = "Risk (standard deviation of portfolio variance)", y = "Real Return",
        caption = paste0("Source: BullionVault, ", min_year, "-", max_year, " (OfDollarsAndData.com)\n",
@@ -209,7 +216,7 @@ frontier_plot <- ggplot(eff, aes(x = sd, y = exp_return)) +
   scale_x_continuous(label = percent) +
   scale_y_continuous(label = percent)
 
-ggsave(paste0(out_path, "/efficient-frontier", min_year, "-", max_year, ".jpeg"), frontier_plot, width = 15, height = 12, units = "cm")
+ggsave(paste0(out_path, "/efficient-frontier-", min_year, "-", max_year, ".jpeg"), frontier_plot, width = 15, height = 12, units = "cm")
 
 # ------------------------------------------------------------------
 # 6. HOW OFTEN DOES THE OPTIMAL PORTFOLIO LOSE MONEY?
