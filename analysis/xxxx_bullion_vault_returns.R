@@ -26,6 +26,10 @@ out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
+
+min_year <- 1972
+max_year <- 1998
+
 # ------------------------------------------------------------------
 # 0. SETUP -- point this at your raw CSV
 # ------------------------------------------------------------------
@@ -40,7 +44,8 @@ set.seed(12345)
 # ------------------------------------------------------------------
 raw <- read_csv(raw_path, show_col_types = FALSE) %>%
   mutate(year = as.Date(year, format = "%m/%d/%y")) %>%
-  mutate(year = if_else(year > Sys.Date(), year - years(100), year))
+  mutate(year = if_else(year > Sys.Date(), year - years(100), year)) %>%
+  filter(year(year) >= min_year, year(year) <= max_year)
 
 asset_cols <- setdiff(names(raw), c("year", "CPI"))
 
@@ -49,8 +54,6 @@ real_returns <- raw %>%
   mutate(across(all_of(asset_cols), ~ (1 + .x) / (1 + CPI) - 1)) %>%
   select(year, all_of(asset_cols))
 
-min_year <- year(min(real_returns$year))
-max_year <- year(max(real_returns$year))
 n_years  <- nrow(real_returns)
 
 # Risk-free = mean real return on 3-month T-bills
@@ -262,38 +265,8 @@ frontier_plot2 <- ggplot(eff, aes(x = sd, y = exp_return)) +
 
 ggsave(paste0(out_path, "/efficient-frontier-permanent-", min_year, "-", max_year, ".jpeg"), frontier_plot2, width = 15, height = 12, units = "cm")
 
-
 # ------------------------------------------------------------------
-# 6. HOW OFTEN DOES THE OPTIMAL PORTFOLIO LOSE MONEY?
-#    (i.e. how many of ITS holdings are negative in a given year)
-# ------------------------------------------------------------------
-opt_holdings <- names(returns)[as.numeric(optimal[names(returns)]) > 0.001]
-n_holdings   <- length(opt_holdings)
-
-neg_by_year <- real_returns %>%
-  select(year, all_of(opt_holdings)) %>%
-  mutate(across(all_of(opt_holdings), ~ if_else(.x < 0, 1, 0))) %>%
-  rowwise() %>%
-  mutate(n_neg = sum(c_across(all_of(opt_holdings)))) %>%
-  ungroup() %>%
-  select(year, n_neg)
-
-pct_any_neg <- round(mean(neg_by_year$n_neg >= 1) * 100)
-
-neg_plot <- ggplot(neg_by_year, aes(x = year, y = n_neg)) +
-  geom_bar(stat = "identity", fill = chart_standard_color) +
-  scale_y_continuous(limits = c(0, n_holdings), breaks = seq(0, n_holdings, 1)) +
-  of_dollars_and_data_theme +
-  theme(legend.title = element_blank(), legend.position = "bottom") +
-  ggtitle(paste0("At Least One Asset in the Optimal Portfolio\nLoses Money in ", pct_any_neg, "% of All Years")) +
-  labs(x = "Year", y = "Number of Assets with a Negative Return",
-       caption = paste0("Source: BullionVault, ", min_year, "-", max_year, " (OfDollarsAndData.com)\n",
-                        "Note: Optimal portfolio holds ", paste(opt_holdings, collapse = ", "), "."))
-
-ggsave(paste0(out_path, "/optimal-portfolio-neg-returns-", min_year, "-", max_year, ".jpeg"), neg_plot, width = 15, height = 12, units = "cm")
-
-# ------------------------------------------------------------------
-# 7. ACTUAL DRAWDOWNS: OPTIMAL PORTFOLIO VS. S&P 500 (single overlaid panel)
+# 6. ACTUAL DRAWDOWNS: OPTIMAL PORTFOLIO VS. S&P 500 (single overlaid panel)
 #    $1 invested in 1972, actual historical return sequence, no
 #    contributions along the way -- just the % drawdown from the
 #    running peak of that $1.
@@ -330,7 +303,7 @@ ggsave(paste0(out_path, "/actual-drawdowns-optimal-vs-sp500-", min_year, "-", ma
        width = 15, height = 12, units = "cm")
 
 # ------------------------------------------------------------------
-# 8. INTERESTING TIDBITS FOR THE POST
+# 7. INTERESTING TIDBITS FOR THE POST
 # ------------------------------------------------------------------
 
 # 8a. Correlation matrix
