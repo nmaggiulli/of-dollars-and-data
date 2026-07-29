@@ -107,6 +107,7 @@ nw_level_summary <- nw_summary_by_age_decade %>%
                       arrange(new_agecl, wealth_level) %>%
                       mutate(next_percentile = percentile - lag(percentile))
 
+# Extra analysis post book launch
 nw_summary_specific_age <- scf_stack %>%
   filter(age <= end_age, age >= start_age) %>%
   summarise(networth = wtd.quantile(networth, 
