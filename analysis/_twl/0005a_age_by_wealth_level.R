@@ -25,6 +25,8 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
 
 data_year <- 2022
+start_age <- 33
+end_age <- 37
 
 # fin = total finanical assets (LIQ+CDS+NMMF+STOCKS+BOND+RETQLIQ+SAVBND+CASHLI+OTHMA+OTHFIN)
 # nfin = total non-financial assets (VEHIC+HOUSES+ORESRE+NNRESRE+BUS+OTHNFIN)
@@ -80,7 +82,7 @@ pct_1 <- age_percentile_summary_by_level %>%
   filter(percentile == 1)
 
 # Now calculate wealth by age cohort
-nw_summary_by_age <- scf_stack %>%
+nw_summary_by_age_decade <- scf_stack %>%
   filter(new_agecl != "<20") %>%
   group_by(new_agecl) %>%
   summarise(networth = wtd.quantile(networth, 
@@ -100,9 +102,20 @@ nw_summary_by_age <- scf_stack %>%
            TRUE ~ -999
          ))
 
-nw_level_summary <- nw_summary_by_age %>%
+nw_level_summary <- nw_summary_by_age_decade %>%
                       filter(wealth_level != lag(wealth_level)) %>%
                       arrange(new_agecl, wealth_level) %>%
                       mutate(next_percentile = percentile - lag(percentile))
+
+nw_summary_specific_age <- scf_stack %>%
+  filter(age <= end_age, age >= start_age) %>%
+  summarise(networth = wtd.quantile(networth, 
+                                    weights = wgt, 
+                                    probs = seq(0.01, 0.99, 0.01)
+  )
+  ) %>%
+  mutate(percentile = rep(seq(1, 99), 1),
+         start_age = start_age,
+         end_age = end_age)
 
 # ############################  End  ################################## #
