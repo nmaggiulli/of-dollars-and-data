@@ -254,12 +254,14 @@ proper_case <- function(input_string) {
   paste(words_proper, collapse = " ")
 }
 
-format_as_dollar <- function(NumberInput, Digits=0){
-  if(NumberInput >= 0){
-    return(paste0("$", formatC(NumberInput, digits = Digits, format = "f", big.mark = ",")))
-  } else{
-    return(paste0("-$", formatC(-1*NumberInput, digits = Digits, format = "f", big.mark = ",")))
-  }
+format_as_dollar <- function(NumberInput, Digits = 0){
+  ifelse(is.na(NumberInput),
+         NA_character_,
+         ifelse(NumberInput >= 0,
+                paste0("$", formatC(NumberInput, digits = Digits,
+                                    format = "f", big.mark = ",")),
+                paste0("-$", formatC(-1 * NumberInput, digits = Digits,
+                                     format = "f", big.mark = ","))))
 }
 
 import_ycharts_timeseries <- function(path){
