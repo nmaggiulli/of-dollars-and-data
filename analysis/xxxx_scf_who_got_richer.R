@@ -26,7 +26,6 @@ library(tidyverse)
 
 latest_year <- 2022   # -> 2025
 prior_year  <- 2019   # -> 2022
-dollar_year <- 2022   # deflator base used in 0003_scf_stack.Rds -> 2025
 
 # Percentiles used in the change-by-percentile charts/tables
 change_probs <- c(0.10, 0.20, 0.25, 0.30, 0.40, 0.50,
@@ -96,7 +95,7 @@ stopifnot(prior_year %in% df$year)
 
 source_string <- paste0("Source:  Survey of Consumer Finances (OfDollarsAndData.com)")
 note_string   <- paste0("Note: All figures are adjusted for inflation (",
-                        dollar_year, " dollars).")
+                        latest_year, " dollars).")
 
 ########################## Helper Functions ########################### #
 
