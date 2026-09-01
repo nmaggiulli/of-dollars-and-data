@@ -82,7 +82,7 @@ yahoo_daily <- data.frame(date=index(get("SPX")), coredata(get("SPX"))) %>%
 
 yahoo_monthly <- yahoo_daily %>%
                     group_by(month) %>%
-                    summarise(price = mean(close)) %>%
+                    summarise(price = mean(close, na.rm = TRUE)) %>%
                     ungroup()
 
 # Get CPI
