@@ -2,7 +2,7 @@
 os <- Sys.info()["sysname"]
 
 if (os == "Darwin") {  # macOS
-  dataroot <- "~/Google Drive/My Drive/of_dollars_and_data/"
+  dataroot <- "~/Google Drive/My Drive/ODAD/_data/of_dollars_and_data/"
 } else if (os == "Windows") {
   dataroot <- "G:/My Drive/of_dollars_and_data/"
 }
