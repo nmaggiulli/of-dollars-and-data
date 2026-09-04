@@ -2,7 +2,7 @@
 os <- Sys.info()["sysname"]
 
 if (os == "Darwin") {  # macOS
-  dataroot <- "~/Google Drive/My Drive/ODAD/_data/of_dollars_and_data/"
+  dataroot <- "~/Google Drive/My Drive/ODAD/of_dollars_and_data/"
 } else if (os == "Windows") {
   dataroot <- "G:/My Drive/of_dollars_and_data/"
 }
@@ -54,4 +54,4 @@ of_dollars_and_data_theme <- theme(
                   plot.caption     = element_text(hjust = 0, family = my_font, size = 8))
 
 # Read in custom functions
-source("custom_functions.R")
+source(paste0(programroot, "/custom_functions.R"))
