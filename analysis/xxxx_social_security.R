@@ -64,10 +64,12 @@ ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 ########################## Chart 2: Replacement rate ################## #
 
-to_plot <- ss_data %>%
-  filter(aime >= 500)
+to_plot <- ss_data
 
-file_path <- paste0(out_path, "/ss_replacement_rate_2026.jpeg")
+file_path <- paste0(out_path, "/ss_replacement_rate_aime_2026.jpeg")
+note_string <- str_wrap(paste0("Note: Bend points shown are for workers turning 62 in 2026. ",
+                               "Benefit shown is the monthly amount at full retirement age (67), as a share of AIME."),
+                        width = 85)
 
 plot <- ggplot(to_plot, aes(x = aime, y = replacement_rate)) +
   geom_vline(xintercept = c(bend1, bend2),
@@ -77,7 +79,7 @@ plot <- ggplot(to_plot, aes(x = aime, y = replacement_rate)) +
   scale_y_continuous(label = percent_format(accuracy = 1),
                      limits = c(0, 1)) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("The More You Earn, The Less\nSocial Security Replaces")) +
+  ggtitle(paste0("The More You Earn,\nThe Less Social Security Replaces")) +
   labs(x = "Average Indexed Monthly Earnings (AIME)",
        y = "Benefit as a % of AIME",
        caption = paste0(source_string, "\n", note_string))
