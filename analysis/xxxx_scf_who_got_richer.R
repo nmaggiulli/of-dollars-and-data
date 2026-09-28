@@ -20,7 +20,7 @@ library(xtable)
 library(tidyverse)
 
 ########################## Parameters ################################# #
-# CHANGE THESE THREE LINES WHEN THE 2025 DATA LANDS.
+# CHANGE THESE TWO LINES WHEN THE 2025 DATA LANDS.
 # Everything downstream (titles, notes, filenames, output folder, tables)
 # keys off them.
 
@@ -41,6 +41,17 @@ universal_cutoff <- 0.98
 # A participation shift bigger than this makes median-among-owners
 # non-comparable across years (composition effect). Flagged on the chart.
 composition_cutoff <- 0.015
+
+# Two-series charts (prior year vs. latest year). The prior year is muted
+# so the eye lands on the current figures; the latest year uses the same
+# navy as every single-series chart on the blog.
+prior_year_color <- "#B3B3B3"
+
+period_fill_scale <- function(){
+  scale_fill_manual(values = setNames(c(prior_year_color, chart_standard_color),
+                                      c(as.character(prior_year),
+                                        as.character(latest_year))))
+}
 
 ########################## Output paths ############################### #
 # Charts land in a year-stamped subfolder, so the 2022 dry run and the 2025
@@ -346,7 +357,7 @@ create_change_by_percentile <- function(var, var_title){
   plot <- ggplot(to_plot, aes(x = prob_label, y = value, fill = period)) +
     geom_bar(stat = "identity", position = "dodge") +
     scale_y_continuous(label = dollar) +
-    scale_fill_grey(start = 0.6, end = 0.2) +
+    period_fill_scale() +
     of_dollars_and_data_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
           legend.title = element_blank(),
@@ -475,7 +486,7 @@ create_change_by_group <- function(var, var_title, quantile_prob){
                                 fill = period)) +
       geom_bar(stat = "identity", position = "dodge") +
       scale_y_continuous(label = dollar) +
-      scale_fill_grey(start = 0.6, end = 0.2) +
+      period_fill_scale() +
       of_dollars_and_data_theme +
       theme(axis.text.x = element_text(angle = 45, hjust = 1),
             legend.title = element_blank(),
@@ -603,7 +614,7 @@ make_participation_chart <- function(comp_subset, chart_label, file_suffix){
     geom_bar(stat = "identity", position = "dodge") +
     coord_flip() +
     scale_y_continuous(label = percent_format(accuracy = 1)) +
-    scale_fill_grey(start = 0.6, end = 0.2) +
+    period_fill_scale() +
     of_dollars_and_data_theme +
     theme(legend.title = element_blank(),
           legend.position = "bottom") +
@@ -786,7 +797,7 @@ if(length(participation_vars) > 0){
     geom_bar(stat = "identity", position = "dodge") +
     facet_rep_wrap(component ~ ., repeat.tick.labels = c("left", "bottom")) +
     scale_y_continuous(label = percent_format(accuracy = 1)) +
-    scale_fill_grey(start = 0.6, end = 0.2) +
+    period_fill_scale() +
     of_dollars_and_data_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
           legend.title = element_blank(),
