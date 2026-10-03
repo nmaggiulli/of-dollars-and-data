@@ -1,0 +1,95 @@
+{
+    "key": "group_53cdaf4b42f67",
+    "title": "Post Format - Quote",
+    "fields": [
+        {
+            "key": "field_53931d75f6d5f",
+            "label": "Quote",
+            "name": "post_quote",
+            "prefix": "",
+            "type": "repeater",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "row_min": 1,
+            "row_limit": 1,
+            "layout": "row",
+            "button_label": "Add Quote",
+            "min": 0,
+            "max": 0,
+            "sub_fields": [
+                {
+                    "key": "field_53931d8ef6d60",
+                    "label": "Quote",
+                    "name": "quote",
+                    "prefix": "",
+                    "type": "textarea",
+                    "instructions": "",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "column_width": "",
+                    "default_value": "",
+                    "placeholder": "",
+                    "maxlength": "",
+                    "rows": "",
+                    "new_lines": "br",
+                    "readonly": 0,
+                    "disabled": 0
+                },
+                {
+                    "key": "field_53931d9cf6d61",
+                    "label": "Source",
+                    "name": "source",
+                    "prefix": "",
+                    "type": "text",
+                    "instructions": "",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "column_width": "",
+                    "default_value": "",
+                    "placeholder": "",
+                    "prepend": "",
+                    "append": "",
+                    "formatting": "html",
+                    "maxlength": "",
+                    "readonly": 0,
+                    "disabled": 0
+                },
+                {
+                    "key": "field_53931da4f6d62",
+                    "label": "Link",
+                    "name": "link",
+                    "prefix": "",
+                    "type": "text",
+                    "instructions": "Link to source, or author's page",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "column_width": "",
+                    "default_value": "",
+                    "placeholder": "",
+                    "prepend": "",
+                    "append": "",
+                    "formatting": "none",
+                    "maxlength": "",
+                    "readonly": 0,
+                    "disabled": 0
+                }
+            ]
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_format",
+                "operator": "==",
+                "value": "quote"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "seamless",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": ""
+}

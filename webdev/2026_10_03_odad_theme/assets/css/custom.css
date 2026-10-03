@@ -1,0 +1,317 @@
+/*
+ * Your Additional CSS, moved into the theme so it's saved with it and can't be
+ * lost in a theme switch. Copied exactly from Appearance > Customize >
+ * Additional CSS on 2026-10-03, with one typo fixed (page-id-245023 -> 25023).
+ * Loads last, so anything here wins. Add new site-specific rules at the bottom.
+ */
+
+.home #main {
+	padding-top:1em;
+}
+
+@media only screen and (max-width: 1023px) {
+	.home #main {
+		padding-top:0em;
+	}
+}
+
+body {
+	line-height: 1.9em;
+}
+
+ol li {
+	list-style-type: decimal !important;
+}
+
+a {
+	text-decoration: underline;	
+}
+
+.mc4wp-form-fields{
+	line-height:0.7em;
+}
+
+.widgettitle{
+	font-size:1.0em;
+}
+
+.single .article-header {
+	margin-bottom:20px;
+}
+
+@media only screen and (min-width: 600px){
+		.inner-header .header-banner{
+			min-height: 282px;
+		}
+}
+
+@media screen and (max-width: 767px) {
+ #sticker-sticky-wrapper.is-sticky .mobile-title {
+  padding: 0 1em;
+  margin: 0.75em 0 0;
+ }
+	 #sticker-sticky-wrapper .mobile-title {
+  margin: 0;
+ }
+}
+
+h1,
+h2,
+h3 {
+	color: #000;
+	text-decoration: none;
+	line-height: 1.3em;
+}
+
+h1 {
+		margin: 0;
+}
+
+p{
+	margin-top:1em;
+}
+
+h1 a,
+h2 a,
+h3 a,
+h4 a,
+h5 a,
+h6 a {
+	color: #585858;
+	text-decoration: none;
+}
+
+.menu-item a{
+	text-decoration: none;
+}
+
+#post_advert{
+	font-size: 0.85em;
+}
+
+strong {
+	color: #000	;
+	font-weight: 900;
+	font-size: 1.1em;
+}
+
+#main {
+	box-shadow: none;
+}
+
+.author-box {
+	border-bottom: none;
+	border-right: none;
+}
+
+/*mediavine sidebar fix*/
+@media only screen and (min-width: 1024px) and (max-width:1100px) {	 
+#main {
+		max-width: calc(100% - 320px)!important;
+	}
+	 #sidebar {
+		min-width: 320px!important;
+		width:320px!important;
+ 	}
+}
+
+
+@media only screen and (max-width: 1023px) {
+	#main {
+		max-width: 100%!important;
+		width: 100%!important;
+	}
+}
+
+@media only screen and (max-width: 359px) {
+.pf-content p {
+word-break:break-word!important;
+}
+}
+/*end mediavine sidebar fix*/
+
+/* Mediavine mobile sidescroll fix CSS */
+@media only screen and (max-width: 359px) {
+.entry-content .gtrackexternal {
+    word-wrap: break-word;
+}
+.calculator #start-month, .calculator #end-month {
+    width: 100%;
+}
+}
+/* End Mediavine mobile sidescroll fix CSS */
+
+/*Calculators CSS*/
+/*One off Calculator CSS*/
+body.page-id-23619 .investment-amounts,
+body.page-id-23693 .investment-amounts
+{
+  display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+body.page-id-23619 .inflation-checkbox
+{
+	display:flex;
+	margin-top:10px;
+	justify-content: center; /* Horizontal centering */
+}
+
+body.page-id-23619 #adjust-for-inflation
+{
+	margin-left:20px;
+}
+
+body.page-id-23470 .initial-investment,
+body.page-id-24987 .inputs,
+body.page-id-25023 .inputs
+{
+  text-align: center;
+	margin-top:-10px;
+}
+
+@media screen and (min-width: 701px) {
+body.page-id-23727 .expected-return{
+	 text-align: center;
+}
+}
+
+body.page-id-23470 .indented,
+body.page-id-23619 .indented,
+body.page-id-23693 .indented{
+  margin-left: 40px;
+}
+
+@media screen and (min-width: 701px){
+	body.page-id-23727 .ages, 
+ body.page-id-23727 .amounts{
+	display:flex;
+	 margin-bottom:10px;
+	 gap:27px;
+	 line-height:1.0em;
+}
+}
+
+@media screen and (min-width: 701px){
+	body.page-id-23727 #monthly-contributions{
+	width:49%;
+}
+}
+
+/*Shared CSS*/
+body.page-id-23470 .calculator,
+body.page-id-23619 .calculator,
+body.page-id-23693 .calculator,
+body.page-id-23727 .calculator,
+body.page-id-24987 .calculator,
+body.page-id-25023 .calculator{
+  font-family: Arial, sans-serif;
+            width: 100%;
+            padding: 10px;
+            border: 4px solid #333;
+	margin-bottom:30px;
+}
+
+body.page-id-23470 .calculator p,
+body.page-id-23619 .calculator p, body.page-id-23693 .calculator p, body.page-id-23727 .calculator p,
+body.page-id-24987 .calculator p, body.page-id-25023 .calculator p{
+  margin: 0em;
+}
+
+body.page-id-23470 button,
+body.page-id-23619 button,
+body.page-id-23693 button,
+body.page-id-23727 button,
+body.page-id-24987 button,
+body.page-id-25023 button
+{
+  display: block;
+            width: 100%;
+            padding: 8px;
+            background-color: #349800;
+            color: white;
+            border: none;
+            cursor: pointer;
+	margin-top:20px;
+}
+
+body.page-id-23470 button:hover,
+body.page-id-23619 button:hover,
+body.page-id-23693 button:hover,
+body.page-id-23727 button:hover,
+body.page-id-24987 button:hover, body.page-id-25023 button:hover{
+  font-weight:bold;
+}
+
+body.page-id-23470 .results,
+body.page-id-23619 .results,
+body.page-id-23693 .results,
+body.page-id-23727 .results,
+body.page-id-24987 .results,
+body.page-id-25023 .results{
+  line-height: 1.0em;
+}
+
+body.page-id-23470 hr,
+body.page-id-23619 hr,
+body.page-id-23693 hr,
+body.page-id-23727 hr,
+body.page-id-24987 hr,
+body.page-id-25023 hr{
+  margin: 1.0em;
+}
+
+body.page-id-23470 .date-container,
+body.page-id-23619 .date-container,
+body.page-id-23693 .date-container
+{
+  display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+@media screen and (max-width: 700px) {
+		body.page-id-23470 .date-selector,
+	body.page-id-23619 .date-selector,
+	body.page-id-23693 .date-selector
+	{
+			font-size:80%
+}
+}
+	
+@media screen and (max-width: 700px) {
+	body.page-id-23619 .investment-amounts,
+	body.page-id-23693 .investment-amounts,
+	body.page-id-23619 .inflation-checkbox,
+	body.page-id-23727 .amounts,
+	body.page-id-23727 .ages,
+	body.page-id-23727 .expected-return,
+	body.page-id-24987 .inputs,
+	body.page-id-25023 .inputs
+	{
+		font-size:80%;
+		display:block;
+		justify-content: center;
+		line-height:1.9em;
+}
+	}
+	
+	@media screen and (max-width: 700px) {
+	body.page-id-23619 #chart-container,
+ body.page-id-23693 #chart-container,
+ body.page-id-23727 #chart-container,
+		 body.page-id-24987 #chart-container,
+		body.page-id-25023 #chart-container
+	{
+		height:450px;
+}
+}
+
+@media screen and (min-width: 2200px) {
+  #inner-content {
+    max-width: 2100px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

@@ -1,0 +1,21 @@
+/*
+ * Colors and fonts from the old theme's Customizer (Aytoo Theme > Colors /
+ * Typography), copied exactly as the old theme printed them on every page.
+ * To change a color or font, edit it here.
+ */
+.header-nav .nav li.current-menu-item a, .header-nav .nav li:hover a, .pagination li .current, .pagination li a:hover{background-color:#2e2e2e;}
+.archive .post-meta .post-facebook-share:hover, .archive .post-meta .post-linkedin-share:hover, .archive .post-meta .post-twitter-share:hover, .blog .post-meta .post-facebook-share:hover, .blog .post-meta .post-linkedin-share:hover, .blog .post-meta .post-twitter-share:hover, .search-results .post-meta .post-facebook-share:hover, .search-results .post-meta .post-linkedin-share:hover, .search-results .post-meta .post-twitter-share:hover{background-color:#2e2e2e;}
+input[type=submit], input[type=submit]:hover, input[type=submit]:focus, .widget_search input[type=submit]{background:#09d55f;}
+input[type=submit], input[type=submit]:hover, input[type=submit]:focus, input[type=submit]:active, .widget_search input[type=submit], input[type=text]:focus, textarea:focus{border-color:#09d55f;}
+.archive .post-meta .meta-box, .blog .post-meta .meta-box, .search-results .post-meta .meta-box, .article-related .wp_rp li{background-color:#f4f4f4;}
+.hotLinks a:visited, .hotLinks a:before, .widget.best_of li a:visited, .widget.hot_links li a:visited, .widget.best_of li .link-source, .widget.hot_links li .link-source, .widget.best_of li a:before, .widget.hot_links li a:before{color:#818282;}
+input, textarea{border-bottom-color:#818282;}
+.archive .post-meta .meta-box, .blog .post-meta .meta-box, .search-results .post-meta .meta-box{color:#585858;}
+body{background-color:#ffffff;font-family:"Libre Baskerville", Georgia, serif;font-size:19px;}
+#main{background-color:#FFFFFF;}
+.author-box, .widget .cm_ajax_widget_form input[type=email]{background-color:#FFFFFF;}
+.nav-wrap{background-color:#333436;}
+.footer{background-color:#333436;}
+a, a:visited{color:#585858;}
+body, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 .h1{color:#585858;}
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6{font-family:"Libre Baskerville", Georgia, serif;}
