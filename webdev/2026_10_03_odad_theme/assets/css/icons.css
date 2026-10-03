@@ -1,0 +1,34 @@
+/*
+ * Icons: the 10 Font Awesome 4.0.3 icons this site uses, in a 2 KB font hosted
+ * with the theme (instead of the full 369-icon font from a CDN). Same glyphs, so
+ * they look identical. Font Awesome by Dave Gandy — SIL OFL 1.1 (font), MIT (CSS).
+ *
+ * To add an icon later, it has to be added to the font file too — ask before
+ * using a new fa-* class.
+ */
+@font-face {
+  font-family: 'FontAwesome';
+  src: url('../fonts/odad-icons.woff') format('woff'), url('../fonts/odad-icons.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+.fa {
+  display: inline-block;
+  font-family: FontAwesome;
+  font-style: normal;
+  font-weight: normal;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.fa-bars:before { content: "\f0c9"; }
+.fa-chevron-left:before { content: "\f053"; }
+.fa-chevron-right:before { content: "\f054"; }
+.fa-envelope:before { content: "\f0e0"; }
+.fa-facebook:before { content: "\f09a"; }
+.fa-linkedin:before { content: "\f0e1"; }
+.fa-long-arrow-left:before { content: "\f177"; }
+.fa-long-arrow-right:before { content: "\f178"; }
+.fa-twitter:before { content: "\f099"; }
+.fa-caret-right:before { content: "\f0da"; }

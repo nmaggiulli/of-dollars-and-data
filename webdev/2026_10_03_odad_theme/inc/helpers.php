@@ -78,12 +78,13 @@ add_action( 'wp_head', function () {
 	}
 } );
 
-/** Preload the header artwork so it paints quickly. */
+/**
+ * Preload the desktop header artwork so it paints quickly. (Phones no longer
+ * show the banner — see the compact mobile header in theme.css — so there's
+ * nothing to preload for them.)
+ */
 add_action( 'wp_head', function () {
 	$img = odad_header_images();
-	if ( $img['mobile'] ) {
-		echo '<link rel="preload" href="' . esc_url( $img['mobile'] ) . '" as="image" media="(max-width: 768px)">' . "\n";
-	}
 	if ( $img['desktop'] ) {
 		echo '<link rel="preload" href="' . esc_url( $img['desktop'] ) . '" as="image" media="(min-width: 769px)">' . "\n";
 	}

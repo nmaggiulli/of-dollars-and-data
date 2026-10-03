@@ -42,7 +42,7 @@
 			<header class="header" role="banner">
 				<div id="inner-header" class="inner-header clearfix">
 				<?php if ( $odad_img['desktop'] || $odad_img['mobile'] ) : ?>
-					<a href="<?php echo esc_url( home_url() ); ?>"><div class="header-banner" role="img" aria-label="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>" style="width:100%;height:133px;"></div></a>
+					<a class="header-banner-link" href="<?php echo esc_url( home_url() ); ?>"><div class="header-banner" role="img" aria-label="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>" style="width:100%;height:133px;"></div></a>
 				<?php endif; ?>
 					<div id="sticker" class="nav-wrap">
 						<p class="mobile-title"><a href="<?php echo esc_url( home_url() ); ?>"><?php bloginfo( 'name' ); ?></a></p>

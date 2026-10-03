@@ -1,0 +1,22 @@
+/*
+ * Theme improvements on top of the original look (legacy.css + customizer.css).
+ * Loads before custom.css, so your own CSS still has the last word.
+ */
+
+/* ---------------------------------------------------------------
+ * Compact mobile header (phones, up to 767px wide)
+ * The logo banner is hidden and the menu bar — showing "Of Dollars And
+ * Data" and the menu button — becomes the header from the start. It's the
+ * same bar readers used to see only after scrolling, so it looks familiar
+ * and doesn't shift when it sticks to the top. Desktop is unchanged.
+ * To undo: delete this block.
+ * ------------------------------------------------------------- */
+@media (max-width: 767px) {
+	.header-banner-link {
+		display: none;
+	}
+	#sticker-sticky-wrapper .mobile-title {
+		-webkit-transform: none;
+		transform: none;
+	}
+}

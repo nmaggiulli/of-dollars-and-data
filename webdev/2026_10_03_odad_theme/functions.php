@@ -19,6 +19,7 @@ require_once get_template_directory() . '/inc/legacy.php';
 require_once get_template_directory() . '/inc/feed.php';
 require_once get_template_directory() . '/inc/calculators.php';
 require_once get_template_directory() . '/inc/analytics.php';
+require_once get_template_directory() . '/inc/cleanup.php';
 
 /* ---------------------------------------------------------------
  * Theme setup (same features the old theme turned on)
@@ -67,9 +68,11 @@ add_action( 'acf/init', function () {
  * Styles and scripts
  *
  * Load order matches the old theme exactly:
- *   1. legacy.css      – the old theme's compiled stylesheet, unchanged
+ *   1. legacy.css      – the old theme's compiled stylesheet (unused slider,
+ *                        pop-up and Reformed Broker widget styles removed)
  *   2. customizer.css  – the colors/fonts the old Customizer (Kirki) printed
- *   3. custom.css      – your Additional CSS
+ *   3. theme.css       – improvements on top of the original look (compact mobile header)
+ *   4. custom.css      – your Additional CSS
  * ------------------------------------------------------------- */
 add_action( 'wp_enqueue_scripts', function () {
 	$uri = get_template_directory_uri();
@@ -81,13 +84,13 @@ add_action( 'wp_enqueue_scripts', function () {
 	// Libre Baskerville, regular weight only — exactly what the old theme loaded.
 	wp_enqueue_style( 'odad-fonts', 'https://fonts.googleapis.com/css2?family=Libre+Baskerville&display=swap', array(), null );
 
-	// Font Awesome 4.0.3 (same version as before, from a maintained CDN). Used for
-	// the menu button, share icons, "Read More" arrow and pagination arrows.
-	wp_enqueue_style( 'font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.3/css/font-awesome.min.css', array(), '4.0.3' );
+	// Icons: the 10 Font Awesome icons the site uses (menu, share, arrows), self-hosted.
+	wp_enqueue_style( 'odad-icons', $uri . '/assets/css/icons.css', array(), $ver( '/assets/css/icons.css' ) );
 
-	wp_enqueue_style( 'odad-legacy', $uri . '/assets/css/legacy.css', array( 'odad-fonts', 'font-awesome' ), $ver( '/assets/css/legacy.css' ) );
+	wp_enqueue_style( 'odad-legacy', $uri . '/assets/css/legacy.css', array( 'odad-fonts', 'odad-icons' ), $ver( '/assets/css/legacy.css' ) );
 	wp_enqueue_style( 'odad-customizer', $uri . '/assets/css/customizer.css', array( 'odad-legacy' ), $ver( '/assets/css/customizer.css' ) );
-	wp_enqueue_style( 'odad-custom', $uri . '/assets/css/custom.css', array( 'odad-customizer' ), $ver( '/assets/css/custom.css' ) );
+	wp_enqueue_style( 'odad-theme', $uri . '/assets/css/theme.css', array( 'odad-customizer' ), $ver( '/assets/css/theme.css' ) );
+	wp_enqueue_style( 'odad-custom', $uri . '/assets/css/custom.css', array( 'odad-theme' ), $ver( '/assets/css/custom.css' ) );
 
 	// Sticky menu, mobile menu toggle and share pop-ups (replaces the 170 KB jQuery bundle).
 	wp_enqueue_script( 'odad-theme', $uri . '/assets/js/theme.js', array(), $ver( '/assets/js/theme.js' ), array( 'strategy' => 'defer', 'in_footer' => true ) );

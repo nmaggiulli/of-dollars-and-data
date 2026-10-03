@@ -382,51 +382,6 @@
             ]
         },
         {
-            "key": "field_53ef66b6c1c1c",
-            "label": "As Seen On",
-            "name": "networks",
-            "type": "repeater",
-            "instructions": "List of networks for \"As Seen On\" sidebar widget",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "collapsed": "",
-            "min": "",
-            "max": "",
-            "layout": "table",
-            "button_label": "Add Logo",
-            "sub_fields": [
-                {
-                    "key": "field_53ef66ccc1c1d",
-                    "label": "Logo",
-                    "name": "logo",
-                    "type": "image",
-                    "instructions": "Must be a png with no background. Size should be 260px by 150px",
-                    "required": 0,
-                    "conditional_logic": 0,
-                    "wrapper": {
-                        "width": "",
-                        "class": "",
-                        "id": ""
-                    },
-                    "return_format": "url",
-                    "preview_size": "thumbnail",
-                    "library": "all",
-                    "min_width": 0,
-                    "min_height": 0,
-                    "min_size": 0,
-                    "max_width": 0,
-                    "max_height": 0,
-                    "max_size": 0,
-                    "mime_types": ""
-                }
-            ]
-        },
-        {
             "key": "field_53eaa8212c8a1",
             "label": "Content",
             "name": "",
@@ -478,5 +433,5 @@
     "hide_on_screen": "",
     "active": 1,
     "description": "",
-    "modified": 1454791847
+    "modified": 1791021313
 }
