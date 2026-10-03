@@ -81,8 +81,8 @@ add_action( 'wp_enqueue_scripts', function () {
 		return file_exists( $dir . $file ) ? filemtime( $dir . $file ) : ODAD_VERSION;
 	};
 
-	// Libre Baskerville, regular weight only — exactly what the old theme loaded.
-	wp_enqueue_style( 'odad-fonts', 'https://fonts.googleapis.com/css2?family=Libre+Baskerville&display=swap', array(), null );
+	// Libre Baskerville, regular weight only (same as before), self-hosted.
+	wp_enqueue_style( 'odad-fonts', $uri . '/assets/css/fonts.css', array(), $ver( '/assets/css/fonts.css' ) );
 
 	// Icons: the 10 Font Awesome icons the site uses (menu, share, arrows), self-hosted.
 	wp_enqueue_style( 'odad-icons', $uri . '/assets/css/icons.css', array(), $ver( '/assets/css/icons.css' ) );
@@ -96,9 +96,9 @@ add_action( 'wp_enqueue_scripts', function () {
 	wp_enqueue_script( 'odad-theme', $uri . '/assets/js/theme.js', array(), $ver( '/assets/js/theme.js' ), array( 'strategy' => 'defer', 'in_footer' => true ) );
 } );
 
+// Start downloading the main text font right away so text paints in the right font sooner.
 add_action( 'wp_head', function () {
-	echo '<link rel="preconnect" href="https://fonts.googleapis.com">' . "\n";
-	echo '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' . "\n";
+	echo '<link rel="preload" href="' . esc_url( get_template_directory_uri() . '/assets/fonts/libre-baskerville-400-latin.woff2' ) . '" as="font" type="font/woff2" crossorigin>' . "\n";
 }, 1 );
 
 /* ---------------------------------------------------------------
