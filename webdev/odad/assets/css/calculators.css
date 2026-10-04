@@ -245,3 +245,11 @@ body.calculator-page .sp500-share .sp500-copy:hover {
 		margin-top: 12px;
 	}
 }
+
+/* ---------- "Compared to History" line and copy-link spacing ---------- */
+body.calculator-page .results p.history-rank {
+	line-height: 1.4;
+}
+body.calculator-page .sp500-share {
+	margin-top: 24px;
+}
