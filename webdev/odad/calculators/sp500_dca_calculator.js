@@ -32,6 +32,38 @@
 		realReturn.push(D.realPricePlusDividend[k] / D.realPricePlusDividend[k - 1] - 1);
 	}
 
+	/* ---------- "Compared to History" ---------- */
+	// Ranks this result against every period of the same length since the data starts.
+	// valueFor(s, e) returns the number to compare (higher = better) for months s..e.
+	function lengthLabel(months) {
+		var y = Math.floor(months / 12), m = months % 12, parts = [];
+		if (y) { parts.push(y + '-year'); }
+		if (m) { parts.push(m + '-month'); }
+		return parts.join(', ');
+	}
+	function showHistoryRank(s, e, valueFor, basis) {
+		var el = $('history-rank');
+		if (!el) { return; }
+		var len = e - s, mine = valueFor(s, e), worse = 0, total = 0;
+		for (var a = 0; a + len < N; a++) {
+			if (a === s) { continue; }
+			total++;
+			if (valueFor(a, a + len) < mine) { worse++; }
+		}
+		var row = el.parentNode;
+		if (total < 10) {
+			row.hidden = true;
+			if (row.previousSibling && row.previousSibling.tagName === 'HR') { row.previousSibling.hidden = true; }
+			return;
+		}
+		row.hidden = false;
+		if (row.previousSibling && row.previousSibling.tagName === 'HR') { row.previousSibling.hidden = false; }
+		var pct = Math.round(worse / total * 100);
+		var lead = worse === total ? 'The best of all ' : worse === 0 ? 'The worst of all ' :
+			'Better than ' + Math.min(99, Math.max(1, pct)) + '% of all ';
+		el.innerText = lead + lengthLabel(len) + ' periods since ' + startY + ' (' + basis + ').';
+	}
+
 	/* ---------- Google Analytics events (see inc/analytics.php) ---------- */
 	function track(name, params) {
 		window.dataLayer = window.dataLayer || [];
@@ -247,6 +279,19 @@
 		var nomIRR = calculateIRR(nominalCashflows), realIRR = calculateIRR(realCashflows);
 		$('nom_irr').innerText = nomIRR === null ? 'n/a' : (nomIRR * 100).toFixed(2) + '%';
 		$('real_irr').innerText = realIRR === null ? 'n/a' : (realIRR * 100).toFixed(2) + '%';
+
+		// Same investments over every other period of this length, compared on inflation-adjusted final value.
+		showHistoryRank(s, e, function (a0, b0) {
+			var v = initialInvestment, c = monthlyInvestment;
+			for (var j = a0 + 1; j <= b0; j++) {
+				if (j > a0 + 1) {
+					if (adjustForInflation) { c = monthlyInvestment * (D.cpi[j] / D.cpi[a0 + 1]); }
+					v += c;
+				}
+				v *= (1 + realReturn[j]);
+			}
+			return v;
+		}, 'inflation-adjusted, with dividends reinvested');
 
 		var out = $('calc-output');
 		if (out) { out.hidden = false; }

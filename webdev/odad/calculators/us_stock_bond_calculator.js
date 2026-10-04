@@ -33,6 +33,38 @@
 	var stockNominal = returns(D.nominalPricePlusDividend), stockReal = returns(D.realPricePlusDividend);
 	var bondNominal = returns(D.bondNominal), bondReal = returns(D.bondReal);
 
+	/* ---------- "Compared to History" ---------- */
+	// Ranks this result against every period of the same length since the data starts.
+	// valueFor(s, e) returns the number to compare (higher = better) for months s..e.
+	function lengthLabel(months) {
+		var y = Math.floor(months / 12), m = months % 12, parts = [];
+		if (y) { parts.push(y + '-year'); }
+		if (m) { parts.push(m + '-month'); }
+		return parts.join(', ');
+	}
+	function showHistoryRank(s, e, valueFor, basis) {
+		var el = $('history-rank');
+		if (!el) { return; }
+		var len = e - s, mine = valueFor(s, e), worse = 0, total = 0;
+		for (var a = 0; a + len < N; a++) {
+			if (a === s) { continue; }
+			total++;
+			if (valueFor(a, a + len) < mine) { worse++; }
+		}
+		var row = el.parentNode;
+		if (total < 10) {
+			row.hidden = true;
+			if (row.previousSibling && row.previousSibling.tagName === 'HR') { row.previousSibling.hidden = true; }
+			return;
+		}
+		row.hidden = false;
+		if (row.previousSibling && row.previousSibling.tagName === 'HR') { row.previousSibling.hidden = false; }
+		var pct = Math.round(worse / total * 100);
+		var lead = worse === total ? 'The best of all ' : worse === 0 ? 'The worst of all ' :
+			'Better than ' + Math.min(99, Math.max(1, pct)) + '% of all ';
+		el.innerText = lead + lengthLabel(len) + ' periods since ' + startY + ' (' + basis + ').';
+	}
+
 	/* ---------- Google Analytics events (see inc/analytics.php) ---------- */
 	function track(name, params) {
 		window.dataLayer = window.dataLayer || [];
@@ -235,6 +267,18 @@
 		$('real-total-return').innerText = formatNumber(Number(((realAmount / initialInvestment - 1) * 100).toFixed(2)));
 		$('real-annualized').innerText = formatNumber(Number((realAnnualized * 100).toFixed(2)));
 		$('real-total').innerText = formatPortDollar(realAmount);
+
+		// Same portfolio over every other period of this length, compared on inflation-adjusted growth.
+		showHistoryRank(s, e, function (a0, b0) {
+			var amt = 1, st = 0, bd = 0;
+			for (var j = 0; j < b0 - a0; j++) {
+				var k2 = a0 + 1 + j;
+				if (j % 12 === 0) { st = amt * w; bd = amt * (1 - w); }
+				st *= (1 + stockReal[k2]); bd *= (1 + bondReal[k2]);
+				amt = st + bd;
+			}
+			return amt;
+		}, 'inflation-adjusted, with dividends reinvested');
 
 		var out = $('calc-output');
 		if (out) { out.hidden = false; }
