@@ -75,9 +75,10 @@
 	function pad(m) { return (m < 10 ? '0' : '') + m; }
 	function monthName(m) { return MONTHS[m - 1]; }
 	function indexFor(y, m) { return (y - startY) * 12 + (m - startM); }
+	// Chart labels like "12/2015" (same format the chart's date axis showed before).
 	function monthLabel(i) {
 		var t = startM - 1 + i;
-		return (startY + Math.floor(t / 12)) + '-' + pad(t % 12 + 1) + '-01';
+		return pad(t % 12 + 1) + '/' + (startY + Math.floor(t / 12));
 	}
 
 	/* ---------- number helpers (same formatting as before) ---------- */
@@ -147,11 +148,20 @@
 	}
 
 	/* ---------- chart ---------- */
+	// How many months between date labels so they fit the chart's width (about 16.5px per label).
+	function monthStep(count) {
+		var box = $('chart-container'), width = box ? box.clientWidth - 70 : 650;
+		var fit = Math.max(4, Math.floor(width / 16.5));
+		var steps = [1, 2, 3, 4, 6, 8, 12, 18, 24, 36, 60, 120, 240, 600];
+		for (var i = 0; i < steps.length; i++) { if (count / steps[i] <= fit) { return steps[i]; } }
+		return 1200;
+	}
 	var chart = null;
 	function drawChart(labels, nominal, real, title) {
 		if (!window.Chart || !$('myChart')) { return; }
 		if (chart) { chart.destroy(); }
 		var yAxisMax = dynamicCeil(Math.max(Math.max.apply(null, nominal), Math.max.apply(null, real)));
+		var step = monthStep(labels.length);
 		chart = new Chart($('myChart').getContext('2d'), {
 			type: 'line',
 			data: {
@@ -167,8 +177,12 @@
 				title: { display: true, text: title, fontSize: 16 },
 				scales: {
 					xAxes: [{
-						type: 'time',
-						time: { unit: 'month', displayFormats: { month: 'MM/YYYY' } },
+						type: 'category',
+						// Show a date every N months (1, 2, 3, 4, 6, 8, 12, 18, 24...), like the old date axis did.
+						ticks: {
+							autoSkip: false,
+							callback: function (label, index) { return index % step === 0 ? label : null; }
+						},
 						scaleLabel: { display: true, labelString: 'Date' }
 					}],
 					yAxes: [{
@@ -183,7 +197,7 @@
 				},
 				tooltips: {
 					callbacks: {
-						title: function (items) { return window.moment ? moment(items[0].xLabel).format('MM/YYYY') : items[0].xLabel; },
+						title: function (items) { return items[0].xLabel; },
 						labelColor: function (item, c) {
 							var col = c.data.datasets[item.datasetIndex].borderColor;
 							return { borderColor: col, backgroundColor: col };

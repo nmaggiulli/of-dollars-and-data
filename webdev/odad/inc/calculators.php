@@ -2,7 +2,7 @@
 /**
  * Calculator pages.
  *
- * Same page IDs and library versions as the old theme; scripts live in
+ * Same page IDs as the old theme; scripts live in
  * /calculators/. To add a calculator: drop its .js file there and add a line below.
  *
  * The three S&P 500 calculators (returns, DCA, stock/bond) share one data file,
@@ -11,15 +11,15 @@
  */
 
 function odad_calculators() {
-	// page ID => array( script file, needs Chart.js?, needs Moment.js?, data file (optional) )
+	// page ID => array( script file, needs Chart.js?, data file (optional) )
 	return array(
-		23470 => array( 'sp500_calculator.js',             false, false, 'sp500_data.js' ),
-		23619 => array( 'sp500_dca_calculator.js',         true,  true,  'sp500_data.js' ),
-		23693 => array( 'us_stock_bond_calculator.js',     true,  true,  'sp500_data.js' ),
-		23727 => array( 'investment_return_calculator.js', true,  true ),
-		24987 => array( 'net_worth_by_age_calculator.js',  true,  true,  'net_worth_data.js' ),
-		25023 => array( 'income_by_age_calculator.js',     true,  true,  'income_data.js' ),
-		27697 => array( 'rent_vs_buy_calculator.js',       true,  true ),
+		23470 => array( 'sp500_calculator.js',             false, 'sp500_data.js' ),
+		23619 => array( 'sp500_dca_calculator.js',         true,  'sp500_data.js' ),
+		23693 => array( 'us_stock_bond_calculator.js',     true,  'sp500_data.js' ),
+		23727 => array( 'investment_return_calculator.js', true ),
+		24987 => array( 'net_worth_by_age_calculator.js',  true,  'net_worth_data.js' ),
+		25023 => array( 'income_by_age_calculator.js',     true,  'income_data.js' ),
+		27697 => array( 'rent_vs_buy_calculator.js',       true ),
 	);
 }
 
@@ -35,22 +35,17 @@ add_action( 'wp_enqueue_scripts', function () {
 		return;
 	}
 
-	$calc         = $calculators[ $page_id ];
-	$file         = $calc[0];
-	$needs_chart  = $calc[1];
-	$needs_moment = $calc[2];
-	$data_file    = isset( $calc[3] ) ? $calc[3] : '';
-	$dir          = get_template_directory() . '/calculators/';
-	$uri          = get_template_directory_uri() . '/calculators/';
-	$deps         = array();
+	$calc        = $calculators[ $page_id ];
+	$file        = $calc[0];
+	$needs_chart = $calc[1];
+	$data_file   = isset( $calc[2] ) ? $calc[2] : '';
+	$dir         = get_template_directory() . '/calculators/';
+	$uri         = get_template_directory_uri() . '/calculators/';
+	$deps        = array();
 
-	if ( $needs_moment ) {
-		wp_enqueue_script( 'momentjs', 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js', array(), '2.29.1', true );
-		$deps[] = 'momentjs';
-	}
-
+	// Chart.js 2.9.4, hosted in the theme (no outside CDN, no Moment.js needed).
 	if ( $needs_chart ) {
-		wp_enqueue_script( 'chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@2.9.4', $needs_moment ? array( 'momentjs' ) : array(), '2.9.4', true );
+		wp_enqueue_script( 'chartjs', get_template_directory_uri() . '/assets/js/vendor/chart-2.9.4.min.js', array(), '2.9.4', true );
 		$deps[] = 'chartjs';
 	}
 
