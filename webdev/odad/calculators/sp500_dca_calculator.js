@@ -32,6 +32,12 @@
 		realReturn.push(D.realPricePlusDividend[k] / D.realPricePlusDividend[k - 1] - 1);
 	}
 
+	/* ---------- Google Analytics events (see inc/analytics.php) ---------- */
+	function track(name, params) {
+		window.dataLayer = window.dataLayer || [];
+		(function () { window.dataLayer.push(arguments); })('event', name, params);
+	}
+
 	function $(id) { return document.getElementById(id); }
 	function pad(m) { return (m < 10 ? '0' : '') + m; }
 	function monthName(m) { return MONTHS[m - 1]; }
@@ -180,7 +186,7 @@
 	});
 
 	/* ---------- Calculate ---------- */
-	function calculate() {
+	function calculate(fromLink) {
 		clearError();
 		var sM = +$('start-month').value, sY = +$('start-year').value;
 		var eM = +$('end-month').value, eY = +$('end-year').value;
@@ -258,8 +264,19 @@
 				(adjustForInflation ? '&inflation=1' : '');
 			history.replaceState(null, '', window.location.pathname + q);
 		}
+
+		track('calculator_run', {
+			calculator: 'sp500_dca',
+			trigger: fromLink ? 'shared_link' : 'button',
+			start_month: sY + '-' + pad(sM),
+			end_month: eY + '-' + pad(eM),
+			period_years: Math.round((indexFor(eY, eM) - indexFor(sY, sM)) / 12 * 10) / 10,
+			initial_amount: Math.round(initialInvestment),
+			monthly_amount: Math.round(monthlyInvestment),
+			inflation_adjusted: adjustForInflation ? 'yes' : 'no'
+		});
 	}
-	window.calculateDCAReturns = calculate;
+	window.calculateDCAReturns = function () { calculate(false); };
 
 	/* ---------- shared links ---------- */
 	function applyLink() {
@@ -273,7 +290,7 @@
 		money('initial-investment', p.get('initial'));
 		money('monthly-investment', p.get('monthly'));
 		if ($('adjust-for-inflation')) { $('adjust-for-inflation').checked = p.get('inflation') === '1'; }
-		calculate();
+		calculate(true);
 	}
 
 	/* ---------- "Copy link to these results" ---------- */
@@ -282,6 +299,7 @@
 		if (!copy || copy.dataset.wired) { return; }
 		copy.dataset.wired = '1';
 		copy.addEventListener('click', function () {
+			track('calculator_copy_link', { calculator: 'sp500_dca' });
 			var url = window.location.href, done = scope.querySelector('.sp500-copied');
 			var ok = function () { if (done) { done.textContent = 'Link copied'; setTimeout(function () { done.textContent = ''; }, 2500); } };
 			if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -296,7 +314,7 @@
 		buildForm();
 		wireCopy($('calc-output'));
 		var btn = $('calculate-btn');
-		if (btn) { btn.addEventListener('click', calculate); }
+		if (btn) { btn.addEventListener('click', function () { calculate(false); }); }
 		['start-month', 'start-year', 'end-month', 'end-year', 'initial-investment', 'monthly-investment'].forEach(function (id) {
 			var el = $(id); if (el) { el.addEventListener('change', clearError); }
 		});

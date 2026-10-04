@@ -33,6 +33,12 @@
 	var stockNominal = returns(D.nominalPricePlusDividend), stockReal = returns(D.realPricePlusDividend);
 	var bondNominal = returns(D.bondNominal), bondReal = returns(D.bondReal);
 
+	/* ---------- Google Analytics events (see inc/analytics.php) ---------- */
+	function track(name, params) {
+		window.dataLayer = window.dataLayer || [];
+		(function () { window.dataLayer.push(arguments); })('event', name, params);
+	}
+
 	function $(id) { return document.getElementById(id); }
 	function pad(m) { return (m < 10 ? '0' : '') + m; }
 	function monthName(m) { return MONTHS[m - 1]; }
@@ -165,7 +171,7 @@
 	});
 
 	/* ---------- Calculate ---------- */
-	function calculate() {
+	function calculate(fromLink) {
 		clearError();
 		var sM = +$('start-month').value, sY = +$('start-year').value;
 		var eM = +$('end-month').value, eY = +$('end-year').value;
@@ -244,8 +250,18 @@
 				'&amount=' + Math.round(initialInvestment) + '&stocks=' + stockPercent;
 			history.replaceState(null, '', window.location.pathname + q);
 		}
+
+		track('calculator_run', {
+			calculator: 'stock_bond',
+			trigger: fromLink ? 'shared_link' : 'button',
+			start_month: sY + '-' + pad(sM),
+			end_month: eY + '-' + pad(eM),
+			period_years: Math.round((indexFor(eY, eM) - indexFor(sY, sM)) / 12 * 10) / 10,
+			initial_amount: Math.round(initialInvestment),
+			stock_pct: stockPercent
+		});
 	}
-	window.calculatePortReturns = calculate;
+	window.calculatePortReturns = function () { calculate(false); };
 
 	/* ---------- shared links ---------- */
 	function applyLink() {
@@ -259,7 +275,7 @@
 		if (amt > 0 && $('initial-investment')) { $('initial-investment').value = amt.toLocaleString('en-US'); }
 		var pct = parseFloat(p.get('stocks'));
 		if (pct >= 0 && pct <= 100 && $('percentage-in-stocks')) { $('percentage-in-stocks').value = pct; }
-		calculate();
+		calculate(true);
 	}
 
 	/* ---------- "Copy link to these results" ---------- */
@@ -268,6 +284,7 @@
 		if (!copy || copy.dataset.wired) { return; }
 		copy.dataset.wired = '1';
 		copy.addEventListener('click', function () {
+			track('calculator_copy_link', { calculator: 'stock_bond' });
 			var url = window.location.href, done = scope.querySelector('.sp500-copied');
 			var ok = function () { if (done) { done.textContent = 'Link copied'; setTimeout(function () { done.textContent = ''; }, 2500); } };
 			if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -282,7 +299,7 @@
 		buildForm();
 		wireCopy($('calc-output'));
 		var btn = $('calculate-btn');
-		if (btn) { btn.addEventListener('click', calculate); }
+		if (btn) { btn.addEventListener('click', function () { calculate(false); }); }
 		['start-month', 'start-year', 'end-month', 'end-year', 'initial-investment', 'percentage-in-stocks'].forEach(function (id) {
 			var el = $(id); if (el) { el.addEventListener('change', clearError); }
 		});

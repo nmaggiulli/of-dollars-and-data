@@ -21,6 +21,12 @@
 	var startY = +D.start.slice(0, 4), startM = +D.start.slice(5, 7);
 	var endY = +D.end.slice(0, 4), endM = +D.end.slice(5, 7);
 
+	/* ---------- Google Analytics events (see inc/analytics.php) ---------- */
+	function track(name, params) {
+		window.dataLayer = window.dataLayer || [];
+		(function () { window.dataLayer.push(arguments); })('event', name, params);
+	}
+
 	function $(id) { return document.getElementById(id); }
 
 	/* ---------- number helpers (same formatting as before) ---------- */
@@ -193,6 +199,7 @@
 		if (!copy || copy.dataset.wired) { return; }
 		copy.dataset.wired = '1';
 		copy.addEventListener('click', function () {
+			track('calculator_copy_link', { calculator: 'sp500' });
 			var url = window.location.href, done = scope.querySelector('.sp500-copied');
 			var ok = function () { if (done) { done.textContent = 'Link copied'; setTimeout(function () { done.textContent = ''; }, 2500); } };
 			if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -234,6 +241,15 @@
 			var q = '?start=' + sY + '-' + pad(sM) + '&end=' + eY + '-' + pad(eM) + '&amount=' + Math.round(amount);
 			history.replaceState(null, '', window.location.pathname + q);
 		}
+
+		track('calculator_run', {
+			calculator: 'sp500',
+			trigger: fromLink ? 'shared_link' : 'button',
+			start_month: sY + '-' + pad(sM),
+			end_month: eY + '-' + pad(eM),
+			period_years: Math.round((indexFor(eY, eM) - indexFor(sY, sM)) / 12 * 10) / 10,
+			initial_amount: Math.round(amount)
+		});
 	}
 	// Kept as a global so the existing onclick="calculateReturns()" keeps working.
 	window.calculateReturns = function () { calculate(false); };
