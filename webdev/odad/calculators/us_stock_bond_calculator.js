@@ -345,7 +345,7 @@
 		var btn = $('calculate-btn');
 		if (btn) { btn.addEventListener('click', function () { calculate(false); }); }
 		['start-month', 'start-year', 'end-month', 'end-year', 'initial-investment', 'percentage-in-stocks'].forEach(function (id) {
-			var el = $(id); if (el) { el.addEventListener('change', clearError); }
+			var el = $(id); if (el) { el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', clearError); }
 		});
 		applyLink();
 	}

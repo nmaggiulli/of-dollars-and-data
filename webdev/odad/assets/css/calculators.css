@@ -253,3 +253,65 @@ body.calculator-page .results p.history-rank {
 body.calculator-page .sp500-share {
 	margin-top: 24px;
 }
+
+/* ---------- Single-row calculators (net worth, income): stack fields on phones ---------- */
+@media screen and (max-width: 700px) {
+	.calculator.odad-calc .inputs {
+		text-align: left;
+		margin-top: 0;
+	}
+	.calculator.odad-calc .inputs label {
+		display: block;
+		margin: 10px 0 6px;
+		line-height: 1.3;
+	}
+	.calculator.odad-calc .inputs select {
+		width: 100%;
+		font-size: 16px;
+		min-height: 44px;
+		padding: 0 6px;
+		border: 1px solid #767676;
+		border-radius: 4px;
+		background-color: #fff;
+		color: #333;
+	}
+}
+
+/* Net worth / income: fields stacked and centered on desktop too */
+@media screen and (min-width: 701px) {
+	.calculator.odad-calc.nw-calc .inputs label,
+	.calculator.odad-calc.income-calc .inputs label {
+		display: block;
+		margin: 10px 0 6px;
+	}
+	.calculator.odad-calc.nw-calc .inputs select,
+	.calculator.odad-calc.nw-calc .inputs input,
+	.calculator.odad-calc.income-calc .inputs select,
+	.calculator.odad-calc.income-calc .inputs input {
+		display: block;
+		margin: 0 auto;
+	}
+}
+
+/* ---------- Rent vs. buy: phones ---------- */
+@media screen and (max-width: 700px) {
+	.rvb-calc .rvb-box {
+		padding: 20px 16px 10px !important;
+	}
+	.rvb-calc .rvb-col {
+		width: 100% !important;
+	}
+	.rvb-calc .input-group label {
+		display: block;
+		margin-bottom: 4px;
+	}
+	.rvb-calc .input-group input {
+		width: 100%;
+		box-sizing: border-box;
+		font-size: 16px;
+		min-height: 44px;
+	}
+	.rvb-calc .rvb-results-row {
+		flex-direction: column;
+	}
+}
