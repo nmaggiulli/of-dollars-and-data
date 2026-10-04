@@ -1,0 +1,247 @@
+/* Calculator pages only. Loads after custom.css. */
+
+/* ---------- Bigger date menus on phones (S&P 500, DCA, stock/bond) ---------- */
+@media screen and (max-width: 700px) {
+	body.calculator-page .date-selector select {
+		font-size: 16px;          /* 16px also stops iPhones zooming in on tap */
+		min-height: 44px;         /* comfortable tap target */
+		padding: 0 6px;
+		border: 1px solid #767676;
+		border-radius: 4px;
+		background-color: #fff;
+		color: #333;
+	}
+}
+
+/* ---------- S&P 500 calculator form ---------- */
+.calculator.odad-calc .date-container {
+	gap: 20px;
+}
+.calculator.odad-calc .date-field {
+	display: flex;
+	align-items: center;
+	flex: 1;
+	gap: 12px;
+}
+.calculator.odad-calc .date-field > label {
+	white-space: nowrap;
+}
+.calculator.odad-calc .date-selector {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	font-size: 100%;
+}
+.calculator.odad-calc .initial-investment label {
+	display: block;
+	margin-bottom: 6px;
+}
+.calculator.odad-calc .initial-investment {
+	margin-top: 0;
+}
+
+@media screen and (max-width: 700px) {
+	.calculator.odad-calc .date-container {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 14px;
+	}
+	.calculator.odad-calc .date-field {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 6px;
+	}
+	.calculator.odad-calc .date-selector {
+		flex-direction: row;
+		gap: 8px;
+	}
+	.calculator.odad-calc .date-selector select:first-child {
+		flex: 3;
+	}
+	.calculator.odad-calc .date-selector select:last-child {
+		flex: 2;
+	}
+	.calculator.odad-calc input[type="text"],
+	.calculator.odad-calc input[type="number"] {
+		font-size: 16px;
+		min-height: 44px;
+		width: 100%;
+		box-sizing: border-box;
+	}
+	.calculator.odad-calc .investment-amounts label {
+		display: block;
+		margin-top: 8px;
+	}
+	.calculator.odad-calc .inflation-checkbox {
+		display: flex !important;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		margin-top: 12px;
+	}
+	.calculator.odad-calc .inflation-checkbox input {
+		width: 24px;
+		height: 24px;
+		margin: 0;
+		flex: none;
+	}
+}
+
+.calculator.odad-calc .data-through {
+	margin-top: 10px !important;
+	font-size: 13px;
+	color: #767676;
+	text-align: center;
+}
+
+#calc-output[hidden] {
+	display: none;
+}
+
+/* ---------- Inline error message ---------- */
+.calc-error {
+	margin: 12px 0 0 !important;
+	padding: 10px 12px;
+	border-left: 4px solid #c62828;
+	background: #fdecea;
+	color: #8e1c1c;
+	font-family: Arial, sans-serif;
+	font-size: 15px;
+	line-height: 1.4;
+}
+.calc-error[hidden] {
+	display: none;
+}
+.calculator select.calc-invalid,
+.calculator input.calc-invalid {
+	border: 2px solid #c62828 !important;
+	outline: none;
+}
+
+/* ---------- S&P 500 results ---------- */
+.sp500-results:empty {
+	display: none;
+}
+.sp500-results {
+	margin: 0 0 30px;
+}
+.sp500-headline {
+	font-size: 1.15em;
+	line-height: 1.5;
+	margin: 0 0 16px;
+}
+.sp500-headline strong {
+	color: #349800;
+}
+.sp500-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-family: Arial, sans-serif;
+	font-size: 16px;
+	line-height: 1.3;
+	color: #333;
+	margin: 0;
+}
+.sp500-table th,
+.sp500-table td {
+	padding: 10px 8px;
+	border-bottom: 1px solid #ddd;
+	text-align: right;
+	vertical-align: middle;
+}
+.sp500-table thead th {
+	font-size: 13px;
+	font-weight: bold;
+	text-transform: uppercase;
+	letter-spacing: .03em;
+	color: #555;
+	border-bottom: 2px solid #333;
+}
+.sp500-table tbody th[scope="row"] {
+	text-align: left;
+	font-weight: normal;
+}
+.sp500-table .sp500-group th {
+	text-align: left;
+	font-weight: bold;
+	background: #f4f4f4;
+	border-bottom: 1px solid #ccc;
+}
+.sp500-table td {
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+.sp500-share {
+	margin: 14px 0 0;
+	font-family: Arial, sans-serif;
+	font-size: 14px;
+}
+body.page-id-23470 .sp500-share .sp500-copy {
+	display: inline-block;
+	width: auto;
+	margin: 0;
+	padding: 6px 12px;
+	background: transparent;
+	color: #349800;
+	border: 1px solid #349800;
+	border-radius: 3px;
+}
+body.page-id-23470 .sp500-share .sp500-copy:hover {
+	background: #349800;
+	color: #fff;
+	font-weight: normal;
+}
+.sp500-copied {
+	margin-left: 10px;
+	color: #349800;
+}
+
+/* Phones: the four columns become compact cards */
+@media screen and (max-width: 600px) {
+	.sp500-table thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+	}
+	.sp500-table,
+	.sp500-table tbody,
+	.sp500-table tr,
+	.sp500-table th,
+	.sp500-table td {
+		display: block;
+		width: 100%;
+	}
+	.sp500-table tr:not(.sp500-group) {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		border-bottom: 1px solid #ddd;
+		padding: 8px 0;
+	}
+	.sp500-table tr:not(.sp500-group) th[scope="row"] {
+		grid-column: 1 / -1;
+		border: 0;
+		padding: 0 0 4px;
+		font-weight: bold;
+	}
+	.sp500-table tr:not(.sp500-group) td {
+		border: 0;
+		padding: 2px 0;
+		text-align: left;
+		font-size: 15px;
+	}
+	.sp500-table td::before {
+		content: attr(data-label);
+		display: block;
+		font-size: 11px;
+		text-transform: uppercase;
+		letter-spacing: .03em;
+		color: #767676;
+	}
+	.sp500-table .sp500-group th {
+		padding: 8px;
+		margin-top: 12px;
+	}
+}

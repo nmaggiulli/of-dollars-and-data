@@ -12,7 +12,7 @@
  * and settings carry over when you switch.
  */
 
-define( 'ODAD_VERSION', '2.0.0' );
+define( 'ODAD_VERSION', '2.1.0' );
 
 require_once get_template_directory() . '/inc/helpers.php';
 require_once get_template_directory() . '/inc/legacy.php';
