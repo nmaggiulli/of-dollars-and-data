@@ -163,6 +163,8 @@ add_shortcode( 'sp500_dca_calculator', function () {
 		. '<p><strong>Final Inflation-Adjusted Value (with dividends reinvested): </strong><span id="final-value-real-dollars"></span></p>'
 		. '<p class="indented"><strong>IRR (Inflation-Adjusted): </strong><span id="real_irr"></span></p>'
 		. '</div>'
+		. '<p class="sp500-share"><button type="button" class="sp500-copy">Copy link to these results</button>'
+		. '<span class="sp500-copied" aria-live="polite"></span></p>'
 		. odad_calc_chart()
 		. '</div><hr>';
 } );
@@ -188,6 +190,8 @@ add_shortcode( 'stock_bond_calculator', function () {
 		. '<p class="indented"><strong>Annualized:</strong> <span id="real-annualized"></span>%</p>'
 		. '<p class="indented"><strong>Investment Grew To:</strong> <span id="real-total"></span></p>'
 		. '</div>'
+		. '<p class="sp500-share"><button type="button" class="sp500-copy">Copy link to these results</button>'
+		. '<span class="sp500-copied" aria-live="polite"></span></p>'
 		. odad_calc_chart()
 		. '</div><hr>';
 } );

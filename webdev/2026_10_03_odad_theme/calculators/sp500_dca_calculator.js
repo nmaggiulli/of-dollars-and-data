@@ -276,8 +276,25 @@
 		calculate();
 	}
 
+	/* ---------- "Copy link to these results" ---------- */
+	function wireCopy(scope) {
+		var copy = scope && scope.querySelector('.sp500-copy');
+		if (!copy || copy.dataset.wired) { return; }
+		copy.dataset.wired = '1';
+		copy.addEventListener('click', function () {
+			var url = window.location.href, done = scope.querySelector('.sp500-copied');
+			var ok = function () { if (done) { done.textContent = 'Link copied'; setTimeout(function () { done.textContent = ''; }, 2500); } };
+			if (navigator.clipboard && navigator.clipboard.writeText) {
+				navigator.clipboard.writeText(url).then(ok, function () { window.prompt('Copy this link:', url); });
+			} else {
+				window.prompt('Copy this link:', url);
+			}
+		});
+	}
+
 	function init() {
 		buildForm();
+		wireCopy($('calc-output'));
 		var btn = $('calculate-btn');
 		if (btn) { btn.addEventListener('click', calculate); }
 		['start-month', 'start-year', 'end-month', 'end-year', 'initial-investment', 'monthly-investment'].forEach(function (id) {

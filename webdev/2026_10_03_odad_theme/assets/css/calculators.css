@@ -177,7 +177,7 @@
 	font-family: Arial, sans-serif;
 	font-size: 14px;
 }
-body.page-id-23470 .sp500-share .sp500-copy {
+body.calculator-page .sp500-share .sp500-copy {
 	display: inline-block;
 	width: auto;
 	margin: 0;
@@ -187,7 +187,7 @@ body.page-id-23470 .sp500-share .sp500-copy {
 	border: 1px solid #349800;
 	border-radius: 3px;
 }
-body.page-id-23470 .sp500-share .sp500-copy:hover {
+body.calculator-page .sp500-share .sp500-copy:hover {
 	background: #349800;
 	color: #fff;
 	font-weight: normal;
