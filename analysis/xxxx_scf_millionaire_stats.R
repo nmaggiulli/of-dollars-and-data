@@ -31,19 +31,21 @@ dollar_year <- 2022   # -> 2025  (dollar basis of 0003_scf_stack.Rds)
 baseline_year <- 1989
 
 # ---------------------------------------------------------------------- #
-# EVERYTHING HERE IS A SHARE, NOT A COUNT.
+# ON THE WEIGHTS
 #
-# The weights in 0003_scf_stack.Rds are survey-scaled - they sum to the
-# number of households SURVEYED, not to the U.S. household population. So a
-# weighted "count" out of this data is a survey figure and means nothing to
-# a reader.
+# wgt in 0003_scf_stack.Rds is a POPULATION weight: summing it across all
+# five implicates gives the number of U.S. households the survey represents
+# (93.0M in 1989 rising to 131.3M in 2022, which matches the Fed's published
+# figures). So sum(wgt) above a threshold IS a household count. No divisor,
+# no external Census merge.
 #
-# Shares and percentiles are unaffected, because the scaling cancels in a
-# ratio. Those are what this script produces.
+# Do NOT divide by n_distinct(imp_id). In this build imp_id = y1, and per
+# the SCF codebook Y1 is a unique RECORD id (case id x 10 + implicate), so
+# n_distinct(imp_id) returns the row count, not 5. If you ever need the
+# implicate number itself it is y1 - 10 * yy1.
 #
-# For a headline count in the post ("X million millionaire households"),
-# multiply a share from here by the U.S. household total from Census or from
-# the Fed's bulletin for that year, and say so in the text.
+# Shares are scaling-invariant either way, which is why the percentile and
+# wealth-level charts were right even before this was sorted out.
 # ---------------------------------------------------------------------- #
 
 # Wealth Ladder levels, in dollar_year dollars. L4 is open-ended, so the
@@ -55,6 +57,12 @@ ladder_colors <- c("#bdd7e7", "#6baed6", "#3182bd", "#08519c")
 
 # Thresholds whose percentile rank we track over time (the ladder boundaries)
 rank_thresholds <- c(10^4, 10^5, 10^6)
+
+# Household-count-over-time charts (the WSJ/Zidar style). Two tiers: the
+# millionaire tier, which is on-theme for this post, and the ultra-wealthy
+# tier the WSJ used. Both run off the same helper.
+count_thresholds_mill  <- c(10^6, 5 * 10^6, 10^7)
+count_thresholds_ultra <- c(3 * 10^7, 5 * 10^7, 10^8)
 
 # Two-series charts (prior year vs. latest year)
 prior_year_color <- "#B3B3B3"
@@ -147,6 +155,16 @@ make_pct_labels <- function(values, digits = 1){
          paste0(formatC(100 * values, format = "f", digits = digits), "%"))
 }
 
+# Household counts read better as "23.6M" than "23,600,000".
+make_count_labels <- function(values, digits = 1){
+  max_abs <- max(abs(values), na.rm = TRUE)
+  if(max_abs >= 10^6){
+    paste0(formatC(values/10^6, format = "f", digits = digits), "M")
+  } else {
+    paste0(formatC(values/10^3, format = "f", digits = 0), "k")
+  }
+}
+
 make_pp_labels <- function(values, digits = 1){
   paste0(ifelse(values > 0, "+", ""),
          formatC(100 * values, format = "f", digits = digits), "pp")
@@ -233,15 +251,20 @@ if(all(c("fin", "retqliq") %in% names(df_year))){
 definition_summary <- tibble(definition = names(millionaire_defs)) %>%
   mutate(share = map_dbl(millionaire_defs,
                          ~ wtd_share(.x(df_year), df_year$wgt)),
+         households = map_dbl(millionaire_defs,
+                              ~ sum(df_year$wgt[.x(df_year)], na.rm = TRUE)),
          definition = factor(definition, levels = rev(names(millionaire_defs))))
 
-print("Share of U.S. households with $1M, by definition:")
+print("U.S. households with $1M, by definition:")
 print(definition_summary %>%
-        transmute(definition, share = make_pct_labels(share)) %>%
+        transmute(definition,
+                  share = make_pct_labels(share),
+                  households = make_count_labels(households)) %>%
         as.data.frame())
 
 text_labels <- definition_summary %>%
-  mutate(label = make_pct_labels(share))
+  mutate(label = paste0(make_pct_labels(share), "   ",
+                        make_count_labels(households)))
 
 file_path <- paste0(out_path, "/01_millionaire_share_by_definition.jpeg")
 
@@ -253,7 +276,7 @@ plot <- ggplot(definition_summary, aes(x = definition, y = share)) +
             size = label_size) +
   coord_flip() +
   scale_y_continuous(label = percent_format(accuracy = 1),
-                     expand = expansion(mult = c(0, 0.18))) +
+                     expand = expansion(mult = c(0, 0.40))) +
   of_dollars_and_data_theme +
   ggtitle(make_title("Who Counts as a Millionaire?",
                      paste0("Share of U.S. Households, ", data_year))) +
@@ -266,7 +289,9 @@ write_html_table(
   definition_summary %>%
     arrange(desc(share)) %>%
     transmute(Definition = as.character(definition),
-              `Share of Households` = make_pct_labels(share)),
+              `Share of Households` = make_pct_labels(share),
+              `Households` = formatC(households, format = "d",
+                                     big.mark = ",")),
   paste0(out_path, "/01_millionaire_by_definition_table.html"))
 
 # ##################################################################### #
@@ -278,7 +303,10 @@ write_html_table(
 
 millionaire_time <- df %>%
   group_by(year) %>%
-  summarise(share = wtd_share(networth >= 10^6, wgt), .groups = "drop") %>%
+  summarise(share       = wtd_share(networth >= 10^6, wgt),
+            households  = sum(wgt[networth >= 10^6], na.rm = TRUE),
+            all_hh      = sum(wgt, na.rm = TRUE),
+            .groups = "drop") %>%
   mutate(pctile_of_1m = 1 - share)
 
 # ---- Chart 2a: the percentile rank of $1M ----
@@ -364,11 +392,103 @@ plot <- ggplot(rank_over_time, aes(x = year, y = pctile,
         legend.title = element_blank(),
         legend.position = "bottom") +
   ggtitle(paste0("Every Wealth Level Got Less Exclusive\n",
-                     "Percentile Rank of Each Cutoff")) +
+                 "Percentile Rank of Each Cutoff")) +
   labs(x = "Year", y = "Percentile",
        caption = make_caption(note_string_ts))
 
 save_chart(plot, file_path)
+
+# ---- Chart 2d: household COUNTS above each threshold, over time ----
+# The WSJ/Owen Zidar chart. No external data needed: wgt is a population
+# weight, so sum(wgt) above a threshold is the household count directly.
+#
+# This is NOT the same story as the share chart. U.S. households grew from
+# 93.0M to 131.3M over this period, so the count rises faster than the share
+# and can climb even in waves where the share is flat.
+
+make_count_over_time <- function(thresholds, file_suffix, chart_title,
+                                 chart_subtitle){
+  
+  counts <- map_dfr(thresholds, function(th){
+    df %>%
+      group_by(year) %>%
+      summarise(households  = sum(wgt[networth >= th], na.rm = TRUE),
+                n_unweighted = n_distinct(hh_id[networth >= th]),
+                .groups = "drop") %>%
+      mutate(threshold = th)
+  }) %>%
+    mutate(threshold_label = factor(short_dollar(threshold),
+                                    levels = short_dollar(sort(thresholds,
+                                                               decreasing = TRUE))))
+  
+  # How thin is the sample behind each line? At the top thresholds this can
+  # fall to a handful of households, and the SCF excludes the Forbes 400 by
+  # design, so the top line is a floor rather than an estimate.
+  thin <- counts %>%
+    group_by(threshold_label) %>%
+    summarise(min_n = min(n_unweighted),
+              n_latest = n_unweighted[year == data_year],
+              .groups = "drop")
+  
+  print(paste0("Unweighted households behind each line (", file_suffix, "):"))
+  print(as.data.frame(thin))
+  
+  max_val <- max(counts$households)
+  
+  y_labels <- if(max_val >= 5 * 10^6){
+    function(x) paste0(formatC(x/10^6, format = "f", digits = 0), "M")
+  } else {
+    comma
+  }
+  
+  file_path <- paste0(out_path, "/02_household_counts_", file_suffix, ".jpeg")
+  
+  plot <- ggplot(counts, aes(x = year, y = households,
+                             col = threshold_label)) +
+    geom_line(linewidth = 0.9) +
+    geom_point(size = 1.1) +
+    scale_y_continuous(label = y_labels,
+                       expand = expansion(mult = c(0.06, 0.10))) +
+    scale_x_continuous(breaks = seq(year_min, year_max, 6),
+                       expand = expansion(mult = c(0.04, 0.04))) +
+    scale_color_manual(values = rev(ladder_colors[2:4])) +
+    of_dollars_and_data_theme +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.title = element_blank(),
+          legend.position = "bottom") +
+    ggtitle(paste0(chart_title, "\n", chart_subtitle)) +
+    labs(x = "Year", y = "Households",
+         caption = make_caption(note_string_ts))
+  
+  save_chart(plot, file_path)
+  
+  write_html_table(
+    counts %>%
+      mutate(display = make_count_labels(households)) %>%
+      select(year, threshold_label, display) %>%
+      pivot_wider(names_from = threshold_label, values_from = display) %>%
+      rename(Year = year),
+    paste0(out_path, "/02_household_counts_", file_suffix, "_table.html"))
+  
+  export_to_excel(df = counts,
+                  outfile = paste0(out_path, "/02_household_counts_",
+                                   file_suffix, ".xlsx"),
+                  sheetname = "counts",
+                  new_file = 1,
+                  fancy_formatting = 0)
+  
+  invisible(counts)
+}
+
+counts_mill <- make_count_over_time(
+  count_thresholds_mill, "millionaire",
+  "How Many Households Are Rich?",
+  "Number by Net Worth, Inflation-Adjusted")
+
+counts_ultra <- make_count_over_time(
+  count_thresholds_ultra, "ultra",
+  "The Very Top Keeps Growing",
+  "Number by Net Worth, Inflation-Adjusted")
 
 write_html_table(
   millionaire_time %>%
@@ -409,7 +529,8 @@ ladder_by_year <- ladder %>%
   group_by(year) %>%
   mutate(share = wgt_sum / sum(wgt_sum)) %>%
   ungroup() %>%
-  select(year, level, share)
+  rename(households = wgt_sum) %>%
+  select(year, level, share, households)
 
 # L4 is open-ended, so shares sum to 1 in every year.
 ladder_check <- ladder_by_year %>%
@@ -450,7 +571,8 @@ census_years <- intersect(c(baseline_year, prior_year, data_year), all_years)
 
 ladder_census <- ladder_by_year %>%
   filter(year %in% census_years) %>%
-  mutate(display = make_pct_labels(share)) %>%
+  mutate(display = paste0(make_pct_labels(share), " (",
+                          make_count_labels(households), ")")) %>%
   select(level, year, display) %>%
   pivot_wider(names_from = year, values_from = display) %>%
   rename(`Wealth Level` = level)
@@ -698,11 +820,16 @@ print(paste0("Output folder: ", out_path))
 print(paste0("Households surveyed in ", data_year, ": ",
              formatC(n_hh, format = "d", big.mark = ",")))
 
+print("U.S. households represented by the weights, by year:")
+print(millionaire_time %>%
+        transmute(year, households = make_count_labels(all_hh)) %>%
+        as.data.frame())
+print("  (should read ~93M in 1989 rising to ~131M in 2022)")
+
 mill_row <- definition_summary %>% filter(definition == "Net worth")
-print(paste0("Share of households worth $1M+ in ", data_year, ": ",
-             make_pct_labels(mill_row$share)))
-print(paste0("  (multiply by the U.S. household total for that year to get ",
-             "a headline count for the post)"))
+print(paste0("Households worth $1M+ in ", data_year, ": ",
+             make_count_labels(mill_row$households),
+             " (", make_pct_labels(mill_row$share), ")"))
 
 print(paste0("$1M sits at the ",
              ordinal(100 * (millionaire_time %>%
