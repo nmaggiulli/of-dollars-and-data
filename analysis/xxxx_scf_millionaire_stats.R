@@ -120,6 +120,13 @@ all_years <- sort(unique(df$year))
 year_min  <- min(all_years)
 year_max  <- max(all_years)
 
+# Axis breaks for every time-series chart. Built by stepping BACK from
+# year_max so the latest wave always gets a tick. year_breaks
+# ran 1989/1995/.../2019 and silently dropped 2022, which made the charts
+# look like they ended early. Stepping back from 2022 also keeps working
+# when data_year becomes 2025.
+year_breaks <- sort(seq(year_max, year_min, by = -3))
+
 df_year <- df %>% filter(year == data_year)
 
 # Unweighted households surveyed in data_year - this is what the note string
@@ -153,6 +160,15 @@ wtd_share <- function(condition, weights){
 make_pct_labels <- function(values, digits = 1){
   ifelse(is.na(values), "n/a",
          paste0(formatC(100 * values, format = "f", digits = digits), "%"))
+}
+
+# Rounded count for an end-of-line label: "395k", "23.6M". Keeps three
+# significant figures so the label stays honest rather than rounding 185k
+# up to 200k.
+make_round_count <- function(values){
+  ifelse(abs(values) >= 10^6,
+         paste0(formatC(values/10^6, format = "f", digits = 1), "M"),
+         paste0(formatC(round(values/10^3), format = "d", big.mark = ","), "k"))
 }
 
 # Household counts read better as "23.6M" than "23,600,000".
@@ -324,7 +340,7 @@ plot <- ggplot(millionaire_time, aes(x = year, y = pctile_of_1m)) +
             hjust = lab_df$hj, vjust = -1.2, size = label_size) +
   scale_y_continuous(label = percent_format(accuracy = 1),
                      expand = expansion(mult = c(0.08, 0.16))) +
-  scale_x_continuous(breaks = seq(year_min, year_max, 3),
+  scale_x_continuous(breaks = year_breaks,
                      expand = expansion(mult = c(0.08, 0.08))) +
   of_dollars_and_data_theme +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -356,7 +372,7 @@ plot <- ggplot(millionaire_time, aes(x = year, y = share)) +
             hjust = lab_df$hj, vjust = -1.2, size = label_size) +
   scale_y_continuous(label = percent_format(accuracy = 1),
                      expand = expansion(mult = c(0.08, 0.16))) +
-  scale_x_continuous(breaks = seq(year_min, year_max, 3),
+  scale_x_continuous(breaks = year_breaks,
                      expand = expansion(mult = c(0.08, 0.08))) +
   of_dollars_and_data_theme +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -384,7 +400,7 @@ plot <- ggplot(rank_over_time, aes(x = year, y = pctile,
   geom_line(linewidth = 0.9) +
   scale_y_continuous(label = percent_format(accuracy = 1),
                      expand = expansion(mult = c(0.08, 0.10))) +
-  scale_x_continuous(breaks = seq(year_min, year_max, 6),
+  scale_x_continuous(breaks = year_breaks,
                      expand = expansion(mult = c(0.04, 0.04))) +
   scale_color_manual(values = ladder_colors[2:4]) +
   of_dollars_and_data_theme +
@@ -441,23 +457,33 @@ make_count_over_time <- function(thresholds, file_suffix, chart_title,
     comma
   }
   
+  # Label the final point of each line with its value and threshold. That
+  # makes the bottom legend redundant, so it comes off - the labels identify
+  # the series and the chart gets the legend row back as plot area.
+  end_labels <- counts %>%
+    filter(year == max(year)) %>%
+    mutate(label = paste0("(", threshold_label, "+)"))
+  
   file_path <- paste0(out_path, "/02_household_counts_", file_suffix, ".jpeg")
   
   plot <- ggplot(counts, aes(x = year, y = households,
                              col = threshold_label)) +
     geom_line(linewidth = 0.9) +
     geom_point(size = 1.1) +
+    geom_text(data = end_labels,
+              aes(x = year, y = households, label = label),
+              hjust = -0.15, vjust = 0.4, size = label_size_small,
+              show.legend = FALSE) +
     scale_y_continuous(label = y_labels,
-                       expand = expansion(mult = c(0.06, 0.10))) +
-    scale_x_continuous(breaks = seq(year_min, year_max, 6),
-                       expand = expansion(mult = c(0.04, 0.04))) +
+                       expand = expansion(mult = c(0.06, 0.12))) +
+    scale_x_continuous(breaks = year_breaks,
+                       expand = expansion(mult = c(0.04, 0.28))) +
     scale_color_manual(values = rev(ladder_colors[2:4])) +
     of_dollars_and_data_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
-          legend.title = element_blank(),
-          legend.position = "bottom") +
+          legend.position = "none") +
     ggtitle(paste0(chart_title, "\n", chart_subtitle)) +
-    labs(x = "Year", y = "Households",
+    labs(x = "Year", y = "Total U.S. Households",
          caption = make_caption(note_string_ts))
   
   save_chart(plot, file_path)
@@ -545,7 +571,7 @@ plot <- ggplot(ladder_by_year, aes(x = year, y = share, fill = level)) +
   geom_bar(stat = "identity") +
   scale_fill_manual(values = ladder_colors) +
   scale_y_continuous(label = percent, expand = expansion(mult = c(0, 0.02))) +
-  scale_x_continuous(breaks = seq(year_min, year_max, 6)) +
+  scale_x_continuous(breaks = year_breaks) +
   of_dollars_and_data_theme +
   theme(legend.title = element_blank(),
         legend.position = "bottom") +
