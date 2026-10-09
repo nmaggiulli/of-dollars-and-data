@@ -23,15 +23,15 @@ library(tidyverse)
 # CHANGE data_year WHEN THE 2025 DATA LANDS. Everything downstream - the
 # output subfolder, titles, source strings, notes, filenames - keys off it.
 
-data_year   <- 2022   # -> 2025
+data_year   <- 2025   # -> 2025
 
 # The dollar basis of 0003_scf_stack.Rds. If the stack deflates every wave
 # to the most recent year, this is that year, NOT necessarily data_year.
-dollar_year <- 2022   # -> 2025
+dollar_year <- 2025   # -> 2025
 
 ########################## Output paths ############################### #
 
-folder_name <- "xxxx_scf_net_worth_by_age_edc"
+folder_name <- "0524_scf_net_worth_by_age_edc"
 base_path   <- paste0(exportdir, folder_name)
 out_path    <- paste0(base_path, "/", data_year)
 
