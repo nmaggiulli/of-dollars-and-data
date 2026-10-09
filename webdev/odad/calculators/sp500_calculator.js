@@ -190,7 +190,7 @@
 			set('annualized-real-total-return', formatNumber(r.realTotal.annual));
 			set('real-total-dollar', formatDollar(r.realTotal.total, amount));
 			var out = $('calc-output');
-			if (out) { out.hidden = false; }
+			if (out) { out.classList.remove('is-empty'); }
 			return;
 		}
 

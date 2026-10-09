@@ -178,7 +178,7 @@
 
 		$('nw-percentile').innerText = percentile;
 		var out = $('calc-output');
-		if (out) { out.hidden = false; }
+		if (out) { out.classList.remove('is-empty'); }
 		drawChart(ageGroup, values, userIndex);
 
 		if (window.history && history.replaceState) {

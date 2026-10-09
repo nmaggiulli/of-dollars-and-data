@@ -146,7 +146,7 @@
 		$('final-amount').innerText = '$' + formatNumber(total);
 
 		var out = $('calc-output');
-		if (out) { out.hidden = false; }
+		if (out) { out.classList.remove('is-empty'); }
 
 		drawChart(labels, data, total, [
 			'Investment Return Calculator',

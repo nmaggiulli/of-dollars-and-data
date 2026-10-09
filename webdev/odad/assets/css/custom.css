@@ -315,3 +315,22 @@ body.page-id-23693 .date-container
     margin-right: auto;
   }
 }
+
+/* Homepage / archive list: less white space between posts on desktop
+   (was 3em above and below each post). Minimum heights = the date/share
+   column (196px) plus padding, so every post gets the same gap below LinkedIn. */
+@media (min-width: 1101px) {
+	.blog .post,
+	.archive .post,
+	.search-results .post {
+		padding-top: 2em;
+		padding-bottom: 2em;
+		min-height: calc(196px + 4em);
+	}
+	.blog .post:first-of-type,
+	.archive .post:first-of-type,
+	.search-results .post:first-of-type {
+		padding-top: 0;
+		min-height: calc(196px + 2em);
+	}
+}

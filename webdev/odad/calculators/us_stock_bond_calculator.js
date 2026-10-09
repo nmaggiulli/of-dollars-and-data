@@ -295,7 +295,7 @@
 		}, 'inflation-adjusted, with dividends reinvested');
 
 		var out = $('calc-output');
-		if (out) { out.hidden = false; }
+		if (out) { out.classList.remove('is-empty'); }
 
 		drawChart(labels, nominalArr, realArr, [
 			stockPercent + '/' + (100 - stockPercent) + ' Portfolio (U.S. Stock/Bond)',

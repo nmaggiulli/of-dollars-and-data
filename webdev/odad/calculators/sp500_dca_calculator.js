@@ -308,7 +308,7 @@
 		}, 'inflation-adjusted, with dividends reinvested');
 
 		var out = $('calc-output');
-		if (out) { out.hidden = false; }
+		if (out) { out.classList.remove('is-empty'); }
 
 		drawChart(labels, contributionsArr, nominalArr, realArr, [
 			'U.S. Stock DCA Calculator',

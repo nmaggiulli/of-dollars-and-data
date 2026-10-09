@@ -95,7 +95,11 @@
 	text-align: center;
 }
 
-#calc-output[hidden] {
+/* Before the first Calculate: result labels show with no values; the % signs,
+   copy-link button and chart stay hidden until there are results. */
+#calc-output.is-empty .calc-unit,
+#calc-output.is-empty .sp500-share,
+#calc-output.is-empty .calc-chart {
 	display: none;
 }
 
