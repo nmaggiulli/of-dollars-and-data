@@ -14,7 +14,7 @@ library(tidyverse)
 in_path <- paste0(importdir, "0003_scf_data/SCF")
 
 # Create a year list to loop through
-year_list <- seq(1989, 2022, 3)
+year_list <- seq(1989, 2025, 3)
 
 # Log everything printed here so the diagnostics can be shared
 while(sink.number() > 0) sink()
