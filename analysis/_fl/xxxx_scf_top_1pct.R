@@ -26,7 +26,7 @@ library(tidyverse)
 #   4. Embedded gains          (unrealized gains / net worth, retirement
 #                               share contrast)
 #   5. Inheritance & bequests  (received, expected, bequest intent, giving,
-#                               support to others, trusts)
+#                               trusts, use of professionals)
 #   6. The exemption           (households above / near their own line,
 #                               illustrative 10-year projection)
 #   7. Sanity checks
@@ -43,14 +43,13 @@ library(tidyverse)
 #   inh_amt            total inheritances received, dollar_year dollars
 #   bequest_expect     "Yes" / "Possibly" / "No"  (expects to leave a
 #                      sizable estate)
-#   bequest_important  1 = says leaving an estate is important, 0 = not
-#   charity_500        1 = gave $500+ to charity last year, 0 = no
-#   charity_amt        dollars given to charity last year (0 if none)
-#   support_given      1 = gives financial support to people outside the
-#                      household, 0 = no
-#   has_trust          1 = has a personal trust or foundation (set up or
-#                      beneficiary), 0 = no
-#   trust_self         1 = household set up a trust, 0 = no
+#   charity_500        1 = made charitable contributions last year (x5822)
+#   charity_amt        dollars given to charity last year (x5823, 0 if none)
+#   trusts             value of trusts with an equity interest (summary var)
+#   has_trust          1 = trusts > 0, 0 = no
+#   ifinpro, ifinplan  1 = uses a lawyer/accountant/banker/broker, or a
+#                      financial planner, for saving/investment information
+#                      (summary vars, 1998+)
 #
 # Already in the build and used here: networth, asset, debt, income, bus,
 # stocks, nmmf, retqliq, houses, oresre, nnresre, liq, cds, bond, savbnd,
@@ -181,8 +180,8 @@ if(length(missing_core) > 0){
 
 kg_vars      <- c("kgtotal", "kgbus", "kghouse", "kgore", "kgstmf")
 later_vars   <- c(kg_vars, "inh_expect", "inh_amt", "bequest_expect",
-                  "bequest_important", "charity_500", "charity_amt",
-                  "support_given", "has_trust", "trust_self")
+                  "charity_500", "charity_amt", "trusts", "has_trust", "ifinpro",
+                  "ifinplan")
 present_later <- intersect(later_vars, names(scf_stack))
 
 message("Later-build variables found: ",
@@ -738,7 +737,21 @@ print("Comparison years:")
 print(older_share %>%
         filter(year %in% c(compare_years, data_year)) %>%
         mutate(wealth_share = make_pct_labels(wealth_share),
+               hh_share = make_pct_labels(hh_share),
                older_wealth = dollar_short(older_wealth)) %>%
+        as.data.frame())
+
+# Robustness: does the latest-year jump hold at other age cutoffs, or is it
+# a cohort bunching right at older_age? Also prints the top-1% median age.
+print("Top 1%: share of wealth held by age cutoff, and median age:")
+print(df %>%
+        filter(top1) %>%
+        group_by(year) %>%
+        summarise(`65+` = make_pct_labels(agg_ratio(networth * (age >= 65), networth, wgt)),
+                  `70+` = make_pct_labels(agg_ratio(networth * (age >= 70), networth, wgt)),
+                  `75+` = make_pct_labels(agg_ratio(networth * (age >= 75), networth, wgt)),
+                  median_age = wtd_median(age, wgt),
+                  .groups = "drop") %>%
         as.data.frame())
 
 older_long <- older_share %>%
@@ -1007,7 +1020,11 @@ if(has_vars("inh_amt")){
 }
 
 # ---- 5c: bequest intent and the gap --------------------------------- #
-if(has_vars(c("bequest_expect", "bequest_important"))){
+# x5825: "Do you expect to leave a sizable estate to others?" (yes /
+# possibly / no). The 2022 survey has no importance question, so the gap is
+# measured directly: households whose net worth all but guarantees a large
+# estate, but who don't say they expect to leave one.
+if(has_vars("bequest_expect")){
   
   bequest_levels <- c("Yes", "Possibly", "No")
   
@@ -1018,21 +1035,30 @@ if(has_vars(c("bequest_expect", "bequest_important"))){
               Yes       = wtd_share(bequest_expect == "Yes", wgt),
               Possibly  = wtd_share(bequest_expect == "Possibly", wgt),
               No        = wtd_share(bequest_expect == "No", wgt),
-              important = wtd_share(bequest_important == 1, wgt),
-              # The gap: a large estate is coming (top 1%), but they say
-              # leaving one is not important
-              not_important = wtd_share(bequest_important == 0, wgt),
               .groups = "drop") %>%
-    suppress_thin(c(bequest_levels, "important", "not_important"),
-                  "5c bequest intent")
+    suppress_thin(bequest_levels, "5c bequest intent")
+  
+  print("Expect to leave a sizable estate, by group:")
+  print(bequest_tier %>% mutate(across(all_of(bequest_levels), make_pct_labels)) %>%
+          as.data.frame())
   
   bequest_long <- bequest_tier %>%
     select(group, all_of(bequest_levels)) %>%
     pivot_longer(-group, names_to = "answer", values_to = "share") %>%
     mutate(answer = factor(answer, levels = rev(bequest_levels)))
   
+  text_labels <- bequest_long %>%
+    group_by(group) %>%
+    arrange(desc(answer)) %>%
+    mutate(pos = cumsum(share) - share / 2) %>%
+    ungroup() %>%
+    filter(share >= 0.05)
+  
   plot <- ggplot(bequest_long, aes(x = group, y = share, fill = answer)) +
     geom_bar(stat = "identity", width = 0.7) +
+    geom_text(data = text_labels,
+              aes(x = group, y = pos, label = make_pct_labels(share)),
+              col = "white", size = label_size_small) +
     scale_fill_manual(values = c(Yes = chart_standard_color,
                                  Possibly = "#6baed6", No = "#B3B3B3"),
                       breaks = bequest_levels) +
@@ -1047,114 +1073,176 @@ if(has_vars(c("bequest_expect", "bequest_important"))){
   
   save_chart(plot, paste0(out_path, "/05_bequest_expect_by_tier.jpeg"))
   
-  # Cross-tab inside the top 1%: expectation x importance
-  gap_table <- df_year %>%
-    filter(top1, !is.na(bequest_expect), !is.na(bequest_important)) %>%
-    group_by(bequest_expect, bequest_important) %>%
-    summarise(n_unw = n_distinct(hh_id), hh = sum(wgt), .groups = "drop") %>%
-    mutate(share = hh / sum(hh)) %>%
-    suppress_thin("share", "5c gap table")
+  # The gap inside the top 1%, by age: older households are the ones whose
+  # estate is closest to transferring
+  gap_age <- df_year %>%
+    filter(top1, !is.na(bequest_expect)) %>%
+    mutate(age_group = cut(age, breaks = c(-Inf, 54, older_age - 1, Inf),
+                           labels = c("Under 55", paste0("55-", older_age - 1),
+                                      paste0(older_age, "+")))) %>%
+    group_by(age_group) %>%
+    summarise(n_unw = n_distinct(hh_id),
+              not_yes = wtd_share(bequest_expect != "Yes", wgt),
+              says_no = wtd_share(bequest_expect == "No", wgt),
+              wealth_not_yes = agg_ratio(networth * (bequest_expect != "Yes"),
+                                         networth, wgt),
+              .groups = "drop") %>%
+    suppress_thin(c("not_yes", "says_no", "wealth_not_yes"), "5c gap by age")
   
-  write_html_table(
-    gap_table %>%
-      transmute(`Expects to leave sizable estate` = bequest_expect,
-                `Says leaving an estate is important` =
-                  ifelse(bequest_important == 1, "Yes", "No"),
-                `Share of top 1%` = make_pct_labels(share)),
-    paste0(out_path, "/05_bequest_gap_top1_table.html"))
+  print("Top 1%: not expecting to leave a sizable estate, by age:")
+  print(gap_age %>%
+          mutate(across(c(not_yes, says_no, wealth_not_yes), make_pct_labels)) %>%
+          as.data.frame())
   
   write_html_table(
     bequest_tier %>%
       transmute(Group = as.character(group),
                 `Expects: yes` = make_pct_labels(Yes),
                 `Expects: possibly` = make_pct_labels(Possibly),
-                `Expects: no` = make_pct_labels(No),
-                `Says it is important` = make_pct_labels(important)),
+                `Expects: no` = make_pct_labels(No)),
     paste0(out_path, "/05_bequest_by_tier_table.html"))
   
+  write_html_table(
+    gap_age %>%
+      transmute(`Age of head` = as.character(age_group),
+                `Not a firm yes` = make_pct_labels(not_yes),
+                `Says no` = make_pct_labels(says_no),
+                `Share of top-1% wealth held by "not yes"` = make_pct_labels(wealth_not_yes)),
+    paste0(out_path, "/05_bequest_gap_top1_by_age_table.html"))
+  
 } else {
-  message("SECTION 5c: bequest variables not in stack - skipping.")
+  message("SECTION 5c: bequest_expect not in stack - skipping.")
 }
 
 # ---- 5d: giving while living ---------------------------------------- #
-if(has_vars(c("charity_500", "charity_amt", "support_given"))){
+# x5822 / x5823: charitable contributions in the past year and amount.
+# (Check x5822's wording before calling it "$500 or more".)
+if(has_vars(c("charity_500", "charity_amt"))){
   
-  giving_tier <- tier_plus_30m(df_year) %>%
-    group_by(group) %>%
+  giving_tier <- tier_plus_30m(df %>% filter(year %in% c(prior_year, data_year))) %>%
+    group_by(year, group) %>%
     summarise(n_unw = n_distinct(hh_id),
-              gave_500       = wtd_share(charity_500 == 1, wgt),
+              gave           = wtd_share(charity_500 == 1, wgt),
               median_gift    = ifelse(any(charity_amt > 0),
                                       wtd_median(charity_amt[charity_amt > 0],
                                                  wgt[charity_amt > 0]),
                                       NA_real_),
               gifts_share_inc = agg_ratio(charity_amt, income, wgt),
               gifts_share_nw  = agg_ratio(charity_amt, networth, wgt),
-              supports_others = wtd_share(support_given == 1, wgt),
               .groups = "drop") %>%
-    suppress_thin(c("gave_500", "median_gift", "gifts_share_inc",
-                    "gifts_share_nw", "supports_others"), "5d giving")
+    suppress_thin(c("gave", "median_gift", "gifts_share_inc", "gifts_share_nw"),
+                  "5d giving") %>%
+    mutate(period = period_factor(year))
   
-  giving_long <- giving_tier %>%
-    select(group, `Gave $500+ to charity` = gave_500,
-           `Supports others financially` = supports_others) %>%
-    pivot_longer(-group, names_to = "measure", values_to = "share")
+  print("Charitable giving by group:")
+  print(giving_tier %>%
+          mutate(gave = make_pct_labels(gave),
+                 median_gift = dollar_short(median_gift),
+                 gifts_share_inc = make_pct_labels(gifts_share_inc, 1),
+                 gifts_share_nw = make_pct_labels(gifts_share_nw, 2)) %>%
+          select(-period) %>%
+          as.data.frame())
   
-  plot <- ggplot(giving_long, aes(x = group, y = share, fill = measure)) +
+  plot <- ggplot(giving_tier, aes(x = group, y = gifts_share_nw, fill = period)) +
     geom_bar(stat = "identity", position = position_dodge(width = 0.8),
              width = 0.75) +
-    geom_text(aes(label = make_pct_labels(share)),
+    geom_text(aes(label = make_pct_labels(gifts_share_nw, 2)),
               position = position_dodge(width = 0.8), vjust = -0.5,
               col = chart_standard_color, size = label_size_small) +
-    scale_fill_manual(values = c(`Gave $500+ to charity` = chart_standard_color,
-                                 `Supports others financially` = "#6baed6")) +
-    scale_y_continuous(label = percent_format(accuracy = 1),
-                       expand = expansion(mult = c(0, 0.10))) +
+    period_fill_scale() +
+    scale_y_continuous(label = percent_format(accuracy = 0.1),
+                       expand = expansion(mult = c(0, 0.12))) +
     of_dollars_and_data_theme +
     theme(legend.title = element_blank(),
           legend.position = "bottom") +
     ggtitle(paste0("Giving While Living\n",
-                   "Charity and Family Support, ", data_year)) +
-    labs(x = NULL, y = "Share of Households",
+                   "Annual Gifts / Net Worth")) +
+    labs(x = NULL, y = "Charitable Gifts / Net Worth",
          caption = make_caption())
   
-  save_chart(plot, paste0(out_path, "/05_giving_by_tier.jpeg"))
+  save_chart(plot, paste0(out_path, "/05_giving_share_of_nw.jpeg"))
   
   write_html_table(
     giving_tier %>%
-      transmute(Group = as.character(group),
-                `Gave $500+` = make_pct_labels(gave_500),
+      arrange(desc(year), group) %>%
+      transmute(Year = as.character(year),
+                Group = as.character(group),
+                `Gave to charity` = make_pct_labels(gave),
                 `Median gift (givers)` = dollar_short(median_gift),
                 `Gifts / income` = make_pct_labels(gifts_share_inc, 1),
-                `Gifts / net worth` = make_pct_labels(gifts_share_nw, 2),
-                `Supports others` = make_pct_labels(supports_others)),
+                `Gifts / net worth` = make_pct_labels(gifts_share_nw, 2)),
     paste0(out_path, "/05_giving_by_tier_table.html"))
   
 } else {
-  message("SECTION 5d: charity/support variables not in stack - skipping.")
+  message("SECTION 5d: charity variables not in stack - skipping.")
 }
 
 # ---- 5e: trusts ----------------------------------------------------- #
-# Likely undercounts revocable living trusts: respondents often report the
-# underlying assets rather than the trust.
-if(has_vars(c("has_trust", "trust_self"))){
+# From the summary variable `trusts`: trusts the household has an equity
+# interest in. Cannot separate trusts set up by the household from ones it
+# benefits from, and likely undercounts revocable living trusts, which
+# respondents often report as the underlying assets.
+if(has_vars(c("trusts", "has_trust"))){
   
-  trust_tier <- tier_plus_30m(df_year) %>%
-    group_by(group) %>%
+  trust_tier <- tier_plus_30m(df %>% filter(year %in% c(prior_year, data_year))) %>%
+    group_by(year, group) %>%
     summarise(n_unw = n_distinct(hh_id),
-              has_trust  = wtd_share(has_trust == 1, wgt),
-              trust_self = wtd_share(trust_self == 1, wgt),
+              has_trust   = wtd_share(has_trust == 1, wgt),
+              trust_share = agg_ratio(trusts, networth, wgt),
               .groups = "drop") %>%
-    suppress_thin(c("has_trust", "trust_self"), "5e trusts")
+    suppress_thin(c("has_trust", "trust_share"), "5e trusts")
   
   write_html_table(
     trust_tier %>%
-      transmute(Group = as.character(group),
-                `Has a trust or foundation` = make_pct_labels(has_trust),
-                `Set up a trust` = make_pct_labels(trust_self)),
+      arrange(desc(year), group) %>%
+      transmute(Year = as.character(year),
+                Group = as.character(group),
+                `Has a trust` = make_pct_labels(has_trust),
+                `Trusts / net worth` = make_pct_labels(trust_share, 1)),
     paste0(out_path, "/05_trusts_by_tier_table.html"))
   
 } else {
   message("SECTION 5e: trust variables not in stack - skipping.")
+}
+
+# ---- 5f: who uses professionals ------------------------------------- #
+# Sources of information for saving/investment decisions. This is NOT
+# "has an estate attorney" - the SCF doesn't ask that.
+if(has_vars(c("ifinpro", "ifinplan"))){
+  
+  pro_time <- df %>%
+    filter(!is.na(ifinpro)) %>%
+    mutate(uses_pro = (ifinpro == 1 | ifinplan == 1)) %>%
+    group_by(year, tier) %>%
+    summarise(share = wtd_share(uses_pro, wgt), .groups = "drop") %>%
+    mutate(tier = as.character(tier))
+  
+  line_with_end_labels(
+    pro_time, "share", "tier", make_pct_labels, tier_colors,
+    paste0("Who Relies on Professionals?\n",
+           "For Saving/Investing Decisions"),
+    "Share of Households",
+    "05_uses_professionals_over_time.jpeg")
+  
+  pro_tier <- tier_plus_30m(df_year) %>%
+    group_by(group) %>%
+    summarise(n_unw = n_distinct(hh_id),
+              planner = wtd_share(ifinplan == 1, wgt),
+              pro     = wtd_share(ifinpro == 1, wgt),
+              either  = wtd_share(ifinplan == 1 | ifinpro == 1, wgt),
+              .groups = "drop") %>%
+    suppress_thin(c("planner", "pro", "either"), "5f professionals")
+  
+  write_html_table(
+    pro_tier %>%
+      transmute(Group = as.character(group),
+                `Financial planner` = make_pct_labels(planner),
+                `Lawyer, accountant, banker or broker` = make_pct_labels(pro),
+                `Either` = make_pct_labels(either)),
+    paste0(out_path, "/05_uses_professionals_table.html"))
+  
+} else {
+  message("SECTION 5f: ifinpro/ifinplan not in stack - skipping.")
 }
 
 # ##################################################################### #
