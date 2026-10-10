@@ -13,19 +13,16 @@ library(lubridate)
 library(stringr)
 library(ggrepel)
 library(survey)
-library(lemon)
 library(mitools)
 library(Hmisc)
 library(xtable)
 library(tidyverse)
 
 ########################## Parameters ################################# #
-# CHANGE THESE WHEN THE 2025 DATA LANDS. Everything downstream - output
-# subfolder, titles, source strings, notes, filenames - keys off them.
 
-data_year   <- 2022   # -> 2025
-prior_year  <- 2019   # -> 2022
-dollar_year <- 2022   # -> 2025  (dollar basis of 0003_scf_stack.Rds)
+data_year   <- 2025
+prior_year  <- 2022
+dollar_year <- 2025
 
 # ---------------------------------------------------------------------- #
 # WHAT THIS SCRIPT MEASURES, AND WHAT IT CANNOT
@@ -473,8 +470,9 @@ plot <- ggplot(dist_by_age, aes(x = agecl, y = value)) +
   geom_text(data = text_labels, aes(x = agecl, y = value, label = label),
             col = chart_standard_color, vjust = -0.4,
             size = label_size_small) +
-  facet_rep_wrap(key ~ ., scales = "free_y",
-                 repeat.tick.labels = c("left", "bottom")) +
+  # ggplot2's own facet_wrap repeats axes on every panel. lemon's
+  # facet_rep_wrap breaks on current ggplot2 versions.
+  facet_wrap(vars(key), scales = "free_y", axes = "all") +
   scale_y_continuous(label = dollar, expand = expansion(mult = c(0, 0.18))) +
   of_dollars_and_data_theme +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -683,9 +681,9 @@ if(!is.na(db_flag)){
     geom_line(col = chart_standard_color, linewidth = 0.9) +
     geom_point(data = lab_df, aes(x = year, y = share),
                col = chart_standard_color, size = 1.4) +
-    geom_text(data = lab_df, aes(x = year, y = share, label = label),
+    geom_text(data = lab_df, aes(x = year, y = share, label = label, hjust = hj),
               col = chart_standard_color,
-              hjust = lab_df$hj, vjust = -1.2, size = label_size) +
+              vjust = -1.2, size = label_size) +
     scale_y_continuous(label = percent_format(accuracy = 1),
                        expand = expansion(mult = c(0.08, 0.16))) +
     scale_x_continuous(breaks = seq(year_min, year_max, 3),
@@ -768,8 +766,7 @@ file_path <- paste0(out_path, "/07_median_balance_over_time_by_age.jpeg")
 
 plot <- ggplot(balance_over_time, aes(x = year, y = median_all)) +
   geom_line(col = chart_standard_color, linewidth = 0.8) +
-  facet_rep_wrap(agecl ~ ., scales = "free_y",
-                 repeat.tick.labels = c("left", "bottom")) +
+  facet_wrap(vars(agecl), scales = "free_y", axes = "all") +
   scale_y_continuous(label = dollar) +
   scale_x_continuous(breaks = seq(year_min, year_max, 9)) +
   of_dollars_and_data_theme +
@@ -785,7 +782,7 @@ file_path <- paste0(out_path, "/07_participation_over_time_by_age.jpeg")
 
 plot <- ggplot(balance_over_time, aes(x = year, y = pct_with)) +
   geom_line(col = chart_standard_color, linewidth = 0.8) +
-  facet_rep_wrap(agecl ~ ., repeat.tick.labels = c("left", "bottom")) +
+  facet_wrap(vars(agecl), axes = "all") +
   scale_y_continuous(label = percent_format(accuracy = 1)) +
   scale_x_continuous(breaks = seq(year_min, year_max, 9)) +
   of_dollars_and_data_theme +

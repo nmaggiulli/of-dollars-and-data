@@ -20,12 +20,10 @@ library(xtable)
 library(tidyverse)
 
 ########################## Parameters ################################# #
-# CHANGE THESE WHEN THE 2025 DATA LANDS. Everything downstream - output
-# subfolder, titles, source strings, notes, filenames - keys off them.
 
-data_year   <- 2022   # -> 2025
-prior_year  <- 2019   # -> 2022
-dollar_year <- 2022   # -> 2025  (dollar basis of 0003_scf_stack.Rds)
+data_year   <- 2025
+prior_year  <- 2022
+dollar_year <- 2025
 
 # Baseline year for the long comparison in the ladder census
 baseline_year <- 1989

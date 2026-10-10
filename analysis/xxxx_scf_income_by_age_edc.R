@@ -13,19 +13,16 @@ library(lubridate)
 library(stringr)
 library(ggrepel)
 library(survey)
-library(lemon)
 library(mitools)
 library(Hmisc)
 library(xtable)
 library(tidyverse)
 
 ########################## Parameters ################################# #
-# CHANGE THESE WHEN THE 2025 DATA LANDS. Everything downstream - output
-# subfolder, titles, source strings, notes, filenames - keys off them.
 
-data_year   <- 2022   # -> 2025
-prior_year  <- 2019   # -> 2022  (for the threshold comparison section)
-dollar_year <- 2022   # -> 2025  (dollar basis of 0003_scf_stack.Rds)
+data_year   <- 2025   
+prior_year  <- 2022   
+dollar_year <- 2025 
 
 # NOTE ON INCOME YEAR: the SCF asks about income for the PRIOR calendar
 # year, so the 2025 survey's income figures describe 2024. Worth one
@@ -172,7 +169,8 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   }
   
   text_labels <- to_plot %>%
-    mutate(label = make_dollar_labels(value))
+    mutate(label = make_dollar_labels(value),
+           vj    = ifelse(value > 0, 0, 1))
   
   file_path <- paste0(out_path, "/", var, "_", qps,
                       "_age_edc_comb_scf_", data_year, ".jpeg")
@@ -180,11 +178,13 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   plot <- ggplot(to_plot, aes(x = agecl, y = value)) +
     geom_bar(stat = "identity", position = "dodge",
              fill = chart_standard_color) +
-    facet_rep_wrap(edcl ~ ., repeat.tick.labels = c("left", "bottom")) +
-    geom_text(data = text_labels, aes(x = agecl, y = value, label = label),
+    # ggplot2's own facet_wrap repeats axes on every panel. lemon's
+    # facet_rep_wrap breaks on current ggplot2 versions.
+    facet_wrap(vars(edcl), axes = "all") +
+    geom_text(data = text_labels,
+              aes(x = agecl, y = value, label = label, vjust = vj),
               col = chart_standard_color,
-              size = 1.8,
-              vjust = ifelse(text_labels$value > 0, 0, 1)) +
+              size = 1.8) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -221,7 +221,8 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
     to_plot <- summarise_by(df, var, group_var, quantile_prob)
     
     text_labels <- to_plot %>%
-      mutate(label = make_dollar_labels(value))
+      mutate(label = make_dollar_labels(value),
+             vj    = ifelse(value > 0, -0.2, 1.2))
     
     file_path <- paste0(out_path, "/", var, "_", qps, "_",
                         end_filename, "_scf_", data_year, ".jpeg")
@@ -229,9 +230,9 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
     plot <- ggplot(to_plot, aes(x = .data[[group_var]], y = value)) +
       geom_bar(stat = "identity", fill = chart_standard_color) +
       geom_text(data = text_labels,
-                aes(x = .data[[group_var]], y = value, label = label),
+                aes(x = .data[[group_var]], y = value, label = label,
+                    vjust = vj),
                 col = chart_standard_color,
-                vjust = ifelse(text_labels$value > 0, -0.2, 1.2),
                 size = 3) +
       scale_y_continuous(label = dollar) +
       of_dollars_and_data_theme +
@@ -470,7 +471,8 @@ if(prior_year %in% scf_stack_all$year){
   text_labels <- threshold_compare %>%
     mutate(pct_label = paste0(ifelse(pct_change > 0, "+", ""),
                               formatC(100 * pct_change, format = "f",
-                                      digits = 1), "%"))
+                                      digits = 1), "%"),
+           vj = ifelse(pct_change > 0, -0.3, 1.3))
   
   file_path <- paste0(out_path, "/income_thresholds_pct_change_",
                       prior_year, "_", data_year, ".jpeg")
@@ -478,9 +480,8 @@ if(prior_year %in% scf_stack_all$year){
   plot <- ggplot(threshold_compare, aes(x = label, y = pct_change)) +
     geom_bar(stat = "identity", fill = chart_standard_color) +
     geom_text(data = text_labels,
-              aes(x = label, y = pct_change, label = pct_label),
+              aes(x = label, y = pct_change, label = pct_label, vjust = vj),
               col = chart_standard_color,
-              vjust = ifelse(text_labels$pct_change > 0, -0.3, 1.3),
               size = 3) +
     scale_y_continuous(label = percent_format(accuracy = 1)) +
     of_dollars_and_data_theme +

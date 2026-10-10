@@ -13,25 +13,19 @@ library(lubridate)
 library(stringr)
 library(ggrepel)
 library(survey)
-library(lemon)
 library(mitools)
 library(Hmisc)
 library(xtable)
 library(tidyverse)
 
 ########################## Parameters ################################# #
-# CHANGE data_year WHEN THE 2025 DATA LANDS. Everything downstream - the
-# output subfolder, titles, source strings, notes, filenames - keys off it.
 
-data_year   <- 2025   # -> 2025
-
-# The dollar basis of 0003_scf_stack.Rds. If the stack deflates every wave
-# to the most recent year, this is that year, NOT necessarily data_year.
-dollar_year <- 2025   # -> 2025
+data_year   <- 2025
+dollar_year <- 2025
 
 ########################## Output paths ############################### #
 
-folder_name <- "0524_scf_net_worth_by_age_edc"
+folder_name <- "0525_scf_net_worth_by_age_edc"
 base_path   <- paste0(exportdir, folder_name)
 out_path    <- paste0(base_path, "/", data_year)
 
@@ -157,7 +151,8 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   text_labels <- to_plot %>%
     group_by(edcl) %>%
     mutate(label = make_dollar_labels(value)) %>%
-    ungroup()
+    ungroup() %>%
+    mutate(vj = ifelse(value > 0, 0, 1))
   
   file_path <- paste0(out_path, "/", var, "_", qps,
                       "_age_edc_comb_", data_year, ".jpeg")
@@ -165,12 +160,13 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   plot <- ggplot(to_plot, aes(x = agecl, y = value)) +
     geom_bar(stat = "identity", position = "dodge",
              fill = chart_standard_color) +
-    facet_rep_wrap(edcl ~ ., scales = "free_y",
-                   repeat.tick.labels = c("left", "bottom")) +
-    geom_text(data = text_labels, aes(x = agecl, y = value, label = label),
+    # ggplot2's own facet_wrap repeats axes on every panel. lemon's
+    # facet_rep_wrap breaks on current ggplot2 versions.
+    facet_wrap(vars(edcl), scales = "free_y", axes = "all") +
+    geom_text(data = text_labels,
+              aes(x = agecl, y = value, label = label, vjust = vj),
               col = chart_standard_color,
-              size = 1.8,
-              vjust = ifelse(text_labels$value > 0, 0, 1)) +
+              size = 1.8) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -207,7 +203,8 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
     to_plot <- summarise_by(df, var, group_var, quantile_prob)
     
     text_labels <- to_plot %>%
-      mutate(label = make_dollar_labels(value))
+      mutate(label = make_dollar_labels(value),
+             vj    = ifelse(value > 0, -0.2, 1.2))
     
     file_path <- paste0(out_path, "/", var, "_", qps, "_",
                         end_filename, ".jpeg")
@@ -215,9 +212,9 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
     plot <- ggplot(to_plot, aes(x = .data[[group_var]], y = value)) +
       geom_bar(stat = "identity", fill = chart_standard_color) +
       geom_text(data = text_labels,
-                aes(x = .data[[group_var]], y = value, label = label),
+                aes(x = .data[[group_var]], y = value, label = label,
+                    vjust = vj),
                 col = chart_standard_color,
-                vjust = ifelse(text_labels$value > 0, -0.2, 1.2),
                 size = 3) +
       scale_y_continuous(label = dollar) +
       of_dollars_and_data_theme +

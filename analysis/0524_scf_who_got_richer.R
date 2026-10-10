@@ -13,19 +13,15 @@ library(lubridate)
 library(stringr)
 library(ggrepel)
 library(survey)
-library(lemon)
 library(mitools)
 library(Hmisc)
 library(xtable)
 library(tidyverse)
 
 ########################## Parameters ################################# #
-# CHANGE THESE TWO LINES WHEN THE 2025 DATA LANDS.
-# Everything downstream (titles, notes, filenames, output folder, tables)
-# keys off them.
 
-latest_year <- 2022   # -> 2025
-prior_year  <- 2019   # -> 2022
+latest_year <- 2025   
+prior_year  <- 2022   
 
 # Percentiles used in the change-by-percentile charts/tables
 change_probs <- c(0.10, 0.20, 0.25, 0.30, 0.40, 0.50,
@@ -57,7 +53,7 @@ period_fill_scale <- function(){
 # Charts land in a year-stamped subfolder, so the 2022 dry run and the 2025
 # run sit side by side instead of overwriting each other.
 
-folder_name <- "xxxx_scf_who_got_richer"
+folder_name <- "0524_scf_who_got_richer"
 base_path   <- paste0(exportdir, folder_name)
 out_path    <- paste0(base_path, "/", latest_year)
 
@@ -280,8 +276,7 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
     
     plot <- ggplot(to_plot, aes(x = year, y = value)) +
       geom_line() +
-      facet_rep_wrap(as.formula(paste0(group_var, " ~ .")),
-                     repeat.tick.labels = c("left", "bottom")) +
+      facet_wrap(vars(.data[[group_var]]), axes = "all") +
       scale_y_continuous(label = dollar) +
       of_dollars_and_data_theme +
       theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -795,7 +790,7 @@ if(length(participation_vars) > 0){
   plot <- ggplot(wealth_participation,
                  aes(x = wealth_group, y = participation, fill = period)) +
     geom_bar(stat = "identity", position = "dodge") +
-    facet_rep_wrap(component ~ ., repeat.tick.labels = c("left", "bottom")) +
+    facet_wrap(vars(component), axes = "all") +
     scale_y_continuous(label = percent_format(accuracy = 1)) +
     period_fill_scale() +
     of_dollars_and_data_theme +
@@ -860,7 +855,7 @@ plot <- ggplot(to_plot, aes(x = agecl, y = value)) +
             col = chart_standard_color,
             vjust = ifelse(text_labels$value > 0, 0, 1),
             size = 1.8) +
-  facet_rep_wrap(key ~ ., repeat.tick.labels = c("left", "bottom")) +
+  facet_wrap(vars(key), axes = "all") +
   scale_y_continuous(label = dollar) +
   of_dollars_and_data_theme +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +

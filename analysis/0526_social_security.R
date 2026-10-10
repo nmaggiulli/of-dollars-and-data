@@ -18,7 +18,7 @@ library(xtable)
 library(gt)
 library(tidyverse)
 
-folder_name <- "xxxx_social_security"
+folder_name <- "0526_social_security"
 out_path <- paste0(exportdir, folder_name)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 ########################## Start Program Here ######################### #
