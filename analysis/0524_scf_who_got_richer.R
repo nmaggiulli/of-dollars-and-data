@@ -20,18 +20,23 @@ library(tidyverse)
 
 ########################## Parameters ################################# #
 
-latest_year <- 2025   
-prior_year  <- 2022   
+latest_year <- 2022
+prior_year  <- 2019
 
-# Percentiles used in the change-by-percentile charts/tables
+# Percentiles used in the change-by-percentile chart/table. Capped at the
+# 90th on purpose: everything above the 90th percentile is reserved for the
+# whitepaper.
 change_probs <- c(0.10, 0.20, 0.25, 0.30, 0.40, 0.50,
-                  0.60, 0.70, 0.75, 0.80, 0.90, 0.95, 0.99)
+                  0.60, 0.70, 0.75, 0.80, 0.90)
 
 # Age groups that get their own standalone time-series chart
-agecl_focus <- c("<35", "35-44")
+agecl_focus <- c("<35")
+
+# The two ends of the age story, compared side by side in Section 6
+young_old <- c("<35", "75+")
 
 # Participation above this in BOTH years means "basically everyone has it",
-# so the component is dropped from the participation charts.
+# so the component is dropped from the participation chart.
 universal_cutoff <- 0.98
 
 # A participation shift bigger than this makes median-among-owners
@@ -39,8 +44,7 @@ universal_cutoff <- 0.98
 composition_cutoff <- 0.015
 
 # Two-series charts (prior year vs. latest year). The prior year is muted
-# so the eye lands on the current figures; the latest year uses the same
-# navy as every single-series chart on the blog.
+# so the eye lands on the current figures.
 prior_year_color <- "#B3B3B3"
 
 period_fill_scale <- function(){
@@ -49,9 +53,31 @@ period_fill_scale <- function(){
                                         as.character(latest_year))))
 }
 
+# Readable names for SCF variables on charts
+component_names <- c(
+  fin     = "Financial assets",
+  nfin    = "Nonfinancial assets",
+  homeeq  = "Home equity",
+  houses  = "Primary home",
+  vehic   = "Vehicles",
+  liq     = "Bank accounts",
+  retqliq = "Retirement accounts",
+  stocks  = "Stocks (direct)",
+  nmmf    = "Mutual funds",
+  bus     = "Business",
+  asset   = "Total assets",
+  debt    = "Total debt",
+  ccbal   = "Credit card debt",
+  install = "Installment loans",
+  resdbt  = "Other property debt",
+  edn_inst = "Student loans"
+)
+
+label_size <- 2.4
+
 ########################## Output paths ############################### #
-# Charts land in a year-stamped subfolder, so the 2022 dry run and the 2025
-# run sit side by side instead of overwriting each other.
+# Charts land in a year-stamped subfolder, so runs sit side by side instead
+# of overwriting each other.
 
 folder_name <- "0524_scf_who_got_richer"
 base_path   <- paste0(exportdir, folder_name)
@@ -60,16 +86,45 @@ out_path    <- paste0(base_path, "/", latest_year)
 dir.create(file.path(paste0(base_path)), showWarnings = FALSE)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
+########################## Console log ################################ #
+# Everything printed to the console also goes to a text file in out_path:
+#   - print()/cat() output via sink(split = TRUE), so it still shows in
+#     the console
+#   - message(), warning() and error text via global calling handlers
+# If a previous run died mid-script its sink is still open - close it first
+# so this run's log starts clean. Needs R 4.0+.
+
+while(sink.number() > 0) sink()
+globalCallingHandlers(NULL)
+
+log_file <- paste0(out_path, "/", basename(folder_name), "_", latest_year, "_log.txt")
+log_con  <- file(log_file, open = "wt")
+sink(log_con, split = TRUE)
+
+log_condition <- function(prefix){
+  function(cond){
+    cat(prefix, sub("\n$", "", conditionMessage(cond)), "\n",
+        sep = "", file = log_con)
+  }
+}
+
+globalCallingHandlers(message = log_condition(""),
+                      warning = log_condition("Warning: "),
+                      error   = log_condition("Error: "))
+
+cat("Run started: ", format(Sys.time()), "\n",
+    "latest_year = ", latest_year, ", prior_year = ", prior_year, "\n\n",
+    sep = "")
+
 ########################## Start Program Here ######################### #
 
 scf_stack <- readRDS(paste0(localdir, "0003_scf_stack.Rds"))
 
-# Component variables for the decomposition. We only keep the ones that
-# actually exist in the stack, so you can add variables to the build later
-# without touching any of the logic below.
+# Component variables for the decomposition. Only the ones that exist in
+# the stack are used.
 component_vars_all <- c("fin", "nfin", "homeeq", "vehic", "liq", "retqliq",
                         "stocks", "nmmf", "bus", "asset", "debt",
-                        "ccbal", "install", "resdbt", "edn_inst", "income")
+                        "ccbal", "install", "resdbt", "edn_inst")
 
 component_vars <- intersect(component_vars_all, names(scf_stack))
 
@@ -81,14 +136,11 @@ if(length(missing_components) > 0){
           paste(missing_components, collapse = ", "))
 }
 
-# Split assets from liabilities so we never chart "share of households with
-# any holdings" across a mix of the two.
-debt_components  <- intersect(c("debt", "ccbal", "install", "resdbt",
-                                "edn_inst"), component_vars)
-asset_components <- setdiff(component_vars, c(debt_components, "income"))
+debt_components <- intersect(c("debt", "ccbal", "install", "resdbt",
+                               "edn_inst"), component_vars)
 
-keep_vars <- unique(c("year", "hh_id", "imp_id", "agecl", "edcl", "age",
-                      "networth", "wgt", component_vars))
+keep_vars <- unique(c("year", "hh_id", "imp_id", "agecl", "age",
+                      "networth", "income", "houses", "wgt", component_vars))
 
 df <- scf_stack %>%
   select(all_of(intersect(keep_vars, names(scf_stack)))) %>%
@@ -97,6 +149,9 @@ df <- scf_stack %>%
 year_min <- min(df$year)
 year_max <- max(df$year)
 
+# Step back from year_max so the latest wave always gets a tick
+year_breaks <- sort(seq(year_max, year_min, by = -3))
+
 stopifnot(latest_year %in% df$year)
 stopifnot(prior_year %in% df$year)
 
@@ -104,13 +159,14 @@ source_string <- paste0("Source:  Survey of Consumer Finances (OfDollarsAndData.
 note_string   <- paste0("Note: All figures are adjusted for inflation (",
                         latest_year, " dollars).")
 
+make_caption <- function(extra = NULL){
+  paste(c(source_string, note_string, extra), collapse = "\n")
+}
+
 ########################## Helper Functions ########################### #
 
-# Scale-robust dollar labels. The format decision is made ONCE per vector
-# (based on the max), so you never get mixed $k and $M labels side by side.
-# On FACETED charts, call this grouped by facet - otherwise a $3M facet
-# forces "$0.02M" labels onto a facet whose values are all in the tens of
-# thousands.
+# Dollar labels: one $k / $M decision per vector, "-$" for negatives.
+# On faceted charts, call this grouped by facet.
 make_dollar_labels <- function(values){
   max_abs <- max(abs(values), na.rm = TRUE)
   sign_prefix <- ifelse(values < 0, "-$", "$")
@@ -133,13 +189,15 @@ make_pct_labels <- function(values, digits = 0){
                 formatC(100 * values, format = "f", digits = digits), "%"))
 }
 
-# Wraps a long main title so it doesn't run off a 15cm chart, then appends
-# the subtitle line underneath.
-make_title <- function(main, sub, width = 38){
-  paste0(str_wrap(main, width = width), "\n", sub)
+make_share_labels <- function(values, digits = 0){
+  ifelse(is.na(values), "n/a",
+         paste0(formatC(100 * values, format = "f", digits = digits), "%"))
 }
 
-# Weighted stat for a single variable at a single prob (prob = 0 -> mean)
+pretty_component <- function(x){
+  ifelse(x %in% names(component_names), component_names[x], x)
+}
+
 wtd_stat <- function(x, w, quantile_prob){
   if(quantile_prob == 0){
     as.numeric(wtd.mean(x, weights = w))
@@ -148,7 +206,10 @@ wtd_stat <- function(x, w, quantile_prob){
   }
 }
 
-# Grouped weighted summary returning one row per group
+wtd_share <- function(condition, weights){
+  as.numeric(wtd.mean(as.numeric(condition), weights = weights))
+}
+
 summarise_by <- function(data, var, group_vars, quantile_prob){
   data %>%
     group_by(across(all_of(group_vars))) %>%
@@ -156,7 +217,6 @@ summarise_by <- function(data, var, group_vars, quantile_prob){
               .groups = "drop")
 }
 
-# Multiple percentiles for one variable, one row per (group x prob).
 wtd_pctile_tbl <- function(data, var, probs){
   tibble(
     prob  = probs,
@@ -195,15 +255,26 @@ save_chart <- function(plot, file_path){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-# Percent change, guarded against a non-positive base. A 10th-percentile net
-# worth of $0 or -$5,000 in the prior year makes percent change meaningless,
-# so those come back NA and get labeled "n/a" rather than silently plotted.
+write_html_table <- function(table_out, file_path){
+  print(xtable(table_out),
+        include.rownames = FALSE,
+        type = "html",
+        file = file_path)
+}
+
+# Percent change, guarded against a non-positive base
 safe_pct_change <- function(new_value, old_value){
   ifelse(old_value > 0, (new_value / old_value) - 1, NA_real_)
 }
 
-# Weighted within-year wealth group. Note this pools all implicates when
-# ranking, which is fine for descriptive cuts but is not a formal MI estimate.
+period_factor <- function(year_vector){
+  factor(as.character(year_vector),
+         levels = c(as.character(prior_year), as.character(latest_year)))
+}
+
+# Weighted within-year wealth group. The top is ONE "Top 10%" group on
+# purpose: anything above the 90th percentile is reserved for the
+# whitepaper.
 add_wealth_group <- function(data){
   data %>%
     group_by(year) %>%
@@ -214,83 +285,73 @@ add_wealth_group <- function(data){
              cum_wgt <= 0.50 ~ "25th-50th",
              cum_wgt <= 0.75 ~ "50th-75th",
              cum_wgt <= 0.90 ~ "75th-90th",
-             cum_wgt <= 0.99 ~ "90th-99th",
-             TRUE            ~ "Top 1%")) %>%
+             TRUE            ~ "Top 10%")) %>%
     ungroup() %>%
     mutate(wealth_group = factor(wealth_group,
                                  levels = c("Bottom 25%", "25th-50th",
                                             "50th-75th", "75th-90th",
-                                            "90th-99th", "Top 1%")))
+                                            "Top 10%")))
 }
 
 df_two_year <- df %>% filter(year %in% c(prior_year, latest_year))
 df_wealth   <- add_wealth_group(df_two_year)
 
-period_factor <- function(year_vector){
-  factor(as.character(year_vector),
-         levels = c(as.character(prior_year), as.character(latest_year)))
-}
-
 # ##################################################################### #
-# SECTION 1: Long time series (adapted from 0369)
+# SECTION 1: Long time series
 # ##################################################################### #
+# Cut back to what the post uses: the median (overall and by age), the
+# 25th percentile (overall), and under-35 standalones for the median and
+# the average. Education moved to the net worth by age post.
 
-create_time_series_chart <- function(var, var_title, quantile_prob){
+create_time_series_chart <- function(var, var_title, quantile_prob,
+                                     overall = TRUE, by_age = FALSE,
+                                     focus = character(0)){
   
   qps <- quantile_prob_string(quantile_prob)
   
   # ---- Overall ----
-  to_plot <- summarise_by(df, var, "year", quantile_prob)
-  
-  file_path <- paste0(out_path, "/01_", var, "_", qps, "_by_year.jpeg")
-  
-  plot <- ggplot(to_plot, aes(x = year, y = value)) +
-    geom_line() +
-    scale_y_continuous(label = dollar) +
-    scale_x_continuous(breaks = seq(year_min, year_max, 3),
-                       limits = c(year_min, year_max)) +
-    of_dollars_and_data_theme +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    ggtitle(make_title(var_title, "by Year")) +
-    labs(x = "Year", y = paste0(var_title),
-         caption = paste0(source_string, "\n", note_string))
-  
-  save_chart(plot, file_path)
-  
-  # ---- By age, then by education ----
-  for(g in 1:2){
-    if(g == 1){
-      group_var    <- "agecl"
-      end_filename <- "age"
-      x_var        <- "Age"
-    } else {
-      group_var    <- "edcl"
-      end_filename <- "edc"
-      x_var        <- "Education Level"
-    }
+  if(overall){
+    to_plot <- summarise_by(df, var, "year", quantile_prob)
     
-    to_plot <- summarise_by(df, var, c("year", group_var), quantile_prob)
-    
-    file_path <- paste0(out_path, "/01_", var, "_", qps,
-                        "_by_year_", end_filename, ".jpeg")
+    print(paste0(var_title, " by year:"))
+    print(to_plot %>%
+            filter(year >= prior_year - 3) %>%
+            mutate(value = format_as_dollar(value)) %>%
+            as.data.frame())
     
     plot <- ggplot(to_plot, aes(x = year, y = value)) +
       geom_line() +
-      facet_wrap(vars(.data[[group_var]]), axes = "all") +
+      scale_y_continuous(label = dollar) +
+      scale_x_continuous(breaks = year_breaks,
+                         limits = c(year_min, year_max)) +
+      of_dollars_and_data_theme +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      ggtitle(paste0(var_title, "\nby Year")) +
+      labs(x = "Year", y = var_title,
+           caption = make_caption())
+    
+    save_chart(plot, paste0(out_path, "/01_", var, "_", qps, "_by_year.jpeg"))
+  }
+  
+  # ---- By age ----
+  if(by_age){
+    to_plot <- summarise_by(df, var, c("year", "agecl"), quantile_prob)
+    
+    plot <- ggplot(to_plot, aes(x = year, y = value)) +
+      geom_line() +
+      facet_wrap(vars(agecl), axes = "all") +
       scale_y_continuous(label = dollar) +
       of_dollars_and_data_theme +
       theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-      ggtitle(make_title(var_title, paste0("by Year & ", x_var))) +
-      labs(x = "Year", y = paste0(var_title),
-           caption = paste0(source_string, "\n", note_string))
+      ggtitle(paste0(var_title, "\nby Year & Age")) +
+      labs(x = "Year", y = var_title,
+           caption = make_caption())
     
-    save_chart(plot, file_path)
+    save_chart(plot, paste0(out_path, "/01_", var, "_", qps, "_by_year_age.jpeg"))
   }
   
   # ---- Standalone chart for each focus age group ----
-  # (In the original this branch silently hardcoded "<35" on the mean path,
-  #  so every average chart for 35-44 was actually plotting under-35 data.)
-  for(agecl_filter in agecl_focus){
+  for(agecl_filter in focus){
     
     agecl_name <- str_replace_all(str_replace_all(agecl_filter, "<", "under_"),
                                   "-", "_to_")
@@ -299,186 +360,126 @@ create_time_series_chart <- function(var, var_title, quantile_prob){
       filter(agecl == agecl_filter) %>%
       summarise_by(var, "year", quantile_prob)
     
-    file_path <- paste0(out_path, "/01_", var, "_", qps, "_",
-                        agecl_name, "_by_year.jpeg")
+    print(paste0(var_title, ", households ", agecl_filter, ":"))
+    print(to_plot %>%
+            filter(year >= prior_year - 3) %>%
+            mutate(value = format_as_dollar(value)) %>%
+            as.data.frame())
     
     plot <- ggplot(to_plot, aes(x = year, y = value)) +
       geom_line() +
       scale_y_continuous(label = dollar) +
-      scale_x_continuous(breaks = seq(year_min, year_max, 3),
+      scale_x_continuous(breaks = year_breaks,
                          limits = c(year_min, year_max)) +
       of_dollars_and_data_theme +
       theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-      ggtitle(make_title(paste0(var_title, " by Year"),
-                         paste0("For Households ", agecl_filter))) +
-      labs(x = "Year", y = paste0(var_title),
-           caption = paste0(source_string, "\n", note_string))
+      ggtitle(paste0(var_title, "\nHouseholds Under 35")) +
+      labs(x = "Year", y = var_title,
+           caption = make_caption())
     
-    save_chart(plot, file_path)
+    save_chart(plot, paste0(out_path, "/01_", var, "_", qps, "_",
+                            agecl_name, "_by_year.jpeg"))
   }
 }
 
-create_time_series_chart("networth", "25th Percentile Real Net Worth", 0.25)
-create_time_series_chart("networth", "Real Median Net Worth", 0.5)
-create_time_series_chart("networth", "75th Percentile Real Net Worth", 0.75)
-create_time_series_chart("networth", "90th Percentile Real Net Worth", 0.9)
-create_time_series_chart("networth", "Real Average Net Worth", 0)
+create_time_series_chart("networth", "Real Median Net Worth", 0.5,
+                         by_age = TRUE, focus = agecl_focus)
+create_time_series_chart("networth", "25th Percentile Net Worth", 0.25)
+create_time_series_chart("networth", "Real Average Net Worth", 0,
+                         overall = FALSE, focus = agecl_focus)
 
 # ##################################################################### #
-# SECTION 2: The headline chart - change by percentile
+# SECTION 2: The headline chart - change by percentile (10th-90th)
 # ##################################################################### #
 
-create_change_by_percentile <- function(var, var_title){
-  
-  pctiles <- summarise_pctiles_by(df_two_year, var, "year", change_probs) %>%
-    mutate(year_label = ifelse(year == latest_year, "latest", "prior")) %>%
-    select(prob, year_label, value) %>%
-    pivot_wider(names_from = year_label, values_from = value) %>%
-    mutate(dollar_change = latest - prior,
-           pct_change    = safe_pct_change(latest, prior),
-           prob_label    = factor(prob_label(prob),
-                                  levels = prob_label(sort(change_probs))))
-  
-  # ---- Chart 2a: levels, side by side ----
-  to_plot <- pctiles %>%
-    select(prob_label, prior, latest) %>%
-    pivot_longer(cols = c(prior, latest),
-                 names_to = "period", values_to = "value") %>%
-    mutate(period = period_factor(ifelse(period == "prior",
-                                         prior_year, latest_year)))
-  
-  file_path <- paste0(out_path, "/02_", var, "_levels_by_percentile.jpeg")
-  
-  plot <- ggplot(to_plot, aes(x = prob_label, y = value, fill = period)) +
-    geom_bar(stat = "identity", position = "dodge") +
-    scale_y_continuous(label = dollar) +
-    period_fill_scale() +
-    of_dollars_and_data_theme +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1),
-          legend.title = element_blank(),
-          legend.position = "bottom") +
-    ggtitle(make_title(paste0("Real ", var_title, " by Percentile"),
-                       paste0(prior_year, " vs. ", latest_year))) +
-    labs(x = "Percentile", y = paste0("Real ", var_title),
-         caption = paste0(source_string, "\n", note_string))
-  
-  save_chart(plot, file_path)
-  
-  # ---- Chart 2b: percent change (this is the money chart) ----
-  to_plot <- pctiles %>% filter(!is.na(pct_change))
-  
-  text_labels <- to_plot %>%
-    mutate(label = make_pct_labels(pct_change))
-  
-  file_path <- paste0(out_path, "/02_", var, "_pct_change_by_percentile.jpeg")
-  
-  plot <- ggplot(to_plot, aes(x = prob_label, y = pct_change)) +
-    geom_bar(stat = "identity", fill = chart_standard_color) +
-    geom_text(data = text_labels,
-              aes(x = prob_label, y = pct_change, label = label),
-              col = chart_standard_color,
-              vjust = ifelse(text_labels$pct_change > 0, -0.5, 1.5),
-              size = 1.8) +
-    scale_y_continuous(label = percent_format(accuracy = 1)) +
-    of_dollars_and_data_theme +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    ggtitle(make_title(paste0("Change in Real ", var_title, " by Percentile"),
-                       paste0(prior_year, "-", latest_year))) +
-    labs(x = "Percentile", y = paste0("Change in Real ", var_title),
-         caption = paste0(source_string, "\n", note_string))
-  
-  save_chart(plot, file_path)
-  
-  # ---- Chart 2c: dollar change ----
-  text_labels <- pctiles %>%
-    mutate(label = make_dollar_labels(dollar_change))
-  
-  file_path <- paste0(out_path, "/02_", var, "_dollar_change_by_percentile.jpeg")
-  
-  plot <- ggplot(pctiles, aes(x = prob_label, y = dollar_change)) +
-    geom_bar(stat = "identity", fill = chart_standard_color) +
-    geom_text(data = text_labels,
-              aes(x = prob_label, y = dollar_change, label = label),
-              col = chart_standard_color,
-              vjust = ifelse(text_labels$dollar_change > 0, -0.5, 1.5),
-              size = 1.8) +
-    scale_y_continuous(label = dollar) +
-    of_dollars_and_data_theme +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    ggtitle(make_title(paste0("Dollar Change in Real ", var_title,
-                              " by Percentile"),
-                       paste0(prior_year, "-", latest_year))) +
-    labs(x = "Percentile", y = paste0("Change in Real ", var_title),
-         caption = paste0(source_string, "\n", note_string))
-  
-  save_chart(plot, file_path)
-  
-  # ---- Table ----
-  table_out <- pctiles %>%
-    arrange(prob) %>%
-    transmute(
-      Percentile = as.character(prob_label),
-      `Prior`    = format_as_dollar(prior),
-      `Latest`   = format_as_dollar(latest),
-      `$ Change` = format_as_dollar(dollar_change),
-      `% Change` = make_pct_labels(pct_change)
-    )
-  
-  names(table_out)[2] <- as.character(prior_year)
-  names(table_out)[3] <- as.character(latest_year)
-  
-  print(xtable(table_out),
-        include.rownames = FALSE,
-        type = "html",
-        file = paste0(out_path, "/02_", var, "_change_by_percentile_table.html"))
-  
-  assign(paste0("pctiles_", var), pctiles, envir = .GlobalEnv)
-}
+pctiles <- summarise_pctiles_by(df_two_year, "networth", "year", change_probs) %>%
+  mutate(year_label = ifelse(year == latest_year, "latest", "prior")) %>%
+  select(prob, year_label, value) %>%
+  pivot_wider(names_from = year_label, values_from = value) %>%
+  mutate(dollar_change = latest - prior,
+         pct_change    = safe_pct_change(latest, prior),
+         prob_label    = factor(prob_label(prob),
+                                levels = prob_label(sort(change_probs))))
 
-create_change_by_percentile("networth", "Net Worth")
-create_change_by_percentile("income", "Income")
+print("Net worth by percentile:")
+print(pctiles %>%
+        transmute(percentile = prob_label,
+                  prior = format_as_dollar(prior),
+                  latest = format_as_dollar(latest),
+                  pct_change = make_pct_labels(pct_change, 1)) %>%
+        as.data.frame())
+
+to_plot <- pctiles %>%
+  filter(!is.na(pct_change)) %>%
+  mutate(label = make_pct_labels(pct_change),
+         vj    = ifelse(pct_change > 0, -0.5, 1.5))
+
+plot <- ggplot(to_plot, aes(x = prob_label, y = pct_change)) +
+  geom_bar(stat = "identity", fill = chart_standard_color) +
+  geom_text(aes(label = label, vjust = vj),
+            col = chart_standard_color, size = label_size) +
+  scale_y_continuous(label = percent_format(accuracy = 1),
+                     expand = expansion(mult = c(0.10, 0.10))) +
+  of_dollars_and_data_theme +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggtitle(paste0("Net Worth Change by Percentile\n",
+                 prior_year, "-", latest_year)) +
+  labs(x = "Percentile", y = "Change in Real Net Worth",
+       caption = make_caption())
+
+save_chart(plot, paste0(out_path, "/02_networth_pct_change_by_percentile.jpeg"))
+
+table_out <- pctiles %>%
+  arrange(prob) %>%
+  transmute(Percentile = as.character(prob_label),
+            Prior      = format_as_dollar(prior),
+            Latest     = format_as_dollar(latest),
+            `$ Change` = format_as_dollar(dollar_change),
+            `% Change` = make_pct_labels(pct_change))
+
+names(table_out)[2] <- as.character(prior_year)
+names(table_out)[3] <- as.character(latest_year)
+
+write_html_table(table_out,
+                 paste0(out_path, "/02_networth_change_by_percentile_table.html"))
 
 # ##################################################################### #
-# SECTION 3: Change by age and education
+# SECTION 3: Change by age
 # ##################################################################### #
+# Median (levels + change) and 90th percentile (change only). The 90th
+# WITHIN an age group is fine for the blog; it is not the top 10% overall.
 
-create_change_by_group <- function(var, var_title, quantile_prob){
+create_change_by_age <- function(var, var_title, quantile_prob,
+                                 show_levels = TRUE){
   
   qps <- quantile_prob_string(quantile_prob)
   stat_name <- stat_title(quantile_prob)
   
-  for(g in 1:2){
-    if(g == 1){
-      group_var    <- "agecl"
-      end_filename <- "age"
-      x_var        <- "Age"
-    } else {
-      group_var    <- "edcl"
-      end_filename <- "edc"
-      x_var        <- "Education Level"
-    }
-    
-    grouped <- summarise_by(df_two_year, var, c("year", group_var),
-                            quantile_prob) %>%
-      mutate(year_label = ifelse(year == latest_year, "latest", "prior")) %>%
-      select(all_of(group_var), year_label, value) %>%
-      pivot_wider(names_from = year_label, values_from = value) %>%
-      mutate(dollar_change = latest - prior,
-             pct_change    = safe_pct_change(latest, prior))
-    
-    # ---- Levels, side by side ----
+  grouped <- summarise_by(df_two_year, var, c("year", "agecl"), quantile_prob) %>%
+    mutate(year_label = ifelse(year == latest_year, "latest", "prior")) %>%
+    select(agecl, year_label, value) %>%
+    pivot_wider(names_from = year_label, values_from = value) %>%
+    mutate(dollar_change = latest - prior,
+           pct_change    = safe_pct_change(latest, prior))
+  
+  print(paste0(stat_name, " ", var_title, " by age:"))
+  print(grouped %>%
+          transmute(agecl,
+                    prior = format_as_dollar(prior),
+                    latest = format_as_dollar(latest),
+                    pct_change = make_pct_labels(pct_change, 1)) %>%
+          as.data.frame())
+  
+  # ---- Levels, side by side ----
+  if(show_levels){
     to_plot <- grouped %>%
-      select(all_of(group_var), prior, latest) %>%
+      select(agecl, prior, latest) %>%
       pivot_longer(cols = c(prior, latest),
                    names_to = "period", values_to = "value") %>%
       mutate(period = period_factor(ifelse(period == "prior",
                                            prior_year, latest_year)))
     
-    file_path <- paste0(out_path, "/03_", var, "_", qps,
-                        "_levels_by_", end_filename, ".jpeg")
-    
-    plot <- ggplot(to_plot, aes(x = .data[[group_var]], y = value,
-                                fill = period)) +
+    plot <- ggplot(to_plot, aes(x = agecl, y = value, fill = period)) +
       geom_bar(stat = "identity", position = "dodge") +
       scale_y_continuous(label = dollar) +
       period_fill_scale() +
@@ -486,67 +487,53 @@ create_change_by_group <- function(var, var_title, quantile_prob){
       theme(axis.text.x = element_text(angle = 45, hjust = 1),
             legend.title = element_blank(),
             legend.position = "bottom") +
-      ggtitle(make_title(paste0("Real ", stat_name, " ", var_title,
-                                " by ", x_var),
-                         paste0(prior_year, " vs. ", latest_year))) +
-      labs(x = x_var, y = paste0("Real ", var_title),
-           caption = paste0(source_string, "\n", note_string))
+      ggtitle(paste0(stat_name, " ", var_title, " by Age\n",
+                     prior_year, " vs. ", latest_year)) +
+      labs(x = "Age", y = paste0("Real ", var_title),
+           caption = make_caption())
     
-    save_chart(plot, file_path)
-    
-    # ---- Percent change ----
-    to_plot <- grouped %>% filter(!is.na(pct_change))
-    
-    text_labels <- to_plot %>%
-      mutate(label = make_pct_labels(pct_change))
-    
-    file_path <- paste0(out_path, "/03_", var, "_", qps,
-                        "_pct_change_by_", end_filename, ".jpeg")
-    
-    plot <- ggplot(to_plot, aes(x = .data[[group_var]], y = pct_change)) +
-      geom_bar(stat = "identity", fill = chart_standard_color) +
-      geom_text(data = text_labels,
-                aes(x = .data[[group_var]], y = pct_change, label = label),
-                col = chart_standard_color,
-                vjust = ifelse(text_labels$pct_change > 0, -0.5, 1.5),
-                size = 1.8) +
-      scale_y_continuous(label = percent_format(accuracy = 1)) +
-      of_dollars_and_data_theme +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-      ggtitle(make_title(paste0("Change in Real ", stat_name, " ", var_title,
-                                " by ", x_var),
-                         paste0(prior_year, "-", latest_year))) +
-      labs(x = x_var, y = paste0("Change in Real ", var_title),
-           caption = paste0(source_string, "\n", note_string))
-    
-    save_chart(plot, file_path)
-    
-    # ---- Table ----
-    table_out <- grouped %>%
-      transmute(
-        Group      = as.character(.data[[group_var]]),
-        `Prior`    = format_as_dollar(prior),
-        `Latest`   = format_as_dollar(latest),
-        `$ Change` = format_as_dollar(dollar_change),
-        `% Change` = make_pct_labels(pct_change)
-      )
-    
-    names(table_out)[1] <- x_var
-    names(table_out)[2] <- as.character(prior_year)
-    names(table_out)[3] <- as.character(latest_year)
-    
-    print(xtable(table_out),
-          include.rownames = FALSE,
-          type = "html",
-          file = paste0(out_path, "/03_", var, "_", qps,
-                        "_change_by_", end_filename, "_table.html"))
+    save_chart(plot, paste0(out_path, "/03_", var, "_", qps, "_levels_by_age.jpeg"))
   }
+  
+  # ---- Percent change ----
+  to_plot <- grouped %>%
+    filter(!is.na(pct_change)) %>%
+    mutate(label = make_pct_labels(pct_change),
+           vj    = ifelse(pct_change > 0, -0.5, 1.5))
+  
+  plot <- ggplot(to_plot, aes(x = agecl, y = pct_change)) +
+    geom_bar(stat = "identity", fill = chart_standard_color) +
+    geom_text(aes(label = label, vjust = vj),
+              col = chart_standard_color, size = label_size) +
+    scale_y_continuous(label = percent_format(accuracy = 1),
+                       expand = expansion(mult = c(0.10, 0.10))) +
+    of_dollars_and_data_theme +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    ggtitle(paste0("Change in ", var_title, " by Age\n",
+                   stat_name, ", ", prior_year, "-", latest_year)) +
+    labs(x = "Age", y = paste0("Change in Real ", var_title),
+         caption = make_caption())
+  
+  save_chart(plot, paste0(out_path, "/03_", var, "_", qps, "_pct_change_by_age.jpeg"))
+  
+  # ---- Table ----
+  table_out <- grouped %>%
+    transmute(Age        = as.character(agecl),
+              Prior      = format_as_dollar(prior),
+              Latest     = format_as_dollar(latest),
+              `$ Change` = format_as_dollar(dollar_change),
+              `% Change` = make_pct_labels(pct_change))
+  
+  names(table_out)[2] <- as.character(prior_year)
+  names(table_out)[3] <- as.character(latest_year)
+  
+  write_html_table(table_out,
+                   paste0(out_path, "/03_", var, "_", qps,
+                          "_change_by_age_table.html"))
 }
 
-create_change_by_group("networth", "Net Worth", 0.5)
-create_change_by_group("networth", "Net Worth", 0.9)
-create_change_by_group("networth", "Net Worth", 0)
-create_change_by_group("income", "Income", 0.5)
+create_change_by_age("networth", "Net Worth", 0.5)
+create_change_by_age("networth", "Net Worth", 0.9, show_levels = FALSE)
 
 # ##################################################################### #
 # SECTION 4: Component decomposition - what actually moved
@@ -561,8 +548,6 @@ component_summary <- df_long %>%
   group_by(year, component) %>%
   summarise(
     participation = as.numeric(wtd.mean(as.numeric(value > 0), weights = wgt)),
-    median_all    = as.numeric(wtd.quantile(value, weights = wgt, probs = 0.5)),
-    mean_all      = as.numeric(wtd.mean(value, weights = wgt)),
     median_owners = if(sum(wgt[value > 0]) > 0){
       as.numeric(wtd.quantile(value[value > 0],
                               weights = wgt[value > 0], probs = 0.5))
@@ -575,203 +560,141 @@ component_summary <- df_long %>%
 component_change <- component_summary %>%
   mutate(year_label = ifelse(year == latest_year, "latest", "prior")) %>%
   select(-year) %>%
-  pivot_longer(cols = c(participation, median_all, mean_all, median_owners),
+  pivot_longer(cols = c(participation, median_owners),
                names_to = "metric", values_to = "value") %>%
   pivot_wider(names_from = year_label, values_from = value) %>%
-  mutate(dollar_change = latest - prior,
-         pct_change    = safe_pct_change(latest, prior))
+  mutate(pct_change = safe_pct_change(latest, prior))
 
-# Components where basically every household has a positive value in both
-# years tell us nothing on a participation chart, so drop them.
 varying_components <- component_summary %>%
   group_by(component) %>%
   summarise(min_participation = min(participation), .groups = "drop") %>%
   filter(min_participation < universal_cutoff) %>%
   pull(component)
 
-# ---- Chart 4a: participation, assets and debts charted separately ----
-make_participation_chart <- function(comp_subset, chart_label, file_suffix){
-  
-  comp_subset <- intersect(comp_subset, varying_components)
-  
-  if(length(comp_subset) == 0){
-    return(invisible(NULL))
-  }
-  
-  to_plot <- component_summary %>%
-    filter(component %in% comp_subset) %>%
-    mutate(period = period_factor(year))
-  
-  file_path <- paste0(out_path, "/04_participation_", file_suffix, ".jpeg")
-  
-  plot <- ggplot(to_plot, aes(x = reorder(component, participation),
-                              y = participation, fill = period)) +
-    geom_bar(stat = "identity", position = "dodge") +
-    coord_flip() +
-    scale_y_continuous(label = percent_format(accuracy = 1)) +
-    period_fill_scale() +
-    of_dollars_and_data_theme +
-    theme(legend.title = element_blank(),
-          legend.position = "bottom") +
-    ggtitle(make_title(chart_label,
-                       paste0(prior_year, " vs. ", latest_year))) +
-    labs(x = "Component", y = "Share of Households",
-         caption = paste0(source_string, "\n", note_string))
-  
-  save_chart(plot, file_path)
-}
-
-make_participation_chart(asset_components,
-                         "Share of Households Owning Each Asset",
-                         "assets")
-
-make_participation_chart(debt_components,
-                         "Share of Households Holding Each Type of Debt",
-                         "debts")
-
-# ---- Chart 4b: percent change in median value among owners ----
-# IMPORTANT: when participation shifts, median-among-owners is NOT
-# comparable across years. If a wave of new small holders enters, the
-# median among owners falls even though nobody's holdings shrank. Those
-# components get an asterisk so the chart can't be misread.
 participation_shift <- component_change %>%
   filter(metric == "participation") %>%
   select(component, part_prior = prior, part_latest = latest) %>%
   mutate(part_change = part_latest - part_prior)
 
+# ---- Chart 4a: change in who owns what ----
+to_plot <- participation_shift %>%
+  filter(component %in% varying_components) %>%
+  mutate(component_label = pretty_component(component),
+         label = paste0(ifelse(part_change > 0, "+", ""),
+                        formatC(100 * part_change, format = "f", digits = 1),
+                        "pp"),
+         hj = ifelse(part_change > 0, -0.1, 1.1))
+
+print("Change in share of households holding each component (pp):")
+print(to_plot %>%
+        arrange(part_change) %>%
+        transmute(component_label,
+                  prior = make_share_labels(part_prior, 1),
+                  latest = make_share_labels(part_latest, 1),
+                  change = label) %>%
+        as.data.frame())
+
+plot <- ggplot(to_plot, aes(x = reorder(component_label, part_change),
+                            y = part_change)) +
+  geom_bar(stat = "identity", fill = chart_standard_color) +
+  geom_text(aes(label = label, hjust = hj),
+            col = chart_standard_color, size = label_size) +
+  coord_flip() +
+  scale_y_continuous(label = function(x) paste0(100 * x, "pp"),
+                     expand = expansion(mult = c(0.15, 0.15))) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Who Owns What\n",
+                 "Change in Share, ", prior_year, "-", latest_year)) +
+  labs(x = NULL, y = "Change in Share of Households",
+       caption = make_caption())
+
+save_chart(plot, paste0(out_path, "/04_component_participation_change.jpeg"))
+
+# ---- Chart 4b: percent change in median value among owners ----
+# When participation shifts, median-among-owners is NOT comparable across
+# years. Those components get an asterisk.
 to_plot <- component_change %>%
   filter(metric == "median_owners", !is.na(pct_change)) %>%
   left_join(participation_shift, by = "component") %>%
   mutate(composition_flag = abs(part_change) > composition_cutoff,
-         component_label  = ifelse(composition_flag,
-                                   paste0(component, " *"), component))
+         component_label  = paste0(pretty_component(component),
+                                   ifelse(composition_flag, " *", "")),
+         label = make_pct_labels(pct_change),
+         hj = ifelse(pct_change > 0, -0.1, 1.1))
 
-composition_note <- paste0("* Participation shifted more than ",
+print("Change in median value among owners:")
+print(to_plot %>%
+        arrange(pct_change) %>%
+        transmute(component_label,
+                  prior = format_as_dollar(prior),
+                  latest = format_as_dollar(latest),
+                  change = label) %>%
+        as.data.frame())
+
+composition_note <- paste0("* Ownership shifted more than ",
                            formatC(100 * composition_cutoff, format = "f",
                                    digits = 1),
-                           "pp; medians among owners are not comparable.")
-
-file_path <- paste0(out_path, "/04_component_pct_change_owners.jpeg")
+                           "pp, so medians are not comparable.")
 
 plot <- ggplot(to_plot, aes(x = reorder(component_label, pct_change),
                             y = pct_change)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
+  geom_text(aes(label = label, hjust = hj),
+            col = chart_standard_color, size = label_size) +
   coord_flip() +
-  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  scale_y_continuous(label = percent_format(accuracy = 1),
+                     expand = expansion(mult = c(0.15, 0.15))) +
   of_dollars_and_data_theme +
-  ggtitle(make_title("Change in Real Median Holdings (Among Owners)",
-                     paste0(prior_year, "-", latest_year))) +
-  labs(x = "Component", y = "Change in Real Median Value",
-       caption = paste0(source_string, "\n", note_string, "\n",
-                        composition_note))
+  ggtitle(paste0("Median Holdings Among Owners\n",
+                 "Real Change, ", prior_year, "-", latest_year)) +
+  labs(x = NULL, y = "Change in Real Median Value",
+       caption = make_caption(composition_note))
 
-save_chart(plot, file_path)
-
-# ---- Chart 4c: the composition effect itself ----
-# Read this next to 4b. A component that gained holders will usually show a
-# falling median among owners for that reason alone.
-to_plot <- participation_shift %>%
-  filter(component %in% varying_components)
-
-text_labels <- to_plot %>%
-  mutate(label = paste0(ifelse(part_change > 0, "+", ""),
-                        formatC(100 * part_change, format = "f", digits = 1),
-                        "pp"))
-
-file_path <- paste0(out_path, "/04_component_participation_change.jpeg")
-
-plot <- ggplot(to_plot, aes(x = reorder(component, part_change),
-                            y = part_change)) +
-  geom_bar(stat = "identity", fill = chart_standard_color) +
-  geom_text(data = text_labels,
-            aes(x = reorder(component, part_change), y = part_change,
-                label = label),
-            col = chart_standard_color,
-            hjust = ifelse(text_labels$part_change > 0, -0.1, 1.1),
-            size = 1.8) +
-  coord_flip() +
-  scale_y_continuous(label = percent_format(accuracy = 1)) +
-  of_dollars_and_data_theme +
-  ggtitle(make_title("Change in Share of Households With Any Holdings",
-                     paste0(prior_year, "-", latest_year))) +
-  labs(x = "Component", y = "Change in Share of Households",
-       caption = paste0(source_string, "\n", note_string))
-
-save_chart(plot, file_path)
+save_chart(plot, paste0(out_path, "/04_component_pct_change_owners.jpeg"))
 
 # ---- Table ----
 component_table <- component_change %>%
-  filter(metric %in% c("participation", "median_owners")) %>%
   mutate(display = ifelse(metric == "participation",
-                          paste0(make_pct_labels(prior, 1), " -> ",
-                                 make_pct_labels(latest, 1)),
+                          paste0(make_share_labels(prior, 1), " -> ",
+                                 make_share_labels(latest, 1)),
                           paste0(format_as_dollar(prior), " -> ",
-                                 format_as_dollar(latest)))) %>%
-  select(component, metric, display, pct_change) %>%
-  mutate(`% Change` = make_pct_labels(pct_change)) %>%
-  select(Component = component, Metric = metric,
-         `Prior -> Latest` = display, `% Change`)
+                                 format_as_dollar(latest))),
+         metric = ifelse(metric == "participation", "Share holding",
+                         "Median among holders")) %>%
+  transmute(Component = pretty_component(component),
+            Metric = metric,
+            `Prior -> Latest` = display,
+            `% Change` = make_pct_labels(pct_change))
 
-print(xtable(component_table),
-      include.rownames = FALSE,
-      type = "html",
-      file = paste0(out_path, "/04_component_change_table.html"))
+write_html_table(component_table,
+                 paste0(out_path, "/04_component_change_table.html"))
 
 # ##################################################################### #
-# SECTION 5: Wealth group cuts - the mechanism
+# SECTION 5: Wealth group cuts (top grouped as Top 10%)
 # ##################################################################### #
 
-wealth_group_summary <- df_wealth %>%
+wealth_group_change <- df_wealth %>%
   group_by(year, wealth_group) %>%
-  summarise(
-    median_networth = as.numeric(wtd.quantile(networth, weights = wgt,
-                                              probs = 0.5)),
-    mean_networth   = as.numeric(wtd.mean(networth, weights = wgt)),
-    .groups = "drop"
-  ) %>%
-  mutate(year_label = ifelse(year == latest_year, "latest", "prior"))
-
-wealth_group_change <- wealth_group_summary %>%
+  summarise(median_networth = as.numeric(wtd.quantile(networth, weights = wgt,
+                                                      probs = 0.5)),
+            .groups = "drop") %>%
+  mutate(year_label = ifelse(year == latest_year, "latest", "prior")) %>%
   select(wealth_group, year_label, median_networth) %>%
   pivot_wider(names_from = year_label, values_from = median_networth) %>%
   mutate(dollar_change = latest - prior,
          pct_change    = safe_pct_change(latest, prior))
 
-# ---- Chart 5a: percent change in median net worth by wealth group ----
-to_plot <- wealth_group_change %>% filter(!is.na(pct_change))
+print("Median net worth by wealth group:")
+print(wealth_group_change %>%
+        transmute(wealth_group,
+                  prior = format_as_dollar(prior),
+                  latest = format_as_dollar(latest),
+                  pct_change = make_pct_labels(pct_change, 1)) %>%
+        as.data.frame())
 
-text_labels <- to_plot %>%
-  mutate(label = make_pct_labels(pct_change))
-
-file_path <- paste0(out_path, "/05_networth_pct_change_by_wealth_group.jpeg")
-
-plot <- ggplot(to_plot, aes(x = wealth_group, y = pct_change)) +
-  geom_bar(stat = "identity", fill = chart_standard_color) +
-  geom_text(data = text_labels,
-            aes(x = wealth_group, y = pct_change, label = label),
-            col = chart_standard_color,
-            vjust = ifelse(text_labels$pct_change > 0, -0.5, 1.5),
-            size = 1.8) +
-  scale_y_continuous(label = percent_format(accuracy = 1)) +
-  of_dollars_and_data_theme +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle(make_title("Change in Real Median Net Worth by Wealth Group",
-                     paste0(prior_year, "-", latest_year))) +
-  labs(x = "Wealth Group", y = "Change in Real Median Net Worth",
-       caption = paste0(source_string, "\n", note_string))
-
-save_chart(plot, file_path)
-
-# ---- Chart 5b: participation by wealth group ----
-# This is the "a bull market can't reach households that own no equities"
-# chart. Deliberately excludes fin/liq - those sit near 100% in every wealth
-# group and just waste panels.
+# ---- Chart 5: participation by wealth group ----
 participation_vars <- intersect(c("stocks", "bus", "retqliq", "homeeq"),
                                 varying_components)
-
-if(length(participation_vars) == 0){
-  participation_vars <- intersect(c("fin"), component_vars)
-}
 
 if(length(participation_vars) > 0){
   
@@ -783,9 +706,16 @@ if(length(participation_vars) > 0){
     summarise(participation = as.numeric(wtd.mean(as.numeric(value > 0),
                                                   weights = wgt)),
               .groups = "drop") %>%
-    mutate(period = period_factor(year))
+    mutate(period = period_factor(year),
+           component = pretty_component(component))
   
-  file_path <- paste0(out_path, "/05_participation_by_wealth_group.jpeg")
+  print("Share holding each asset, by wealth group:")
+  print(wealth_participation %>%
+          select(component, wealth_group, year, participation) %>%
+          mutate(participation = make_share_labels(participation)) %>%
+          pivot_wider(names_from = year, values_from = participation) %>%
+          arrange(component, wealth_group) %>%
+          as.data.frame())
   
   plot <- ggplot(wealth_participation,
                  aes(x = wealth_group, y = participation, fill = period)) +
@@ -797,128 +727,140 @@ if(length(participation_vars) > 0){
     theme(axis.text.x = element_text(angle = 45, hjust = 1),
           legend.title = element_blank(),
           legend.position = "bottom") +
-    ggtitle(make_title("Share of Households With Any Holdings",
-                       "by Wealth Group")) +
+    ggtitle(paste0("Who Owns What\nby Wealth Group")) +
     labs(x = "Wealth Group", y = "Share of Households",
-         caption = paste0(source_string, "\n", note_string))
+         caption = make_caption())
   
-  save_chart(plot, file_path)
+  save_chart(plot, paste0(out_path, "/05_participation_by_wealth_group.jpeg"))
 }
 
-# ---- Table ----
 wealth_group_table <- wealth_group_change %>%
-  transmute(
-    `Wealth Group` = as.character(wealth_group),
-    `Prior`        = format_as_dollar(prior),
-    `Latest`       = format_as_dollar(latest),
-    `$ Change`     = format_as_dollar(dollar_change),
-    `% Change`     = make_pct_labels(pct_change)
-  )
+  transmute(`Wealth Group` = as.character(wealth_group),
+            Prior          = format_as_dollar(prior),
+            Latest         = format_as_dollar(latest),
+            `$ Change`     = format_as_dollar(dollar_change),
+            `% Change`     = make_pct_labels(pct_change))
 
 names(wealth_group_table)[2] <- as.character(prior_year)
 names(wealth_group_table)[3] <- as.character(latest_year)
 
-print(xtable(wealth_group_table),
-      include.rownames = FALSE,
-      type = "html",
-      file = paste0(out_path, "/05_wealth_group_change_table.html"))
+write_html_table(wealth_group_table,
+                 paste0(out_path, "/05_wealth_group_change_table.html"))
 
 # ##################################################################### #
-# SECTION 6: Latest-year reference charts and tables (from 0369)
+# SECTION 6: Young vs. old - why did they move in opposite directions?
 # ##################################################################### #
 
-df_year <- df %>%
-  filter(year == latest_year) %>%
-  arrange(year, hh_id, imp_id)
+# ---- 6a: who owns what, by age ----
+age_own_vars <- c(houses = "Owns a home", stocks = "Stocks (direct)",
+                  retqliq = "Retirement accounts", bus = "Business")
+age_own_vars <- age_own_vars[names(age_own_vars) %in% names(df_two_year)]
 
-to_plot <- summarise_pctiles_by(df_year, "networth", "agecl",
-                                c(0.25, 0.50, 0.75, 0.90)) %>%
-  mutate(key = factor(paste0(formatC(100 * prob, format = "f", digits = 0),
-                             "th Percentile"),
-                      levels = c("25th Percentile", "50th Percentile",
-                                 "75th Percentile", "90th Percentile")))
+age_participation <- df_two_year %>%
+  select(year, agecl, wgt, all_of(names(age_own_vars))) %>%
+  pivot_longer(cols = all_of(names(age_own_vars)),
+               names_to = "component", values_to = "value") %>%
+  group_by(year, agecl, component) %>%
+  summarise(participation = wtd_share(value > 0, wgt), .groups = "drop") %>%
+  mutate(period = period_factor(year),
+         component = factor(age_own_vars[component], levels = age_own_vars))
 
-# Labels are formatted PER FACET. The y-axis stays fixed across facets (so
-# you can see relative differences), but a $3M facet shouldn't force the
-# 25th-percentile facet to read "$0.02M".
-text_labels <- to_plot %>%
-  group_by(key) %>%
-  mutate(label = make_dollar_labels(value)) %>%
-  ungroup()
+print("Share holding each asset, by age:")
+print(age_participation %>%
+        select(component, agecl, year, participation) %>%
+        mutate(participation = make_share_labels(participation, 1)) %>%
+        pivot_wider(names_from = year, values_from = participation) %>%
+        arrange(component, agecl) %>%
+        as.data.frame())
 
-file_path <- paste0(out_path, "/06_", latest_year,
-                    "_all_networth_percentiles_by_agecl.jpeg")
-
-plot <- ggplot(to_plot, aes(x = agecl, y = value)) +
-  geom_bar(stat = "identity", fill = chart_standard_color) +
-  geom_text(data = text_labels, aes(x = agecl, y = value, label = label),
-            col = chart_standard_color,
-            vjust = ifelse(text_labels$value > 0, 0, 1),
-            size = 1.8) +
-  facet_wrap(vars(key), axes = "all") +
-  scale_y_continuous(label = dollar) +
+plot <- ggplot(age_participation,
+               aes(x = agecl, y = participation, fill = period)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(vars(component), axes = "all") +
+  scale_y_continuous(label = percent_format(accuracy = 1)) +
+  period_fill_scale() +
   of_dollars_and_data_theme +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle(make_title("Net Worth Percentiles by Age",
-                     as.character(latest_year))) +
-  labs(x = "Age", y = "Net Worth",
-       caption = paste0(source_string, "\n", note_string))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.title = element_blank(),
+        legend.position = "bottom") +
+  ggtitle(paste0("Who Owns What by Age\n",
+                 prior_year, " vs. ", latest_year)) +
+  labs(x = "Age", y = "Share of Households",
+       caption = make_caption())
 
-save_chart(plot, file_path)
+save_chart(plot, paste0(out_path, "/06_participation_by_age.jpeg"))
 
-# ---- Fine-grained age tables ----
-add_agecl_new <- function(data){
-  data %>%
-    filter(age >= 20, age <= 80) %>%
-    mutate(agecl_new = case_when(age < 25 ~ "20-24",
-                                 age < 30 ~ "25-29",
-                                 age < 35 ~ "30-34",
-                                 age < 40 ~ "35-39",
-                                 age < 45 ~ "40-44",
-                                 age < 50 ~ "45-49",
-                                 age < 55 ~ "50-54",
-                                 age < 60 ~ "55-59",
-                                 age < 65 ~ "60-64",
-                                 age < 70 ~ "65-69",
-                                 age < 75 ~ "70-74",
-                                 TRUE     ~ "75-80"))
-}
+# ---- 6b: balance sheet of the youngest and oldest households ----
+# Medians across ALL households in the group (zeros included), so they
+# answer "what does the typical young household have", not "among owners".
+balance_vars <- intersect(c("networth", "income", "fin", "liq", "retqliq",
+                            "homeeq", "debt"), names(df_two_year))
 
-make_age_table <- function(var){
-  
-  table_out <- df_year %>%
-    add_agecl_new() %>%
-    group_by(agecl_new) %>%
-    summarise(
-      avg    = format_as_dollar(as.numeric(wtd.mean(.data[[var]], weights = wgt))),
-      pct_50 = format_as_dollar(as.numeric(wtd.quantile(.data[[var]],
-                                                        weights = wgt,
-                                                        probs = 0.5))),
-      .groups = "drop"
-    ) %>%
-    select(agecl_new, avg, pct_50)
-  
-  print(xtable(table_out),
-        include.rownames = FALSE,
-        type = "html",
-        file = paste0(out_path, "/06_", latest_year, "_", var,
-                      "_by_agecl_table.html"))
-}
+young_old_balance <- df_two_year %>%
+  filter(agecl %in% young_old) %>%
+  select(year, agecl, wgt, all_of(balance_vars)) %>%
+  pivot_longer(cols = all_of(balance_vars),
+               names_to = "measure", values_to = "value") %>%
+  group_by(agecl, measure, year) %>%
+  summarise(median = wtd_stat(value, wgt, 0.5), .groups = "drop") %>%
+  mutate(year_label = ifelse(year == latest_year, "latest", "prior")) %>%
+  select(-year) %>%
+  pivot_wider(names_from = year_label, values_from = median) %>%
+  mutate(pct_change = safe_pct_change(latest, prior),
+         measure = ifelse(measure == "networth", "Net worth",
+                          ifelse(measure == "income", "Income",
+                                 pretty_component(measure))))
 
-make_age_table("networth")
+print("Typical balance sheet (medians, zeros included), youngest vs. oldest:")
+print(young_old_balance %>%
+        transmute(agecl, measure,
+                  prior = format_as_dollar(prior),
+                  latest = format_as_dollar(latest),
+                  pct_change = make_pct_labels(pct_change, 1)) %>%
+        arrange(agecl, measure) %>%
+        as.data.frame())
 
-if("homeeq" %in% names(df_year)){
-  make_age_table("homeeq")
-}
+yo_table <- young_old_balance %>%
+  arrange(agecl, measure) %>%
+  transmute(Age = as.character(agecl),
+            Measure = measure,
+            Prior = format_as_dollar(prior),
+            Latest = format_as_dollar(latest),
+            `% Change` = make_pct_labels(pct_change))
+
+names(yo_table)[3] <- as.character(prior_year)
+names(yo_table)[4] <- as.character(latest_year)
+
+write_html_table(yo_table,
+                 paste0(out_path, "/06_young_vs_old_balance_sheet_table.html"))
+
+# ---- 6c: did the groups themselves change? ----
+# If more young households formed (or older ones were more likely to
+# survive into the 75+ group), the medians shift without anyone getting
+# richer or poorer. Check before writing the "why".
+age_mix <- df_two_year %>%
+  group_by(year) %>%
+  mutate(total_wgt = sum(wgt)) %>%
+  group_by(year, agecl) %>%
+  summarise(share_of_households = sum(wgt) / first(total_wgt),
+            households = sum(wgt),
+            median_age = wtd_stat(age, wgt, 0.5),
+            unweighted = n_distinct(hh_id),
+            .groups = "drop")
+
+print("Age mix of households (check for composition effects):")
+print(age_mix %>%
+        mutate(share_of_households = make_share_labels(share_of_households, 1),
+               households = paste0(formatC(households/10^6, format = "f",
+                                           digits = 1), "M")) %>%
+        arrange(agecl, year) %>%
+        as.data.frame())
 
 # ##################################################################### #
 # SECTION 7: Sanity checks
 # ##################################################################### #
-# These print to console so you can eyeball the refactor against what you
-# already published. For the 2019 -> 2022 dry run the median net worth
-# figures should come back at $141,145 and $192,700, a +36.5% real increase.
 
-sanity <- pctiles_networth %>% filter(prob == 0.5)
+sanity <- pctiles %>% filter(prob == 0.5)
 
 print(paste0("Output folder: ", out_path))
 print(paste0("Median net worth ", prior_year, ": ",
@@ -930,9 +872,21 @@ print(paste0("Real change: ", make_pct_labels(sanity$pct_change, 1)))
 print("Components flagged for composition effects (read 4b with care):")
 print(participation_shift %>%
         filter(abs(part_change) > composition_cutoff) %>%
-        arrange(desc(abs(part_change))))
+        arrange(desc(abs(part_change))) %>%
+        as.data.frame())
 
-print("Households per year (unweighted, all implicates): ")
-print(df %>% count(year) %>% filter(year %in% c(prior_year, latest_year)))
+print("Records per year (all five implicates): ")
+print(df %>% count(year) %>% filter(year %in% c(prior_year, latest_year)) %>%
+        as.data.frame())
+
+########################## Close the log ############################## #
+
+cat("\nRun finished: ", format(Sys.time()), "\n", sep = "")
+
+globalCallingHandlers(NULL)
+sink()
+close(log_con)
+
+print(paste0("Log saved to: ", log_file))
 
 # ############################  End  ################################## #
