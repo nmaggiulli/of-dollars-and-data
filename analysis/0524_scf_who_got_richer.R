@@ -175,11 +175,16 @@ save_chart <- function(plot, file_name){
          width = 15, height = 12, units = "cm")
 }
 
+# Writes a WordPress-ready table: id="myTable" so the post CSS applies,
+# no xtable comment, and all on one line so WordPress doesn't add <p>/<br> gaps
 write_html_table <- function(table_out, file_name){
-  print(xtable(table_out),
-        include.rownames = FALSE,
-        type = "html",
-        file = add_year_suffix(paste0(out_path, "/", file_name)))
+  html <- capture.output(print(xtable(table_out),
+                               include.rownames = FALSE,
+                               type = "html",
+                               comment = FALSE,
+                               html.table.attributes = 'id="myTable"'))
+  writeLines(paste(trimws(html), collapse = ""),
+             add_year_suffix(paste0(out_path, "/", file_name)))
 }
 
 wtd_stat <- function(x, w, quantile_prob){
@@ -388,8 +393,8 @@ make_pctile_change <- function(data, subtitle, file_tag, table_label){
     labs(x = "Percentile", y = "Change in Real Net Worth",
          caption = make_caption(
            if(length(dropped) > 0) paste0("Percentiles near or below $0 are ",
-                                          "not shown as these percent changes ",
-                                          "would not be meaningful.") else NULL))
+                                          "not shown, since a percent change ",
+                                          "isn't meaningful there.") else NULL))
   
   save_chart(plot, paste0("02_networth_pct_change_by_percentile", file_tag, ".jpeg"))
   
@@ -514,10 +519,11 @@ plot <- ggplot(yo_own, aes(x = age_group, y = share, fill = period)) +
         legend.position = "bottom") +
   ggtitle(paste0("Who Owns What\n",
                  "Under 35 vs. 75+")) +
+  # Ownership rates aren't dollar figures, so skip the inflation note
   labs(x = NULL, y = "Share of Households",
-       caption = make_caption())
+       caption = source_string)
 
-save_chart(plot, "03_who_owns_what_young_old.jpeg")
+save_chart(plot, "03_ownership_rates_under_35_vs_75_plus.jpeg")
 
 # ---- 3c: what drove the change ----
 # Medians of the pieces don't add up to the median net worth, so this uses
@@ -578,17 +584,20 @@ plot <- ggplot(to_plot, aes(x = component, y = change)) +
             col = chart_standard_color, size = label_size) +
   geom_hline(yintercept = 0, col = "black") +
   coord_flip() +
-  facet_wrap(vars(age_group), axes = "all") +
+  # Category labels only on the left facet, so the long labels aren't drawn twice
+  facet_wrap(vars(age_group), axes = "all", axis.labels = "margins") +
   scale_y_continuous(label = label_dollar(scale = 1e-3, suffix = "k"),
                      breaks = breaks_pretty(n = 3),
                      expand = expansion(mult = c(0.30, 0.30))) +
   of_dollars_and_data_theme +
+  theme(plot.caption.position = "plot",
+        plot.margin = margin(t = 5.5, r = 15, b = 5.5, l = 5.5)) +
   ggtitle(paste0("What Drove the Change\n",
                  "Avg. per Household, ", prior_year, "-", latest_year)) +
   labs(x = NULL, y = "Change in Real Value",
        caption = make_caption(paste0(
-         "Middle 50% of each age group by net worth. Debt is negative, ",
-         "so less debt shows as a gain.")))
+         "Middle 50% of each age group by net worth.\n",
+         "Debt is negative, so less debt shows as a gain.")))
 
 save_chart(plot, "03_what_drove_change_young_old.jpeg")
 
@@ -748,11 +757,11 @@ plot <- ggplot(to_plot, aes(x = group, y = pct_change, fill = period)) +
   theme(legend.title = element_blank(),
         legend.position = "bottom") +
   ggtitle(paste0("Change in Median Net Worth\n",
-                 "by Homeownership")) +
+                 "by Homeownership Status")) +
   labs(x = NULL, y = "Change in Real Median Net Worth",
        caption = make_caption())
 
-save_chart(plot, "04_networth_change_by_homeownership.jpeg")
+save_chart(plot, "04_networth_change_by_homeownership_status.jpeg")
 
 # ##################################################################### #
 # SECTION 5: Income ends (text only)
