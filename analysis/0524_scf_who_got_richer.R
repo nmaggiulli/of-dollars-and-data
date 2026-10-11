@@ -23,7 +23,7 @@ library(tidyverse)
 #   Section 3: Under 35 vs. 75+ - long view, who owns what, what drove the
 #              change, typical balance sheet, and a check on whether the
 #              groups themselves changed
-#   Section 4: Homeowners vs. non-homeowners
+#   Section 4: Homeowners vs. non-homeowners (table only)
 #   Section 5: Income ends (text only)
 #   Section 6: Sanity checks
 #   Section 7: Robustness checks
@@ -730,39 +730,6 @@ tenure_out <- summarise_three_years(df_tenure, "Homeownership")
 write_html_table(tenure_out$median_table %>% select(-`Min. respondents`),
                  "04_networth_by_homeownership_table.html")
 
-period_labels <- c(paste0(baseline_year, "-", prior_year),
-                   paste0(prior_year, "-", latest_year))
-
-to_plot <- tenure_out$changes %>%
-  filter(stat == "p50") %>%
-  select(group, chg_early, chg_late) %>%
-  pivot_longer(c(chg_early, chg_late), names_to = "period", values_to = "pct_change") %>%
-  mutate(period = factor(ifelse(period == "chg_early",
-                                period_labels[1], period_labels[2]),
-                         levels = period_labels),
-         label = make_pct_labels(pct_change),
-         vj    = ifelse(pct_change > 0, -0.5, 1.5))
-
-plot <- ggplot(to_plot, aes(x = group, y = pct_change, fill = period)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
-  geom_text(aes(label = label, vjust = vj, group = period),
-            position = position_dodge(width = 0.9),
-            col = chart_standard_color, size = label_size) +
-  geom_hline(yintercept = 0, col = "black") +
-  scale_y_continuous(label = percent_format(accuracy = 1),
-                     expand = expansion(mult = c(0.10, 0.12))) +
-  scale_fill_manual(values = setNames(c(prior_year_color, chart_standard_color),
-                                      period_labels)) +
-  of_dollars_and_data_theme +
-  theme(legend.title = element_blank(),
-        legend.position = "bottom") +
-  ggtitle(paste0("Change in Median Net Worth\n",
-                 "by Homeownership Status")) +
-  labs(x = NULL, y = "Change in Real Median Net Worth",
-       caption = make_caption())
-
-save_chart(plot, "04_networth_change_by_homeownership_status.jpeg")
-
 # ##################################################################### #
 # SECTION 5: Income ends (text only)
 # ##################################################################### #
@@ -802,7 +769,7 @@ income_out <- summarise_three_years(df_income, "Income Group")
 #       aren't their own SCF household, so a shrinking count of young
 #       households would mean the group is more selected.
 #   7f  65+ owners combined, so the 74/75 boundary can't shuffle wealth.
-#   7g  Rough bootstrap ranges: which changes are clearly up/down vs. noise.
+#   7h  Under-35 renters' median net worth over every survey year.
 
 robust_ages <- c("<35", "35-44", "45-54", "55-64", "65-74", "75+")
 
@@ -842,7 +809,6 @@ print(age_tenure %>%
         as.data.frame())
 
 # Chart shows only the two ends; the middle age groups are too noisy
-# (see the 7g bootstrap ranges)
 to_plot <- age_tenure %>%
   filter(agecl %in% young_old, m_prior >= min_base_dollars) %>%
   mutate(age_group = factor(age_labels[as.character(agecl)],
@@ -938,6 +904,54 @@ plot <- ggplot(to_plot, aes(x = agecl, y = pct_change, fill = basis)) +
 
 save_chart(plot, "07_networth_change_same_age_vs_same_cohort.jpeg")
 
+# Like-for-like 75+ gain, for the post
+old_cohort <- cohort_tbl %>% filter(agecl == "75+")
+print(paste0("75+ like-for-like: households ", old_cohort$cohort_2022_ages, " in ",
+             prior_year, " (", format_as_dollar(old_cohort$same_cohort_prior),
+             ") vs. 75+ in ", latest_year, " (", format_as_dollar(old_cohort$latest),
+             "): ", make_pct_labels(old_cohort$chg_cohort),
+             " vs. ", make_pct_labels(old_cohort$chg_same_age), " same-age"))
+
+# ---- 7h: young renters' median net worth over time ----
+# Answers "did young renters actually get poorer?" across every survey year.
+# Caveat: who rents changes over time (would-be buyers who stay renters
+# raise the renter median), so read this alongside the homeownership rate.
+young_renters <- df %>%
+  filter(agecl == "<35") %>%
+  group_by(year) %>%
+  summarise(median    = wtd_stat(networth[houses <= 0], wgt[houses <= 0], 0.5),
+            own_rate  = wtd_share(houses > 0, wgt),
+            n_renters = n_distinct(hh_id[houses <= 0]),
+            .groups = "drop")
+
+print("==== 7h: Under-35 non-homeowners, median net worth by survey year ====")
+print(young_renters %>%
+        transmute(year,
+                  `Renter median` = format_as_dollar(median),
+                  `Under-35 homeownership` = make_share_labels(own_rate, 1),
+                  `Renter respondents` = n_renters) %>%
+        as.data.frame())
+
+renter_labels <- young_renters %>%
+  filter(year %in% c(baseline_year, prior_year, latest_year)) %>%
+  mutate(label = format_as_dollar(round(median, -2)))
+
+plot <- ggplot(young_renters, aes(x = year, y = median)) +
+  geom_line(col = chart_standard_color, linewidth = 0.8) +
+  geom_point(data = renter_labels, col = chart_standard_color, size = 1.2) +
+  geom_text(data = renter_labels, aes(label = label),
+            vjust = -0.9, col = chart_standard_color, size = label_size) +
+  scale_y_continuous(label = dollar, limits = c(0, NA),
+                     expand = expansion(mult = c(0, 0.15))) +
+  scale_x_continuous(breaks = sort(seq(year_max, year_min, by = -6))) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Median Net Worth of Young Renters\n",
+                 "Under 35, Non-Homeowners")) +
+  labs(x = "Year", y = "Median Net Worth",
+       caption = make_caption())
+
+save_chart(plot, "07_median_networth_under_35_renters_over_time.jpeg")
+
 # ---- 7c: home values among owners ----
 print("==== 7c: Among homeowners - median home value and home equity ====")
 print(df_two %>%
@@ -1013,68 +1027,6 @@ print(df_age_tenure %>%
         rename(!!as.character(baseline_year) := b,
                !!as.character(prior_year) := p,
                !!as.character(latest_year) := l) %>%
-        as.data.frame())
-
-# ---- 7g: bootstrap ranges for the key changes ----
-# Resamples whole households (all five implicates together) with
-# replacement, separately in each year, and recomputes each median.
-# This ignores the SCF's survey design, so treat the ranges as rough -
-# the real ones are probably somewhat wider.
-n_boot <- 200
-set.seed(12345)
-
-boot_groups <- list(
-  `Under 35, all`        = function(d) d$agecl == "<35",
-  `Under 35, owners`     = function(d) d$agecl == "<35" & d$houses > 0,
-  `Under 35, non-owners` = function(d) d$agecl == "<35" & d$houses <= 0,
-  `75+, all`             = function(d) d$agecl == "75+",
-  `75+, owners`          = function(d) d$agecl == "75+" & d$houses > 0,
-  `75+, non-owners`      = function(d) d$agecl == "75+" & d$houses <= 0,
-  `65-74, owners`        = function(d) d$agecl == "65-74" & d$houses > 0,
-  `55-64, owners`        = function(d) d$agecl == "55-64" & d$houses > 0,
-  `65+, owners`          = function(d) d$age >= 65 & d$houses > 0,
-  `All households`       = function(d) rep(TRUE, nrow(d))
-)
-
-group_medians <- function(d){
-  sapply(boot_groups, function(f){
-    keep <- f(d)
-    wtd_stat(d$networth[keep], d$wgt[keep], 0.5)
-  })
-}
-
-boot_year <- function(yr){
-  d <- df_two %>%
-    filter(year == yr) %>%
-    select(hh_id, agecl, age, houses, networth, wgt)
-  rows_by_hh <- split(seq_len(nrow(d)), d$hh_id)
-  ids <- names(rows_by_hh)
-  draws <- replicate(n_boot, {
-    pick <- sample(ids, length(ids), replace = TRUE)
-    group_medians(d[unlist(rows_by_hh[pick], use.names = FALSE), ])
-  })
-  list(point = group_medians(d), draws = draws)
-}
-
-message("7g: running ", n_boot, " bootstrap draws per year (takes a minute)...")
-boot_prior  <- boot_year(prior_year)
-boot_latest <- boot_year(latest_year)
-
-boot_tbl <- tibble(group = names(boot_groups)) %>%
-  mutate(point = safe_pct_change(boot_latest$point, boot_prior$point),
-         lo = apply(boot_latest$draws / boot_prior$draws - 1, 1,
-                    quantile, probs = 0.05, na.rm = TRUE),
-         hi = apply(boot_latest$draws / boot_prior$draws - 1, 1,
-                    quantile, probs = 0.95, na.rm = TRUE),
-         clearly = case_when(lo > 0 ~ "Up", hi < 0 ~ "Down", TRUE ~ "Unclear"))
-
-print(paste0("==== 7g: Change in median net worth, ", prior_year, "-", latest_year,
-             ", with rough 90% bootstrap range ===="))
-print(boot_tbl %>%
-        transmute(Group = group,
-                  Change = make_pct_labels(point),
-                  `90% range` = paste0(make_pct_labels(lo), " to ", make_pct_labels(hi)),
-                  Direction = clearly) %>%
         as.data.frame())
 
 # ##################################################################### #
