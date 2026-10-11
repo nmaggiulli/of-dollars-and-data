@@ -15,14 +15,26 @@ library(xtable)
 library(tidyverse)
 
 # ##################################################################### #
-# THE TOP 1% IN THE SCF
+# THE TOP 1% IN THE SCF - $30M+ VERSION
+#
+# Copy of xxxx_scf_top_1pct.R that leads with households worth $30M+ (the
+# married-couple exemption, which is the binding line for most households
+# above their own exemption) and splits the top 1% in two. Tiers, assigned
+# within each year:
+#   $30M+            net worth >= exemption_married
+#   Rest of top 1%   99th percentile up to $30M
+#   Next 9%          90th-99th percentile
+#   Bottom 90%
+# Charts and tables that were "top 1% only" now show $30M+ against the rest
+# of the top 1% (and the next 9% where it adds something). Outputs go to a
+# separate folder so the original run is not overwritten.
 #
 # Sections:
 #   1. Who the 1% are          (thresholds, counts above $15M/$30M,
 #                               wealth vs. income overlap, demographics)
-#   2. The balance sheet       (asset mix by tier, top-1% mix over time,
+#   2. The balance sheet       (asset mix by tier, $30M+ mix over time,
 #                               prior -> data year change, wealth shares)
-#   3. The transfer window     (share of top-1% wealth held by 70+)
+#   3. The transfer window     (share of each tier's wealth held by 70+)
 #   4. Embedded gains          (unrealized gains / net worth, retirement
 #                               share contrast)
 #   5. Inheritance & bequests  (received, expected, bequest intent, giving,
@@ -87,10 +99,15 @@ projection_years <- 10
 older_age  <- 70    # "transfer window" cutoff (age of the household head)
 min_cell_n <- 30    # suppress any cell built on fewer respondents
 
-# Tier colors: bottom 90% gray, next 9% light blue, top 1% navy
-tier_levels <- c("Bottom 90%", "Next 9%", "Top 1%")
-tier_colors <- setNames(c("#B3B3B3", "#6baed6", chart_standard_color),
+# Tier colors: bottom 90% gray, next 9% light blue, rest of top 1% mid
+# blue, $30M+ navy
+tier_levels <- c("Bottom 90%", "Next 9%", "Rest of top 1%", "$30M+")
+tier_colors <- setNames(c("#B3B3B3", "#9ecae1", "#4292c6", chart_standard_color),
                         tier_levels)
+
+# The groups compared in the "top of the distribution" charts
+top_tiers   <- c("Rest of top 1%", "$30M+")
+upper_tiers <- c("Next 9%", top_tiers)
 
 prior_year_color <- "#B3B3B3"
 
@@ -117,7 +134,7 @@ label_size       <- 3.0
 
 ########################## Output paths ############################### #
 
-folder_name <- "_fl/xxxx_scf_top_1pct"
+folder_name <- "_fl/xxxx_scf_top_1pct_30m"
 base_path   <- paste0(exportdir, folder_name)
 out_path    <- paste0(base_path, "/", data_year)
 
@@ -211,7 +228,10 @@ df <- df %>%
          inc_p90 = wtd.quantile(income,   weights = wgt, probs = 0.90),
          inc_p99 = wtd.quantile(income,   weights = wgt, probs = 0.99)) %>%
   ungroup() %>%
-  mutate(tier = factor(case_when(networth >= nw_p99 ~ "Top 1%",
+  # $30M+ sits inside the top 1% in every wave (p99 has never reached
+  # $30M); Section 7 checks this
+  mutate(tier = factor(case_when(networth >= exemption_married ~ "$30M+",
+                                 networth >= nw_p99 ~ "Rest of top 1%",
                                  networth >= nw_p90 ~ "Next 9%",
                                  TRUE               ~ "Bottom 90%"),
                        levels = tier_levels),
@@ -469,30 +489,26 @@ write_html_table(
 
 # ---- 1c: wealth vs. income overlap ---------------------------------- #
 overlap <- df %>%
-  filter(top1) %>%
-  group_by(year) %>%
+  filter(tier %in% top_tiers) %>%
+  group_by(year, tier) %>%
   summarise(n_unw = n_distinct(hh_id),
             in_top1_income  = wtd_share(top1_income,  wgt),
             in_top10_income = wtd_share(top10_income, wgt),
-            .groups = "drop")
+            .groups = "drop") %>%
+  suppress_thin(c("in_top1_income", "in_top10_income"), "1c overlap")
 
-print("Share of the top 1% by WEALTH who are also top earners:")
+print("Share of each top tier (by WEALTH) who are also top earners:")
 print(overlap %>%
         mutate(across(c(in_top1_income, in_top10_income), make_pct_labels)) %>%
         as.data.frame())
 
-overlap_long <- overlap %>%
-  select(year, `Top 1% income` = in_top1_income,
-         `Top 10% income` = in_top10_income) %>%
-  pivot_longer(-year, names_to = "measure", values_to = "share")
-
+# Chart: share also in the top 1% by income, $30M+ vs. rest of the top 1%
 line_with_end_labels(
-  overlap_long, "share", "measure", make_pct_labels,
-  setNames(c(chart_standard_color, "#6baed6"),
-           c("Top 1% income", "Top 10% income")),
+  overlap %>% mutate(tier = as.character(tier)),
+  "in_top1_income", "tier", make_pct_labels, tier_colors[top_tiers],
   paste0("Rich Isn't the Same as High Pay\n",
-         "Top 1% Wealth Also in Top Income"),
-  "Share of Top 1% (Net Worth)",
+         "Share Also in the Top 1% by Income"),
+  "Share of Tier",
   "01_wealth_income_overlap.jpeg")
 
 # ---- 1d: demographics by tier, prior vs. data year ------------------ #
@@ -511,34 +527,17 @@ demographics <- df %>%
             share_inherited = wtd_share(inherited, wgt),
             .groups = "drop")
 
-# Same row for the $30M+ group inside the top 1%
-demographics_30m <- df %>%
-  filter(year %in% c(prior_year, data_year), over_30m) %>%
-  group_by(year) %>%
-  summarise(n_unw          = n_distinct(hh_id),
-            households     = sum(wgt),
-            median_nw      = wtd_median(networth, wgt),
-            median_income  = wtd_median(income, wgt),
-            median_age     = wtd_median(age, wgt),
-            share_older    = wtd_share(older, wgt),
-            share_married  = wtd_share(married_flag, wgt),
-            share_college  = wtd_share(college, wgt),
-            share_business = wtd_share(business_owner, wgt),
-            share_inherited = wtd_share(inherited, wgt),
-            .groups = "drop") %>%
-  mutate(tier = "$30M+")
-
 demo_value_cols <- c("households", "median_nw", "median_income", "median_age",
                      "share_older", "share_married", "share_college",
                      "share_business", "share_inherited")
 
-demographics_all <- bind_rows(demographics %>% mutate(tier = as.character(tier)),
-                              demographics_30m) %>%
+demographics_all <- demographics %>%
   suppress_thin(demo_value_cols, "1d demographics")
 
 write_html_table(
   demographics_all %>%
-    arrange(desc(year), factor(tier, levels = c(rev(tier_levels), "$30M+"))) %>%
+    arrange(desc(year), desc(tier)) %>%
+    mutate(tier = as.character(tier)) %>%
     transmute(Year = as.character(year),
               Tier = tier,
               Households      = make_round_count(households),
@@ -578,7 +577,7 @@ plot <- ggplot(mix_tier, aes(x = tier, y = share, fill = component)) +
   theme(legend.title = element_blank(),
         legend.position = "right",
         legend.text = element_text(size = 7)) +
-  ggtitle(paste0("What the 1% Own\n",
+  ggtitle(paste0("What the Very Top Owns\n",
                  "Share of Total Assets, ", data_year)) +
   labs(x = NULL, y = "Share of Total Assets",
        caption = make_caption())
@@ -594,8 +593,8 @@ write_html_table(
     rename(Component = component),
   paste0(out_path, "/02_asset_mix_by_tier_table.html"))
 
-# ---- 2b: top-1% asset mix over time ---------------------------------- #
-mix_top1_time <- asset_mix(df %>% filter(top1), year)
+# ---- 2b: $30M+ asset mix over time ----------------------------------- #
+mix_top1_time <- asset_mix(df %>% filter(over_30m), year)
 
 plot <- ggplot(mix_top1_time, aes(x = year, y = share, fill = component)) +
   geom_area() +
@@ -609,20 +608,20 @@ plot <- ggplot(mix_top1_time, aes(x = year, y = share, fill = component)) +
         legend.title = element_blank(),
         legend.position = "right",
         legend.text = element_text(size = 7)) +
-  ggtitle(paste0("How the 1%'s Assets Have Shifted\n",
+  ggtitle(paste0("How $30M+ Assets Have Shifted\n",
                  "Share of Total Assets")) +
   labs(x = "Year", y = "Share of Total Assets",
        caption = make_caption(note_string_ts, source_string_ts))
 
-save_chart(plot, paste0(out_path, "/02_top1_asset_mix_over_time.jpeg"))
+save_chart(plot, paste0(out_path, "/02_30m_asset_mix_over_time.jpeg"))
 
-# ---- 2c: prior -> data year change, per top-1% household ------------ #
+# ---- 2c: prior -> data year change, per household in each top tier --- #
 # Means, not medians: most components have a median of zero even at the
-# top. The top 1% is a different set of households in each wave, so this
-# is "the average top-1% balance sheet then vs. now", not a panel.
+# top. Each tier is a different set of households in each wave, so this
+# is "the average balance sheet then vs. now", not a panel.
 component_means <- df %>%
-  filter(top1, year %in% c(prior_year, data_year)) %>%
-  group_by(year) %>%
+  filter(tier %in% top_tiers, year %in% c(prior_year, data_year)) %>%
+  group_by(year, tier) %>%
   summarise(n_unw = n_distinct(hh_id),
             `Private business`    = weighted.mean(mix_business,   wgt),
             `Stocks & funds`      = weighted.mean(mix_stocks,     wgt),
@@ -636,20 +635,24 @@ component_means <- df %>%
             `Net worth`           = weighted.mean(networth,       wgt),
             .groups = "drop")
 
+print(paste0("Respondents behind the average balance sheets:"))
+print(component_means %>% select(year, tier, n_unw) %>% as.data.frame())
+
 component_change <- component_means %>%
   select(-n_unw) %>%
-  pivot_longer(-year, names_to = "component", values_to = "mean") %>%
+  pivot_longer(-c(year, tier), names_to = "component", values_to = "mean") %>%
   pivot_wider(names_from = year, values_from = mean, names_prefix = "y") %>%
   mutate(change = .data[[paste0("y", data_year)]] - .data[[paste0("y", prior_year)]],
          component = factor(component, levels = rev(c("Net worth", mix_levels, "Debt"))))
 
-print(paste0("Average top-1% balance sheet, ", prior_year, " vs ", data_year, ":"))
+print(paste0("Average balance sheet by top tier, ", prior_year, " vs ", data_year, ":"))
 print(component_change %>%
+        arrange(desc(tier), desc(component)) %>%
         mutate(across(starts_with("y"), dollar_short),
                change = dollar_short(change)) %>%
         as.data.frame())
 
-plot <- ggplot(component_change %>% filter(component != "Net worth"),
+plot <- ggplot(component_change %>% filter(tier == "$30M+", component != "Net worth"),
                aes(x = component, y = change)) +
   geom_bar(stat = "identity",
            aes(fill = change >= 0), show.legend = FALSE) +
@@ -663,15 +666,15 @@ plot <- ggplot(component_change %>% filter(component != "Net worth"),
   scale_y_continuous(label = function(x) paste0("$", formatC(x/10^6, format = "f", digits = 1), "M"),
                      expand = expansion(mult = c(0.25, 0.25))) +
   of_dollars_and_data_theme +
-  ggtitle(paste0("What Drove the 1%'s Gains\n",
+  ggtitle(paste0("How the $30M+ Balance Sheet Changed\n",
                  "Avg. Change, ", prior_year, "-", data_year)) +
-  labs(x = NULL, y = "Change per Top 1% Household",
+  labs(x = NULL, y = "Change per $30M+ Household",
        caption = make_caption(str_wrap(paste0(
-         "Note: Average balance sheet of top 1% households in each year, ",
+         "Note: Average balance sheet of $30M+ households in each year, ",
          dollar_year, " dollars. Debt shown as negative, so a rise in debt ",
          "is a negative bar."), width = caption_wrap)))
 
-save_chart(plot, paste0(out_path, "/02_top1_component_change.jpeg"))
+save_chart(plot, paste0(out_path, "/02_30m_component_change.jpeg"))
 
 # ---- 2d: share of all net worth by tier, over time ------------------ #
 wealth_shares <- df %>%
@@ -716,17 +719,22 @@ write_html_table(
 # SECTION 3: The transfer window
 # ##################################################################### #
 
+# Share of each upper tier's wealth held by households older_age+. $30M+
+# is the lead series; the rest of the top 1% and the next 9% are the
+# comparison.
 older_share <- df %>%
-  filter(top1) %>%
-  group_by(year) %>%
+  filter(tier %in% upper_tiers) %>%
+  group_by(year, tier) %>%
   summarise(n_unw        = n_distinct(hh_id[older]),
             wealth_share = agg_ratio(networth * older, networth, wgt),
             hh_share     = wtd_share(older, wgt),
             older_wealth = sum(wgt * networth * older),
-            .groups = "drop")
+            .groups = "drop") %>%
+  suppress_thin(c("wealth_share", "hh_share", "older_wealth"), "3 older share")
 
-print(paste0("Top 1%: share held by households ", older_age, "+:"))
+print(paste0("Share of each tier's wealth held by households ", older_age, "+:"))
 print(older_share %>%
+        arrange(desc(tier), year) %>%
         mutate(wealth_share = make_pct_labels(wealth_share),
                hh_share = make_pct_labels(hh_share),
                older_wealth = dollar_short(older_wealth)) %>%
@@ -735,47 +743,46 @@ print(older_share %>%
 print("Comparison years:")
 print(older_share %>%
         filter(year %in% c(compare_years, data_year)) %>%
+        arrange(desc(tier), year) %>%
         mutate(wealth_share = make_pct_labels(wealth_share),
                hh_share = make_pct_labels(hh_share),
                older_wealth = dollar_short(older_wealth)) %>%
         as.data.frame())
 
 # Robustness: does the latest-year jump hold at other age cutoffs, or is it
-# a cohort bunching right at older_age? Also prints the top-1% median age.
-print("Top 1%: share of wealth held by age cutoff, and median age:")
+# a cohort bunching right at older_age? Also prints each tier's median age.
+print("Top tiers: share of wealth held by age cutoff, and median age:")
 print(df %>%
-        filter(top1) %>%
-        group_by(year) %>%
+        filter(tier %in% top_tiers) %>%
+        group_by(tier, year) %>%
         summarise(`65+` = make_pct_labels(agg_ratio(networth * (age >= 65), networth, wgt)),
                   `70+` = make_pct_labels(agg_ratio(networth * (age >= 70), networth, wgt)),
                   `75+` = make_pct_labels(agg_ratio(networth * (age >= 75), networth, wgt)),
                   median_age = wtd_median(age, wgt),
                   .groups = "drop") %>%
+        arrange(desc(tier), year) %>%
         as.data.frame())
 
-older_long <- older_share %>%
-  select(year, `Share of wealth` = wealth_share,
-         `Share of households` = hh_share) %>%
-  pivot_longer(-year, names_to = "measure", values_to = "share")
-
 line_with_end_labels(
-  older_long, "share", "measure", make_pct_labels,
-  setNames(c(chart_standard_color, "#6baed6"),
-           c("Share of wealth", "Share of households")),
-  paste0("The 1%'s Wealth Is Getting Older\n",
-         "Held by Households ", older_age, "+"),
-  paste0("Share of Top 1% Held by ", older_age, "+"),
-  "03_top1_older_share.jpeg")
+  older_share %>% mutate(tier = as.character(tier)),
+  "wealth_share", "tier", make_pct_labels, tier_colors[upper_tiers],
+  paste0("Wealth at the Top Is Getting Older\n",
+         "Share Held by Households ", older_age, "+"),
+  paste0("Share of Tier's Wealth Held by ", older_age, "+"),
+  "03_older_share_by_tier.jpeg")
 
-# What older top-1% households hold vs. younger ones (data year)
+# What older $30M+ households hold vs. younger ones (data year)
 mix_by_age <- asset_mix(df_year %>%
-                          filter(top1) %>%
+                          filter(over_30m) %>%
                           mutate(age_group = factor(ifelse(older,
                                                            paste0(older_age, "+"),
                                                            paste0("Under ", older_age)),
                                                     levels = c(paste0("Under ", older_age),
                                                                paste0(older_age, "+")))),
                         age_group)
+
+print("Respondents behind the $30M+ asset mix by age:")
+print(mix_by_age %>% distinct(age_group, n_unw) %>% as.data.frame())
 
 text_labels <- mix_by_age %>%
   group_by(age_group) %>%
@@ -796,11 +803,11 @@ plot <- ggplot(mix_by_age, aes(x = age_group, y = share, fill = component)) +
         legend.position = "right",
         legend.text = element_text(size = 7)) +
   ggtitle(paste0("What Will Transfer First\n",
-                 "Top 1% Assets by Age, ", data_year)) +
+                 "$30M+ Assets by Age, ", data_year)) +
   labs(x = NULL, y = "Share of Total Assets",
        caption = make_caption())
 
-save_chart(plot, paste0(out_path, "/03_top1_asset_mix_by_age.jpeg"))
+save_chart(plot, paste0(out_path, "/03_30m_asset_mix_by_age.jpeg"))
 
 # ##################################################################### #
 # SECTION 4: Embedded gains and the step-up
@@ -864,40 +871,46 @@ if(has_vars(kg_vars)){
   
   save_chart(plot, paste0(out_path, "/04_unrealized_gains_by_tier.jpeg"))
   
-  # Within the top 1%, by age - gains held until death get the step-up
+  # Within the top tiers, by age - gains held until death get the step-up
   gains_age <- df_year %>%
-    filter(top1) %>%
+    filter(tier %in% top_tiers) %>%
     mutate(age_group = cut(age, breaks = c(-Inf, 54, older_age - 1, Inf),
                            labels = c("Under 55", paste0("55-", older_age - 1),
                                       paste0(older_age, "+")))) %>%
-    group_by(age_group) %>%
+    group_by(tier, age_group) %>%
     summarise(n_unw = n_distinct(hh_id),
               gains_share = agg_ratio(kgtotal, networth, wgt),
               gains_total = sum(wgt * kgtotal),
               .groups = "drop") %>%
     suppress_thin(c("gains_share", "gains_total"), "4b gains by age")
   
-  print("Top 1% unrealized gains by age of head:")
+  print("Top tiers: unrealized gains by age of head:")
   print(gains_age %>%
+          arrange(desc(tier), age_group) %>%
           mutate(gains_share = make_pct_labels(gains_share),
                  gains_total = dollar_short(gains_total)) %>%
           as.data.frame())
   
-  plot <- ggplot(gains_age, aes(x = age_group, y = gains_share)) +
-    geom_bar(stat = "identity", fill = chart_standard_color, width = 0.6) +
-    geom_text(aes(label = make_pct_labels(gains_share)), vjust = -0.5,
-              col = chart_standard_color, size = label_size) +
+  plot <- ggplot(gains_age, aes(x = age_group, y = gains_share, fill = tier)) +
+    geom_bar(stat = "identity", position = position_dodge(width = 0.8),
+             width = 0.75) +
+    geom_text(aes(label = make_pct_labels(gains_share)),
+              position = position_dodge(width = 0.8), vjust = -0.5,
+              col = chart_standard_color, size = label_size_small) +
+    scale_fill_manual(values = tier_colors[top_tiers]) +
     scale_y_continuous(label = percent_format(accuracy = 1),
                        expand = expansion(mult = c(0, 0.10))) +
     of_dollars_and_data_theme +
+    theme(legend.title = element_blank(),
+          legend.position = "bottom") +
     ggtitle(paste0("The Step-Up Matters Most Late\n",
-                   "Top 1% Gains / Net Worth by Age")) +
+                   "Gains / Net Worth by Age")) +
     labs(x = "Age of Head of Household", y = "Share of Net Worth",
          caption = make_caption())
   
-  save_chart(plot, paste0(out_path, "/04_top1_gains_by_age.jpeg"))
+  save_chart(plot, paste0(out_path, "/04_top_tier_gains_by_age.jpeg"))
   
-  # Over time for the top 1% (kg vars exist in every wave of the extract)
+  # Over time by tier (kg vars exist in every wave of the extract)
   gains_time <- df %>%
     group_by(year, tier) %>%
     summarise(share = agg_ratio(kgtotal, networth, wgt), .groups = "drop") %>%
@@ -937,11 +950,10 @@ if(has_vars(kg_vars)){
 # SECTION 5: Inheritance in, bequests out
 # ##################################################################### #
 
-# Groups for this section: the three tiers plus $30M+
+# Groups for this section are the four tiers. ($30M+ is now its own tier,
+# so it no longer needs to be stacked on top of the top 1%.)
 tier_plus_30m <- function(d){
-  bind_rows(d %>% mutate(group = as.character(tier)),
-            d %>% filter(over_30m) %>% mutate(group = "$30M+")) %>%
-    mutate(group = factor(group, levels = c(tier_levels, "$30M+")))
+  d %>% mutate(group = tier)
 }
 
 # ---- 5a: ever received an inheritance (runs today) ------------------ #
@@ -1072,14 +1084,14 @@ if(has_vars("bequest_expect")){
   
   save_chart(plot, paste0(out_path, "/05_bequest_expect_by_tier.jpeg"))
   
-  # The gap inside the top 1%, by age: older households are the ones whose
-  # estate is closest to transferring
+  # The gap inside the top tiers, by age: older households are the ones
+  # whose estate is closest to transferring
   gap_age <- df_year %>%
-    filter(top1, !is.na(bequest_expect)) %>%
+    filter(tier %in% top_tiers, !is.na(bequest_expect)) %>%
     mutate(age_group = cut(age, breaks = c(-Inf, 54, older_age - 1, Inf),
                            labels = c("Under 55", paste0("55-", older_age - 1),
                                       paste0(older_age, "+")))) %>%
-    group_by(age_group) %>%
+    group_by(tier, age_group) %>%
     summarise(n_unw = n_distinct(hh_id),
               not_yes = wtd_share(bequest_expect != "Yes", wgt),
               says_no = wtd_share(bequest_expect == "No", wgt),
@@ -1088,8 +1100,9 @@ if(has_vars("bequest_expect")){
               .groups = "drop") %>%
     suppress_thin(c("not_yes", "says_no", "wealth_not_yes"), "5c gap by age")
   
-  print("Top 1%: not expecting to leave a sizable estate, by age:")
+  print("Top tiers: not expecting to leave a sizable estate, by age:")
   print(gap_age %>%
+          arrange(desc(tier), age_group) %>%
           mutate(across(c(not_yes, says_no, wealth_not_yes), make_pct_labels)) %>%
           as.data.frame())
   
@@ -1103,11 +1116,13 @@ if(has_vars("bequest_expect")){
   
   write_html_table(
     gap_age %>%
-      transmute(`Age of head` = as.character(age_group),
+      arrange(desc(tier), age_group) %>%
+      transmute(Tier = as.character(tier),
+                `Age of head` = as.character(age_group),
                 `Not a firm yes` = make_pct_labels(not_yes),
                 `Says no` = make_pct_labels(says_no),
-                `Share of top-1% wealth held by "not yes"` = make_pct_labels(wealth_not_yes)),
-    paste0(out_path, "/05_bequest_gap_top1_by_age_table.html"))
+                `Share of tier wealth held by "not yes"` = make_pct_labels(wealth_not_yes)),
+    paste0(out_path, "/05_bequest_gap_top_tiers_by_age_table.html"))
   
 } else {
   message("SECTION 5c: bequest_expect not in stack - skipping.")
@@ -1361,6 +1376,16 @@ print(df %>% group_by(year) %>%
         summarise(share = make_pct_labels(wtd_share(top1, wgt), 2),
                   .groups = "drop") %>%
         as.data.frame())
+
+# The tiers assume every $30M+ household is in the top 1%. If p99 ever
+# reaches $30M, "Rest of top 1%" would be empty and "$30M+" would include
+# households below the 99th percentile.
+p99_over_30m <- thresholds %>% filter(nw_p99 > exemption_married)
+if(nrow(p99_over_30m) > 0){
+  warning("Top 1% threshold is above $30M in: ",
+          paste(p99_over_30m$year, collapse = ", "),
+          " - $30M+ is no longer a subset of the top 1%.")
+}
 
 # Known 2022 reference: top 1% net worth threshold ~ $13.7M (2022 dollars)
 if(2022 %in% all_years & dollar_year == 2022){
