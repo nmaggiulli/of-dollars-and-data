@@ -2,11 +2,12 @@
  * Income by Age Calculator — Of Dollars And Data
  *
  * Uses income_data.js (written by the R script). This file never needs to
- * change for a data update: the age groups and the "Data from the ... Survey of
- * Consumer Finances" line come from the data file.
+ * change for a data update: the ages, the +/- window and the "Data from the ...
+ * Survey of Consumer Finances" line come from the data file.
  *
  * Shareable links: after Calculate, the address bar updates to e.g.
- *   ?age=30-34&income=78000
+ *   ?age=32&income=78000
+ * Older bracket links (?age=30-34) are mapped to the bracket's middle age.
  */
 (function () {
 	'use strict';
@@ -15,6 +16,17 @@
 	if (!D) { return; }
 
 	function $(id) { return document.getElementById(id); }
+
+	/* ---------- age labels ---------- */
+	// "36" -> "36 (34–38)"; "All Ages" stays as is.
+	function ageLabel(g) {
+		var n = parseInt(g, 10), w = D.window || 0;
+		if (isNaN(n) || !w) { return g; }
+		return g + ' (' + (n - w) + '–' + (n + w) + ')';
+	}
+	function titleLabel(g) {
+		return isNaN(parseInt(g, 10)) ? g : 'Age: ' + ageLabel(g);
+	}
 
 	/* ---------- Google Analytics events (see inc/analytics.php) ---------- */
 	function track(name, params) {
@@ -46,15 +58,21 @@
 	function buildForm() {
 		var sel = $('age');
 		if (sel) {
-			sel.innerHTML = '<option value="">Select age group</option>';
+			sel.innerHTML = '<option value="">Select your age</option>';
 			D.groups.forEach(function (g) {
 				var o = document.createElement('option');
-				o.value = g; o.textContent = g;
+				o.value = g; o.textContent = ageLabel(g);
 				sel.appendChild(o);
 			});
 		}
+		// Label reads "Your Age:" (the reader picks an age; the window is a sample detail).
+		var lab = document.querySelector('label[for="age"]');
+		if (lab) { lab.textContent = 'Your Age:'; }
 		var note = $('data-through');
-		if (note) { note.textContent = 'Data from the ' + D.year + ' Survey of Consumer Finances.'; }
+		if (note) {
+			note.textContent = 'Data from the ' + D.year + ' Survey of Consumer Finances.' +
+				(D.window ? ' Each age includes households within ' + D.window + ' year' + (D.window === 1 ? '' : 's') + ' of that age to ensure a sufficient sample size.' : '');
+		}
 	}
 
 	/* ---------- inline errors ---------- */
@@ -109,7 +127,7 @@
 			options: {
 				responsive: true,
 				maintainAspectRatio: window.innerWidth > 767,
-				title: { display: true, text: ['U.S. Household Income by Percentile', 'Age Group: ' + ageGroup], fontSize: 16 },
+				title: { display: true, text: ['U.S. Household Income by Percentile', titleLabel(ageGroup)], fontSize: 16 },
 				scales: {
 					xAxes: [{ type: 'category', scaleLabel: { display: true, labelString: 'Percentile' } }],
 					yAxes: [{
@@ -149,7 +167,7 @@
 		var income = getNumericValue(raw);
 
 		if (!ageGroup || !D.values[ageGroup]) {
-			showError('Select your age group.', ['age']);
+			showError('Select your age.', ['age']);
 			return;
 		}
 		if (raw === '') {
@@ -211,6 +229,9 @@
 	function applyLink() {
 		var p = new URLSearchParams(window.location.search);
 		var age = p.get('age'), amt = p.get('income');
+		// Old bracket links (e.g. "30-34") open at the bracket's middle age ("32").
+		var m = age && age.match(/^(\d+)-(\d+)$/);
+		if (m) { age = String(Math.round((+m[1] + +m[2]) / 2)); }
 		if (!age || amt === null || !D.values[age]) { return; }
 		$('age').value = age;
 		var v = parseFloat(amt);

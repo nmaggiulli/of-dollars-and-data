@@ -71,8 +71,14 @@
 				sel.appendChild(o);
 			});
 		}
+		// Label reads "Your Age:" (the reader picks an age; the window is a sample detail).
+		var lab = document.querySelector('label[for="nw-age"]');
+		if (lab) { lab.textContent = 'Your Age:'; }
 		var note = $('data-through');
-		if (note) { note.textContent = 'Data from the ' + D.year + ' Survey of Consumer Finances.'; }
+		if (note) {
+			note.textContent = 'Data from the ' + D.year + ' Survey of Consumer Finances.' +
+				(D.window ? ' Each age includes households within ' + D.window + ' year' + (D.window === 1 ? '' : 's') + ' of that age to ensure a sufficient sample size.' : '');
+		}
 	}
 
 	/* ---------- inline errors ---------- */
