@@ -24,7 +24,7 @@ dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
-data_year <- 2022
+data_year <- 2025
 
 # fin = total finanical assets (LIQ+CDS+NMMF+STOCKS+BOND+RETQLIQ+SAVBND+CASHLI+OTHMA+OTHFIN)
 # nfin = total non-financial assets (VEHIC+HOUSES+ORESRE+NNRESRE+BUS+OTHNFIN)
@@ -120,8 +120,8 @@ assign("income_producing_summary", income_producing_summary, envir = .GlobalEnv)
 #Do income-producing summary
 my_grayscale <- c("#969696", "black")
 
-file_path <- paste0(out_path, "/_income_producing_breakdown_by_wealth_level.jpeg")
-source_string <- paste0("Source: Survey of Consumer Finances (2022)")
+file_path <- paste0(out_path, "/_income_producing_breakdown_by_wealth_level_", data_year, ".jpeg")
+source_string <- paste0("Source: Survey of Consumer Finances (", data_year, ")")
 
 plot <- ggplot(data = income_producing_summary, aes(x = wealth_level, y=value, fill = key)) +
   geom_bar(stat = "identity", position = "stack") +
@@ -138,7 +138,7 @@ plot <- ggplot(data = income_producing_summary, aes(x = wealth_level, y=value, f
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Do overall breakdown
-file_path <- paste0(out_path, "/_asset_breakdown_by_wealth_level_all_color.jpeg")
+file_path <- paste0(out_path, "/_asset_breakdown_by_wealth_level_all_color_", data_year, ".jpeg")
 
 my_colors <- c("#1f78b4", "#a6cee3", "#33a02c", "#FFDB58", "#e31a1c", "#fb9a99",
             "purple", "#ff7f00")
@@ -187,7 +187,7 @@ plot <- ggplot(data = to_plot_nm, aes(x = wealth_level, y=value, fill = key)) +
 ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 
 # Now do grayscale
-file_path <- paste0(out_path, "/_asset_breakdown_by_wealth_level_grayscale.jpeg")
+file_path <- paste0(out_path, "/_asset_breakdown_by_wealth_level_grayscale_", data_year, ".jpeg")
 
 # Create plot 
 plot <- ggplot(data = to_plot, aes(x = wealth_level, y=value, fill = key)) +
@@ -222,7 +222,7 @@ for(a in all_assets){
   
   a_string <- str_replace_all(a, "\\s|&", "_")
   
-  file_path <- paste0(out_path, "/", a_string, "_by_wealth_level_grayscale.jpeg")
+  file_path <- paste0(out_path, "/", a_string, "_by_wealth_level_grayscale_", data_year, ".jpeg")
   
   if(a == "Retirement"){
     a_title <- "Retirement Wealth"
@@ -259,7 +259,7 @@ homeowner_only_avg <- scf_stack %>%
   mutate(`All Other Assets` = 1 - `Primary Residence`) %>%
   gather(-wealth_level, key=key, value=value)
 
-file_path <- paste0(out_path, "/homeowner_residence_by_wealth_level_grayscale.jpeg")
+file_path <- paste0(out_path, "/homeowner_residence_by_wealth_level_grayscale_", data_year, ".jpeg")
 
 # Create plot 
 plot <- ggplot(data = homeowner_only_avg, aes(x = wealth_level, y=value, fill = key)) +

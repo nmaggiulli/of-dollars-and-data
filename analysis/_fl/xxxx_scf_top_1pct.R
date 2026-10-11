@@ -61,11 +61,10 @@ library(tidyverse)
 # ##################################################################### #
 
 ########################## Parameters ################################# #
-# CHANGE THESE WHEN THE 2025 DATA LANDS.
 
-data_year   <- 2022   # -> 2025
-prior_year  <- 2019   # -> 2022
-dollar_year <- 2022   # -> 2025  (dollar basis of 0003_scf_stack.Rds)
+data_year   <- 2025   # -> 2025
+prior_year  <- 2022  # -> 2022
+dollar_year <- 2025   # -> 2025  (dollar basis of 0003_scf_stack.Rds)
 
 baseline_year <- 1989
 compare_years <- c(1989, 2007)   # "versus 1989 and 2007" in Section 3
