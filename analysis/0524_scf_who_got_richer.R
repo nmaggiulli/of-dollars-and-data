@@ -42,8 +42,12 @@ young_old  <- c("<35", "75+")
 age_labels <- c(`<35` = "Under 35", `75+` = "75+")
 
 # Percentiles in the change-by-percentile table. Capped at the 90th.
-change_probs <- c(0.10, 0.20, 0.25, 0.30, 0.40, 0.50,
-                  0.60, 0.70, 0.75, 0.80, 0.90)
+change_probs <- c(0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90)
+
+# In the change-by-percentile charts, a percentile whose PRIOR value is
+# below this is left off the chart (it stays in the table). A move from
+# $500 to $200 is "-60%" but means nothing.
+min_base_dollars <- 5000
 
 # Labels under this (in dollars) are hidden on the "what drove the change"
 # chart so it isn't cluttered with "$0k"
@@ -334,49 +338,75 @@ prob_label <- function(prob){
          paste0(formatC(100 * prob, format = "f", digits = 0), "th"))
 }
 
-pctiles <- df_two %>%
-  group_by(year) %>%
-  group_modify(~ tibble(prob = change_probs,
-                        value = as.numeric(wtd.quantile(.x$networth,
-                                                        weights = .x$wgt,
-                                                        probs = change_probs)))) %>%
-  ungroup() %>%
-  mutate(year_label = ifelse(year == latest_year, "latest", "prior")) %>%
-  select(prob, year_label, value) %>%
-  pivot_wider(names_from = year_label, values_from = value) %>%
-  mutate(dollar_change = latest - prior,
-         pct_change    = safe_pct_change(latest, prior),
-         group         = factor(prob_label(prob),
-                                levels = prob_label(sort(change_probs))))
+# One function for all three versions: everyone, under 35, and 75+.
+# Percentiles are computed WITHIN the group (e.g. the 90th percentile of
+# households under 35), not across all households.
+make_pctile_change <- function(data, subtitle, file_tag, table_label){
+  
+  pctiles <- data %>%
+    group_by(year) %>%
+    group_modify(~ tibble(prob = change_probs,
+                          value = as.numeric(wtd.quantile(.x$networth,
+                                                          weights = .x$wgt,
+                                                          probs = change_probs)))) %>%
+    ungroup() %>%
+    mutate(year_label = ifelse(year == latest_year, "latest", "prior")) %>%
+    select(prob, year_label, value) %>%
+    pivot_wider(names_from = year_label, values_from = value) %>%
+    mutate(dollar_change = latest - prior,
+           pct_change    = safe_pct_change(latest, prior),
+           group         = factor(prob_label(prob),
+                                  levels = prob_label(sort(change_probs))))
+  
+  print(paste0("Net worth by percentile, ", table_label, ":"))
+  print(change_table(pctiles, "Percentile") %>% as.data.frame())
+  
+  write_html_table(change_table(pctiles, "Percentile"),
+                   paste0("02_networth_change_by_percentile", file_tag, "_table.html"))
+  
+  to_plot <- pctiles %>%
+    filter(prior >= min_base_dollars, !is.na(pct_change)) %>%
+    mutate(label = make_pct_labels(pct_change),
+           vj    = ifelse(pct_change > 0, -0.5, 1.5))
+  
+  dropped <- setdiff(as.character(pctiles$group), as.character(to_plot$group))
+  if(length(dropped) > 0){
+    message("Left off the ", table_label, " chart (prior value under ",
+            format_as_dollar(min_base_dollars), "): ", paste(dropped, collapse = ", "))
+  }
+  
+  plot <- ggplot(to_plot, aes(x = group, y = pct_change)) +
+    geom_bar(stat = "identity", fill = chart_standard_color) +
+    geom_text(aes(label = label, vjust = vj),
+              col = chart_standard_color, size = label_size) +
+    geom_hline(yintercept = 0, col = "black") +
+    scale_y_continuous(label = percent_format(accuracy = 1),
+                       expand = expansion(mult = c(0.10, 0.10))) +
+    of_dollars_and_data_theme +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    ggtitle(paste0("Net Worth Change by Percentile\n", subtitle)) +
+    labs(x = "Percentile", y = "Change in Real Net Worth",
+         caption = make_caption(
+           if(length(dropped) > 0) paste0("Percentiles near or below $0 are ",
+                                          "not shown as these percent changes ",
+                                          "would not be meaningful.") else NULL))
+  
+  save_chart(plot, paste0("02_networth_pct_change_by_percentile", file_tag, ".jpeg"))
+  
+  pctiles
+}
 
-print("Net worth by percentile:")
-print(change_table(pctiles, "Percentile") %>% as.data.frame())
+pctiles <- make_pctile_change(df_two,
+                              paste0(prior_year, "-", latest_year),
+                              "", "all households")
 
-write_html_table(change_table(pctiles, "Percentile"),
-                 "02_networth_change_by_percentile_table.html")
+pctiles_young <- make_pctile_change(df_two %>% filter(agecl == "<35"),
+                                    paste0("Under 35, ", prior_year, "-", latest_year),
+                                    "_under_35", "under 35")
 
-# The 10th percentile is a few hundred dollars, so its percent change is
-# meaningless - it stays in the table but comes off the chart.
-to_plot <- pctiles %>%
-  filter(prob >= 0.20, !is.na(pct_change)) %>%
-  mutate(label = make_pct_labels(pct_change),
-         vj    = ifelse(pct_change > 0, -0.5, 1.5))
-
-plot <- ggplot(to_plot, aes(x = group, y = pct_change)) +
-  geom_bar(stat = "identity", fill = chart_standard_color) +
-  geom_text(aes(label = label, vjust = vj),
-            col = chart_standard_color, size = label_size) +
-  geom_hline(yintercept = 0, col = "black") +
-  scale_y_continuous(label = percent_format(accuracy = 1),
-                     expand = expansion(mult = c(0.10, 0.10))) +
-  of_dollars_and_data_theme +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle(paste0("Net Worth Change by Percentile\n",
-                 prior_year, "-", latest_year)) +
-  labs(x = "Percentile", y = "Change in Real Net Worth",
-       caption = make_caption())
-
-save_chart(plot, "02_networth_pct_change_by_percentile.jpeg")
+pctiles_old <- make_pctile_change(df_two %>% filter(agecl == "75+"),
+                                  paste0("75+, ", prior_year, "-", latest_year),
+                                  "_75_plus", "75+")
 
 # ##################################################################### #
 # SECTION 3: Under 35 vs. 75+

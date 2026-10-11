@@ -23,14 +23,19 @@ library(tidyverse)
 data_year   <- 2025
 dollar_year <- 2025
 
+# Percentiles used for the within-cohort distribution charts
+dist_probs  <- seq(0.1, 0.9, by = 0.1)
+
 ########################## Output paths ############################### #
 
 folder_name <- "0525_scf_net_worth_by_age_edc"
 base_path   <- paste0(exportdir, folder_name)
 out_path    <- paste0(base_path, "/", data_year)
+dist_path   <- paste0(out_path, "/age_distribution")
 
 dir.create(file.path(paste0(base_path)), showWarnings = FALSE)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+dir.create(file.path(paste0(dist_path)), showWarnings = FALSE)
 
 ########################## Start Program Here ######################### #
 
@@ -114,6 +119,15 @@ write_html_table <- function(table_out, file_path){
         include.rownames = FALSE,
         type = "html",
         file = file_path)
+}
+
+# Turns "35-44" or "<35" into something safe for a file name
+file_safe <- function(x){
+  x %>%
+    str_replace_all("<", "under_") %>%
+    str_replace_all(">=|\\+", "_plus") %>%
+    str_replace_all("[^0-9A-Za-z]+", "_") %>%
+    str_replace_all("^_|_$", "")
 }
 
 # ##################################################################### #
@@ -256,6 +270,126 @@ create_percentile_chart("networth", "98th Percentile Net Worth", 0.98)
 create_percentile_chart("networth", "99th Percentile Net Worth", 0.99)
 
 # ##################################################################### #
+# NEW: Distribution of a variable WITHIN each age cohort
+# For each agecl, plot the 10th, 20th, ..., 90th weighted percentiles.
+# Outputs (in out_path/age_distribution/):
+#   - one chart per age cohort
+#   - one faceted chart with every cohort side by side
+#   - one HTML table (rows = percentile, columns = age cohort)
+#   - one sheet in all_var_summaries.xlsx
+# ##################################################################### #
+
+create_age_distribution_charts <- function(var, var_title, probs = dist_probs){
+  
+  pct_levels <- paste0(100 * probs, "th")
+  
+  dist_df <- df %>%
+    group_by(agecl) %>%
+    reframe(pct   = probs,
+            value = as.numeric(wtd.quantile(.data[[var]],
+                                            weights = wgt,
+                                            probs   = probs))) %>%
+    mutate(pct_label = factor(paste0(100 * pct, "th"), levels = pct_levels))
+  
+  assign(paste0("age_dist_", var), dist_df, envir = .GlobalEnv)
+  
+  # Keep cohorts in their natural order if agecl is a factor
+  cohorts <- if(is.factor(df$agecl)){
+    levels(droplevels(df$agecl))
+  } else {
+    sort(unique(df$agecl))
+  }
+  
+  # ---- Excel sheet ----
+  export_to_excel(dist_df %>%
+                    transmute(agecl,
+                              percentile = pct_label,
+                              value = format_as_dollar(value)),
+                  excel_path,
+                  paste0("age_dist_", var),
+                  create_new_file,
+                  0)
+  
+  if(create_new_file == 1){
+    assign("create_new_file", 0, envir = .GlobalEnv)
+  }
+  
+  # ##### 1. One chart per age cohort #####
+  for(cohort in cohorts){
+    
+    to_plot <- dist_df %>%
+      filter(as.character(agecl) == as.character(cohort))
+    
+    text_labels <- to_plot %>%
+      mutate(label = make_dollar_labels(value),
+             vj    = ifelse(value >= 0, -0.2, 1.2))
+    
+    file_path <- paste0(dist_path, "/", var, "_dist_age_",
+                        file_safe(cohort), "_", data_year, ".jpeg")
+    
+    plot <- ggplot(to_plot, aes(x = pct_label, y = value)) +
+      geom_bar(stat = "identity", fill = chart_standard_color) +
+      geom_hline(yintercept = 0, linetype = "dashed", col = "black") +
+      geom_text(data = text_labels,
+                aes(x = pct_label, y = value, label = label, vjust = vj),
+                col = chart_standard_color,
+                size = 3) +
+      scale_y_continuous(label = dollar) +
+      of_dollars_and_data_theme +
+      ggtitle(paste0(str_wrap(paste0(var_title, " Distribution"), width = 38),
+                     "\nAge ", cohort)) +
+      labs(x = "Percentile", y = var_title,
+           caption = paste0(source_string, "\n", note_string))
+    
+    save_chart(plot, file_path)
+  }
+  
+  # ##### 2. All cohorts faceted together #####
+  # Labels formatted per facet since facets use free_y
+  text_labels <- dist_df %>%
+    group_by(agecl) %>%
+    mutate(label = make_dollar_labels(value)) %>%
+    ungroup() %>%
+    mutate(vj = ifelse(value >= 0, 0, 1))
+  
+  file_path <- paste0(dist_path, "/", var, "_dist_age_comb_",
+                      data_year, ".jpeg")
+  
+  plot <- ggplot(dist_df, aes(x = pct_label, y = value)) +
+    geom_bar(stat = "identity", fill = chart_standard_color) +
+    facet_wrap(vars(agecl), scales = "free_y", axes = "all") +
+    geom_text(data = text_labels,
+              aes(x = pct_label, y = value, label = label, vjust = vj),
+              col = chart_standard_color,
+              size = 1.5) +
+    scale_y_continuous(label = dollar) +
+    of_dollars_and_data_theme +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) +
+    ggtitle(paste0(str_wrap(paste0(var_title, " Distribution"), width = 38),
+                   "\nby Age")) +
+    labs(x = "Percentile", y = var_title,
+         caption = paste0(source_string, "\n", note_string))
+  
+  save_chart(plot, file_path)
+  
+  # ##### 3. Table: rows = percentile, columns = age cohort #####
+  dist_table <- dist_df %>%
+    mutate(display = format_as_dollar(value)) %>%
+    select(pct_label, agecl, display) %>%
+    pivot_wider(names_from = agecl, values_from = display) %>%
+    rename(Percentile = pct_label)
+  
+  write_html_table(dist_table,
+                   paste0(dist_path, "/", var, "_dist_age_",
+                          data_year, "_table.html"))
+  
+  print(paste0("Wrote ", length(cohorts), " cohort distribution charts for ",
+               var, " to: ", dist_path))
+}
+
+create_age_distribution_charts("networth", "Net Worth")
+
+# ##################################################################### #
 # Fine-grained age table (average and median side by side)
 # This is the 0369-style table the merged post needs alongside the
 # education charts above.
@@ -295,6 +429,8 @@ write_html_table(age_detail_table,
 # ##################################################################### #
 # For the 2022 run, median net worth should print as $192,700 and average
 # as $1,059,470 - the figures published in post 369.
+# The 50th percentile row of the new distribution table should match the
+# median-by-age chart from create_percentile_chart("networth", ..., 0.5).
 
 print(paste0("Output folder: ", out_path))
 print(paste0("Unweighted households (single implicate): ",
@@ -303,5 +439,13 @@ print(paste0("Median net worth ", data_year, ": ",
              format_as_dollar(wtd_stat(df$networth, df$wgt, 0.5))))
 print(paste0("Average net worth ", data_year, ": ",
              format_as_dollar(wtd_stat(df$networth, df$wgt, 0))))
+
+dist_check <- age_dist_networth %>%
+  filter(pct == 0.5) %>%
+  select(agecl, dist_median = value) %>%
+  inner_join(summarise_by(df, "networth", "agecl", 0.5), by = "agecl")
+
+stopifnot(isTRUE(all.equal(dist_check$dist_median, dist_check$value)))
+print("Distribution 50th percentile matches median-by-age: OK")
 
 # ############################  End  ################################## #
