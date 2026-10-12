@@ -25,8 +25,10 @@ library(tidyverse)
 #              groups themselves changed
 #   Section 4: Homeowners vs. non-homeowners (table only)
 #   Section 5: Income ends (text only)
-#   Section 6: Sanity checks
 #   Section 7: Robustness checks
+#   Section 8: Every figure cited in the post, in post order, with the
+#              post's number in brackets for line-by-line checking
+#   Section 6: Sanity checks
 #
 # Nothing above the 90th percentile of net worth is shown.
 # ##################################################################### #
@@ -808,34 +810,6 @@ print(age_tenure %>%
                !!as.character(latest_year) := l) %>%
         as.data.frame())
 
-# Chart shows only the two ends; the middle age groups are too noisy
-to_plot <- age_tenure %>%
-  filter(agecl %in% young_old, m_prior >= min_base_dollars) %>%
-  mutate(age_group = factor(age_labels[as.character(agecl)],
-                            levels = unname(age_labels)),
-         label = make_pct_labels(chg_late),
-         vj    = ifelse(chg_late > 0, -0.5, 1.5))
-
-plot <- ggplot(to_plot, aes(x = age_group, y = chg_late, fill = tenure)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
-  geom_text(aes(label = label, vjust = vj, group = tenure),
-            position = position_dodge(width = 0.9),
-            col = chart_standard_color, size = label_size) +
-  geom_hline(yintercept = 0, col = "black") +
-  scale_y_continuous(label = percent_format(accuracy = 1),
-                     expand = expansion(mult = c(0.10, 0.12))) +
-  scale_fill_manual(values = c(`Non-homeowners` = prior_year_color,
-                               Homeowners = chart_standard_color)) +
-  of_dollars_and_data_theme +
-  theme(legend.title = element_blank(),
-        legend.position = "bottom") +
-  ggtitle(paste0("Change in Median Net Worth\n",
-                 "by Homeownership, ", prior_year, "-", latest_year)) +
-  labs(x = NULL, y = "Change in Real Median Net Worth",
-       caption = make_caption())
-
-save_chart(plot, "07_networth_change_young_old_by_homeownership.jpeg")
-
 # ---- 7b: same birth cohort vs. same age ----
 # 2025 age band [lo, hi] is compared with the 2022 band [lo-3, hi-3].
 gap <- latest_year - prior_year
@@ -872,37 +846,6 @@ print(cohort_tbl %>%
                   `Chg vs same age` = make_pct_labels(chg_same_age),
                   `Chg vs same cohort` = make_pct_labels(chg_cohort)) %>%
         as.data.frame())
-
-to_plot <- cohort_tbl %>%
-  select(agecl, chg_same_age, chg_cohort) %>%
-  pivot_longer(-agecl, names_to = "basis", values_to = "pct_change") %>%
-  mutate(basis = factor(ifelse(basis == "chg_same_age",
-                               "Same age group", "Same birth cohort"),
-                        levels = c("Same age group", "Same birth cohort")),
-         label = make_pct_labels(pct_change),
-         vj    = ifelse(pct_change > 0, -0.5, 1.5))
-
-plot <- ggplot(to_plot, aes(x = agecl, y = pct_change, fill = basis)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
-  geom_text(aes(label = label, vjust = vj, group = basis),
-            position = position_dodge(width = 0.9),
-            col = chart_standard_color, size = label_size) +
-  geom_hline(yintercept = 0, col = "black") +
-  scale_y_continuous(label = percent_format(accuracy = 1),
-                     expand = expansion(mult = c(0.10, 0.12))) +
-  scale_fill_manual(values = c(`Same age group` = prior_year_color,
-                               `Same birth cohort` = chart_standard_color)) +
-  of_dollars_and_data_theme +
-  theme(legend.title = element_blank(),
-        legend.position = "bottom") +
-  ggtitle(paste0("Change in Median Net Worth\n",
-                 "Same Age vs. Same Birth Cohort")) +
-  labs(x = paste0("Age in ", latest_year), y = "Change in Real Median Net Worth",
-       caption = make_caption(paste0("Same birth cohort compares each ", latest_year,
-                                     " age group with households three years ",
-                                     "younger in ", prior_year, ".")))
-
-save_chart(plot, "07_networth_change_same_age_vs_same_cohort.jpeg")
 
 # Like-for-like 75+ gain, for the post
 old_cohort <- cohort_tbl %>% filter(agecl == "75+")
@@ -1030,15 +973,268 @@ print(df_age_tenure %>%
         as.data.frame())
 
 # ##################################################################### #
+# SECTION 8: Figures cited in the post
+# ##################################################################### #
+# One line per figure, in the order the post uses them. The number the post
+# states is in [brackets] at the end of each line so the log can be checked
+# line by line. Figures that don't come from the SCF (stock returns, gift
+# tax exclusion, etc.) are not computed here.
+
+cat("\n==================== FIGURES CITED IN THE POST ====================\n\n")
+
+post_line <- function(...){ cat(..., "\n", sep = "") }
+
+age_row    <- function(tbl, a){ tbl[as.character(tbl$group) == a, ] }
+pctile_row <- function(tbl, p){ tbl[abs(tbl$prob - p) < 1e-9, ] }
+
+list_moves <- function(tbl, direction){
+  moved <- !is.na(tbl$pct_change) &
+    (if(direction == "up") tbl$pct_change > 0 else tbl$pct_change < 0)
+  out <- as.character(tbl$group[moved])
+  if(length(out) == 0) "none" else paste(out, collapse = ", ")
+}
+
+list_na <- function(tbl){
+  out <- as.character(tbl$group[is.na(tbl$pct_change)])
+  if(length(out) == 0) "none" else paste(out, collapse = ", ")
+}
+
+# ---- Intro: headline and table ----
+y_med <- age_row(median_by_age, "<35")
+o_med <- age_row(median_by_age, "75+")
+
+post_line("--- Intro ---")
+post_line("75+ median net worth: ", format_as_dollar(o_med$prior), " -> ",
+          format_as_dollar(o_med$latest), " = ",
+          make_pct_labels(o_med$pct_change, 1), "  [post: +38%]")
+post_line("Under-35 median net worth: ", format_as_dollar(y_med$prior), " -> ",
+          format_as_dollar(y_med$latest), " = ",
+          make_pct_labels(y_med$pct_change, 1), "  [post: -23%]")
+
+mid_med <- median_by_age %>% filter(!(as.character(group) %in% young_old))
+mid_big <- which.max(abs(mid_med$pct_change))
+post_line("Largest change among the other age groups: ",
+          as.character(mid_med$group[mid_big]), " ",
+          make_pct_labels(mid_med$pct_change[mid_big], 1),
+          "  [post: no more than 6% in either direction]")
+
+n_resp <- n_distinct(df$hh_id[df$year == latest_year])
+post_line("SCF respondents (households interviewed) in ", latest_year, ": ",
+          formatC(n_resp, format = "d", big.mark = ","),
+          "  [post: only a few thousand households]")
+post_line("Age table in the post: see 'Median net worth by age' in Section 1 above")
+
+# ---- Are the rich getting richer? ----
+all_p20 <- pctile_row(pctiles, 0.2)
+all_top <- pctiles %>% filter(prob >= 0.7)
+
+post_line("\n--- Are the Rich Getting Richer? ---")
+post_line("All households, 20th percentile change: ",
+          make_pct_labels(all_p20$pct_change, 1), "  [post: -11%]")
+post_line("All households, smallest change at the 70th percentile or above: ",
+          make_pct_labels(min(all_top$pct_change, na.rm = TRUE), 1),
+          "  [post: +11% or higher]")
+post_line("All households, percentiles that rose: ", list_moves(pctiles, "up"))
+post_line("All households, percentiles that fell: ", list_moves(pctiles, "down"))
+
+post_line("Under 35, percentiles that rose: ", list_moves(pctiles_young, "up"),
+          "  [post: only the 80th]")
+post_line("Under 35, percentiles that fell: ", list_moves(pctiles_young, "down"))
+post_line("Under 35, no meaningful % change (2022 value at or below $0): ",
+          list_na(pctiles_young))
+
+post_line("75+, percentiles that rose: ", list_moves(pctiles_old, "up"),
+          "  [post: everywhere but the 10th]")
+post_line("75+, percentiles that fell: ", list_moves(pctiles_old, "down"))
+post_line("75+, no meaningful % change (2022 value at or below $0): ",
+          list_na(pctiles_old))
+
+post_line("75+ same birth cohort (ages ", old_cohort$cohort_2022_ages, " in ",
+          prior_year, "): ", format_as_dollar(old_cohort$same_cohort_prior), " -> ",
+          format_as_dollar(old_cohort$latest), " = ",
+          make_pct_labels(old_cohort$chg_cohort, 1),
+          "  [post: 72+ in 2022, $418,720 -> $504,600, +21%]")
+
+y_p90 <- pctile_row(pctiles_young, 0.9)
+o_p20 <- pctile_row(pctiles_old, 0.2)
+o_p30 <- pctile_row(pctiles_old, 0.3)
+o_p40 <- pctile_row(pctiles_old, 0.4)
+
+post_line("Under-35 90th percentile net worth, ", latest_year, ": ",
+          format_as_dollar(y_p90$latest), "  [post: $351,000]")
+post_line("75+ 40th percentile net worth, ", latest_year, ": ",
+          format_as_dollar(o_p40$latest), "  [post: similar to $351,000]")
+post_line("Under-35 90th percentile change: ",
+          make_pct_labels(y_p90$pct_change, 1), "  [post: -14%]")
+post_line("75+ 40th percentile change: ",
+          make_pct_labels(o_p40$pct_change, 1), "  [post: +38%]")
+post_line("75+ 20th / 30th percentile change: ",
+          make_pct_labels(o_p20$pct_change, 1), " / ",
+          make_pct_labels(o_p30$pct_change, 1), "  [post: +26% / +45%]")
+
+# ---- What drove the change in net worth? ----
+mix_moves <- function(a, direction){
+  x <- mix_change %>% filter(as.character(agecl) == a, component != "networth")
+  x <- if(direction == "up") x %>% filter(change > 0) %>% arrange(desc(change)) else
+    x %>% filter(change < 0) %>% arrange(change)
+  if(nrow(x) == 0) return("none")
+  paste0(x$component, " (", short_dollar(x$change), ")", collapse = ", ")
+}
+
+post_line("\n--- What Drove the Change in Net Worth? ---")
+post_line("(Middle 50% of each age group, average per household. Debt is shown as ",
+          "negative, so a fall in 'Debt' means more debt.)")
+post_line("75+ components that rose: ", mix_moves("75+", "up"),
+          "  [post: primary home, retirement accounts, other assets]")
+post_line("75+ components that fell: ", mix_moves("75+", "down"))
+post_line("Under-35 components that fell: ", mix_moves("<35", "down"),
+          "  [post: vehicles, retirement accounts, primary home]")
+post_line("Under-35 components that rose: ", mix_moves("<35", "up"))
+
+own_share <- function(asset_label, grp, yr){
+  yo_own$share[as.character(yo_own$asset) == asset_label &
+                 as.character(yo_own$age_group) == grp & yo_own$year == yr]
+}
+
+for(yr in c(baseline_year, prior_year, latest_year)){
+  post_line("Homeownership, ", yr, ": under 35 ",
+            make_share_labels(own_share("Owns a home", "Under 35", yr), 1),
+            " vs. 75+ ", make_share_labels(own_share("Owns a home", "75+", yr), 1),
+            "  [post: under 35 far less likely in every year shown]")
+}
+for(a in c("Stocks (direct)", "Retirement accounts", "Vehicles")){
+  post_line(a, " ownership, ", latest_year, ": under 35 ",
+            make_share_labels(own_share(a, "Under 35", latest_year), 1),
+            " vs. 75+ ", make_share_labels(own_share(a, "75+", latest_year), 1),
+            "  [post: similar across the two groups]")
+}
+post_line("Under-35 homeownership: ",
+          make_share_labels(own_share("Owns a home", "Under 35", prior_year), 1),
+          " -> ",
+          make_share_labels(own_share("Owns a home", "Under 35", latest_year), 1),
+          "  [post: 38.5% -> 35.6%]")
+post_line("Under-35 share NOT owning a home, ", latest_year, ": ",
+          make_share_labels(1 - own_share("Owns a home", "Under 35", latest_year), 1),
+          "  [post: around 64%]")
+
+y_tenure <- age_tenure %>% filter(as.character(agecl) == "<35")
+y_owner  <- y_tenure$m_latest[y_tenure$tenure == "Homeowners"]
+y_renter <- y_tenure$m_latest[y_tenure$tenure == "Non-homeowners"]
+post_line("Under-35 median net worth, ", latest_year, ": homeowners ",
+          format_as_dollar(y_owner), " vs. non-homeowners ",
+          format_as_dollar(y_renter), " = ",
+          formatC(y_owner / y_renter, format = "f", digits = 1), "x",
+          "  [post: $184,000 vs. $12,000, roughly 15x]")
+
+renters_ranked <- young_renters %>% arrange(desc(median))
+post_line("Under-35 non-homeowner median, ", latest_year, ": ",
+          format_as_dollar(young_renters$median[young_renters$year == latest_year]),
+          "  [post: $12,000]")
+post_line("Highest under-35 non-homeowner median in the data: ",
+          renters_ranked$year[1], " (", format_as_dollar(renters_ranked$median[1]),
+          "); runner-up ", renters_ranked$year[2], " (",
+          format_as_dollar(renters_ranked$median[2]), "); data start in ", year_min,
+          "  [post: 2025 is the highest since 1989]")
+
+mix_shares <- df_mix %>%
+  filter(year == prior_year, as.character(agecl) %in% young_old) %>%
+  group_by(agecl) %>%
+  summarise(total_assets = weighted.mean(asset, wgt),
+            fin_share = weighted.mean(`Stocks & funds` + `Retirement accounts`, wgt) /
+              total_assets,
+            veh_share = weighted.mean(Vehicles, wgt) / total_assets,
+            .groups = "drop")
+ms <- function(a, col){ mix_shares[[col]][as.character(mix_shares$agecl) == a] }
+
+post_line("Stocks, funds & retirement accounts as share of total assets, ", prior_year,
+          " (middle 50%, ratio of averages): under 35 ",
+          make_share_labels(ms("<35", "fin_share"), 1), " vs. 75+ ",
+          make_share_labels(ms("75+", "fin_share"), 1),
+          "  [post: about 9% vs. 16%]")
+post_line("Vehicles as share of total assets, ", prior_year,
+          " (middle 50%, ratio of averages): under 35 ",
+          make_share_labels(ms("<35", "veh_share"), 1), " vs. 75+ ",
+          make_share_labels(ms("75+", "veh_share"), 1),
+          "  [post: about 20% vs. under 6%]")
+
+veh_owners <- df_two %>%
+  filter(as.character(agecl) %in% young_old, vehic > 0) %>%
+  group_by(agecl, year) %>%
+  summarise(med = wtd_stat(vehic, wgt, 0.5),
+            n_unw = n_distinct(hh_id), .groups = "drop") %>%
+  group_by(agecl) %>%
+  summarise(prior = med[year == prior_year],
+            latest = med[year == latest_year],
+            chg = safe_pct_change(latest, prior),
+            min_n = min(n_unw), .groups = "drop")
+vo <- function(a){ veh_owners[as.character(veh_owners$agecl) == a, ] }
+
+for(a in young_old){
+  post_line("Median total vehicle value among ", age_labels[[a]],
+            " households with a vehicle: ", format_as_dollar(vo(a)$prior), " -> ",
+            format_as_dollar(vo(a)$latest), " = ",
+            make_pct_labels(vo(a)$chg, 1), " (min. respondents ", vo(a)$min_n, ")",
+            ifelse(a == "<35", "  [post: -21%]", "  [post: -1%]"))
+}
+
+# ---- A step back (not a collapse) ----
+yo_val <- function(grp, yr){
+  yo_time$median[as.character(yo_time$age_group) == grp & yo_time$year == yr]
+}
+
+post_line("\n--- A Step Back (Not a Collapse) ---")
+post_line("Under-35 median: ", baseline_year, " ",
+          format_as_dollar(yo_val("Under 35", baseline_year)), " -> ", prior_year, " ",
+          format_as_dollar(yo_val("Under 35", prior_year)), " (",
+          make_pct_labels(safe_pct_change(yo_val("Under 35", prior_year),
+                                          yo_val("Under 35", baseline_year)), 1),
+          ") -> ", latest_year, " ",
+          format_as_dollar(yo_val("Under 35", latest_year)),
+          "  [post: ~$18,000 -> nearly $43,000 (+140%) -> $33,000]")
+post_line("75+ median change ", baseline_year, "-", prior_year, ": ",
+          make_pct_labels(safe_pct_change(yo_val("75+", prior_year),
+                                          yo_val("75+", baseline_year)), 1),
+          "  [post: +13%]")
+post_line("75+ median change ", prior_year, "-", latest_year, ": ",
+          make_pct_labels(safe_pct_change(yo_val("75+", latest_year),
+                                          yo_val("75+", prior_year)), 1),
+          "  [post: +38%]")
+
+y_steps <- yo_time %>%
+  filter(age_group == "Under 35") %>%
+  arrange(year) %>%
+  mutate(from_year = lag(year),
+         dollar_chg = median - lag(median),
+         pct_chg = safe_pct_change(median, lag(median))) %>%
+  filter(!is.na(from_year))
+
+post_line("Under-35 median, every survey-to-survey change:")
+print(y_steps %>%
+        transmute(Period = paste0(from_year, "-", year),
+                  `$ Change` = format_as_dollar(dollar_chg),
+                  `% Change` = make_pct_labels(pct_chg, 1)) %>%
+        as.data.frame())
+big_pct <- y_steps[which.max(y_steps$pct_chg), ]
+big_dol <- y_steps[which.max(y_steps$dollar_chg), ]
+post_line("Largest under-35 increase by %: ", big_pct$from_year, "-", big_pct$year,
+          " (", make_pct_labels(big_pct$pct_chg, 1), "); by $: ",
+          big_dol$from_year, "-", big_dol$year, " (",
+          format_as_dollar(big_dol$dollar_chg), ")",
+          "  [post: 2019-2022 was the largest on record]")
+
+cat("\n================== END FIGURES CITED IN THE POST ==================\n\n")
+
+# ##################################################################### #
 # SECTION 6: Sanity checks
 # ##################################################################### #
 
 print(paste0("Output folder: ", out_path))
-print("Records (all five implicates) and households represented:")
+print("Records (all five implicates), respondents, and households represented:")
 print(df %>%
         filter(year %in% c(baseline_year, prior_year, latest_year)) %>%
         group_by(year) %>%
         summarise(records = n(),
+                  respondents = n_distinct(hh_id),
                   households = paste0(formatC(sum(wgt)/10^6, format = "f",
                                               digits = 1), "M"),
                   .groups = "drop") %>%
