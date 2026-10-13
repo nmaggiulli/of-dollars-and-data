@@ -145,14 +145,14 @@ results <- bind_cols(results,
                      pmap_dfr(list(results$year, results$age, results$nw_real),
                               pct_for_year))
 
-# Percentile label is floored (95.7 -> "95th") = share of peers you are above
+# Percentile label is rounded to the nearest percentile (95.7 -> "96th")
 results_print <- results %>%
   transmute(Year          = year,
             Age           = age,
             `NW (nominal)` = format_as_dollar(nw_nominal),
             `NW (2025$)`   = format_as_dollar(nw_real),
             `Pct (exact)`  = round(100 * pct, 1),
-            Percentile     = ordinal(floor(100 * pct)),
+            Percentile     = ordinal(floor(100 * pct + 0.5)),
             Method         = method)
 
 print(results_print, n = Inf, width = Inf)
