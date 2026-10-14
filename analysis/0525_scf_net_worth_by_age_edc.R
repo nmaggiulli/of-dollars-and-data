@@ -32,12 +32,14 @@ folder_name <- "0525_scf_net_worth_by_age_edc"
 base_path   <- paste0(exportdir, folder_name)
 out_path    <- paste0(base_path, "/", data_year)
 dist_path   <- paste0(out_path, "/age_distribution")
-ts_path     <- paste0(out_path, "/over_time")
 
 dir.create(file.path(paste0(base_path)), showWarnings = FALSE)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
 dir.create(file.path(paste0(dist_path)), showWarnings = FALSE)
-dir.create(file.path(paste0(ts_path)), showWarnings = FALSE)
+
+# Everything printed below also goes to this log file (and still to the console)
+log_file <- paste0(out_path, "/0525_log_", data_year, ".txt")
+sink(log_file, split = TRUE)
 
 ########################## Start Program Here ######################### #
 
@@ -55,8 +57,11 @@ stopifnot(nrow(scf_stack) > 0)
 
 df <- scf_stack %>%
   select(hh_id, imp_id, age,
-         networth, homeeq, fin, wgt,
-         agecl, edcl) %>%
+         networth, homeeq, wgt,
+         agecl) %>%
+  # Net worth excluding home equity (homeeq = primary residence value minus
+  # the debt secured by it). Answers "what does this look like without my home?"
+  mutate(nw_ex_home = networth - homeeq) %>%
   arrange(hh_id, imp_id)
 
 n_hh <- length(unique(df$hh_id))
@@ -124,9 +129,12 @@ save_chart <- function(plot, file_path){
 }
 
 write_html_table <- function(table_out, file_path){
+  # id="myTable" hooks into the blog's #myTable CSS
   print(xtable(table_out),
         include.rownames = FALSE,
         type = "html",
+        html.table.attributes = 'id="myTable"',
+        comment = FALSE,
         file = file_path)
 }
 
@@ -152,15 +160,13 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
   
   print(paste0("Overall ", var_title, " is: ", format_as_dollar(overall_value)))
   
-  # ##### 1. Age x Education grid #####
-  to_plot <- summarise_by(df, var, c("edcl", "agecl"), quantile_prob)
-  
-  assign(paste0("age_edc_", var, "_", qps), to_plot, envir = .GlobalEnv)
+  # ---- By age ----
+  to_plot <- summarise_by(df, var, "agecl", quantile_prob)
   
   export_to_excel(to_plot %>%
                     mutate(value = format_as_dollar(value)),
                   excel_path,
-                  paste0("age_edc_", var, "_", qps),
+                  paste0("age_", var, "_", qps),
                   create_new_file,
                   0)
   
@@ -168,106 +174,32 @@ create_percentile_chart <- function(var, var_title, quantile_prob){
     assign("create_new_file", 0, envir = .GlobalEnv)
   }
   
-  # Labels are formatted PER FACET because the facets use free_y. A
-  # College Degree panel in the millions shouldn't dictate the label
-  # format for the No High School panel.
   text_labels <- to_plot %>%
-    group_by(edcl) %>%
-    mutate(label = make_dollar_labels(value)) %>%
-    ungroup() %>%
-    mutate(vj = ifelse(value > 0, 0, 1))
+    mutate(label = make_dollar_labels(value),
+           vj    = ifelse(value > 0, -0.2, 1.2))
   
-  file_path <- paste0(out_path, "/", var, "_", qps,
-                      "_age_edc_comb_", data_year, ".jpeg")
+  file_path <- paste0(out_path, "/", var, "_", qps, "_age_", data_year, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x = agecl, y = value)) +
-    geom_bar(stat = "identity", position = "dodge",
-             fill = chart_standard_color) +
-    # ggplot2's own facet_wrap repeats axes on every panel. lemon's
-    # facet_rep_wrap breaks on current ggplot2 versions.
-    facet_wrap(vars(edcl), scales = "free_y", axes = "all") +
+    geom_bar(stat = "identity", fill = chart_standard_color) +
     geom_text(data = text_labels,
               aes(x = agecl, y = value, label = label, vjust = vj),
               col = chart_standard_color,
-              size = 1.8) +
+              size = 3) +
     scale_y_continuous(label = dollar) +
     of_dollars_and_data_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    ggtitle(paste0(str_wrap(var_title, width = 38),
-                   "\nby Age & Education Level")) +
+    ggtitle(paste0(str_wrap(var_title, width = 38), "\nby Age")) +
     labs(x = "Age", y = paste0(var_title),
          caption = paste0(source_string, "\n", note_string))
   
   save_chart(plot, file_path)
-  
-  # ---- Grid table: rows are age, columns are education ----
-  grid_table <- to_plot %>%
-    mutate(display = format_as_dollar(value)) %>%
-    select(agecl, edcl, display) %>%
-    pivot_wider(names_from = edcl, values_from = display) %>%
-    rename(Age = agecl)
-  
-  write_html_table(grid_table,
-                   paste0(out_path, "/", var, "_", qps,
-                          "_age_edc_comb_", data_year, "_table.html"))
-  
-  # ##### 2. Age only, then Education only #####
-  for(g in 1:2){
-    if(g == 1){
-      group_var    <- "agecl"
-      end_filename <- "age"
-      x_var        <- "Age"
-    } else {
-      group_var    <- "edcl"
-      end_filename <- "edc"
-      x_var        <- "Education Level"
-    }
-    
-    to_plot <- summarise_by(df, var, group_var, quantile_prob)
-    
-    text_labels <- to_plot %>%
-      mutate(label = make_dollar_labels(value),
-             vj    = ifelse(value > 0, -0.2, 1.2))
-    
-    file_path <- paste0(out_path, "/", var, "_", qps, "_",
-                        end_filename, ".jpeg")
-    
-    plot <- ggplot(to_plot, aes(x = .data[[group_var]], y = value)) +
-      geom_bar(stat = "identity", fill = chart_standard_color) +
-      geom_text(data = text_labels,
-                aes(x = .data[[group_var]], y = value, label = label,
-                    vjust = vj),
-                col = chart_standard_color,
-                size = 3) +
-      scale_y_continuous(label = dollar) +
-      of_dollars_and_data_theme +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-      ggtitle(paste0(str_wrap(var_title, width = 38), "\nby ", x_var)) +
-      labs(x = x_var, y = paste0(var_title),
-           caption = paste0(source_string, "\n", note_string))
-    
-    save_chart(plot, file_path)
-    
-    # ---- Table ----
-    table_out <- to_plot %>%
-      transmute(Group = as.character(.data[[group_var]]),
-                Value = format_as_dollar(value))
-    
-    names(table_out)[1] <- x_var
-    names(table_out)[2] <- var_title
-    
-    write_html_table(table_out,
-                     paste0(out_path, "/", var, "_", qps, "_",
-                            end_filename, "_table.html"))
-  }
 }
 
 create_new_file <- 1
 
 create_percentile_chart("networth", "25th Percentile Net Worth", 0.25)
 create_percentile_chart("networth", "Median Net Worth", 0.5)
-create_percentile_chart("homeeq", "Median Home Equity", 0.5)
-create_percentile_chart("fin", "Median Financial Assets", 0.5)
 create_percentile_chart("networth", "75th Percentile Net Worth", 0.75)
 create_percentile_chart("networth", "Average Net Worth", 0)
 create_percentile_chart("networth", "90th Percentile Net Worth", 0.9)
@@ -285,142 +217,152 @@ create_percentile_chart("networth", "99th Percentile Net Worth", 0.99)
 
 comb_probs <- c(0.25, 0.5, 0.75, 0.9)
 
-comb_df <- map_dfr(comb_probs, function(p){
-  summarise_by(df, "networth", "agecl", p) %>%
-    mutate(pct = p)
-}) %>%
-  mutate(pct_label = factor(paste0(100 * pct, "th Percentile"),
-                            levels = paste0(100 * comb_probs, "th Percentile")))
+comb_percentiles <- function(var){
+  map_dfr(comb_probs, function(p){
+    summarise_by(df, var, "agecl", p) %>%
+      mutate(pct = p)
+  }) %>%
+    mutate(pct_label = factor(paste0(100 * pct, "th Percentile"),
+                              levels = paste0(100 * comb_probs, "th Percentile")))
+}
 
-comb_labels <- comb_df %>%
+comb_df    <- comb_percentiles("networth")
+comb_df_ex <- comb_percentiles("nw_ex_home")
+
+comb_y_limits <- range(c(0, comb_df$value))
+
+plot_pct_comb <- function(to_plot, title, y_title, file_name){
+  
+  labels <- to_plot %>%
+    group_by(pct_label) %>%
+    mutate(label = make_dollar_labels(value)) %>%
+    ungroup() %>%
+    mutate(vj = ifelse(value >= 0, -0.2, 1.2))
+  
+  plot <- ggplot(to_plot, aes(x = agecl, y = value)) +
+    geom_bar(stat = "identity", fill = chart_standard_color) +
+    facet_wrap(vars(pct_label), axes = "all") +
+    geom_text(data = labels,
+              aes(x = agecl, y = value, label = label, vjust = vj),
+              col = chart_standard_color,
+              size = 1.5) +
+    scale_y_continuous(label = dollar, limits = comb_y_limits) +
+    of_dollars_and_data_theme +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    ggtitle(title) +
+    labs(x = "Age", y = y_title,
+         caption = paste0(source_string, "\n", note_string))
+  
+  save_chart(plot, paste0(out_path, "/", file_name, "_", data_year, ".jpeg"))
+}
+
+plot_pct_comb(comb_df,
+              "Net Worth Percentiles by Age",
+              "Net Worth",
+              "networth_pct_25_50_75_90_age_comb")
+
+# HTML table of the same data: rows = age group, columns = percentile
+pct_table <- comb_df %>%
+  mutate(agecl   = as.character(agecl),
+         display = format_as_dollar(value),
+         col     = recode(as.character(pct_label),
+                          "25th Percentile" = "25th Percentile",
+                          "50th Percentile" = "Median",
+                          "75th Percentile" = "75th Percentile",
+                          "90th Percentile" = "90th Percentile")) %>%
+  select(`Age Range` = agecl, col, display) %>%
+  pivot_wider(names_from = col, values_from = display)
+
+write_html_table(pct_table,
+                 paste0(out_path, "/networth_pct_25_50_75_90_age_",
+                        data_year, "_table.html"))
+
+# ---- With vs. without home equity, side by side ----
+nw_types <- c("Total net worth", "Net worth (ex home equity)")
+nw_fills <- setNames(c("#a9bfd6", chart_standard_color), nw_types)
+
+comb_both <- bind_rows(comb_df    %>% mutate(type = nw_types[1]),
+                       comb_df_ex %>% mutate(type = nw_types[2])) %>%
+  mutate(type = factor(type, levels = nw_types))
+
+dodge <- position_dodge(width = 0.8)
+
+with_vs_ex_caption <- function(extra_note = ""){
+  paste0(source_string, "\n",
+         str_wrap(paste0("Note: ", extra_note, "All figures are in ",
+                         dollar_year, " dollars."), width = 85))
+}
+
+# (a) Median only - single panel, the first chart readers see in the section
+median_both <- comb_both %>%
+  filter(pct == 0.5)
+
+median_both_labels <- median_both %>%
+  mutate(label = make_dollar_labels(value),
+         vj    = ifelse(value >= 0, -0.3, 1.3))
+
+plot <- ggplot(median_both, aes(x = agecl, y = value, fill = type)) +
+  geom_col(position = dodge, width = 0.8) +
+  geom_text(data = median_both_labels,
+            aes(x = agecl, y = value, label = label, vjust = vj, group = type),
+            position = dodge,
+            col = "black",
+            size = 2.6) +
+  scale_fill_manual(values = nw_fills) +
+  scale_y_continuous(label = dollar,
+                     expand = expansion(mult = c(0, 0.1))) +
+  of_dollars_and_data_theme +
+  theme(axis.text.x  = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom",
+        legend.title    = element_blank()) +
+  ggtitle("Median Net Worth by Age\nWith and Without Home Equity") +
+  labs(x = "Age", y = "Median Net Worth",
+       caption = with_vs_ex_caption())
+
+save_chart(plot, paste0(out_path, "/nw_vs_nw_ex_home_median_age_",
+                        data_year, ".jpeg"))
+
+# (b) 25th / 50th / 75th / 90th percentiles
+# Each panel gets its own y-axis (free_y): the comparison that matters is
+# within a panel (light bar vs. dark bar), and a shared axis flattens the
+# 25th and 50th percentile panels to nothing.
+comb_both_labels <- comb_both %>%
   group_by(pct_label) %>%
   mutate(label = make_dollar_labels(value)) %>%
   ungroup() %>%
-  mutate(vj = ifelse(value >= 0, -0.2, 1.2))
+  mutate(vj = ifelse(value >= 0, -0.3, 1.3))
 
-plot <- ggplot(comb_df, aes(x = agecl, y = value)) +
-  geom_bar(stat = "identity", fill = chart_standard_color) +
-  facet_wrap(vars(pct_label), axes = "all") +
-  geom_text(data = comb_labels,
-            aes(x = agecl, y = value, label = label, vjust = vj),
-            col = chart_standard_color,
-            size = 1.5) +
-  scale_y_continuous(label = dollar) +
+plot <- ggplot(comb_both, aes(x = agecl, y = value, fill = type)) +
+  geom_col(position = dodge, width = 0.8) +
+  geom_text(data = comb_both_labels,
+            aes(x = agecl, y = value, label = label, vjust = vj, group = type),
+            position = dodge,
+            col = "black",
+            size = 1.3) +
+  facet_wrap(vars(pct_label), scales = "free_y", axes = "all") +
+  scale_fill_manual(values = nw_fills) +
+  scale_y_continuous(label = dollar,
+                     expand = expansion(mult = c(0, 0.1))) +
   of_dollars_and_data_theme +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle("Net Worth Percentiles by Age") +
+  theme(axis.text.x  = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom",
+        legend.title    = element_blank()) +
+  ggtitle("Net Worth Percentiles by Age\nWith and Without Home Equity") +
   labs(x = "Age", y = "Net Worth",
-       caption = paste0(source_string, "\n", note_string))
+       caption = with_vs_ex_caption("Each panel has its own y-axis. "))
 
-save_chart(plot, paste0(out_path, "/networth_pct_25_50_75_90_age_comb_",
+# Renamed from nw_with_vs_ex_home_pct_age_comb (already uploaded under the
+# old legend label)
+save_chart(plot, paste0(out_path, "/nw_vs_nw_ex_home_pct_age_comb_",
                         data_year, ".jpeg"))
 
 # ##################################################################### #
-# OVER TIME: real median by survey year (1989 - data_year)
-# Charts in the "How Has American Net Worth Changed Over Time?" section
+# Prior survey years (only used for the 2022 vs. 2025 comparisons in the text)
 # ##################################################################### #
-
-ts_vars <- intersect(c("networth", "fin", "vehic"), names(scf_all))
-
-if(!"vehic" %in% ts_vars){
-  warning("Column 'vehic' not found in 0003_scf_stack.Rds - the under-35 ",
-          "median vehicle value chart will be skipped. Add vehic to 0003.")
-}
 
 df_ts <- scf_all %>%
   filter(year <= data_year) %>%
-  select(year, age, agecl, wgt, all_of(ts_vars))
-
-ts_note <- paste0("Note:  All figures are adjusted for inflation (",
-                  dollar_year, " dollars).")
-ts_source <- "Source:  Survey of Consumer Finances (OfDollarsAndData.com)"
-
-ts_median <- function(data, var, group_vars = "year"){
-  data %>%
-    group_by(across(all_of(group_vars))) %>%
-    summarise(value = as.numeric(wtd.quantile(.data[[var]], weights = wgt,
-                                              probs = 0.5)),
-              .groups = "drop")
-}
-
-ts_line_chart <- function(to_plot, y_title, file_name, title = NULL){
-  plot <- ggplot(to_plot, aes(x = year, y = value)) +
-    geom_line(col = "black") +
-    scale_y_continuous(label = dollar) +
-    scale_x_continuous(breaks = sort(unique(to_plot$year))) +
-    of_dollars_and_data_theme +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    labs(x = "Year", y = y_title,
-         caption = paste0(ts_source, "\n", ts_note))
-  
-  if(!is.null(title)) plot <- plot + ggtitle(title)
-  
-  save_chart(plot, paste0(ts_path, "/", file_name))
-}
-
-# 1. Real median net worth by year (all households)
-median_nw_by_year <- ts_median(df_ts, "networth")
-ts_line_chart(median_nw_by_year, "Real Median Net Worth",
-              paste0("median_networth_by_year_", data_year, ".jpeg"),
-              "Real Median Net Worth\nby Year")
-
-# 2. Real median net worth by year, faceted by age (same y-axis)
-median_nw_by_year_age <- ts_median(df_ts, "networth", c("year", "agecl"))
-
-plot <- ggplot(median_nw_by_year_age, aes(x = year, y = value)) +
-  geom_line(col = "black") +
-  facet_wrap(vars(agecl), axes = "all") +
-  scale_y_continuous(label = dollar) +
-  scale_x_continuous(breaks = seq(1990, data_year, 10)) +
-  of_dollars_and_data_theme +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(x = "Year", y = "Real Median Net Worth",
-       caption = paste0(ts_source, "\n", ts_note))
-
-save_chart(plot, paste0(ts_path, "/median_networth_by_year_age_",
-                        data_year, ".jpeg"))
-
-# 3-5. Under-35 households: net worth, financial assets, vehicle value
-df_ts_u35 <- df_ts %>% filter(age < 35)
-
-u35_specs <- tribble(
-  ~var,       ~y_title,
-  "networth", "Real Median Net Worth",
-  "fin",      "Real Median Financial Assets",
-  "vehic",    "Real Median Vehicle Value"
-) %>%
-  filter(var %in% ts_vars)
-
-u35_results <- list()
-
-for(i in seq_len(nrow(u35_specs))){
-  v <- u35_specs$var[i]
-  to_plot <- ts_median(df_ts_u35, v)
-  u35_results[[v]] <- to_plot
-  ts_line_chart(to_plot, u35_specs$y_title[i],
-                paste0("median_", v, "_by_year_under35_", data_year, ".jpeg"))
-}
-
-# Over-time data for the text, plus one Excel sheet
-over_time_table <- median_nw_by_year %>%
-  rename(all_households = value) %>%
-  left_join(median_nw_by_year_age %>%
-              mutate(agecl = paste0("age_", agecl)) %>%
-              pivot_wider(names_from = agecl, values_from = value),
-            by = "year")
-
-for(v in names(u35_results)){
-  over_time_table <- over_time_table %>%
-    left_join(u35_results[[v]] %>% rename(!!paste0("under35_", v) := value),
-              by = "year")
-}
-
-export_to_excel(over_time_table %>%
-                  mutate(across(-year, format_as_dollar)),
-                excel_path,
-                "median_over_time",
-                create_new_file,
-                0)
+  select(year, age, agecl, wgt, networth)
 
 # ##################################################################### #
 # NEW: Distribution of a variable WITHIN each age cohort
@@ -428,11 +370,14 @@ export_to_excel(over_time_table %>%
 # Outputs (in out_path/age_distribution/):
 #   - one chart per age cohort
 #   - one faceted chart with every cohort side by side
-#   - one HTML table (rows = percentile, columns = age cohort)
+#   (the 10th-90th table itself is printed in the log appendix)
 #   - one sheet in all_var_summaries.xlsx
 # ##################################################################### #
 
-create_age_distribution_charts <- function(var, var_title, probs = dist_probs){
+# comb_exclude: age groups left out of the faceted chart only (to keep it
+# readable). They still get their own single-cohort charts and table columns.
+create_age_distribution_charts <- function(var, var_title, probs = dist_probs,
+                                           comb_exclude = c("65-74", "75+")){
   
   pct_levels <- paste0(100 * probs, "th")
   
@@ -497,44 +442,38 @@ create_age_distribution_charts <- function(var, var_title, probs = dist_probs){
     save_chart(plot, file_path)
   }
   
-  # ##### 2. All cohorts faceted together #####
-  # Labels formatted per facet since facets use free_y
-  text_labels <- dist_df %>%
-    group_by(agecl) %>%
-    mutate(label = make_dollar_labels(value)) %>%
-    ungroup() %>%
-    mutate(vj = ifelse(value >= 0, 0, 1))
+  # ##### 2. Cohorts faceted together (minus comb_exclude) #####
+  comb_dist <- dist_df %>%
+    filter(!(as.character(agecl) %in% comb_exclude))
+  
+  if(is.factor(comb_dist$agecl)) comb_dist$agecl <- droplevels(comb_dist$agecl)
+  
+  # Each bar formatted on its own ($7k, $350k, $1.2M) so small bars don't
+  # show as "$0.01M" in panels that reach into the millions
+  text_labels <- comb_dist %>%
+    mutate(label = map_chr(value, make_dollar_labels),
+           vj    = ifelse(value >= 0, -0.3, 1.3))
   
   file_path <- paste0(dist_path, "/", var, "_dist_age_comb_",
                       data_year, ".jpeg")
   
-  plot <- ggplot(dist_df, aes(x = pct_label, y = value)) +
+  plot <- ggplot(comb_dist, aes(x = pct_label, y = value)) +
     geom_bar(stat = "identity", fill = chart_standard_color) +
-    facet_wrap(vars(agecl), scales = "free_y", axes = "all") +
+    facet_wrap(vars(agecl), scales = "free_y", axes = "all", ncol = 2) +
     geom_text(data = text_labels,
               aes(x = pct_label, y = value, label = label, vjust = vj),
               col = chart_standard_color,
-              size = 1.5) +
-    scale_y_continuous(label = dollar) +
+              size = 1.8) +
+    scale_y_continuous(label = dollar,
+                       expand = expansion(mult = c(0.12, 0.1))) +
     of_dollars_and_data_theme +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 6)) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 7)) +
     ggtitle(paste0(str_wrap(paste0(var_title, " Distribution"), width = 38),
                    "\nby Age")) +
     labs(x = "Percentile", y = var_title,
          caption = paste0(source_string, "\n", note_string))
   
   save_chart(plot, file_path)
-  
-  # ##### 3. Table: rows = percentile, columns = age cohort #####
-  dist_table <- dist_df %>%
-    mutate(display = format_as_dollar(value)) %>%
-    select(pct_label, agecl, display) %>%
-    pivot_wider(names_from = agecl, values_from = display) %>%
-    rename(Percentile = pct_label)
-  
-  write_html_table(dist_table,
-                   paste0(dist_path, "/", var, "_dist_age_",
-                          data_year, "_table.html"))
   
   print(paste0("Wrote ", length(cohorts), " cohort distribution charts for ",
                var, " to: ", dist_path))
@@ -544,13 +483,17 @@ create_age_distribution_charts("networth", "Net Worth")
 
 # ##################################################################### #
 # Fine-grained age table (average and median side by side)
-# This is the 0369-style table the merged post needs alongside the
-# education charts above.
 # ##################################################################### #
 
+# Covers EVERY household so each row rolls up into a bar on the age charts
+# (e.g. 75-79 + 80+ = the 75+ bar). The old version stopped at age 80, which
+# dropped the oldest households and made the table look inconsistent with
+# the 75+ chart.
+detail_levels <- c("Under 25", "25-29", "30-34", "35-39", "40-44", "45-49",
+                   "50-54", "55-59", "60-64", "65-69", "70-74", "75-79", "80+")
+
 age_detail_table <- df %>%
-  filter(age >= 20, age <= 80) %>%
-  mutate(agecl_new = case_when(age < 25 ~ "20-24",
+  mutate(agecl_new = case_when(age < 25 ~ "Under 25",
                                age < 30 ~ "25-29",
                                age < 35 ~ "30-34",
                                age < 40 ~ "35-39",
@@ -561,7 +504,9 @@ age_detail_table <- df %>%
                                age < 65 ~ "60-64",
                                age < 70 ~ "65-69",
                                age < 75 ~ "70-74",
-                               TRUE     ~ "75-80")) %>%
+                               age < 80 ~ "75-79",
+                               TRUE     ~ "80+"),
+         agecl_new = factor(agecl_new, levels = detail_levels)) %>%
   group_by(agecl_new) %>%
   summarise(
     avg    = format_as_dollar(as.numeric(wtd.mean(networth, weights = wgt))),
@@ -569,6 +514,7 @@ age_detail_table <- df %>%
                                                       probs = 0.5))),
     .groups = "drop"
   ) %>%
+  mutate(agecl_new = as.character(agecl_new)) %>%
   select(`Age Range` = agecl_new,
          `Average Net Worth` = avg,
          `Median Net Worth`  = pct_50)
@@ -605,10 +551,7 @@ print("Distribution 50th percentile matches median-by-age: OK")
 # NUMBERS FOR THE POST - printed in the order they appear in the text
 # ##################################################################### #
 
-compare_year <- 2019   # "since 2019"
-prior_year   <- 2022   # "over the past three years"
-gfc_year     <- 2007   # "pre-GFC"
-first_year   <- min(df_ts$year)
+compare_year <- 2022   # "since 2022"
 
 fd <- format_as_dollar
 
@@ -634,12 +577,8 @@ print_df <- function(x){
 
 avg_now   <- yr_stat(data_year, 0)
 avg_cmp   <- yr_stat(compare_year, 0)
-avg_prior <- yr_stat(prior_year, 0)
 med_now   <- yr_stat(data_year, 0.5)
 med_cmp   <- yr_stat(compare_year, 0.5)
-med_prior <- yr_stat(prior_year, 0.5)
-med_first <- yr_stat(first_year, 0.5)
-med_gfc   <- yr_stat(gfc_year, 0.5)
 
 by_age <- summarise_by(df, "networth", "agecl", 0.25) %>% rename(p25 = value) %>%
   left_join(summarise_by(df, "networth", "agecl", 0.5)  %>% rename(median = value), by = "agecl") %>%
@@ -650,23 +589,17 @@ by_age <- summarise_by(df, "networth", "agecl", 0.25) %>% rename(p25 = value) %>
 cat("\n================ NUMBERS FOR THE POST (in order) ================\n")
 cat("All figures in", dollar_year, "dollars\n")
 
-# ---- What is Net Worth? ----
-cat("\n-- What is Net Worth? --\n")
-say(paste0("Median NW change ", prior_year, " -> ", data_year,
-           " ('grown substantially over the past three years')"),
-    paste0(fd(med_now - med_prior), " (", pct_chg(med_now, med_prior), ")"))
-say(paste0("Average NW change ", prior_year, " -> ", data_year),
-    paste0(fd(avg_now - avg_prior), " (", pct_chg(avg_now, avg_prior), ")"))
-
 # ---- Average Net Worth ----
 cat("\n-- What is the Average Net Worth? --\n")
 say(paste0("Average NW ", data_year), fd(avg_now))
-say(paste0("Change in average NW since ", compare_year), fd(avg_now - avg_cmp))
+say(paste0("Change in average NW since ", compare_year),
+    paste0(fd(avg_now - avg_cmp), " (", pct_chg(avg_now, avg_cmp), ")"))
 say(paste0("Average NW ", compare_year), fd(avg_cmp))
 say(paste0("Median NW ", data_year), fd(med_now))
 say("Median / average",
     paste0(round(med_now / avg_now, 2), " (about 1/", round(avg_now / med_now, 1), ")"))
-say(paste0("Change in median NW since ", compare_year), fd(med_now - med_cmp))
+say(paste0("Change in median NW since ", compare_year, " ('about $50,000')"),
+    paste0(fd(med_now - med_cmp), " (", pct_chg(med_now, med_cmp), ")"))
 say(paste0("Median NW ", compare_year), fd(med_cmp))
 
 # ---- Net Worth by Age ----
@@ -694,47 +627,155 @@ print_df(by_age %>% mutate(across(-agecl, fd)))
 say(paste0("25th percentile positive for every age group in ", data_year),
     paste0(all(by_age$p25 > 0), " (lowest: ", fd(min(by_age$p25)), ", ",
            by_age$agecl[which.min(by_age$p25)], ")"))
-say(paste0("Under-35 25th percentile NW ", compare_year, " ('near $0')"),
-    fd(yr_stat(compare_year, 0.25, df_ts %>% filter(age < 35))))
-say(paste0("Under-35 25th percentile NW ", data_year),
-    fd(yr_stat(data_year, 0.25, df_ts %>% filter(age < 35))))
 say("75th percentile closer to median or average? (count of age groups closer to average)",
     paste0(sum(abs(by_age$p75 - by_age$average) < abs(by_age$p75 - by_age$median)),
            " of ", nrow(by_age)))
 
-# ---- Over Time ----
-cat("\n-- How Has American Net Worth Changed Over Time? --\n")
-say(paste0("Median NW ", first_year), fd(med_first))
-say(paste0("Median NW ", data_year), fd(med_now))
-say(paste0("Multiple ", first_year, " -> ", data_year, " ('more than doubled')"),
-    paste0(round(med_now / med_first, 2), "x"))
-say(paste0("Median NW change ", compare_year, " -> ", data_year, " ('increased by 37%')"),
-    pct_chg(med_now, med_cmp))
-say(paste0("Median NW ", gfc_year, " (pre-GFC)"),
-    paste0(fd(med_gfc), " | ", data_year, " above pre-GFC: ", med_now > med_gfc))
+# ---- Net worth excluding home equity ----
+cat("\n-- What Does This Look Like Without Home Equity? --\n")
 
-cat("\nMedian NW by age, ", gfc_year, " vs ", data_year,
-    " ('every age group roughly the same or better than 2007'):\n", sep = "")
-print_df(median_nw_by_year_age %>%
-           filter(year %in% c(gfc_year, data_year)) %>%
-           pivot_wider(names_from = year, values_from = value,
-                       names_prefix = "y") %>%
-           mutate(change = pct_chg(.data[[paste0("y", data_year)]],
-                                   .data[[paste0("y", gfc_year)]])) %>%
-           mutate(across(starts_with("y"), fd)))
+say("Median NW excluding home equity (all households)",
+    fd(wtd_stat(df$nw_ex_home, df$wgt, 0.5)))
+say("Average NW excluding home equity (all households)",
+    fd(wtd_stat(df$nw_ex_home, df$wgt, 0)))
 
-cat("Under-35 households ('exploded in the last three years'):\n")
-for(v in names(u35_results)){
-  r <- u35_results[[v]]
-  v_cmp   <- r$value[r$year == compare_year]
-  v_prior <- r$value[r$year == prior_year]
-  v_now   <- r$value[r$year == data_year]
-  say(paste0("Under-35 median ", v, " ", compare_year, " / ", prior_year, " / ", data_year),
-      paste0(fd(v_cmp), " / ", fd(v_prior), " / ", fd(v_now),
-             " | ", prior_year, "->", data_year, ": ", pct_chg(v_now, v_prior),
-             " | ", compare_year, "->", data_year, ": ", pct_chg(v_now, v_cmp)))
-}
+# Renter example for the text: same $150k, ranked against total net worth
+# vs. against net worth excluding home equity (a renter's two are identical)
+ex_age <- "35-44"
+ex_nw  <- 150000
+d_ex   <- df %>% filter(as.character(agecl) == ex_age)
+say(paste0("Renter, age ", ex_age, ", ", fd(ex_nw), ": percentile on total NW"),
+    paste0(round(100 * sum(d_ex$wgt[d_ex$networth <= ex_nw]) / sum(d_ex$wgt)), "th"))
+say(paste0("Renter, age ", ex_age, ", ", fd(ex_nw), ": percentile on NW excl. home equity"),
+    paste0(round(100 * sum(d_ex$wgt[d_ex$nw_ex_home <= ex_nw]) / sum(d_ex$wgt)), "th"))
+
+ex_home_table <- comb_df %>%
+  select(agecl, pct_label, with_home = value) %>%
+  left_join(comb_df_ex %>% select(agecl, pct_label, ex_home = value),
+            by = c("agecl", "pct_label")) %>%
+  mutate(home_share = paste0(round(100 * (1 - ex_home / with_home)), "%"))
+
+cat("\nPercentiles by age, with vs. without home equity\n")
+cat("(home_share = how much lower the percentile is once home equity is removed.\n")
+cat(" Households are re-ranked without home equity, so this is not the exact home\n")
+cat(" equity share of any one household):\n")
+print_df(ex_home_table %>%
+           mutate(across(c(with_home, ex_home), fd)) %>%
+           arrange(pct_label, agecl))
+
+# ---- Home equity share for the SAME households ----
+# Unlike the table above (two separate rankings), this ranks households once
+# on total net worth within their age group, takes a band around each
+# percentile, and asks: for these households, how much of their net worth
+# is home equity? Bands are +/-10 percentiles wide (the 90th uses 80-100)
+# so each band holds enough households to be stable.
+share_bands <- tribble(
+  ~band,              ~lo,  ~hi,
+  "~25th (15th-35th)", 0.15, 0.35,
+  "~50th (40th-60th)", 0.40, 0.60,
+  "~75th (65th-85th)", 0.65, 0.85,
+  "~90th (80th-100th)",0.80, 1.00
+) %>%
+  mutate(band = factor(band, levels = band))
+
+df_ranked <- df %>%
+  group_by(agecl) %>%
+  arrange(networth, .by_group = TRUE) %>%
+  mutate(nw_rank = (cumsum(wgt) - wgt / 2) / sum(wgt)) %>%
+  ungroup()
+
+home_share_table <- pmap_dfr(share_bands, function(band, lo, hi){
+  df_ranked %>%
+    filter(nw_rank >= lo, nw_rank < hi) %>%
+    group_by(agecl) %>%
+    summarise(
+      band            = band,
+      median_nw       = wtd_stat(networth, wgt, 0.5),
+      median_homeeq   = wtd_stat(homeeq, wgt, 0.5),
+      pct_with_homeeq = sum(wgt[homeeq > 0]) / sum(wgt),
+      # share only defined when net worth is positive
+      median_home_share = wtd_stat(homeeq[networth > 0] / networth[networth > 0],
+                                   wgt[networth > 0], 0.5),
+      .groups = "drop"
+    )
+}) %>%
+  mutate(band = factor(band, levels = levels(share_bands$band)))
+
+# ---- Chart: home equity vs. everything else, middle vs. top 20% ----
+share_chart_bands <- c("~50th (40th-60th)"  = "Middle of Age Group\n(40th-60th Percentile)",
+                       "~90th (80th-100th)" = "Top 20% of Age Group\n(80th-100th Percentile)")
+
+share_parts <- c("Home equity", "Everything else")
+
+share_plot_df <- home_share_table %>%
+  filter(as.character(band) %in% names(share_chart_bands)) %>%
+  mutate(panel = factor(share_chart_bands[as.character(band)],
+                        levels = share_chart_bands),
+         home  = pmin(pmax(median_home_share, 0), 1)) %>%
+  select(panel, agecl, home) %>%
+  mutate(other = 1 - home) %>%
+  pivot_longer(c(home, other), names_to = "part", values_to = "share") %>%
+  mutate(part = factor(ifelse(part == "home", share_parts[1], share_parts[2]),
+                       levels = rev(share_parts)))
+
+share_labels <- share_plot_df %>%
+  filter(part == share_parts[1]) %>%
+  mutate(label  = paste0(round(100 * share), "%"),
+         inside = share >= 0.08,
+         y      = ifelse(inside, share / 2, share + 0.02))
+
+plot <- ggplot(share_plot_df, aes(x = agecl, y = share, fill = part)) +
+  geom_col(width = 0.75) +
+  geom_text(data = share_labels %>% filter(inside),
+            aes(x = agecl, y = y, label = label),
+            inherit.aes = FALSE, col = "white", fontface = "bold", size = 3) +
+  geom_text(data = share_labels %>% filter(!inside),
+            aes(x = agecl, y = y, label = label),
+            inherit.aes = FALSE, col = chart_standard_color,
+            fontface = "bold", size = 3, vjust = 0) +
+  facet_wrap(vars(panel), axes = "all") +
+  scale_fill_manual(values = setNames(c(chart_standard_color, "#a9bfd6"),
+                                      share_parts),
+                    breaks = share_parts) +
+  scale_y_continuous(labels = percent_format(accuracy = 1),
+                     expand = expansion(mult = c(0, 0.02))) +
+  of_dollars_and_data_theme +
+  theme(axis.text.x     = element_text(angle = 45, hjust = 1),
+        legend.position = "bottom",
+        legend.title    = element_blank()) +
+  ggtitle("How Much of Net Worth Is Home Equity?\nMedian Share by Age") +
+  labs(x = "Age", y = "Share of Net Worth",
+       caption = paste0(source_string, "\n",
+                        str_wrap(paste0("Note: Households ranked by total net worth ",
+                                        "within their age group. Bars show the ",
+                                        "median share of net worth held in home ",
+                                        "equity."), width = 85)))
+
+save_chart(plot, paste0(out_path, "/home_equity_share_by_age_",
+                        data_year, ".jpeg"))
+
+cat("Home equity share of net worth for the SAME households\n")
+cat("(households ranked once by total net worth within their age group):\n")
+print_df(home_share_table %>%
+           arrange(band, agecl) %>%
+           transmute(band, agecl,
+                     median_nw       = fd(median_nw),
+                     median_homeeq   = fd(median_homeeq),
+                     pct_with_homeeq = paste0(round(100 * pct_with_homeeq), "%"),
+                     median_home_share = paste0(round(100 * median_home_share), "%")))
+
+# ---- Appendix: full data behind the distribution charts ----
+cat("\n================ APPENDIX: FULL DATA ================\n")
+
+cat("\n")
+cat("Net worth distribution by age (10th-90th percentiles):\n")
+print_df(age_dist_networth %>%
+           transmute(agecl, pct_label, value = fd(value)) %>%
+           pivot_wider(names_from = agecl, values_from = value))
 
 cat("\n=================================================================\n")
+
+sink()
+print(paste0("Log written to: ", log_file))
 
 # ############################  End  ################################## #
