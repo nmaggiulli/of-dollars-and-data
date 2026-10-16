@@ -2,8 +2,7 @@
  * Income by Age Calculator — Of Dollars And Data
  *
  * Uses income_data.js (written by the R script). This file never needs to
- * change for a data update: the ages, the +/- window and the "Data from the ...
- * Survey of Consumer Finances" line come from the data file.
+ * change for a data update: the ages and the +/- window come from the data file.
  *
  * Shareable links: after Calculate, the address bar updates to e.g.
  *   ?age=32&income=78000
@@ -70,8 +69,9 @@
 		if (lab) { lab.textContent = 'Your Age:'; }
 		var note = $('data-through');
 		if (note) {
-			note.textContent = 'Data from the ' + D.year + ' Survey of Consumer Finances.' +
-				(D.window ? ' Each age includes households within ' + D.window + ' year' + (D.window === 1 ? '' : 's') + ' of that age to ensure a sufficient sample size.' : '');
+			// The survey is already named in the page text above the calculator.
+			note.textContent = D.window ? 'Each age includes households within ' + D.window + ' year' + (D.window === 1 ? '' : 's') + ' of that age to ensure a sufficient sample size.' : '';
+			note.hidden = !note.textContent;
 		}
 	}
 

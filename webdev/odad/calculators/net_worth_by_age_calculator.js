@@ -2,12 +2,16 @@
  * Net Worth by Age Calculator — Of Dollars And Data
  *
  * Uses net_worth_data.js (written by the R script). This file never needs to
- * change for a data update: the ages, the +/- window and the "Data from the ...
- * Survey of Consumer Finances" line come from the data file.
+ * change for a data update: the ages and the +/- window come from the data file.
  *
  * Shareable links: after Calculate, the address bar updates to e.g.
- *   ?age=32&nw=90000
+ *   ?age=32&nw=90000          (home equity included, the default)
+ *   ?age=32&nw=90000&home=0   (home equity excluded)
  * Older bracket links (?age=30-34) are mapped to the bracket's middle age.
+ *
+ * "Include Home Equity?" dropdown: added by this script under the net worth
+ * field, but only when the data file has values_ex_home (net worth minus
+ * home equity). With an older data file the calculator works as before.
  */
 (function () {
 	'use strict';
@@ -16,6 +20,22 @@
 	if (!D) { return; }
 
 	function $(id) { return document.getElementById(id); }
+
+	/* ---------- home equity option ---------- */
+	var HAS_EX_HOME = !!D.values_ex_home;
+	var NW_LABEL = 'Household Net Worth:';
+	var NW_LABEL_EX = 'Household Net Worth (excluding home equity):';
+	var RESULT_LABEL = 'Your Net Worth Percentile: ';
+	var RESULT_LABEL_EX = 'Your Net Worth Percentile (excluding home equity): ';
+	var HOME_NOTE = ' Home equity is the value of your primary residence minus any mortgage or home equity loan on it.';
+
+	function includeHome() {
+		var sel = $('nw-home');
+		return !sel || sel.value !== '0';
+	}
+	function valuesFor(age) {
+		return includeHome() ? D.values[age] : D.values_ex_home[age];
+	}
 
 	/* ---------- age labels ---------- */
 	// "36" -> "36 (34–38)"; "All Ages" stays as is.
@@ -74,10 +94,46 @@
 		// Label reads "Your Age:" (the reader picks an age; the window is a sample detail).
 		var lab = document.querySelector('label[for="nw-age"]');
 		if (lab) { lab.textContent = 'Your Age:'; }
+		if (HAS_EX_HOME && !$('nw-home')) {
+			var nw = $('net-worth');
+			var hl = document.createElement('label');
+			hl.setAttribute('for', 'nw-home');
+			hl.textContent = 'Include Home Equity?';
+			var hs = document.createElement('select');
+			hs.id = 'nw-home'; hs.name = 'nw-home';
+			hs.innerHTML = '<option value="1">Yes</option><option value="0">No</option>';
+			if (nw && nw.parentNode) {
+				nw.parentNode.insertBefore(hl, nw.nextSibling);
+				nw.parentNode.insertBefore(hs, hl.nextSibling);
+			}
+			// Changing it after a result re-runs the calculation, so the result,
+			// its label and the chart always match the dropdown.
+			hs.addEventListener('change', function () {
+				clearError();
+				updateLabels(false);
+				var out = $('calc-output');
+				if (out && !out.classList.contains('is-empty')) { calculate('home_toggle'); }
+			});
+		}
+		updateLabels(true);
+	}
+
+	// Labels and the note below the button follow the home equity choice.
+	// The result label only changes when a result is (re)calculated.
+	function updateLabels(withResult) {
+		var inc = includeHome();
+		var nl = document.querySelector('label[for="net-worth"]');
+		if (nl) { nl.textContent = inc ? NW_LABEL : NW_LABEL_EX; }
+		var res = $('nw-percentile');
+		var strong = res && res.parentNode ? res.parentNode.querySelector('strong') : null;
+		if (strong && withResult) { strong.textContent = inc ? RESULT_LABEL : RESULT_LABEL_EX; }
 		var note = $('data-through');
 		if (note) {
-			note.textContent = 'Data from the ' + D.year + ' Survey of Consumer Finances.' +
-				(D.window ? ' Each age includes households within ' + D.window + ' year' + (D.window === 1 ? '' : 's') + ' of that age to ensure a sufficient sample size.' : '');
+			// The survey and year are already named in the page text above the calculator.
+			var text = (D.window ? 'Each age includes households within ' + D.window + ' year' + (D.window === 1 ? '' : 's') + ' of that age to ensure a sufficient sample size.' : '') +
+				(inc ? '' : HOME_NOTE);
+			note.textContent = text.trim();
+			note.hidden = !note.textContent;
 		}
 	}
 
@@ -119,7 +175,7 @@
 			data: {
 				labels: D.pct.map(function (p) { return p + '%'; }),
 				datasets: [{
-					label: 'U.S. Household Net Worth',
+					label: includeHome() ? 'U.S. Household Net Worth' : 'Net Worth Excl. Home Equity',
 					data: values,
 					borderColor: '#349800',
 					fill: false,
@@ -133,7 +189,13 @@
 			options: {
 				responsive: true,
 				maintainAspectRatio: window.innerWidth > 767,
-				title: { display: true, text: ['U.S. Household Net Worth by Percentile', titleLabel(ageGroup)], fontSize: 16 },
+				title: {
+					display: true,
+					text: includeHome()
+						? ['U.S. Household Net Worth by Percentile', titleLabel(ageGroup)]
+						: ['U.S. Household Net Worth by Percentile', 'Excluding Home Equity', titleLabel(ageGroup)],
+					fontSize: 16
+				},
 				scales: {
 					xAxes: [{ type: 'category', scaleLabel: { display: true, labelString: 'Percentile' } }],
 					yAxes: [{
@@ -182,7 +244,7 @@
 		}
 
 		// Same matching as before: the highest percentile whose net worth is at or below yours.
-		var values = D.values[ageGroup];
+		var values = valuesFor(ageGroup);
 		var userIndex = -1, best = null;
 		for (var i = 0; i < values.length; i++) {
 			if (values[i] <= netWorth) {
@@ -194,21 +256,24 @@
 		}
 		var percentile = userIndex === -1 ? 'Below ' + D.pct[0] + '%' : D.pct[userIndex] + '%';
 
+		updateLabels(true);
 		$('nw-percentile').innerText = percentile;
 		var out = $('calc-output');
 		if (out) { out.classList.remove('is-empty'); }
 		drawChart(ageGroup, values, userIndex);
 
 		if (window.history && history.replaceState) {
-			var q = '?age=' + encodeURIComponent(ageGroup) + '&nw=' + Math.round(netWorth);
+			var q = '?age=' + encodeURIComponent(ageGroup) + '&nw=' + Math.round(netWorth) +
+				(includeHome() ? '' : '&home=0');
 			history.replaceState(null, '', window.location.pathname + q);
 		}
 
 		track('calculator_run', {
 			calculator: 'net_worth',
-			trigger: fromLink ? 'shared_link' : 'button',
+			trigger: fromLink === true ? 'shared_link' : (fromLink || 'button'),
 			age_group: ageGroup,
 			amount: Math.round(netWorth),
+			home_equity: includeHome() ? 'included' : 'excluded',
 			result: percentile
 		});
 	}
@@ -240,6 +305,7 @@
 		if (m) { age = String(Math.round((+m[1] + +m[2]) / 2)); }
 		if (!age || nw === null || !D.values[age]) { return; }
 		$('nw-age').value = age;
+		if (p.get('home') === '0' && $('nw-home')) { $('nw-home').value = '0'; }
 		var v = parseFloat(nw);
 		if (!isNaN(v)) { $('net-worth').value = v.toLocaleString('en-US'); }
 		calculate(true);
