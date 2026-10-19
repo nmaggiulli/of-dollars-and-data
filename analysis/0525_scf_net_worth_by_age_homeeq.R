@@ -28,7 +28,7 @@ dist_probs  <- seq(0.1, 0.9, by = 0.1)
 
 ########################## Output paths ############################### #
 
-folder_name <- "0525_scf_net_worth_by_age_edc"
+folder_name <- "0525_scf_net_worth_by_age_homeeq"
 base_path   <- paste0(exportdir, folder_name)
 out_path    <- paste0(base_path, "/", data_year)
 dist_path   <- paste0(out_path, "/age_distribution")
@@ -272,6 +272,17 @@ pct_table <- comb_df %>%
                           "90th Percentile" = "90th Percentile")) %>%
   select(`Age Range` = agecl, col, display) %>%
   pivot_wider(names_from = col, values_from = display)
+
+# "All Ages" row: same percentiles, computed on every household
+all_ages_pct <- tibble(
+  `Age Range`         = "All Ages",
+  `25th Percentile`   = format_as_dollar(wtd_stat(df$networth, df$wgt, 0.25)),
+  Median              = format_as_dollar(wtd_stat(df$networth, df$wgt, 0.5)),
+  `75th Percentile`   = format_as_dollar(wtd_stat(df$networth, df$wgt, 0.75)),
+  `90th Percentile`   = format_as_dollar(wtd_stat(df$networth, df$wgt, 0.9))
+)
+
+pct_table <- bind_rows(pct_table, all_ages_pct)
 
 write_html_table(pct_table,
                  paste0(out_path, "/networth_pct_25_50_75_90_age_",
@@ -519,6 +530,14 @@ age_detail_table <- df %>%
          `Average Net Worth` = avg,
          `Median Net Worth`  = pct_50)
 
+# "All Ages" row: average and median across every household
+age_detail_table <- bind_rows(
+  age_detail_table,
+  tibble(`Age Range`         = "All Ages",
+         `Average Net Worth` = format_as_dollar(wtd_stat(df$networth, df$wgt, 0)),
+         `Median Net Worth`  = format_as_dollar(wtd_stat(df$networth, df$wgt, 0.5)))
+)
+
 write_html_table(age_detail_table,
                  paste0(out_path, "/networth_by_age_detail_",
                         data_year, "_table.html"))
@@ -586,6 +605,18 @@ by_age <- summarise_by(df, "networth", "agecl", 0.25) %>% rename(p25 = value) %>
   left_join(summarise_by(df, "networth", "agecl", 0.9)  %>% rename(p90 = value),    by = "agecl") %>%
   left_join(summarise_by(df, "networth", "agecl", 0)    %>% rename(average = value), by = "agecl")
 
+# Display-only version with an "All Ages" row. The say() checks below use
+# by_age (age groups only) so the All Ages row can't skew min/max/counts.
+by_age_all <- bind_rows(
+  by_age %>% mutate(agecl = as.character(agecl)),
+  tibble(agecl   = "All Ages",
+         p25     = wtd_stat(df$networth, df$wgt, 0.25),
+         median  = med_now,
+         p75     = wtd_stat(df$networth, df$wgt, 0.75),
+         p90     = wtd_stat(df$networth, df$wgt, 0.9),
+         average = avg_now)
+)
+
 cat("\n================ NUMBERS FOR THE POST (in order) ================\n")
 cat("All figures in", dollar_year, "dollars\n")
 
@@ -595,12 +626,12 @@ say(paste0("Average NW ", data_year), fd(avg_now))
 say(paste0("Change in average NW since ", compare_year),
     paste0(fd(avg_now - avg_cmp), " (", pct_chg(avg_now, avg_cmp), ")"))
 say(paste0("Average NW ", compare_year), fd(avg_cmp))
-say(paste0("Median NW ", data_year), fd(med_now))
+say(paste0("Median NW ", data_year, " (all ages)"), fd(med_now))
 say("Median / average",
     paste0(round(med_now / avg_now, 2), " (about 1/", round(avg_now / med_now, 1), ")"))
 say(paste0("Change in median NW since ", compare_year, " ('about $50,000')"),
     paste0(fd(med_now - med_cmp), " (", pct_chg(med_now, med_cmp), ")"))
-say(paste0("Median NW ", compare_year), fd(med_cmp))
+say(paste0("Median NW ", compare_year, " (all ages)"), fd(med_cmp))
 
 # ---- Net Worth by Age ----
 cat("\n-- What is the Average Net Worth by Age? --\n")
@@ -614,15 +645,18 @@ say("Median NW by age: peak age group ('rising to age 65-74')",
 cat("\nFine-grained table:\n")
 print_df(age_detail_table)
 
+# Exclude the All Ages row from the peak checks
+age_detail_ages <- age_detail_table %>% filter(`Age Range` != "All Ages")
+
 say("Fine table: peak AVERAGE age range ('wealth peaks in 65-69')",
-    age_detail_table$`Age Range`[which.max(parse_number(age_detail_table$`Average Net Worth`))])
+    age_detail_ages$`Age Range`[which.max(parse_number(age_detail_ages$`Average Net Worth`))])
 say("Fine table: peak MEDIAN age range",
-    age_detail_table$`Age Range`[which.max(parse_number(age_detail_table$`Median Net Worth`))])
+    age_detail_ages$`Age Range`[which.max(parse_number(age_detail_ages$`Median Net Worth`))])
 
 # ---- Worse or Better Than the Median ----
 cat("\n-- Doing Worse or Better Than the Median? --\n")
 cat("Percentiles by age (25th / median / 75th / 90th / average):\n")
-print_df(by_age %>% mutate(across(-agecl, fd)))
+print_df(by_age_all %>% mutate(across(-agecl, fd)))
 
 say(paste0("25th percentile positive for every age group in ", data_year),
     paste0(all(by_age$p25 > 0), " (lowest: ", fd(min(by_age$p25)), ", ",
@@ -634,9 +668,14 @@ say("75th percentile closer to median or average? (count of age groups closer to
 # ---- Net worth excluding home equity ----
 cat("\n-- What Does This Look Like Without Home Equity? --\n")
 
-say("Median NW excluding home equity (all households)",
-    fd(wtd_stat(df$nw_ex_home, df$wgt, 0.5)))
-say("Average NW excluding home equity (all households)",
+med_ex_home_now <- wtd_stat(df$nw_ex_home, df$wgt, 0.5)
+
+say(paste0("Median NW ex home equity ", data_year, " (all ages)"),
+    fd(med_ex_home_now))
+say(paste0("Median NW ", data_year, " (all ages): with vs. ex home equity"),
+    paste0(fd(med_now), " vs. ", fd(med_ex_home_now),
+           " (ex home is ", round(100 * med_ex_home_now / med_now), "% of total)"))
+say(paste0("Average NW ex home equity ", data_year, " (all ages)"),
     fd(wtd_stat(df$nw_ex_home, df$wgt, 0)))
 
 # Renter example for the text: same $150k, ranked against total net worth
@@ -654,6 +693,28 @@ ex_home_table <- comb_df %>%
   left_join(comb_df_ex %>% select(agecl, pct_label, ex_home = value),
             by = c("agecl", "pct_label")) %>%
   mutate(home_share = paste0(round(100 * (1 - ex_home / with_home)), "%"))
+
+# "All Ages" rows: each percentile with and without home equity, computed on
+# every household (re-ranked separately on each measure, same as the age rows)
+age_order <- c(if(is.factor(df$agecl)) levels(droplevels(df$agecl))
+               else sort(unique(as.character(df$agecl))),
+               "All Ages")
+
+all_ages_ex <- map_dfr(comb_probs, function(p){
+  tibble(agecl     = "All Ages",
+         pct_label = paste0(100 * p, "th Percentile"),
+         with_home = wtd_stat(df$networth,   df$wgt, p),
+         ex_home   = wtd_stat(df$nw_ex_home, df$wgt, p))
+}) %>%
+  mutate(home_share = paste0(round(100 * (1 - ex_home / with_home)), "%"))
+
+ex_home_table <- bind_rows(
+  ex_home_table %>% mutate(agecl = as.character(agecl),
+                           pct_label = as.character(pct_label)),
+  all_ages_ex
+) %>%
+  mutate(agecl     = factor(agecl, levels = age_order),
+         pct_label = factor(pct_label, levels = levels(comb_df$pct_label)))
 
 cat("\nPercentiles by age, with vs. without home equity\n")
 cat("(home_share = how much lower the percentile is once home equity is removed.\n")
