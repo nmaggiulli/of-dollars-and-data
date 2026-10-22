@@ -131,6 +131,11 @@ band_other_label <- "Everything else (net)"
 title_wrap   <- 30
 caption_wrap <- 80
 
+# Charts with plot.caption.position = "plot" (01, 06 and 08) start the caption
+# at the left edge of the image, not the panel, so the note can run wider
+# before it wraps.
+caption_wrap_wide <- 110
+
 # The first run used size 1.8 for in-chart value labels, which is unreadable.
 label_size_small <- 2.4   # dense charts (many bars)
 label_size       <- 3.0   # normal charts
@@ -231,12 +236,17 @@ n_hh <- n_distinct(df_year$hh_id)
 source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year,
                         " (OfDollarsAndData.com)")
 
-note_string <- str_wrap(paste0("Note:  Calculations based on weighted data from ",
-                               formatC(n_hh, digits = 0, format = "f",
-                                       big.mark = ","),
-                               " U.S. households. All figures are in ",
-                               dollar_year, " dollars."),
-                        width = caption_wrap)
+note_text <- paste0("Note:  Calculations based on weighted data from ",
+                    formatC(n_hh, digits = 0, format = "f", big.mark = ","),
+                    " U.S. households. All figures are in ",
+                    dollar_year, " dollars.")
+
+note_string      <- str_wrap(note_text, width = caption_wrap)
+note_string_wide <- str_wrap(note_text, width = caption_wrap_wide)
+
+# Definition line added to the notes on the definition charts (01, 06, 07)
+liquid_def_text <- paste0("Liquid net worth is non-retirement financial assets ",
+                          "minus all debts other than mortgage debt.")
 
 # Time-series charts span every wave, so their note cannot cite one year's
 # sample size.
@@ -302,12 +312,18 @@ make_caption <- function(note = note_string){
 }
 
 # Caption with an extra wrapped line under the standard note
-make_caption_extra <- function(extra, note = note_string){
-  make_caption(paste0(note, "\n", str_wrap(extra, width = caption_wrap)))
+make_caption_extra <- function(extra, note = note_string, width = caption_wrap){
+  make_caption(paste0(note, "\n", str_wrap(extra, width = width)))
+}
+
+# Every chart file gets "_<data_year>" before its extension so WordPress can
+# tell the 2022 and 2025 versions apart (same helper as 0524).
+add_year_suffix <- function(file_path){
+  sub("(\\.[A-Za-z0-9]+)$", paste0("_", data_year, "\\1"), file_path)
 }
 
 save_chart <- function(plot, file_path){
-  ggsave(file_path, plot, width = 15, height = 12, units = "cm")
+  ggsave(add_year_suffix(file_path), plot, width = 15, height = 12, units = "cm")
 }
 
 period_factor <- function(year_vector){
@@ -336,12 +352,7 @@ endpoint_labels <- function(data, label_vector){
 def_axis_label <- function(x){
   recode(x,
          "Net worth (ex home)" = "Net worth\n(ex home)",
-         "Financial assets (ex retirement)" = "Financial assets\n(ex retirement)")
-}
-
-# "L2 ($10k-$100k)" -> "L2\n($10k-$100k)" so ladder axis labels can sit flat
-ladder_axis_label <- function(x){
-  sub(" (", "\n(", x, fixed = TRUE)
+         "Net worth (ex home & retirement)" = "Net worth\n(ex home &\nretirement)")
 }
 
 # Puts SCF age classes in age order. Leaves a factor alone.
@@ -407,14 +418,25 @@ if("homeeq" %in% names(df_year)){
     function(d) (d$networth - d$homeeq) >= 10^6
 }
 
-if("fin" %in% names(df_year)){
-  millionaire_defs[["Financial assets"]] <-
-    function(d) d$fin >= 10^6
+if(all(c("homeeq", "retqliq") %in% names(df_year))){
+  millionaire_defs[["Net worth (ex home & retirement)"]] <-
+    function(d) (d$networth - d$homeeq - d$retqliq) >= 10^6
 }
 
-if(all(c("fin", "retqliq") %in% names(df_year))){
-  millionaire_defs[["Financial assets (ex retirement)"]] <-
-    function(d) (d$fin - d$retqliq) >= 10^6
+# Liquid net worth: non-retirement financial assets minus all debts EXCEPT
+# home loans. The home is already excluded (bar 2 removes home equity, which
+# is net of the mortgage), so subtracting the mortgage here would count it
+# twice. Exception: if the home is underwater, the shortfall is still a debt
+# and is subtracted (same treatment as the SEC accredited-investor test).
+#   home loans       = houses - homeeq
+#   non-home debt    = debt - (houses - homeeq)
+#   underwater gap   = max(0, -homeeq)
+#   liquid assets    = asset - nfin - retqliq
+if(all(c("asset", "nfin", "retqliq", "debt", "houses", "homeeq") %in% names(df_year))){
+  millionaire_defs[["Liquid net worth"]] <-
+    function(d) (d$asset - d$nfin - d$retqliq -
+                   (d$debt - (d$houses - d$homeeq)) -
+                   pmax(0, -d$homeeq)) >= 10^6
 }
 
 definition_summary <- tibble(definition = names(millionaire_defs)) %>%
@@ -432,10 +454,10 @@ print(definition_summary %>%
         as.data.frame())
 
 text_labels <- definition_summary %>%
-  mutate(label = paste0(make_pct_labels(share), "   ",
-                        make_count_labels(households)))
+  mutate(label = paste0(make_pct_labels(share), " (",
+                        make_count_labels(households), ")"))
 
-file_path <- paste0(out_path, "/01_millionaire_share_by_definition.jpeg")
+file_path <- paste0(out_path, "/millionaire_share_by_definition.jpeg")
 
 # Fix for clipping: wrap the long category labels so the panel gets more
 # width, anchor the caption to the whole plot, and pad the right margin so
@@ -453,10 +475,13 @@ plot <- ggplot(definition_summary, aes(x = definition, y = share)) +
   of_dollars_and_data_theme +
   theme(plot.caption.position = "plot",
         plot.margin = margin(t = 5.5, r = 15, b = 5.5, l = 5.5)) +
-  ggtitle(make_title("Who Counts as a Millionaire?",
-                     paste0("Share of U.S. Households, ", data_year))) +
+  # paste0, not make_title: make_title wraps at 30 characters, which would
+  # split this subtitle onto a second line.
+  ggtitle(paste0("Who Counts as a Millionaire?\n",
+                 "Share and Number of U.S. Households, ", data_year)) +
   labs(x = NULL, y = "Share of Households With $1M+",
-       caption = make_caption())
+       caption = make_caption_extra(liquid_def_text, note = note_string_wide,
+                                    width = caption_wrap_wide))
 
 save_chart(plot, file_path)
 
@@ -487,7 +512,7 @@ turn_df <- millionaire_time %>%
   mutate(label = make_pct_labels(share, 0),
          vj    = ifelse(share >= prev & share >= nxt, -1.2, 1.9))
 
-file_path <- paste0(out_path, "/02_millionaire_share_over_time.jpeg")
+file_path <- paste0(out_path, "/millionaire_share_over_time.jpeg")
 
 plot <- ggplot(millionaire_time, aes(x = year, y = share)) +
   geom_line(col = chart_standard_color, linewidth = 0.9) +
@@ -566,7 +591,7 @@ make_count_over_time <- function(thresholds, file_suffix, chart_title,
     mutate(label = paste0(make_round_count(households),
                           " (", threshold_label, "+)"))
   
-  file_path <- paste0(out_path, "/02_household_counts_", file_suffix, ".jpeg")
+  file_path <- paste0(out_path, "/household_counts_", file_suffix, ".jpeg")
   
   plot <- ggplot(counts, aes(x = year, y = households,
                              col = threshold_label)) +
@@ -604,7 +629,7 @@ make_count_over_time <- function(thresholds, file_suffix, chart_title,
 
 counts_mill <- make_count_over_time(
   count_thresholds_mill, "millionaire",
-  "How Many Households Are Rich?",
+  "How Many Millionaire Households Are There?",
   "Number by Net Worth, Inflation-Adjusted")
 
 
@@ -644,7 +669,7 @@ ladder_check <- ladder_by_year %>%
 
 stopifnot(all(abs(ladder_check$total_share - 1) < 1e-8))
 
-file_path <- paste0(out_path, "/03_wealth_levels_over_time.jpeg")
+file_path <- paste0(out_path, "/wealth_levels_over_time.jpeg")
 
 plot <- ggplot(ladder_by_year, aes(x = year, y = share, fill = level)) +
   geom_bar(stat = "identity") +
@@ -689,39 +714,6 @@ ladder_census <- ladder_by_year %>%
 print("Wealth Ladder census (share of households):")
 print(as.data.frame(ladder_census))
 
-# ---- Chart: change in SHARE by level, in percentage points ----
-# Percentage points, not percent change: with shares this small at the top
-# rungs, a percent change would exaggerate movement at L4.
-ladder_change <- ladder_by_year %>%
-  filter(year %in% c(prior_year, data_year)) %>%
-  mutate(year_label = ifelse(year == data_year, "latest", "prior")) %>%
-  select(level, year_label, share) %>%
-  pivot_wider(names_from = year_label, values_from = share) %>%
-  mutate(pp_change = latest - prior)
-
-text_labels <- ladder_change %>%
-  mutate(label = make_pp_labels(pp_change))
-
-file_path <- paste0(out_path, "/04_wealth_level_share_change.jpeg")
-
-plot <- ggplot(ladder_change, aes(x = level, y = pp_change)) +
-  geom_bar(stat = "identity", fill = chart_standard_color) +
-  geom_hline(yintercept = 0, col = "black", linewidth = 0.3) +
-  geom_text(data = text_labels, aes(x = level, y = pp_change, label = label),
-            col = chart_standard_color,
-            vjust = ifelse(text_labels$pp_change > 0, -0.5, 1.5),
-            size = label_size) +
-  scale_y_continuous(label = function(x) paste0(100 * x, "pp"),
-                     expand = expansion(mult = c(0.16, 0.16))) +
-  scale_x_discrete(labels = ladder_axis_label) +
-  of_dollars_and_data_theme +
-  ggtitle(paste0("Which Wealth Levels Got More Crowded?\n",
-                 "Change in Share, ", prior_year, "-", data_year)) +
-  labs(x = NULL, y = "Change in Share of Households",
-       caption = make_caption(note_string_ts))
-
-save_chart(plot, file_path)
-
 # ##################################################################### #
 # SECTION 5: Who are the millionaires?
 # ##################################################################### #
@@ -752,7 +744,7 @@ mill_rate_by_age <- df_year %>%
 text_labels <- mill_rate_by_age %>%
   mutate(label = make_pct_labels(share, 0))
 
-file_path <- paste0(out_path, "/05_millionaire_rate_by_age.jpeg")
+file_path <- paste0(out_path, "/millionaire_rate_by_age.jpeg")
 
 plot <- ggplot(mill_rate_by_age, aes(x = agecl, y = share)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
@@ -779,7 +771,7 @@ if(can_do_composition){
           " (should be 1)")
 }
 
-# ---- 5d: how much is in the home and retirement accounts? ----
+# ---- 5d: how much is in the home and retirement accounts? (log only) ----
 if(all(c("homeeq", "retqliq") %in% names(df_mill))){
   
   liquidity <- df_mill %>%
@@ -789,25 +781,6 @@ if(all(c("homeeq", "retqliq") %in% names(df_mill))){
                                                         weights = wgt,
                                                         probs = 0.5)),
               .groups = "drop")
-  
-  text_labels <- liquidity %>%
-    mutate(label = make_pct_labels(median_illiquid, 0))
-  
-  file_path <- paste0(out_path, "/05_millionaire_illiquid_share.jpeg")
-  
-  plot <- ggplot(liquidity, aes(x = agecl, y = median_illiquid)) +
-    geom_bar(stat = "identity", fill = chart_standard_color) +
-    geom_text(data = text_labels,
-              aes(x = agecl, y = median_illiquid, label = label),
-              col = chart_standard_color, vjust = -0.5, size = label_size) +
-    scale_y_continuous(label = percent_format(accuracy = 1),
-                       expand = expansion(mult = c(0, 0.12))) +
-    of_dollars_and_data_theme +
-    ggtitle("Millionaire Household Median Share in\nHome + Retirement Accounts") +
-    labs(x = "Age", y = "Median Share of Net Worth",
-         caption = make_caption())
-  
-  save_chart(plot, file_path)
 }
 
 # ##################################################################### #
@@ -824,7 +797,7 @@ funnel <- tibble(definition = names(millionaire_defs),
   mutate(definition = factor(definition, levels = rev(names(millionaire_defs))),
          label = make_pct_labels(share, 0))
 
-file_path <- paste0(out_path, "/06_millionaire_definition_funnel.jpeg")
+file_path <- paste0(out_path, "/millionaire_hh_definition_shares.jpeg")
 
 plot <- ggplot(funnel, aes(x = definition, y = share)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
@@ -838,10 +811,11 @@ plot <- ggplot(funnel, aes(x = definition, y = share)) +
   of_dollars_and_data_theme +
   theme(plot.caption.position = "plot",
         plot.margin = margin(t = 5.5, r = 15, b = 5.5, l = 5.5)) +
-  ggtitle(paste0("How Many Millionaires Pass Each Test?\n",
+  ggtitle(paste0("How Many Millionaires Fit Each Definition?\n",
                  "Households Worth $1M+, ", data_year)) +
-  labs(x = NULL, y = "Share That Also Have $1M+ on This Measure",
-       caption = make_caption())
+  labs(x = NULL, y = "Share of Households With $1M+ on This Measure",
+       caption = make_caption_extra(liquid_def_text, note = note_string_wide,
+                                    width = caption_wrap_wide))
 
 save_chart(plot, file_path)
 
@@ -860,7 +834,7 @@ end_df <- def_time %>%
   filter(year == year_max) %>%
   mutate(label = make_pct_labels(share, 0))
 
-file_path <- paste0(out_path, "/07_millionaire_share_by_definition_over_time.jpeg")
+file_path <- paste0(out_path, "/millionaire_share_by_definition_over_time.jpeg")
 
 plot <- ggplot(def_time, aes(x = year, y = share, col = definition)) +
   geom_line(linewidth = 0.9) +
@@ -883,8 +857,8 @@ plot <- ggplot(def_time, aes(x = year, y = share, col = definition)) +
   guides(col = guide_legend(nrow = 2, byrow = TRUE)) +
   ggtitle(paste0("Millionaires Under Four Definitions\n",
                  "Share of U.S. Households")) +
-  labs(x = "Year", y = "Share of Households With $1M+",
-       caption = make_caption(note_string_ts))
+  labs(x = "Year", y = "Share of Households With $1M+ on This Measure",
+       caption = make_caption_extra(liquid_def_text, note = note_string_ts))
 
 save_chart(plot, file_path)
 
@@ -914,7 +888,7 @@ if(can_do_composition){
            label = make_pct_labels(share, 0),
            vj    = ifelse(share >= 0, -0.4, 1.3))
   
-  file_path <- paste0(out_path, "/08_millionaire_composition_by_band.jpeg")
+  file_path <- paste0(out_path, "/millionaire_composition_by_band.jpeg")
   
   plot <- ggplot(band_plot, aes(x = band, y = share)) +
     geom_bar(stat = "identity", fill = chart_standard_color) +
@@ -925,15 +899,47 @@ if(can_do_composition){
     scale_y_continuous(label = percent_format(accuracy = 1),
                        expand = expansion(mult = c(0.08, 0.15))) +
     of_dollars_and_data_theme +
-    theme(axis.text.x = element_text(size = 7)) +
+    theme(axis.text.x = element_text(size = 7),
+          plot.caption.position = "plot") +
     ggtitle(paste0("What Millionaires Own, by Net Worth\n",
                    "Share of Each Group's Net Worth, ", data_year)) +
     labs(x = "Net Worth", y = "Share of Net Worth",
          caption = make_caption_extra(
-           "Home equity is net of home loans. 'Everything else' includes all other debt."))
+           "Home equity is net of home loans. 'Everything else' includes all other debt.",
+           note = note_string_wide))
   
   save_chart(plot, file_path)
 }
+
+# ---- 09: how millionaires split by net worth band ----
+# Share of all $1M+ households in each band, so the bars sum to 100%. Reads
+# as "X% of millionaires have $1M-$2M".
+mill_band_share <- df_mill %>%
+  mutate(band = cut(networth, breaks = mill_band_breaks,
+                    labels = mill_band_labels, right = FALSE)) %>%
+  group_by(band) %>%
+  summarise(households = sum(wgt), .groups = "drop") %>%
+  mutate(share = households / sum(households),
+         label = paste0(make_pct_labels(share, 0), "\n(",
+                        make_round_count(households), ")"))
+
+stopifnot(abs(sum(mill_band_share$share) - 1) < 1e-8)
+
+file_path <- paste0(out_path, "/millionaire_share_by_band.jpeg")
+
+plot <- ggplot(mill_band_share, aes(x = band, y = share)) +
+  geom_bar(stat = "identity", fill = chart_standard_color) +
+  geom_text(aes(label = label), col = chart_standard_color,
+            vjust = -0.3, size = label_size, lineheight = 0.9) +
+  scale_y_continuous(label = percent_format(accuracy = 1),
+                     expand = expansion(mult = c(0, 0.18))) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("How Rich Are Millionaires?\n",
+                 "Share of $1M+ Households by Net Worth, ", data_year)) +
+  labs(x = "Net Worth", y = "Share of Millionaire Households",
+       caption = make_caption())
+
+save_chart(plot, file_path)
 
 # ##################################################################### #
 # SECTION 7: Key facts for review (log only - no charts)
