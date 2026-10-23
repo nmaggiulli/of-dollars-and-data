@@ -834,7 +834,7 @@ end_df <- def_time %>%
   filter(year == year_max) %>%
   mutate(label = make_pct_labels(share, 0))
 
-file_path <- paste0(out_path, "/millionaire_share_by_definition_over_time.jpeg")
+file_path <- paste0(out_path, "/millionaire_definitions_over_time.jpeg")
 
 plot <- ggplot(def_time, aes(x = year, y = share, col = definition)) +
   geom_line(linewidth = 0.9) +
@@ -857,7 +857,7 @@ plot <- ggplot(def_time, aes(x = year, y = share, col = definition)) +
   guides(col = guide_legend(nrow = 2, byrow = TRUE)) +
   ggtitle(paste0("Millionaires Under Four Definitions\n",
                  "Share of U.S. Households")) +
-  labs(x = "Year", y = "Share of Households With $1M+ on This Measure",
+  labs(x = "Year", y = "Share of Households With $1M+",
        caption = make_caption_extra(liquid_def_text, note = note_string_ts))
 
 save_chart(plot, file_path)
