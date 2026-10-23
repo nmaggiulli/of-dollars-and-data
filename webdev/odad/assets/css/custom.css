@@ -334,3 +334,73 @@ body.page-id-23693 .date-container
 		min-height: calc(196px + 2em);
 	}
 }
+
+/* ==========================================================================
+   Print styles (Save as PDF / Print). Added 2026-10-23.
+   Problem: the sticky header (jQuery Sticky, #sticker-sticky-wrapper) is
+   position: fixed while scrolled, so browsers repeat it at the top of every
+   printed page, covering text and chart titles. Charts could also split
+   across page breaks.
+   Print only - the on-screen site is unchanged.
+   ========================================================================== */
+@media print {
+
+	/* 1. Remove the sticky header (and its placeholder height) from print.
+	      The browser's own print header already shows the post title. */
+	#sticker-sticky-wrapper,
+	#sticker,
+	.is-sticky,
+	.inner-header,
+	.header-banner,
+	.mobile-title {
+		display: none !important;
+	}
+
+	/* 2. Remove any top offset the theme adds to make room for the header */
+	html,
+	body,
+	#container,
+	#content,
+	#inner-content,
+	#main {
+		padding-top: 0 !important;
+		margin-top: 0 !important;
+	}
+
+	/* 3. Article uses the full page width once the sidebar is gone */
+	#main {
+		max-width: 100% !important;
+		width: 100% !important;
+	}
+
+	/* 4. Hide non-article elements: sidebar (book, newsletter, search),
+	      newsletter forms, and in-post ads */
+	#sidebar,
+	.mc4wp-form,
+	#post_advert {
+		display: none !important;
+	}
+
+	/* 5. Keep charts, images and captions on one page */
+	img,
+	figure,
+	.wp-block-image,
+	.wp-caption {
+		break-inside: avoid;
+		page-break-inside: avoid;
+		max-width: 100% !important;
+		height: auto !important;
+	}
+
+	/* 6. Keep headings with the paragraph that follows them */
+	h1, h2, h3, h4 {
+		break-after: avoid;
+		page-break-after: avoid;
+	}
+
+	/* 7. Avoid single stray lines at the top or bottom of a page */
+	p, li {
+		orphans: 3;
+		widows: 3;
+	}
+}
