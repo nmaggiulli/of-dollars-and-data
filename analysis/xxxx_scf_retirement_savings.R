@@ -15,13 +15,11 @@ library(ggrepel)
 library(survey)
 library(mitools)
 library(Hmisc)
-library(xtable)
 library(tidyverse)
 
 ########################## Parameters ################################# #
 
 data_year   <- 2025
-prior_year  <- 2022
 dollar_year <- 2025
 
 # ---------------------------------------------------------------------- #
@@ -74,17 +72,11 @@ income_floor <- 20000
 # Percentiles for the distribution charts
 dist_probs <- c(0.25, 0.50, 0.75, 0.90)
 
-# Two-series charts (prior year vs. latest year, or split groups)
-prior_year_color <- "#B3B3B3"
-
-period_fill_scale <- function(){
-  scale_fill_manual(values = setNames(c(prior_year_color, chart_standard_color),
-                                      c(as.character(prior_year),
-                                        as.character(data_year))))
-}
+# Two-series charts (split groups)
+secondary_color <- "#B3B3B3"
 
 two_group_fill <- function(){
-  scale_fill_manual(values = c(prior_year_color, chart_standard_color))
+  scale_fill_manual(values = c(secondary_color, chart_standard_color))
 }
 
 # ---- Chart layout constants -------------------------------------------- #
@@ -267,13 +259,6 @@ save_chart <- function(plot, file_path){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
-write_html_table <- function(table_out, file_path){
-  print(xtable(table_out),
-        include.rownames = FALSE,
-        type = "html",
-        file = file_path)
-}
-
 # ##################################################################### #
 # SECTION 1: What people actually have
 # ##################################################################### #
@@ -328,7 +313,7 @@ plot <- ggplot(balances_by_age, aes(x = agecl_new, y = value, fill = group)) +
 
 save_chart(plot, file_path)
 
-# ---- Table: mean and median side by side, both bases ----
+# ---- Console summary: mean and median side by side, both bases ----
 balance_table <- df_fine %>%
   group_by(agecl_new) %>%
   summarise(
@@ -341,20 +326,12 @@ balance_table <- df_fine %>%
     .groups = "drop"
   )
 
-write_html_table(
-  balance_table %>%
-    transmute(`Age Range` = as.character(agecl_new),
-              `Median (All)`    = format_as_dollar(median_all),
-              `Median (Savers)` = format_as_dollar(median_owners),
-              `Average (All)`   = format_as_dollar(mean_all),
-              `% With Account`  = make_pct_labels(pct_with)),
-  paste0(out_path, "/01_balance_by_age_table.html"))
-
 print("Retirement balances by age:")
 print(balance_table %>%
         transmute(agecl_new,
                   median_all = format_as_dollar(median_all),
                   median_owners = format_as_dollar(median_owners),
+                  mean_all = format_as_dollar(mean_all),
                   pct_with = make_pct_labels(pct_with)) %>%
         as.data.frame())
 
@@ -430,12 +407,12 @@ plot <- ggplot(participation_by_income, aes(x = income_group, y = share)) +
 
 save_chart(plot, file_path)
 
-write_html_table(
-  participation_by_income %>%
-    transmute(`Income Group` = as.character(income_group),
-              `% With Account` = make_pct_labels(share),
-              `Median Balance` = format_as_dollar(median_balance)),
-  paste0(out_path, "/02_participation_by_income_table.html"))
+print("Participation and median balance by income quintile:")
+print(participation_by_income %>%
+        transmute(income_group,
+                  pct_with = make_pct_labels(share),
+                  median_balance = format_as_dollar(median_balance)) %>%
+        as.data.frame())
 
 # ##################################################################### #
 # SECTION 3: The spread
@@ -482,14 +459,6 @@ plot <- ggplot(dist_by_age, aes(x = agecl, y = value)) +
        caption = make_caption(note_accounts))
 
 save_chart(plot, file_path)
-
-write_html_table(
-  dist_by_age %>%
-    mutate(display = format_as_dollar(value)) %>%
-    select(agecl, key, display) %>%
-    pivot_wider(names_from = key, values_from = display) %>%
-    rename(Age = agecl),
-  paste0(out_path, "/03_distribution_by_age_table.html"))
 
 # ##################################################################### #
 # SECTION 4: The "should" part - actual vs. the rule of thumb
@@ -581,20 +550,13 @@ plot <- ggplot(meets_benchmark, aes(x = agecl_new, y = share_meeting)) +
 
 save_chart(plot, file_path)
 
-write_html_table(
-  multiple_by_age %>%
-    left_join(meets_benchmark, by = "agecl_new") %>%
-    transmute(`Age Range` = as.character(agecl_new),
-              `Benchmark` = make_x_labels(benchmark),
-              `Actual (Median)` = make_x_labels(actual_multiple),
-              `% Meeting It` = make_pct_labels(share_meeting)),
-  paste0(out_path, "/04_savings_multiple_table.html"))
-
 print("Actual vs. benchmark savings multiple:")
 print(multiple_by_age %>%
+        left_join(meets_benchmark, by = "agecl_new") %>%
         transmute(agecl_new,
                   benchmark = make_x_labels(benchmark),
-                  actual = make_x_labels(actual_multiple)) %>%
+                  actual = make_x_labels(actual_multiple),
+                  pct_meeting = make_pct_labels(share_meeting)) %>%
         as.data.frame())
 
 # ##################################################################### #
@@ -696,12 +658,6 @@ if(!is.na(db_flag)){
          caption = make_caption(note_string_ts))
   
   save_chart(plot, file_path)
-  
-  write_html_table(
-    db_by_age %>%
-      transmute(`Age Range` = as.character(agecl_new),
-                `% With a Pension` = make_pct_labels(share)),
-    paste0(out_path, "/05_db_coverage_table.html"))
 }
 
 # ##################################################################### #
@@ -758,25 +714,8 @@ if("fin" %in% names(df_fine)){
 balance_over_time <- df %>%
   add_agecl_new() %>%
   group_by(year, agecl) %>%
-  summarise(median_all = wtd_stat(retqliq, wgt, 0.5),
-            pct_with   = wtd_share(has_ret, wgt),
+  summarise(pct_with = wtd_share(has_ret, wgt),
             .groups = "drop")
-
-file_path <- paste0(out_path, "/07_median_balance_over_time_by_age.jpeg")
-
-plot <- ggplot(balance_over_time, aes(x = year, y = median_all)) +
-  geom_line(col = chart_standard_color, linewidth = 0.8) +
-  facet_wrap(vars(agecl), scales = "free_y", axes = "all") +
-  scale_y_continuous(label = dollar) +
-  scale_x_continuous(breaks = seq(year_min, year_max, 9)) +
-  of_dollars_and_data_theme +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle(paste0("Retirement Savings Over Time\n",
-                 "Median Balance, All Households")) +
-  labs(x = "Year", y = "Retirement Account Balance",
-       caption = make_caption(note_string_ts))
-
-save_chart(plot, file_path)
 
 file_path <- paste0(out_path, "/07_participation_over_time_by_age.jpeg")
 
@@ -793,46 +732,6 @@ plot <- ggplot(balance_over_time, aes(x = year, y = pct_with)) +
        caption = make_caption(note_string_ts))
 
 save_chart(plot, file_path)
-
-# ---- Prior vs. latest, median balance by age ----
-balance_two_year <- balance_over_time %>%
-  filter(year %in% c(prior_year, data_year)) %>%
-  mutate(period = factor(as.character(year),
-                         levels = c(as.character(prior_year),
-                                    as.character(data_year))))
-
-text_labels <- balance_two_year %>%
-  mutate(label = make_dollar_labels(median_all))
-
-file_path <- paste0(out_path, "/07_balance_", prior_year, "_vs_",
-                    data_year, ".jpeg")
-
-plot <- ggplot(balance_two_year, aes(x = agecl, y = median_all,
-                                     fill = period)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
-  geom_text(data = text_labels,
-            aes(x = agecl, y = median_all, label = label, group = period),
-            position = position_dodge(width = 0.9),
-            col = chart_standard_color, vjust = -0.5,
-            size = label_size_small) +
-  scale_y_continuous(label = dollar, expand = expansion(mult = c(0, 0.14))) +
-  period_fill_scale() +
-  of_dollars_and_data_theme +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.title = element_blank(),
-        legend.position = "bottom") +
-  ggtitle(paste0("Median Retirement Balances by Age\n",
-                 prior_year, " vs. ", data_year)) +
-  labs(x = "Age", y = "Median Balance",
-       caption = make_caption(note_string_ts))
-
-save_chart(plot, file_path)
-
-export_to_excel(df = balance_over_time,
-                outfile = paste0(out_path, "/07_balance_over_time.xlsx"),
-                sheetname = "retirement",
-                new_file = 1,
-                fancy_formatting = 0)
 
 # ##################################################################### #
 # SECTION 8: Sanity checks
