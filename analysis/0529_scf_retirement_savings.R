@@ -36,10 +36,7 @@ dollar_year <- 2025
 # public sector workers and union households hardest.
 #
 # So the post's scope is RETIREMENT ACCOUNT BALANCES, not total retirement
-# resources. Section 5 splits the sample on DB coverage, which turns the
-# limitation into the finding: for households with no pension - most of the
-# private sector now - RETQLIQ IS their full retirement wealth, with no gap
-# at all.
+# resources.
 #
 # Social Security is missing from all of this too, and for the median
 # household it is worth more than any 401(k) balance. That belongs in the
@@ -111,18 +108,6 @@ optional_vars <- intersect(c("fin", "liq", "homeeq", "networth",
 
 message("Optional variables found: ", paste(optional_vars, collapse = ", "))
 
-# Which DB pension flag is available? DBPLANT is broader (current job OR a
-# pension from a past job), so prefer it.
-db_flag <- intersect(c("dbplant", "dbplancj"), names(scf_stack))[1]
-
-if(is.na(db_flag)){
-  message("No DB pension flag (dbplant/dbplancj) in the stack - Section 5 ",
-          "will be skipped. That section is the honest counterweight to the ",
-          "headline numbers, so consider adding the flag to build 0003.")
-} else {
-  message("Using DB pension flag: ", db_flag)
-}
-
 df <- scf_stack %>%
   select(all_of(unique(c("year", "hh_id", "imp_id", "agecl", "edcl", "age",
                          "income", "retqliq", "wgt", optional_vars)))) %>%
@@ -160,13 +145,6 @@ df <- df %>%
     has_ret = retqliq > 0
   )
 
-if(!is.na(db_flag)){
-  df <- df %>%
-    mutate(has_db = .data[[db_flag]] %in% c(1, TRUE, "1", "Yes", "yes"),
-           db_group = factor(ifelse(has_db, "Has a pension", "No pension"),
-                             levels = c("Has a pension", "No pension")))
-}
-
 df_year <- df %>% filter(year == data_year)
 df_fine <- df_year %>% add_agecl_new()
 
@@ -189,6 +167,10 @@ note_string_ts <- str_wrap(paste0("Note: All figures are adjusted for inflation 
 note_accounts <- str_wrap(paste0("Note: Retirement accounts include IRAs, 401(k)s, and similar plans, but not the value of a traditional pension. All figures in ",
                                  dollar_year, " dollars."),
                           width = caption_wrap)
+
+note_accounts2 <- str_wrap(paste0("Note: Retirement accounts include IRAs, 401(k)s, and similar plans, but not the value of a traditional pension."),
+                           width = caption_wrap)
+
 
 ########################## Helper Functions ########################### #
 
@@ -445,7 +427,7 @@ plot <- ggplot(participation_by_age, aes(x = agecl_new, y = share)) +
   ggtitle(paste0("Who Has a Retirement Account?\n",
                  "Share With Any Balance, ", data_year)) +
   labs(x = "Age", y = "Share of Households",
-       caption = make_caption(note_accounts))
+       caption = make_caption(note_accounts2))
 
 save_chart(plot, file_path)
 
@@ -483,10 +465,10 @@ plot <- ggplot(participation_by_income, aes(x = income_group, y = share)) +
                      expand = expansion(mult = c(0, 0.14))) +
   of_dollars_and_data_theme +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle(paste0("Saving Is an Income Story\n",
+  ggtitle(paste0("Saving for Retirement Is an Income Story\n",
                  "Share With an Account, ", data_year)) +
-  labs(x = "Household Income", y = "Share of Households",
-       caption = make_caption(note_accounts))
+  labs(x = "Household Income Quintile", y = "Share of Households",
+       caption = make_caption(note_accounts2))
 
 save_chart(plot, file_path)
 
@@ -536,8 +518,7 @@ plot <- ggplot(dist_by_age, aes(x = agecl, y = value)) +
   scale_y_continuous(label = dollar, expand = expansion(mult = c(0, 0.18))) +
   of_dollars_and_data_theme +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle(paste0("The Spread Is Enormous\n",
-                 "Retirement Balances by Age, ", data_year)) +
+  ggtitle(paste0("Distribution of Retirement Balances by Age")) +
   labs(x = "Age", y = "Retirement Account Balance",
        caption = make_caption(note_accounts))
 
@@ -643,133 +624,6 @@ print(multiple_by_age %>%
         as.data.frame())
 
 # ##################################################################### #
-# SECTION 5: The pension caveat
-# ##################################################################### #
-# The honest counterweight. Low balances look less alarming once you see who
-# has a pension behind them - and for households WITHOUT one, RETQLIQ is
-# their complete retirement wealth, so the numbers above have no gap at all.
-
-if(!is.na(db_flag)){
-  
-  # ---- 5a: DB coverage by age ----
-  db_by_age <- df_fine %>%
-    group_by(agecl_new) %>%
-    summarise(share = wtd_share(has_db, wgt), .groups = "drop")
-  
-  text_labels <- db_by_age %>%
-    mutate(label = make_pct_labels(share))
-  
-  file_path <- paste0(out_path, "/05_db_coverage_by_age.jpeg")
-  
-  plot <- ggplot(db_by_age, aes(x = agecl_new, y = share)) +
-    geom_bar(stat = "identity", fill = chart_standard_color) +
-    geom_text(data = text_labels, aes(x = agecl_new, y = share, label = label),
-              col = chart_standard_color, vjust = -0.5,
-              size = label_size_small) +
-    scale_y_continuous(label = percent_format(accuracy = 1),
-                       expand = expansion(mult = c(0, 0.14))) +
-    of_dollars_and_data_theme +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    ggtitle(paste0("Who Still Has a Pension?\n",
-                   "Share With a DB Plan, ", data_year)) +
-    labs(x = "Age", y = "Share of Households",
-         caption = make_caption())
-  
-  save_chart(plot, file_path)
-  
-  # ---- 5b: balances split on pension status ----
-  # Expect households WITH a pension to hold LESS in accounts - they did not
-  # need to accumulate as much. Same "low" balance, entirely different
-  # meaning. This is the chart that reframes the post.
-  balance_by_db <- df_fine %>%
-    group_by(agecl, db_group) %>%
-    summarise(value = wtd_stat(retqliq, wgt, 0.5), .groups = "drop")
-  
-  text_labels <- balance_by_db %>%
-    mutate(label = make_dollar_labels(value))
-  
-  file_path <- paste0(out_path, "/05_balance_by_pension_status.jpeg")
-  
-  plot <- ggplot(balance_by_db, aes(x = agecl, y = value, fill = db_group)) +
-    geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
-    geom_text(data = text_labels,
-              aes(x = agecl, y = value, label = label, group = db_group),
-              position = position_dodge(width = 0.9),
-              col = chart_standard_color, vjust = -0.5,
-              size = label_size_small) +
-    scale_y_continuous(label = dollar, expand = expansion(mult = c(0, 0.14))) +
-    two_group_fill() +
-    of_dollars_and_data_theme +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1),
-          legend.title = element_blank(),
-          legend.position = "bottom") +
-    ggtitle(paste0("A Pension Changes the Math\n",
-                   "Median Account Balance, ", data_year)) +
-    labs(x = "Age", y = "Retirement Account Balance",
-         caption = make_caption(note_accounts))
-  
-  save_chart(plot, file_path)
-  
-  # ---- 5c: the structural shift over time ----
-  db_over_time <- df %>%
-    group_by(year) %>%
-    summarise(share = wtd_share(has_db, wgt), .groups = "drop")
-  
-  file_path <- paste0(out_path, "/05_db_coverage_over_time.jpeg")
-  
-  lab_df <- db_over_time %>%
-    filter(year %in% c(min(year), max(year))) %>%
-    mutate(label = make_pct_labels(share),
-           hj = ifelse(year == min(year), 0, 1))
-  
-  plot <- ggplot(db_over_time, aes(x = year, y = share)) +
-    geom_line(col = chart_standard_color, linewidth = 0.9) +
-    geom_point(data = lab_df, aes(x = year, y = share),
-               col = chart_standard_color, size = 1.4) +
-    geom_text(data = lab_df, aes(x = year, y = share, label = label, hjust = hj),
-              col = chart_standard_color,
-              vjust = -1.2, size = label_size) +
-    scale_y_continuous(label = percent_format(accuracy = 1),
-                       expand = expansion(mult = c(0.08, 0.16))) +
-    scale_x_continuous(breaks = seq(year_min, year_max, 3),
-                       expand = expansion(mult = c(0.08, 0.08))) +
-    of_dollars_and_data_theme +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    ggtitle(paste0("The Pension Disappeared\n",
-                   "Share of Households Covered")) +
-    labs(x = "Year", y = "Share of Households",
-         caption = make_caption(note_string_ts))
-  
-  save_chart(plot, file_path)
-}
-
-# ##################################################################### #
-# SECTION 7: Has it gotten better or worse?
-# ##################################################################### #
-
-balance_over_time <- df %>%
-  add_agecl_new() %>%
-  group_by(year, agecl) %>%
-  summarise(pct_with = wtd_share(has_ret, wgt),
-            .groups = "drop")
-
-file_path <- paste0(out_path, "/07_participation_over_time_by_age.jpeg")
-
-plot <- ggplot(balance_over_time, aes(x = year, y = pct_with)) +
-  geom_line(col = chart_standard_color, linewidth = 0.8) +
-  facet_wrap(vars(agecl), axes = "all") +
-  scale_y_continuous(label = percent_format(accuracy = 1)) +
-  scale_x_continuous(breaks = seq(year_min, year_max, 9)) +
-  of_dollars_and_data_theme +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle(paste0("Who Has an Account, Over Time\n",
-                 "Share With Any Balance")) +
-  labs(x = "Year", y = "Share of Households",
-       caption = make_caption(note_string_ts))
-
-save_chart(plot, file_path)
-
-# ##################################################################### #
 # SECTION 8: Sanity checks
 # ##################################################################### #
 
@@ -799,18 +653,6 @@ if(length(component_cols) == 4){
                "found: ",
                ifelse(length(component_cols) == 0, "none",
                       paste(component_cols, collapse = ", ")), ")"))
-}
-
-if(!is.na(db_flag)){
-  print(paste0("DB pension coverage in ", data_year, ": ",
-               make_pct_labels(wtd_share(df_year$has_db, df_year$wgt), 1),
-               " (using ", db_flag, ")"))
-  print(paste0("DB coverage in ", year_min, ": ",
-               make_pct_labels(db_over_time %>%
-                                 filter(year == year_min) %>%
-                                 pull(share), 1)))
-} else {
-  print("No DB flag in the stack - Section 5 was skipped.")
 }
 
 print(paste0("Households excluded from the multiple charts (income below ",

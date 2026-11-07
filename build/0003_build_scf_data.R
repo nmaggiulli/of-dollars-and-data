@@ -84,6 +84,17 @@ sink(log_con, split = TRUE)
 # kgbus   = on businesses
 # kgstmf  = on stocks and mutual funds
 
+# NEW - retirement plan detail (summary extract):
+# irakh   = IRAs and Keoghs
+# thrift  = account-type pension plans on current job (401(k), 403(b), TSP)
+# futpen  = future pensions (accumulated in an account) from past jobs
+# currpen = currently received account-type pensions
+#           (irakh + thrift + futpen + currpen = retqliq)
+# dbplant  = 1 if the household has a DB pension on a current job OR any
+#            type of pension from a past job
+# dbplancj = 1 if the household has a DB pension on a current job
+# dcplancj = 1 if the household has a DC (account-type) plan on a current job
+
 # x5801 = Inheritance (1 = yes, 5 = no)
 # x3915 = stock options (actual value)
 # NEW - from the summary extract (same real dollars as networth):
@@ -106,6 +117,8 @@ vars_to_keep <- c('y1', 'yy1', 'networth', 'asset',
                   'income', 'wageinc', 'intdivinc', 'bussefarminc',  'kginc', 'ssretinc',
                   'kgtotal', 'kghouse', 'kgore', 'kgbus', 'kgstmf',
                   'trusts', 'annuit', 'ifinpro', 'ifinplan',
+                  'irakh', 'thrift', 'futpen', 'currpen',
+                  'dbplant', 'dbplancj', 'dcplancj',
                   'agecl', 'age', 'hhsex', 'race', 'racecl4', 'edcl', 'married', 'kids',
                   'x5801', 'x3915', 'x4006',
                   'wgt')
@@ -317,6 +330,21 @@ for (key in names(x_lookup)){
   }
 }
 
+# ---- Diagnostics: pension flags ---------------------------------------- #
+# A flag missing from a year's file comes back as NA, and the analysis
+# script would read NA as "no pension". Print the weighted share by year so
+# a year with no data (NA) stands out from a real low share.
+pension_check <- scf_stack %>%
+  group_by(year) %>%
+  summarise(dbplant  = ifelse(all(is.na(dbplant)), NA,
+                              weighted.mean(dbplant == 1, wgt, na.rm = TRUE)),
+            dbplancj = ifelse(all(is.na(dbplancj)), NA,
+                              weighted.mean(dbplancj == 1, wgt, na.rm = TRUE)),
+            .groups = "drop")
+
+print("Weighted share with a DB pension flag, by year (NA = not in file):")
+print(as.data.frame(pension_check))
+
 # ---- Original cleaning ------------------------------------------------- #
 scf_stack_final <- mutate(scf_stack_final, married = married %% 2,
                           white = race %% 2,
@@ -364,7 +392,9 @@ print("New variables in the stack:")
 print(intersect(c("kgtotal", "kghouse", "kgore", "kgbus", "kgstmf", "inh_amt",
                   "inh_expect", "inh_expect_amt", "bequest_expect",
                   "bequest_important", "charity_500", "charity_amt",
-                  "support_given", "trusts", "has_trust", "ifinpro", "ifinplan"),
+                  "support_given", "trusts", "has_trust", "ifinpro", "ifinplan",
+                  "irakh", "thrift", "futpen", "currpen",
+                  "dbplant", "dbplancj", "dcplancj"),
                 names(scf_stack_final)))
 
 # Save down data to permanent file
