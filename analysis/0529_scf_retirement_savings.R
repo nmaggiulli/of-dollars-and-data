@@ -624,6 +624,68 @@ print(multiple_by_age %>%
         as.data.frame())
 
 # ##################################################################### #
+# SECTION 5: A better benchmark - Current Retirement Need by age
+# ##################################################################### #
+# Worked example from the post. Everything is in today's dollars:
+#   Uncovered spending  = retirement spending - Social Security
+#   Future need         = uncovered spending x 25 (4% withdrawal rate)
+#   Current need at age = future need / (1 + real return)^(years to retirement)
+# No SCF data here.
+
+retirement_spending <- 150000
+social_security     <- 36000
+withdrawal_rate     <- 0.04
+real_return         <- 0.05
+retirement_age      <- 67
+start_age           <- 22
+
+uncovered_spending <- retirement_spending - social_security
+future_need        <- uncovered_spending / withdrawal_rate
+
+current_need <- tibble(age = start_age:retirement_age) %>%
+  mutate(years_left = retirement_age - age,
+         need       = future_need / (1 + real_return)^years_left)
+
+# Label the start, today (age 36 in the post's example), and retirement.
+label_ages <- c(start_age, 36, retirement_age)
+
+need_labels <- current_need %>%
+  filter(age %in% label_ages) %>%
+  # Two decimals for millions so $2,850,000 reads "$2.85M", not "$2.9M"
+  mutate(label = ifelse(need >= 10^6,
+                        paste0("$", formatC(need/10^6, format = "f", digits = 2), "M"),
+                        make_target_labels(need)),
+         # Left-align the first label and right-align the last so neither clips
+         hj = case_when(age == min(age) ~ 0, age == max(age) ~ 1, TRUE ~ 0.5))
+
+file_path <- paste0(out_path, "/05_current_retirement_need_by_age.jpeg")
+
+plot <- ggplot(current_need, aes(x = age, y = need)) +
+  geom_line(col = chart_standard_color, linewidth = 1) +
+  geom_point(data = need_labels, col = chart_standard_color, size = 1.8) +
+  geom_text(data = need_labels, aes(label = label, hjust = hj),
+            col = chart_standard_color, vjust = -1, size = label_size) +
+  scale_x_continuous(breaks = seq(25, 65, 5),
+                     expand = expansion(mult = c(0.03, 0.04))) +
+  scale_y_continuous(label = dollar, limits = c(0, NA),
+                     expand = expansion(mult = c(0, 0.10))) +
+  of_dollars_and_data_theme +
+  ggtitle(paste0("Current Retirement Need by Age\n",
+                 "To Have $2.85M at Age 67")) +
+  labs(x = "Age", y = "Current Retirement Need",
+       caption = paste0("Source:  OfDollarsAndData.com\n",
+                        str_wrap(paste0("Note: Assumes $150k of annual retirement spending, $36k of Social Security, a 4% withdrawal rate, a 5% real return, and retirement at age ",
+                                        retirement_age, ". All figures in today's dollars."),
+                                 width = caption_wrap)))
+
+save_chart(plot, file_path)
+
+print("Current Retirement Need at selected ages:")
+print(need_labels %>%
+        transmute(age, current_need = format_as_dollar(need)) %>%
+        as.data.frame())
+
+# ##################################################################### #
 # SECTION 8: Sanity checks
 # ##################################################################### #
 
