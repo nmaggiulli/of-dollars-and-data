@@ -414,7 +414,7 @@ participation_by_age <- df_fine %>%
 text_labels <- participation_by_age %>%
   mutate(label = make_pct_labels(share))
 
-file_path <- paste0(out_path, "/02_participation_by_age.jpeg")
+file_path <- paste0(out_path, "/02_participation_by_age_redo.jpeg")
 
 plot <- ggplot(participation_by_age, aes(x = agecl_new, y = share)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
@@ -498,17 +498,24 @@ dist_by_age <- df_fine %>%
                                               digits = 0),
                                       "th Percentile")))
 
-# Labels formatted PER FACET - a $1M facet should not force "$0.0M" labels
-# onto a facet whose values are in the thousands.
+# Labels formatted PER VALUE: "$75k" and "$330k" instead of "$0.1M" and
+# "$0.3M" in the 90th percentile panel.
 text_labels <- dist_by_age %>%
-  group_by(key) %>%
-  mutate(label = make_dollar_labels(value)) %>%
-  ungroup()
+  mutate(label = ifelse(round(value) == 0, "$0", make_target_labels(value)))
 
-file_path <- paste0(out_path, "/03_distribution_by_age.jpeg")
+# The 25th percentile is $0 at every age, so its free y-axis collapsed to
+# $0.00-$0.15. An invisible point at $10k gives that panel a normal dollar
+# axis. Panels with real values are unaffected.
+axis_floor <- dist_by_age %>%
+  group_by(key) %>%
+  summarise(value = max(max(value), 10000), .groups = "drop") %>%
+  mutate(agecl = levels(dist_by_age$agecl)[1])
+
+file_path <- paste0(out_path, "/03_retirement_balance_distribution_by_age.jpeg")
 
 plot <- ggplot(dist_by_age, aes(x = agecl, y = value)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
+  geom_blank(data = axis_floor) +
   geom_text(data = text_labels, aes(x = agecl, y = value, label = label),
             col = chart_standard_color, vjust = -0.4,
             size = label_size_small) +
@@ -593,14 +600,16 @@ meets_benchmark <- df_multiple %>%
 text_labels <- meets_benchmark %>%
   mutate(label = make_pct_labels(share_meeting))
 
-file_path <- paste0(out_path, "/04_share_meeting_benchmark.jpeg")
+file_path <- paste0(out_path, "/04_share_hitting_benchmark.jpeg")
 
 plot <- ggplot(meets_benchmark, aes(x = agecl_new, y = share_meeting)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
   geom_text(data = text_labels,
             aes(x = agecl_new, y = share_meeting, label = label),
             col = chart_standard_color, vjust = -0.5, size = label_size_small) +
+  # Explicit 2% breaks. The default 2.5% steps rounded to "2%, 5%, 8%".
   scale_y_continuous(label = percent_format(accuracy = 1),
+                     breaks = seq(0, 1, 0.02),
                      expand = expansion(mult = c(0, 0.14))) +
   of_dollars_and_data_theme +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
