@@ -19,8 +19,14 @@ library(tidyverse)
 
 ########################## Parameters ################################# #
 
+# Change data_year only. Everything else (file names, folder, captions)
+# follows from it.
 data_year   <- 2025
-dollar_year <- 2025
+
+# Used in caption text only. It assumes the SCF build (0003_scf_stack.Rds)
+# inflation-adjusts to the latest survey year. If the build uses a different
+# dollar year, set this by hand.
+dollar_year <- data_year
 
 # ---------------------------------------------------------------------- #
 # WHAT THIS SCRIPT MEASURES, AND WHAT IT CANNOT
@@ -91,6 +97,11 @@ out_path    <- paste0(base_path, "/", data_year)
 
 dir.create(file.path(paste0(base_path)), showWarnings = FALSE)
 dir.create(file.path(paste0(out_path)), showWarnings = FALSE)
+
+# Every chart file ends in "_<data_year>", e.g. "01_median_balance_by_age_2025.jpeg".
+make_file_path <- function(chart_name){
+  paste0(out_path, "/", chart_name, "_", data_year, ".jpeg")
+}
 
 ########################## Start Program Here ######################### #
 
@@ -272,7 +283,7 @@ end_labels <- target_by_age %>%
   filter(age == max(age)) %>%
   mutate(label = make_target_labels(target))
 
-file_path <- paste0(out_path, "/00_fidelity_savings_targets.jpeg")
+file_path <- make_file_path("00_fidelity_savings_targets")
 
 # Age is numeric, so the 60-to-67 gap is drawn wider than the 5-year gaps.
 plot <- ggplot(target_by_age, aes(x = age, y = target, col = income_label)) +
@@ -333,7 +344,7 @@ balances_by_age <- bind_rows(
 text_labels <- balances_by_age %>%
   mutate(label = make_dollar_labels(value))
 
-file_path <- paste0(out_path, "/01_median_balance_by_age.jpeg")
+file_path <- make_file_path("01_median_balance_by_age")
 
 plot <- ggplot(balances_by_age, aes(x = agecl_new, y = value, fill = group)) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
@@ -361,7 +372,7 @@ balances_all <- balances_by_age %>%
 text_labels <- balances_all %>%
   mutate(label = make_dollar_labels(value))
 
-file_path <- paste0(out_path, "/01_median_balance_by_age_all.jpeg")
+file_path <- make_file_path("01_median_balance_by_age_all")
 
 plot <- ggplot(balances_all, aes(x = agecl_new, y = value)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
@@ -414,7 +425,7 @@ participation_by_age <- df_fine %>%
 text_labels <- participation_by_age %>%
   mutate(label = make_pct_labels(share))
 
-file_path <- paste0(out_path, "/02_participation_by_age_redo.jpeg")
+file_path <- make_file_path("02_participation_by_age_redo")
 
 plot <- ggplot(participation_by_age, aes(x = agecl_new, y = share)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
@@ -455,7 +466,7 @@ participation_by_income <- df_quintile %>%
 text_labels <- participation_by_income %>%
   mutate(label = make_pct_labels(share))
 
-file_path <- paste0(out_path, "/02_participation_by_income.jpeg")
+file_path <- make_file_path("02_participation_by_income")
 
 plot <- ggplot(participation_by_income, aes(x = income_group, y = share)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
@@ -511,7 +522,7 @@ axis_floor <- dist_by_age %>%
   summarise(value = max(max(value), 10000), .groups = "drop") %>%
   mutate(agecl = levels(dist_by_age$agecl)[1])
 
-file_path <- paste0(out_path, "/03_retirement_balance_distribution_by_age.jpeg")
+file_path <- make_file_path("03_retirement_balance_distribution_by_age")
 
 plot <- ggplot(dist_by_age, aes(x = agecl, y = value)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
@@ -564,7 +575,7 @@ to_plot <- multiple_by_age %>%
 text_labels <- to_plot %>%
   mutate(label = make_x_labels(value))
 
-file_path <- paste0(out_path, "/04_savings_multiple_vs_benchmark_miss.jpeg")
+file_path <- make_file_path("04_savings_multiple_vs_benchmark_miss")
 
 plot <- ggplot(to_plot, aes(x = agecl_new, y = value, fill = series)) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
@@ -600,7 +611,7 @@ meets_benchmark <- df_multiple %>%
 text_labels <- meets_benchmark %>%
   mutate(label = make_pct_labels(share_meeting))
 
-file_path <- paste0(out_path, "/04_share_hitting_benchmark.jpeg")
+file_path <- make_file_path("04_share_hitting_benchmark")
 
 plot <- ggplot(meets_benchmark, aes(x = agecl_new, y = share_meeting)) +
   geom_bar(stat = "identity", fill = chart_standard_color) +
@@ -667,7 +678,7 @@ need_labels <- current_need %>%
          # Left-align the first label and right-align the last so neither clips
          hj = case_when(age == min(age) ~ 0, age == max(age) ~ 1, TRUE ~ 0.5))
 
-file_path <- paste0(out_path, "/05_current_retirement_need_by_age.jpeg")
+file_path <- make_file_path("05_current_retirement_need_by_age")
 
 plot <- ggplot(current_need, aes(x = age, y = need)) +
   geom_line(col = chart_standard_color, linewidth = 1) +
@@ -692,6 +703,82 @@ save_chart(plot, file_path)
 print("Current Retirement Need at selected ages:")
 print(need_labels %>%
         transmute(age, current_need = format_as_dollar(need)) %>%
+        as.data.frame())
+
+# ##################################################################### #
+# SECTION 6: Current Retirement Need for several targets
+# ##################################################################### #
+# Same math as Section 5, but for three final targets on one chart. Reuses
+# real_return, retirement_age and start_age from Section 5. No SCF data here.
+
+future_targets <- c(750000, 1500000, 3000000)
+
+# Compact dollar labels: "$250k", "$1.25M", "$3M". Used for the y-axis and
+# the age-67 labels, so both read the same way.
+make_compact_labels <- function(values){
+  ifelse(values == 0, "$0",
+         ifelse(values >= 10^6,
+                paste0("$", values/10^6, "M"),
+                paste0("$", values/10^3, "k")))
+}
+
+target_levels <- paste0(make_compact_labels(future_targets), " at ", retirement_age)
+
+need_by_target <- expand_grid(age = start_age:retirement_age,
+                              target = future_targets) %>%
+  mutate(years_left   = retirement_age - age,
+         need         = target / (1 + real_return)^years_left,
+         target_label = factor(paste0(make_compact_labels(target), " at ",
+                                      retirement_age),
+                               levels = target_levels))
+
+# Mark and label only the age-67 endpoints.
+target_end_labels <- need_by_target %>%
+  filter(age == retirement_age) %>%
+  mutate(label = make_compact_labels(need))
+
+file_path <- make_file_path("06_current_retirement_need_by_target")
+
+plot <- ggplot(need_by_target, aes(x = age, y = need, col = target_label)) +
+  geom_line(linewidth = 1) +
+  geom_point(data = target_end_labels, size = 1.8) +
+  # Labels sit to the right of the endpoint, in one dark color so the
+  # light-grey line's label stays readable.
+  geom_text(data = target_end_labels, aes(label = label),
+            col = chart_standard_color, hjust = -0.3, size = label_size,
+            show.legend = FALSE) +
+  scale_x_continuous(breaks = seq(25, 65, 5),
+                     expand = expansion(mult = c(0.03, 0.10))) +
+  # $250k steps so a reader can find their age and read the need directly.
+  scale_y_continuous(label = make_compact_labels,
+                     breaks = seq(0, max(future_targets), 250000),
+                     limits = c(0, NA),
+                     expand = expansion(mult = c(0, 0.04))) +
+  scale_color_manual(values = setNames(income_fill, target_levels)) +
+  of_dollars_and_data_theme +
+  # Light gridlines at every y break and every 5 years of age.
+  theme(panel.grid.major = element_line(color = "grey88", linewidth = 0.3),
+        legend.title = element_blank(),
+        legend.position = "bottom") +
+  ggtitle(paste0("Current Retirement Need by Age\n",
+                 "For Three Retirement Targets")) +
+  labs(x = "Age", y = "Current Retirement Need",
+       caption = paste0("Source:  OfDollarsAndData.com\n",
+                        str_wrap(paste0("Note: Assumes a ",
+                                        100 * real_return,
+                                        "% real return and retirement at age ",
+                                        retirement_age,
+                                        ". All figures in today's dollars."),
+                                 width = caption_wrap)))
+
+save_chart(plot, file_path)
+
+print("Current Retirement Need by target, selected ages:")
+print(need_by_target %>%
+        filter(age %in% c(start_age, seq(25, 65, 5), retirement_age)) %>%
+        select(age, target_label, need) %>%
+        mutate(need = format_as_dollar(need)) %>%
+        pivot_wider(names_from = target_label, values_from = need) %>%
         as.data.frame())
 
 # ##################################################################### #

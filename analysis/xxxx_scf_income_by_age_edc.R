@@ -98,7 +98,10 @@ df <- scf_stack_all %>%
 stopifnot(!any(is.na(df$agecl)), !any(is.na(df$edcl)))
 
 n_hh  <- n_distinct(df$hh_id)
-n_imp <- n_distinct(df$imp_id)
+# imp_id is a unique row ID in the stack, not the implicate number (1-5),
+# so count implicates as rows per household.
+n_imp <- nrow(df) / n_hh
+stopifnot(n_imp == round(n_imp))
 
 source_string <- paste0("Source:  Survey of Consumer Finances, ", data_year,
                         " (OfDollarsAndData.com)")
@@ -236,7 +239,7 @@ cell_counts <- function(data, group_vars){
 }
 
 # Sample households behind an upper percentile: rows at or above the cell's
-# threshold, divided by the number of implicates. This counts actual rows
+# threshold, divided by the number of implicates (rows per household). This counts actual rows
 # instead of using n * (1 - p), because the SCF oversamples wealthy
 # households. The naive formula understates support in the upper tail.
 support_above <- function(data, group_vars, quantile_prob){
@@ -244,7 +247,7 @@ support_above <- function(data, group_vars, quantile_prob){
     group_by(across(all_of(group_vars))) %>%
     summarise(threshold = wtd_stat(income, wgt, quantile_prob),
               n_hh      = n_distinct(hh_id),
-              hh_above  = sum(income >= threshold) / n_distinct(imp_id),
+              hh_above  = sum(income >= threshold) / (n() / n_distinct(hh_id)),
               .groups   = "drop")
 }
 
@@ -270,11 +273,37 @@ save_chart <- function(plot, file_path){
   ggsave(file_path, plot, width = 15, height = 12, units = "cm")
 }
 
+# Blog table style. Written into every HTML table file so one paste into
+# the draft carries both the table and its CSS.
+table_css <- '<style>
+#myTable {
+  border-collapse: collapse;
+  width: auto;            /* shrink to fit the content */
+  margin: 1em auto;       /* centered, with small gaps above and below */
+  border: 1px solid #ddd;
+}
+#myTable th, #myTable td {
+  text-align: center;
+  padding: 6px 12px;
+}
+#myTable th, #myTable tr:last-child {
+  border-bottom: 1px solid #000;
+}
+#myTable tr:nth-child(even) {
+  background-color: #dce6f1;
+}
+</style>'
+
 write_html_table <- function(table_out, file_path){
+  # id="myTable" replaces xtable's default border="1", which would draw
+  # a border on every cell and override the CSS.
   print(xtable(table_out),
         include.rownames = FALSE,
         type = "html",
+        html.table.attributes = 'id="myTable"',
+        comment = FALSE,
         file = file_path)
+  cat("\n", table_css, "\n", sep = "", file = file_path, append = TRUE)
 }
 
 # ##################################################################### #
@@ -578,20 +607,32 @@ if(prior_year %in% scf_stack_all$year){
                                      !is.na(implied_factor) ~ implied_factor,
                                      TRUE                   ~ NA_real_)
   
-  threshold_compare <- tibble(prob = rich_probs) %>%
-    mutate(label          = factor(rich_label(prob), levels = rich_label(rich_probs)),
-           prior          = prior_stack_values * prior_factor,
-           prior_nominal  = prior_stack_values / prior_nominal_divisor,
-           latest         = headline$value,
+  # The median is included so the post can show the middle vs. the top.
+  # It goes in the percent-change chart and the table. The levels chart
+  # keeps only the three thresholds: a $82k bar next to $1.2M is unreadable.
+  compare_probs <- c(0.50, rich_probs)
+  compare_label <- function(p){ ifelse(p == 0.5, "Median", rich_label(p)) }
+  
+  prior_compare_stack <- map_dbl(compare_probs,
+                                 ~ wtd_stat(df_prior$income, df_prior$wgt, .x))
+  latest_compare      <- map_dbl(compare_probs,
+                                 ~ wtd_stat(df$income, df$wgt, .x))
+  
+  threshold_compare <- tibble(prob = compare_probs) %>%
+    mutate(label          = factor(compare_label(prob),
+                                   levels = compare_label(compare_probs)),
+           prior          = prior_compare_stack * prior_factor,
+           prior_nominal  = prior_compare_stack / prior_nominal_divisor,
+           latest         = latest_compare,
            pct_change     = latest / prior - 1,
            nominal_change = latest / prior_nominal - 1)
   
-  log_sub(paste0("Thresholds, ", prior_year, " vs. ", data_year))
+  log_sub(paste0("Household income, ", prior_year, " vs. ", data_year))
   
   compare_log <- threshold_compare %>%
-    transmute(Threshold = as.character(label),
-              Prior     = fmt_dollar(prior),
-              Latest    = fmt_dollar(latest),
+    transmute(Percentile = as.character(label),
+              Prior      = fmt_dollar(prior),
+              Latest     = fmt_dollar(latest),
               `Real change` = fmt_signed_pct(pct_change))
   
   if(!is.na(prior_nominal_divisor)){
@@ -604,6 +645,13 @@ if(prior_year %in% scf_stack_all$year){
   names(compare_log)[3] <- as.character(data_year)
   
   log_table(compare_log)
+  log_note("Fed's published 2022-2025 change in real median family income: +7%. ",
+           "The Median row above should be close to that.")
+  
+  # Both surveys feed these charts, so the source line names both.
+  compare_source_string <- paste0("Source:  Survey of Consumer Finances, ",
+                                  prior_year, " and ", data_year,
+                                  " (OfDollarsAndData.com)")
   
   real_note <- str_wrap(paste0("Note: ", prior_year,
                                " figures adjusted for inflation",
@@ -612,8 +660,10 @@ if(prior_year %in% scf_stack_all$year){
                                       " with CPI-U.")),
                         width = 85)
   
-  # ---- Levels, side by side ----
+  # ---- Levels, side by side (thresholds only) ----
   to_plot <- threshold_compare %>%
+    filter(prob %in% rich_probs) %>%
+    mutate(label = droplevels(label)) %>%
     select(label, prior, latest) %>%
     pivot_longer(cols = c(prior, latest),
                  names_to = "period", values_to = "value") %>%
@@ -621,29 +671,41 @@ if(prior_year %in% scf_stack_all$year){
                                   as.character(prior_year),
                                   as.character(data_year)),
                            levels = c(as.character(prior_year),
-                                      as.character(data_year))))
+                                      as.character(data_year))),
+           bar_label = fmt_short(value))
   
   file_path <- paste0(out_path, "/income_thresholds_", prior_year, "_vs_",
                       data_year, ".jpeg")
   
   plot <- ggplot(to_plot, aes(x = label, y = value, fill = period)) +
-    geom_bar(stat = "identity", position = "dodge") +
-    scale_y_continuous(label = dollar) +
+    geom_bar(stat = "identity", position = position_dodge(width = 0.9)) +
+    geom_text(aes(label = bar_label, col = period),
+              position = position_dodge(width = 0.9),
+              vjust = -0.3,
+              size = 2.5,
+              show.legend = FALSE) +
+    scale_y_continuous(label = dollar,
+                       expand = expansion(mult = c(0, 0.08))) +
     scale_fill_manual(values = setNames(c(prior_year_color,
                                           chart_standard_color),
                                         c(as.character(prior_year),
                                           as.character(data_year)))) +
+    scale_color_manual(values = setNames(c("#808080",
+                                           chart_standard_color),
+                                         c(as.character(prior_year),
+                                           as.character(data_year)))) +
     of_dollars_and_data_theme +
     theme(legend.title = element_blank(),
           legend.position = "bottom") +
-    ggtitle(paste0("What It Takes to Be Rich\n", prior_year, " vs. ",
+    ggtitle(paste0("What It Takes to Be Rich
+", prior_year, " vs. ",
                    data_year)) +
     labs(x = "Threshold", y = "Household Income",
-         caption = paste0(source_string, "\n", real_note))
+         caption = paste0(compare_source_string, "\n", real_note))
   
   save_chart(plot, file_path)
   
-  # ---- Real percent change ----
+  # ---- Real percent change (median + thresholds) ----
   text_labels <- threshold_compare %>%
     mutate(pct_label = fmt_signed_pct(pct_change),
            vj = ifelse(pct_change > 0, -0.3, 1.3))
@@ -652,29 +714,31 @@ if(prior_year %in% scf_stack_all$year){
                       prior_year, "_", data_year, ".jpeg")
   
   plot <- ggplot(threshold_compare, aes(x = label, y = pct_change)) +
+    geom_hline(yintercept = 0, col = "black") +
     geom_bar(stat = "identity", fill = chart_standard_color) +
     geom_text(data = text_labels,
               aes(x = label, y = pct_change, label = pct_label, vjust = vj),
               col = chart_standard_color,
               size = 3) +
-    scale_y_continuous(label = percent_format(accuracy = 1)) +
+    scale_y_continuous(label = percent_format(accuracy = 1),
+                       expand = expansion(mult = 0.15)) +
     of_dollars_and_data_theme +
-    ggtitle(paste0("Real Change in the Income Needed to Be Rich\n",
+    ggtitle(paste0("Real Change in Household Income
+by Percentile, ",
                    prior_year, "-", data_year)) +
-    labs(x = "Threshold", y = "Real Change",
-         caption = paste0(source_string, "\n", real_note))
+    labs(x = "Percentile", y = "Real Change",
+         caption = paste0(compare_source_string, "\n", real_note))
   
   save_chart(plot, file_path)
   
   # ---- Table ----
   compare_table <- threshold_compare %>%
-    arrange(desc(prob)) %>%
-    transmute(Threshold     = as.character(label),
+    transmute(Percentile    = as.character(label),
               Prior         = format_as_dollar(prior),
               Latest        = format_as_dollar(latest),
               `Real Change` = fmt_signed_pct(pct_change))
   
-  names(compare_table)[2] <- as.character(prior_year)
+  names(compare_table)[2] <- paste0(prior_year, " (", data_year, " dollars)")
   names(compare_table)[3] <- as.character(data_year)
   
   write_html_table(compare_table,
@@ -733,12 +797,10 @@ log_table(df %>%
 # ##################################################################### #
 # SECTION 5: Fine-grained age table
 # ##################################################################### #
-# The published 2022 version carried a Top 1% column here. Split across
-# twelve bands, each band's 99th percentile rests on a few households. It
-# showed 30-34 at $468k jumping to $1,048k at 35-39, and 45-49 top 5%
-# coming in BELOW 40-44 - impossible as population facts, ordinary as
-# sampling noise. So this table stops at the top 5%. The top 1% lives in
-# the 6-group age chart above. The diagnostic below shows the thinness.
+# Same layout as the published 2022 table: Top 10%, Top 5%, Top 1% by
+# 5-year band. The Top 1% column is noisy in 5-year bands (few sample
+# households per band). The log prints the sample support for each band
+# so you can see it, but the published table leaves the counts out.
 
 log_section("5. AGE TABLE (5-YEAR BANDS)")
 
@@ -761,22 +823,18 @@ add_agecl_new <- function(data){
 
 df_fine <- df %>% add_agecl_new()
 
-fine_counts <- cell_counts(df_fine, "agecl_new")
-
 rich_table_by_age <- df_fine %>%
   group_by(agecl_new) %>%
   summarise(
-    pct_50 = wtd_stat(income, wgt, 0.50),
     pct_90 = wtd_stat(income, wgt, 0.90),
     pct_95 = wtd_stat(income, wgt, 0.95),
+    pct_99 = wtd_stat(income, wgt, 0.99),
     .groups = "drop"
   ) %>%
-  left_join(fine_counts, by = "agecl_new") %>%
-  transmute(`Age Range`  = agecl_new,
-            `Median`     = format_as_dollar(pct_50),
-            `Top 10%`    = format_as_dollar(pct_90),
-            `Top 5%`     = format_as_dollar(pct_95),
-            `Households` = fmt_count(n_hh))
+  transmute(`Age Range` = agecl_new,
+            `Top 10%`   = format_as_dollar(pct_90),
+            `Top 5%`    = format_as_dollar(pct_95),
+            `Top 1%`    = format_as_dollar(pct_99))
 
 log_table(rich_table_by_age)
 log_value("Households outside ages 20-80 (dropped from this table)",
@@ -787,10 +845,9 @@ write_html_table(rich_table_by_age,
                  paste0(out_path, "/income_by_agecl_table_rich_",
                         data_year, ".html"))
 
-log_sub("DIAGNOSTIC - Top 1% by 5-year band. Do NOT publish.")
+log_sub("Sample support per band (log only, not in the published table)")
 log_table(support_above(df_fine, "agecl_new", 0.99) %>%
             transmute(`Age Range` = agecl_new,
-                      `Top 1%`    = fmt_dollar(threshold),
                       `Sample HH` = fmt_count(n_hh),
                       `Sample HH above Top 1%` = fmt_count(hh_above, 1)))
 
